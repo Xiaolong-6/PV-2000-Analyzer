@@ -6,7 +6,7 @@ Current modules:
 
 - `DITMeasurement` — COCOS / Dit analysis with wafer map, PV2000-style discrete minimum Dit, optional PCHIP midgap Dit, flatband/Qtot/Cox/EOT extraction, XML metadata and contextual analysis-method routing. `Follow XML setting` resolves standard XMLs to Standard COCOS and `UseCocosII=true` XMLs to the inferred PV2000 COCOS-II path; the older guide-based path is kept under Advanced / legacy methods. COCOS-II exposes data-derived parameter suggestions without silently overriding the XML/user values.
 - `QssUpcdMeasurement` — QSS-µPCD map analysis with lifetime, Smax, implied Voc, valid-data filtering, map/distribution/acquisition views and CSV export.
-- `LBICMeasurement` — rectangular LBIC raster analysis with dynamic beam/wavelength channels, raw current/reflectance maps, inferred Total R/EQE/IQE fallbacks, line profiles, pixel inspection and CSV export.
+- `LBICMeasurement` — rectangular LBIC raster analysis with dynamic beam/wavelength channels, raw current/reflectance maps, vendor-regressed SquareRegionPattern coordinates and current/reflectance→QE/IQE relationships for the validated unit/channel combination, plus line profiles, pixel inspection and CSV export. Exact wavelength/power/FluxCache fixture values are not treated as validation gates.
 - Unknown types — Generic XML Inspector rather than a hard failure.
 
 ## Run
