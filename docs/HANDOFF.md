@@ -45,16 +45,25 @@ Current analysis routing:
 
 The inferred PV2000 path comes from same-raw-data parameter sweeps. It interprets vendor EOT as Å, reconstructs signed Vsb and applies configurable Min/Max Vsb when selecting minimum Dit. It is explicitly labelled **inferred**, not vendor-exact. Back Surface Shift is recorded but intentionally not applied because the supplied True/False reprocessing produced identical outputs.
 
-Dit Analysis controls are contextual rather than flat:
+Dit Analysis controls are contextual and compact:
 
-- inferred COCOS-II shows EOT / Min Vsb / Max Vsb;
+- inferred COCOS-II shows EOT / Min Vsb / Max Vsb on one-line label/input rows;
 - Standard COCOS hides COCOS-II-only settings;
-- shared flatband and Dit-extraction settings remain visible;
+- shared Flatband accumulation points remain visible;
+- **Minimum Dit (PV2000-style)** is the accepted discrete minimum and does not use PCHIP;
+- optional PCHIP controls are nested under **Optional Midgap Dit (PCHIP)** and affect Midgap Dit / fitted curve only;
+- COCOS-II and PCHIP can be combined because PCHIP runs after COCOS-II Vsb reconstruction and acceptance masking;
+- data-derived COCOS-II suggestions are shown but do not silently overwrite XML/user values;
+- invalid COCOS-II settings are shown as errors and no longer fall back silently to Standard COCOS;
 - the legacy guide-based method is hidden under Advanced / legacy methods;
 - Follow XML displays the resolved method;
 - Apply/recalculation, method changes, PCHIP changes and site re-renders preserve the Analysis controls open state once the user has opened it.
 
-LOG10 remains the default PCHIP scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
+A parser fix now treats missing/empty numeric XML nodes as missing rather than as JavaScript numeric zero. This is required for COCOS-II Min/Max defaults and also improves numeric fallback behavior across modules.
+
+On desktop, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. Responsive layouts revert to normal page flow.
+
+LOG10 remains the default optional PCHIP interpolation scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
 
 QSS Distribution has a Swap axes button beside Export. The map-selected metric (lifetime by default) starts on the horizontal axis with count vertically; swapping moves the metric to the vertical axis and count to the horizontal axis. Valid histogram bars use the same color scale and valid-point value range as the wafer map; excluded counts remain gray. The histogram CSV remains in metric bins and includes the selected metric's units in bin headers.
 
