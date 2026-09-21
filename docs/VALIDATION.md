@@ -79,7 +79,7 @@ The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP
 
 COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
 
-In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Scrolling it must not move the plot columns. Browser zoom must not disable the scroll container when the CSS viewport crosses 900 px; only the true single-column/mobile breakpoint returns it to normal page flow.
+In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Scrolling it must not move the plot columns. Fine-pointer desktop zoom must not trigger the portrait/mobile fallback merely because the viewport becomes taller than wide; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary must not require horizontal scrolling: parameter, valid-site mean and current-site values are rendered as responsive cards.
 
 
 
