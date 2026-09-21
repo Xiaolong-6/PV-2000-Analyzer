@@ -5,6 +5,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "test": "node --test tests/*.test.js",
-    "validate:qss": "python scripts/validate_qss_reference.py"
+    "validate:qss": "python scripts/validate_qss_reference.py",
+    "validate:lbic": "python scripts/validate_lbic_structure.py"
   }
 }
