@@ -63,12 +63,19 @@ Status: **legacy / development comparison**.
 
 The older guide-based synthetic-light implementation remains available only under Advanced / legacy methods. It is no longer the default for `UseCocosII=true` and must not be described as the normal PV-2000 COCOS-II implementation.
 
-### UI regression expectations
+### UI / control regression expectations
 
-The Analysis controls panel must remain open after Apply/recalculation. Method-specific parameters are shown contextually:
+The Analysis controls panel must remain open after Apply/recalculation. Method-specific parameters are shown contextually and compactly, with the label/help icon and its input on one row:
 
 - Standard COCOS: no COCOS-II EOT or Min/Max inputs;
 - PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
 - Legacy guide-based path: accessible only through Advanced / legacy methods;
-- Flatband and Dit-extraction controls remain available because they are shared by the active calculation path.
+- Flatband accumulation points remain shared;
+- PCHIP outlier limit and interpolation scale live only under **Optional Midgap Dit (PCHIP)**.
+
+The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP settings change. PCHIP settings may change Midgap Dit and the fitted curve only.
+
+COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
+
+On desktop, the left functional sidebar is independently scrollable/sticky within the viewport. Scrolling it must not move the plot columns; responsive layouts at <=900 px return to normal page flow.
 
