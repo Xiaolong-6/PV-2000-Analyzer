@@ -81,25 +81,27 @@ In multi-column layouts, the left functional sidebar is independently scrollable
 
 
 
-## LBIC raster — structural validation only
+## LBIC raster — paired XML+CSV regression
 
-Private LBIC XML examples inspected during development cover 51×51 (2601 point) and 101×101 (10201 point) `SquareRegionPattern` rasters. The current module discovers `BeamData` numeric attributes dynamically and joins beam keys to `LaserSettings` / `FluxCache`.
+Four paired XML+CSV references are available. Validation is defined by **input/result combination and units**, not by an exact recipe tuple. The observed fixture wavelength, laser power and FluxCache values document the references; they are not equality checks that gate the algorithm.
 
 Current status:
 
 | Quantity / behavior | Status |
 |---|---|
 | `LBICMeasurement` dispatch | tested |
-| Region + Dimension point count | structurally validated on supplied examples |
+| `SquareRegionPattern` Region/Dimension → X/Y coordinates | vendor-validated on paired references |
+| X-fast, row-major, downward-Y ordering | vendor-validated on paired references |
 | dynamic BeamData numeric-channel discovery | tested |
 | raw-channel precedence | tested |
-| multiple beam/wavelength data model | implemented, not yet exercised by supplied examples |
-| X-fast / row-major coordinate order | inferred |
-| Y direction from Region.Y downward | inferred |
-| Total R = direct + diffuse | inferred; no vendor export parity yet |
-| EQE from Current / FluxCache photon flux | inferred; no vendor export parity yet |
-| IQE from EQE / (1-Rtotal) | inferred; no vendor export parity yet |
+| Total R = DirectReflection + ScatteredReflection | vendor-validated for percent reflectance channels |
+| current / FluxCache photon normalization using µA current | vendor-validated as part of the QE/IQE chain |
+| IQE = EQE / (1-Rtotal), including blanking at Rtotal >= 100% | vendor-validated |
+| exact wavelength / laser power / FluxCache numeric value | fixture metadata, **not** a validation boundary |
+| multiple beam/wavelength data model | implemented, not yet vendor-regressed with a real multi-beam file |
 | calculated diffusion length | unsupported |
+
+The four references include 51×51 and 101×101 rasters and currently happen to use a single 984 nm beam, power 0.6 and the same calibrated FluxCache. A different wavelength, power or nearby/different FluxCache remains inside the validated calculation domain when the same XML concepts and units apply. What requires a new regression is a change in **semantics**: e.g. current no longer in µA, reflectance no longer expressed in percent, FluxCache no longer representing calibrated photon flux, a new acquisition ordering, or a different pattern type.
 
 Run:
 
@@ -107,6 +109,6 @@ Run:
 npm run validate:lbic
 ```
 
-with private XMLs under `private/reference/lbic/`. The validator checks structure only and deliberately does not upgrade inferred algorithms to validated.
+The tracked validator checks XML structure. The paired private CSV regressions are the numerical evidence and remain outside the repository.
 
-To validate coordinates, provide one matching LBIC X/Y export or an orientation-known PV-2000 map. To validate Total R/EQE/IQE, provide matching vendor values. To implement diffusion length, provide a multi-wavelength LBIC XML and matching PV-2000 DL output; see `ALGORITHMS_LBIC.md`.
+For multi-beam support, add at least one real multi-wavelength paired reference. For diffusion length, provide a multi-wavelength LBIC XML and matching PV-2000 DL output; see `ALGORITHMS_LBIC.md`.
