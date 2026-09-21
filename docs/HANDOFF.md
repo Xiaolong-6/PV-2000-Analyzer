@@ -84,12 +84,13 @@ Implemented:
 - raster map, histogram, selected-pixel inspector, X/Y profiles and CSV exports;
 - unit tests, structural private validator and detailed provenance/validation documentation.
 
-Important limitations:
+Validation scope:
 
-- coordinate acquisition order and Y orientation are **inferred** until a matching PV-2000 coordinate export or known-orientation map is available;
-- Total R, EQE and IQE calculations are **inferred** until pointwise vendor output is available;
-- supplied examples are single-beam, so real multi-wavelength XML still needs regression;
-- calculated diffusion length is intentionally **unsupported** until a two-wavelength XML plus matching PV-2000 DL result is supplied.
+- SquareRegionPattern coordinate reconstruction and X-fast/downward-Y ordering are vendor-validated against paired XML+CSV references;
+- Total reflectance from direct + scattered reflectance and the µA-current / FluxCache / IQE calculation chain are vendor-validated for the observed channel semantics, including IQE blanking when total reflectance reaches/exceeds 100%;
+- validation is **combination-based**, not tied to one exact 984 nm / power 0.6 / FluxCache value. Different numeric wavelength, power or photon-flux values remain inside the validated domain when the same units and meanings apply;
+- real multi-beam/multi-wavelength XML still needs regression for parsing/interleaving behavior;
+- calculated diffusion length remains intentionally **unsupported** until a two-wavelength XML plus matching PV-2000 DL result is supplied.
 
 See `docs/ALGORITHMS_LBIC.md`.
 
@@ -103,7 +104,7 @@ npm run validate:lbic
 git status --short --ignored
 ```
 
-Current expected automated tests after LBIC integration: 28/28 PASS. QSS private pointwise validation should PASS when its ignored references are present; the LBIC private validator is structural only and should PASS when the ignored LBIC XML examples are present.
+Current automated test count is maintained by CI. QSS private pointwise validation should PASS when its ignored references are present. LBIC numerical vendor parity is established by the paired private XML+CSV references; the tracked `validate:lbic` script remains a structural guard and is not the sole evidence for the validated formulas.
 
 ## Next scientific module
 
