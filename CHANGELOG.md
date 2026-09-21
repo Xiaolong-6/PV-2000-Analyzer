@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Reworked Dit Results summary from a fixed nowrap table into responsive result cards so Valid-site mean / Current-site values do not clip inside the sidebar.
+- Hardened responsive breakpoints: fine-pointer desktop zoom keeps a dedicated sidebar column; portrait/tablet fallback now requires coarse-pointer input, while <=700 px remains the true narrow fallback.
+- Added landing-page capability tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector.
+- Added min-width containment to grid children/sidebar panels to prevent intrinsic content width from forcing horizontal overflow.
 - Replaced LBIC structural-only assumptions with four paired PV-2000 XML/CSV regressions: X/Y coordinates now use validated X-fast row-major positive-Y reconstruction; Reflectivity reproduces DirectReflection + ScatteredReflection; IQE reproduces vendor output with q=1.602e-19 C and vendor >100% blanking.
 - Changed the default LBIC result view to PV-2000-style Current / Reflectivity / IQE; Direct/Scattered reflectance, EQE and unknown numeric channels are available as Advanced raw/intermediate diagnostics.
 - Added a paired LBIC validator and central reference-profile registry. Validation is attached to semantic input/output algorithm families: ordinary numeric wavelength/power/FluxCache/raster-size changes stay in-family, while categorical pattern/beam/channel/result/unit/blanking changes are NEW PROFILE until matched against actual PV-2000 output.
