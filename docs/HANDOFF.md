@@ -62,7 +62,7 @@ Dit Analysis controls are contextual and compact:
 
 A parser fix now treats missing/empty numeric XML nodes as missing rather than as JavaScript numeric zero. This is required for COCOS-II Min/Max defaults and also improves numeric fallback behavior across modules.
 
-In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. The scroll container now uses an explicit viewport height and stays enabled across the 900 px layout breakpoint, so browser zoom cannot make lower panels unreachable. Only the true single-column/mobile layout returns to normal page flow.
+In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. The portrait/tablet single-column fallback is now gated by coarse-pointer input so desktop browser zoom does not unexpectedly collapse the app into the mobile layout. At <=700 px the app still uses the true narrow layout. Dit Results summary was converted from a nowrap three-column table to responsive result cards to prevent clipped Valid-site mean / Current-site values.
 
 LOG10 remains the default optional PCHIP interpolation scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
 
