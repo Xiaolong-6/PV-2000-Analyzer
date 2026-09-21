@@ -1,0 +1,10 @@
+{
+  "name": "pv2000-analyzer",
+  "version": "0.2.2",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node --test tests/*.test.js",
+    "validate:qss": "python scripts/validate_qss_reference.py"
+  }
+}

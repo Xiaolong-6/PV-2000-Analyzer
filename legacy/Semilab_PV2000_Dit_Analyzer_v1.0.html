@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Semilab PV-2000 Dit Analyzer v1.0</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#ffffff;--panel:#f6f7f9;--panel2:#eef1f5;--chart-bg:#ffffff;
+  --border:#d6dbe3;--grid:#e2e6ec;--grid2:#edf0f4;
+  --text:#111827;--muted:#657083;--soft:#7b8799;--button:#ffffff;--button-border:#c6ccd6;
+  --blue:#315ee8;--red:#e34b52;--green:#2da867;--purple:#8b5bd7;--yellow:#b78600;
+  --good:#16794a;--warn:#a56400;--bad:#c73b45;--toolbar:46px
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --bg:#0d1015;--panel:#151922;--panel2:#191f29;--chart-bg:#11141a;
+    --border:#303847;--grid:#2d3440;--grid2:#242a34;
+    --text:#eef2f7;--muted:#93a0b2;--soft:#8290a3;--button:#232a36;--button-border:#3a4556;
+    --blue:#4f7cff;--red:#ff5a5f;--green:#5fd38d;--purple:#b477ff;--yellow:#f2d36b;
+    --good:#73df9b;--warn:#ffd071;--bad:#ff8585
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0d1015;--panel:#151922;--panel2:#191f29;--chart-bg:#11141a;
+  --border:#303847;--grid:#2d3440;--grid2:#242a34;
+  --text:#eef2f7;--muted:#93a0b2;--soft:#8290a3;--button:#232a36;--button-border:#3a4556;
+  --blue:#4f7cff;--red:#ff5a5f;--green:#5fd38d;--purple:#b477ff;--yellow:#f2d36b;
+  --good:#73df9b;--warn:#ffd071;--bad:#ff8585
+}
+:root[data-theme="light"]{
+  color-scheme: light;
+  --bg:#ffffff;--panel:#f6f7f9;--panel2:#eef1f5;--chart-bg:#ffffff;
+  --border:#d6dbe3;--grid:#e2e6ec;--grid2:#edf0f4;
+  --text:#111827;--muted:#657083;--soft:#7b8799;--button:#ffffff;--button-border:#c6ccd6;
+  --blue:#315ee8;--red:#e34b52;--green:#2da867;--purple:#8b5bd7;--yellow:#b78600;
+  --good:#16794a;--warn:#a56400;--bad:#c73b45
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif}
+body{overflow-y:auto}
+button,select,input,.btn{font:inherit;background:var(--button);color:var(--text);border:1px solid var(--button-border);border-radius:7px;padding:5px 8px}
+button,.btn,select{cursor:pointer}.btn input{display:none}.hidden{display:none!important}
+.small{font-size:10px;color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+.info{display:inline-grid;place-items:center;width:15px;height:15px;border:1px solid #536174;border-radius:50%;font-size:9px;color:#9eabba;cursor:help;margin-left:4px}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px}
+
+#welcome{height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--text)}
+.welcome-card{width:min(620px,90vw);text-align:center}.welcome-card h1{font-size:32px;margin:0 0 28px}
+.drop{border:1px dashed var(--button-border);background:var(--panel);color:var(--text);padding:31px 25px}.drop.drag{border-color:#69b7ff;background:var(--panel2)}
+.drop .title{font-size:20px;margin-bottom:9px}.drop .privacy{margin-top:8px;color:var(--muted);font-size:11px}
+
+.toolbar{
+  position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:6px;min-height:var(--toolbar);
+  padding:5px 8px;background:var(--panel);border-bottom:1px solid var(--border)
+}
+.brand{font-weight:760;white-space:nowrap}.version{font-weight:400;color:#7f8ca0}
+.filelabel{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px}
+.sep{width:1px;height:25px;background:var(--border)}
+.site-nav{display:flex;align-items:center;gap:4px}.site-nav button{width:29px;height:29px;padding:0;font-size:16px}.site-nav select{height:29px;min-width:88px;padding:3px 22px 3px 6px}
+.toolbar .spacer{flex:1}.compact{height:30px;font-size:10.5px}
+
+main{max-width:1540px;margin:0 auto;padding:9px}
+.workspace{
+  display:grid;grid-template-columns:minmax(300px,340px) minmax(0,1fr) minmax(0,1fr);
+  gap:9px;align-items:start
+}
+.leftcol{display:flex;flex-direction:column;gap:8px}
+.plotcol{display:flex;flex-direction:column;gap:9px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.card-head{display:flex;align-items:center;gap:7px;min-height:34px;padding:5px 8px;border-bottom:1px solid var(--border)}
+.card-head h3{font-size:11px;margin:0}.card-head .spacer{flex:1}.card-head select{font-size:9.5px;padding:3px 6px;height:25px}
+.card-body{padding:7px 8px}
+.measure-title{font-size:11.5px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}.measure-meta{font-size:9.5px;color:var(--muted);margin-top:4px}
+.status-row{display:flex;align-items:center;gap:5px;margin-top:6px;font-size:9.5px}.pill{padding:2px 6px;border:1px solid #3d4857;border-radius:12px;color:#aab5c3}.pill.good{border-color:#35664a;background:#173022}.pill.bad{border-color:#71434a;background:#2b1b1e}
+
+.metric-list{padding:3px 8px 7px}.metric{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:baseline;
+  padding:5px 0;border-bottom:1px solid #252c38
+}.metric:last-child{border-bottom:0}.metric .label{font-size:9.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .value{font-size:11px;font-weight:700;text-align:right;white-space:nowrap}.metric .value.hero{font-size:15px;color:var(--good)}
+.metric .sub{grid-column:1/-1;text-align:right;font-size:8.5px;color:var(--soft);margin-top:-3px}
+
+.result-table{width:100%;border-collapse:collapse;font-size:9.5px}
+.result-table th,.result-table td{padding:5px 4px;border-bottom:1px solid var(--border);vertical-align:middle}
+.result-table tr:last-child td{border-bottom:0}
+.result-table th{font-size:8.6px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);font-weight:700;text-align:right}
+.result-table th:first-child,.result-table td:first-child{text-align:left}
+.result-table td:not(:first-child){text-align:right;font-weight:650;white-space:nowrap}
+.result-table .hero{color:var(--good);font-size:11.5px}
+.result-table .na{color:var(--soft);font-weight:500}
+.chart-export{height:23px;padding:2px 7px;font-size:8.8px;white-space:nowrap}
+.theme-btn{height:30px;font-size:10.5px;white-space:nowrap}
+.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}.mini{background:var(--panel2);border:1px solid var(--border);border-radius:6px;padding:6px}.mini .k{font-size:8.5px;color:var(--muted)}.mini .v{font-size:10.5px;font-weight:700;margin-top:3px}
+
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.chart-head{height:34px;display:flex;align-items:center;gap:7px;padding:0 8px;border-bottom:1px solid var(--border)}
+.chart-head h3{margin:0;font-size:11px}.chart-head .meta{font-size:8.8px;color:var(--soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.chart-head .spacer{flex:1}
+.chart-head select{font-size:9px;height:24px;padding:2px 5px}
+.chart-body{height:270px;position:relative}.chart-body svg{width:100%;height:100%;display:block;background:var(--chart-bg)}
+.legend{position:absolute;left:9px;top:5px;z-index:3;display:flex;gap:8px;flex-wrap:wrap;font-size:8.2px;color:var(--muted);pointer-events:none}
+
+.map-card .chart-body{height:300px}
+.map-note{position:absolute;right:8px;bottom:6px;font-size:8px;color:#6f7d90}
+
+details.card>summary{list-style:none;cursor:pointer;padding:8px;font-size:10px;font-weight:700;color:var(--text)}
+details.card>summary::-webkit-details-marker{display:none}details.card[open]>summary{border-bottom:1px solid var(--border)}
+.audit-body{padding:7px 8px;font-size:9px;color:#9ba8b9;line-height:1.45}.audit-row{display:grid;grid-template-columns:1fr auto;gap:5px;padding:3px 0;border-bottom:1px solid #252c38}.audit-row:last-child{border-bottom:0}
+
+.drawer-mask{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:40}
+.drawer{position:fixed;z-index:41;right:0;top:0;height:100vh;width:min(410px,94vw);background:#141922;border-left:1px solid #3a4352;display:grid;grid-template-rows:46px 1fr 50px}
+.drawer-head{display:flex;align-items:center;padding:0 11px;border-bottom:1px solid var(--border)}.drawer-head h2{font-size:13px;margin:0}.drawer-head .spacer{flex:1}
+.drawer-body{overflow:auto;padding:9px}.drawer-foot{display:flex;align-items:center;gap:7px;padding:7px 9px;border-top:1px solid var(--border)}
+.setting-group{margin-bottom:11px}.setting-group h3{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 5px}
+.setting-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}.setting{background:var(--panel2);border:1px solid var(--border);border-radius:7px;padding:6px}.setting.wide{grid-column:1/-1}
+.setting label{display:block;color:var(--muted);font-size:9.5px;margin-bottom:4px}.setting input,.setting select{width:100%;font-size:10.5px;padding:5px}
+
+@media(max-width:1120px){
+  .workspace{grid-template-columns:290px minmax(0,1fr) minmax(0,1fr)}
+  .filelabel{max-width:125px}.brand{font-size:12px}.chart-body{height:265px}.map-card .chart-body{height:290px}
+}
+@media(max-width:880px){
+  .toolbar{flex-wrap:wrap}.brand{flex:1 0 100%;font-size:12px}.filelabel{display:none}.sep{display:none}
+  .workspace{grid-template-columns:1fr 1fr}.leftcol{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .leftcol>.card:first-child{grid-column:1/-1}.chart-body{height:275px}
+}
+@media(max-width:680px), (orientation:portrait) and (max-width:900px){
+  main{padding:7px}.workspace{grid-template-columns:1fr}.leftcol{grid-column:auto;display:flex}.plotcol{display:flex}.chart-body{height:285px}.map-card .chart-body{height:300px}
+}
+</style>
+</head>
+<body>
+<div id="welcome">
+  <div class="welcome-card">
+    <h1>Semilab PV-2000 Dit Analyzer</h1>
+    <div id="drop" class="drop">
+      <div class="title">Drop a Dit XML results here</div>
+      <label class="btn">Open XML<input id="file" type="file" accept=".xml,text/xml,application/xml"></label>
+      <div class="privacy">Local analysis only.</div>
+    </div>
+  </div>
+</div>
+
+<div id="app" class="hidden">
+  <div class="toolbar">
+    <div class="brand">Semilab PV-2000 Dit Analyzer <span class="version">v1.0</span></div>
+    <label class="btn compact">Open XML<input id="fileTop" type="file" accept=".xml,text/xml,application/xml"></label>
+    <div id="fileLabel" class="filelabel mono"></div>
+    <div class="sep"></div><div id="sites" class="site-nav"></div>
+    <div class="spacer"></div>
+    <button id="themeBtn" class="theme-btn" title="Toggle light/dark theme">Theme</button>
+    <button id="settingsBtn" class="compact">Settings</button>
+  </div>
+
+  <main>
+    <div class="workspace">
+      <aside class="leftcol">
+        <section class="card">
+          <div class="card-head"><h3>Measurement</h3><div class="spacer"></div><span id="coordLabel" class="small"></span></div>
+          <div class="card-body">
+            <div id="sampleTitle" class="measure-title">—</div>
+            <div id="sampleMeta" class="measure-meta"></div>
+            <div class="status-row"><span id="sitePill" class="pill">—</span><span id="sourcePill" class="pill good">XML</span></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head"><h3>Results summary</h3></div>
+          <div class="card-body" style="padding:3px 7px 6px">
+            <table class="result-table">
+              <thead><tr><th>Parameter</th><th>Valid site mean</th><th>Current site</th></tr></thead>
+              <tbody>
+                <tr title="Total dielectric/interface charge extracted from the horizontal separation between the natural initial condition and flatband on the dark V–Q characteristic."><td>Qtot</td><td id="mQtot">—</td><td id="vQtot" class="hero">—</td></tr>
+                <tr title="Minimum interface-state density recalculated from the XML with the group MATLAB variation method."><td>Minimum Dit</td><td id="mDit">—</td><td id="vDit">—</td></tr>
+                <tr title="Interface-state density interpolated at the midgap surface potential using the group MATLAB variation method and PCHIP."><td>Midgap Dit</td><td id="mMidDit">—</td><td id="vMidDit">—</td></tr>
+                <tr title="Equivalent oxide thickness: the thickness of SiO₂ (κ≈3.9) that would give the measured dielectric capacitance. It equals physical thickness only for a single SiO₂ dielectric with approximately that permittivity. For any other dielectric or multilayer stack, EOT is an electrical-equivalent thickness, not the physical thickness."><td>EOT (SiO₂ eq.)</td><td id="mEot">—</td><td id="vEot">—</td></tr>
+                <tr title="Measured dielectric capacitance per unit area derived from the deep-accumulation dark V–Q slope. This is the more material-independent quantity underlying EOT."><td>Cox</td><td id="mCox">—</td><td id="vCox">—</td></tr>
+                <tr title="Semiconductor space charge calculated at the natural initial Vsb using the same semiconductor charge model as the group MATLAB code."><td>Qsc (initial)</td><td id="mQsc">—</td><td id="vQsc">—</td></tr>
+                <tr title="Barrier-adjustment bookkeeping from the XML: number of PreProcess charge events multiplied by the PreProcess corona-charge step."><td>Initial Qc</td><td id="mInitialQc">—</td><td id="vInitialQc">—</td></tr>
+                <tr title="Maximum absolute surface-barrier value reached in the Process sweep."><td>Max |Vsb|</td><td id="mMaxVsb">—</td><td id="vMaxVsb">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <details class="card">
+          <summary title="Intermediate quantities used in the Qtot/flatband extraction.">Flatband extraction</summary>
+          <div class="card-body">
+            <div class="mini-grid">
+              <div class="mini" title="Initial natural-condition dark Vcpd is projected onto the Process dark V–Q curve."><div class="k">q initial</div><div id="vQinit" class="v">—</div></div>
+              <div class="mini" title="Flatband is identified from the theoretical flatband capacitance crossing in the differential dark C–Q curve."><div class="k">q flatband</div><div id="vQfb" class="v">—</div></div>
+              <div class="mini" title="Deep-accumulation dark V–Q slope."><div class="k">oxide slope</div><div id="vMox" class="v">—</div></div>
+              <div class="mini" title="Theoretical flatband dV/dQc = 1/Cox + 1/Cs,FB."><div class="k">FB slope</div><div id="vMfb" class="v">—</div></div>
+            </div>
+          </div>
+        </details>
+
+        <details class="card">
+          <summary>Audit / legacy direct-charge</summary>
+          <div class="audit-body">
+            <div class="audit-row"><span>XML → PV2000 Raw Vsb</span><b>0.607 mV MAE</b></div>
+            <div class="audit-row"><span>Qtot validation (W1)</span><b>≈2.6% MAE</b></div>
+            <div class="audit-row"><span>Minimum Dit validation</span><b>≈2.6% MAE</b></div>
+            <div class="audit-row"><span>Vfb / Qit</span><b class="warn">not yet matched</b></div>
+            <label style="display:flex;align-items:center;gap:5px;margin-top:7px"><input id="showDirect" type="checkbox"> show legacy direct-charge Dit</label>
+          </div>
+        </details>
+      </aside>
+
+      <section class="plotcol">
+        <article class="chart-card">
+          <div class="chart-head"><h3>Vcpd–Qc</h3><div id="vcpdMeta" class="meta"></div><div class="spacer"></div><button id="exportVcpd" class="chart-export" title="Export the data shown in this chart as CSV">Export</button></div>
+          <div class="chart-body"><div id="vcpdLegend" class="legend"></div><svg id="vcpdPlot" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div>
+        </article>
+        <article class="chart-card">
+          <div class="chart-head"><h3>Dit–Vsb</h3><div id="ditMeta" class="meta"></div><div class="spacer"></div><button id="exportDit" class="chart-export" title="Export the data shown in this chart as CSV">Export</button></div>
+          <div class="chart-body"><div id="ditLegend" class="legend"></div><svg id="ditPlot" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div>
+        </article>
+      </section>
+
+      <section class="plotcol">
+        <article class="chart-card">
+          <div class="chart-head"><h3>Vsb–Qc</h3><div id="vsbMeta" class="meta"></div><div class="spacer"></div><button id="exportVsb" class="chart-export" title="Export the data shown in this chart as CSV">Export</button></div>
+          <div class="chart-body"><div id="vsbLegend" class="legend"></div><svg id="vsbPlot" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div>
+        </article>
+        <article class="chart-card map-card">
+          <div class="chart-head">
+            <h3>Wafer map</h3><div class="spacer"></div><button id="exportMap" class="chart-export" title="Export the currently mapped metric for every site as CSV">Export</button>
+            <select id="mapMetric" title="Select the quantity shown at each wafer site">
+              <option value="Qtot" selected>Qtot</option>
+              <option value="Dit">Minimum Dit</option>
+              <option value="MidgapDit">Midgap Dit</option>
+              <option value="EOT">EOT (SiO₂ eq.)</option>
+              <option value="Cox">Cox</option>
+              <option value="Qsc">Qsc</option>
+              <option value="InitialQc">Initial Qc</option>
+              <option value="MaxVsb">Max |Vsb|</option>
+            </select>
+          </div>
+          <div class="chart-body"><svg id="waferMap" viewBox="0 0 620 315"></svg><div class="map-note">click a site to select it</div></div>
+        </article>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="settingsMask" class="drawer-mask hidden"></div>
+<aside id="settingsDrawer" class="drawer hidden">
+  <div class="drawer-head"><h2>Analysis settings</h2><div class="spacer"></div><button id="settingsClose">✕</button></div>
+  <div class="drawer-body">
+    <div class="setting-group"><h3>Sample</h3><div class="setting-grid">
+      <div class="setting"><label>Material</label><select id="material"><option value="Si">Si</option><option value="Ge">Ge</option></select></div>
+      <div class="setting"><label>Doping type</label><select id="dtype"><option value="n">n-type</option><option value="p">p-type</option></select></div>
+      <div class="setting wide"><label>Doping concentration (cm⁻³)</label><input id="doping" type="number" step="any"></div>
+      <div class="setting"><label>Vsb correction factor</label><input id="vsbFactor" type="number" step="0.01"></div>
+      <div class="setting"><label>Dit reject threshold</label><input id="ditReject" type="number" step="any" value="2e13"></div>
+      <div class="setting"><label>Accumulation fit points</label><input id="accumN" type="number" min="3" max="20" step="1" value="5"></div>
+    </div></div>
+  </div>
+  <div class="drawer-foot"><div class="spacer"></div><button id="settingsCancel">Close</button><button id="applySettings">Recalculate</button></div>
+</aside>
+
+<script>
+const $=q=>document.querySelector(q);
+const state={files:[],xml:null,xmlInfo:{},rawSites:[],summarySites:[],coords:[],matlab:[],flat:[],site:0,themeManual:false};
+const finite=a=>a.filter(Number.isFinite),mean=a=>{const b=finite(a);return b.length?b.reduce((x,y)=>x+y,0)/b.length:NaN};
+const popSD=a=>{const b=finite(a);if(!b.length)return NaN;const m=mean(b);return Math.sqrt(b.reduce((s,v)=>s+(v-m)**2,0)/b.length)};
+const fmt=(x,n=3)=>Number.isFinite(x)?x.toFixed(n):'—';
+const sci=(x,n=3)=>Number.isFinite(x)?x.toExponential(n-1).replace('e+','e'):'—';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lname=e=>e?.localName||e?.nodeName?.split(':').pop();
+function direct(p,n){return p?[...p.children].find(c=>lname(c)===n):null}
+function txt(p,n,d=''){const e=direct(p,n);return e?e.textContent.trim():d}
+function ntext(p,n,d=NaN){const v=Number(txt(p,n,''));return Number.isFinite(v)?v:d}
+function childList(p,n){const e=direct(p,n);return e?[...e.children]:[]}
+function scalarMean(e){const z=e?[...e.children].map(x=>Number(x.textContent)).filter(Number.isFinite):[];return z.length?mean(z):NaN}
+function vectorMeans(e){return e?[...e.children].map(v=>scalarMean(v)):[]}
+
+function parseXML(text,name){
+  const doc=new DOMParser().parseFromString(text,'application/xml');
+  if(doc.querySelector('parsererror'))throw Error('XML parse failed');
+  const job=doc.documentElement,meas=direct(job,'Measurement'),md=direct(meas,'MeasurementData');
+  return{doc,job,meas,md,name,info:{
+    title:txt(job,'ResultName')||txt(job,'Name')||name,
+    doping:ntext(meas,'Doping',1.5e15),
+    type:txt(meas,'DopingType','NType').toLowerCase().startsWith('n')?'n':'p',
+    factor:ntext(md,'VsbCorrectionFactor',1.2),
+    offset:ntext(md,'VcpdOffsett',0)
+  }};
+}
+function deriveXML(x){
+  const {meas,md}=x,offset=x.info.offset,factor=x.info.factor;
+  const process=direct(meas,'Process'),ps=direct(process,'Settings'),qstep=ntext(ps,'CoronaCharge');
+  const pre=direct(meas,'PreProcess'),prs=direct(pre,'Settings'),prestep=ntext(prs,'CoronaCharge');
+  const data=direct(direct(direct(md,'IterationData'),'Iteration'),'Data');
+  const items=data?[...data.children].filter(e=>lname(e)==='DataItem'):[];
+  const coeffs=direct(direct(meas,'Pattern'),'Coefficients');
+  const coords=coeffs?[...coeffs.children].map(p=>({x:ntext(p,'X',0),y:ntext(p,'Y',0)})):[];
+  const raw=[],summ=[];
+  items.forEach((item,si)=>{
+    const pd=direct(item,'ProcessData'),pred=direct(item,'PreProcessData');
+    const d=vectorMeans(direct(pd,'VcpdDark')),l=vectorMeans(direct(pd,'VcpdLight')),rows=[];
+    const n=Math.min(d.length,l.length);
+    // Confirmed against supplied PV2000 Raw CSV: XML Process vector 0 is not exported; vector 1 is Qc=0.
+    for(let j=1;j<n;j++){
+      const VDark=d[j]-offset,VLight=l[j]-offset;
+      rows.push({Qc:(j-1)*qstep,VDark,VLight,Vsb:factor*(VLight-VDark)});
+    }
+    raw.push(rows);
+    const initDark=scalarMean(direct(item,'InitialVcpdDark'))-offset;
+    const initLightRaw=scalarMean(direct(item,'InitialVcpdLight'))-offset;
+    const initVsb=factor*(initDark-initLightRaw);
+    summ.push({
+      x:coords[si]?.x??si,y:coords[si]?.y??0,
+      VDark:initDark,VLight:initDark-initVsb,Vsb:initVsb,
+      InitialQc:Number.isFinite(prestep)?childList(pred,'VcpdDark').length*prestep:NaN,
+      Qtot:NaN,Dit:NaN,Qsc:NaN,EOT:NaN,Cox:NaN,Qinit:NaN,Qfb:NaN,Mox:NaN,Mfb:NaN
+    });
+  });
+  return{raw,summ,coords};
+}
+
+function qscDark(vsb,material,Ndop_cm,type){
+  const ni=(material==='Si'?1e10:2e13)*1e6,eps_s=material==='Si'?11.68:16.2,eps0=8.85e-12,k=1.38e-23,T=300,q=1.60218e-19,beta=q/(k*T),Ndop=Ndop_cm*1e6;
+  let p0,n0;if(type==='p'){p0=Ndop;n0=ni*ni/Ndop}else{p0=ni*ni/Ndop;n0=Ndop}
+  const sg=vsb<=0?1:-1,maj=type==='p'?p0:n0,minrat=type==='p'?n0/p0:p0/n0;
+  const term=(Math.exp(-beta*vsb)+beta*vsb-1)+minrat*(Math.exp(beta*vsb)-beta*vsb-1);
+  return sg*Math.sqrt(2*k*T*eps0*eps_s*maj)*Math.sqrt(Math.max(0,term))*1e-4/q
+}
+function midgapV(){const k=1.38e-23,T=300,q=1.60218e-19,ni=$('#material').value==='Si'?9.65e9:2e13,d=Number($('#doping').value);return Math.abs(k*T/q*Math.log(d/ni))}
+function linearFitSlope(x,y){
+  const xx=finite(x),n=Math.min(x.length,y.length);let sx=0,sy=0,sxx=0,sxy=0,k=0;
+  for(let i=0;i<n;i++)if(Number.isFinite(x[i])&&Number.isFinite(y[i])){sx+=x[i];sy+=y[i];sxx+=x[i]*x[i];sxy+=x[i]*y[i];k++}
+  return k>1?(k*sxy-sx*sy)/(k*sxx-sx*sx):NaN
+}
+function inverseInterp(q,v,target){
+  for(let i=0;i<v.length-1;i++){
+    if(![q[i],q[i+1],v[i],v[i+1],target].every(Number.isFinite)||v[i+1]===v[i])continue;
+    if((v[i]-target)*(v[i+1]-target)<=0)return q[i]+(target-v[i])/(v[i+1]-v[i])*(q[i+1]-q[i])
+  }
+  return NaN
+}
+function interp(q,v,x){
+  for(let i=0;i<q.length-1;i++)if(x>=q[i]&&x<=q[i+1]&&q[i+1]!==q[i])return v[i]+(x-q[i])/(q[i+1]-q[i])*(v[i+1]-v[i]);
+  return NaN
+}
+function flatbandSite(df,initDark){
+  if(!df||df.length<8)return{valid:false};
+  const type=$('#dtype').value,material=$('#material').value,Nd=Number($('#doping').value),N=Math.max(3,Math.min(20,Number($('#accumN').value||5)));
+  const q=df.map(r=>r.Qc),v=df.map(r=>r.VDark),qinit=inverseInterp(q,v,initDark);
+  const start=type==='n'?Math.max(0,q.length-N):0,end=type==='n'?q.length:Math.min(N,q.length);
+  const mox=linearFitSlope(q.slice(start,end),v.slice(start,end));
+  const eps0=8.8541878128e-14,epsr=material==='Si'?11.68:16.2,qe=1.602176634e-19,k=1.380649e-23,T=300;
+  const Csfb=Math.sqrt(epsr*eps0*qe*qe*Nd/(k*T));
+  const msc=qe/Csfb,mfb=mox+msc,sl=[];
+  for(let i=0;i<q.length-1;i++)sl.push((v[i+1]-v[i])/(q[i+1]-q[i]));
+  let peak=0;for(let i=1;i<sl.length;i++)if(sl[i]>sl[peak])peak=i;
+  let ix=-1;
+  if(type==='n'){
+    for(let i=peak;i<sl.length-1;i++)if(sl[i]>=mfb&&sl[i+1]<=mfb){ix=i;break}
+  }else{
+    for(let i=0;i<peak;i++)if(sl[i]<=mfb&&sl[i+1]>=mfb)ix=i
+  }
+  if(ix<0||!Number.isFinite(qinit)||!Number.isFinite(mox))return{valid:false,qinit,mox,mfb,slopes:sl};
+  const qfb=q[ix]+(mfb-sl[ix])/(sl[ix+1]-sl[ix])*(q[ix+1]-q[ix]);
+  const qtot=qinit-qfb,Cox=qe/mox,eot=3.9*eps0/Cox*1e7;
+  return{valid:true,qinit,qfb,qtot,mox,mfb,msc,Csfb,eot,cox:Cox,ix,slopes:sl,vfbDark:interp(q,v,qfb)}
+}
+
+function pchipSlopes(x,y){
+  const n=x.length,h=[],delta=[];for(let i=0;i<n-1;i++){h[i]=x[i+1]-x[i];delta[i]=(y[i+1]-y[i])/h[i]}
+  if(n===2)return[delta[0],delta[0]];const d=new Array(n).fill(0);
+  const edge=(h0,h1,d0,d1)=>{let z=((2*h0+h1)*d0-h0*d1)/(h0+h1);if(Math.sign(z)!==Math.sign(d0))z=0;else if(Math.sign(d0)!==Math.sign(d1)&&Math.abs(z)>3*Math.abs(d0))z=3*d0;return z};
+  d[0]=edge(h[0],h[1],delta[0],delta[1]);d[n-1]=edge(h[n-2],h[n-3],delta[n-2],delta[n-3]);
+  for(let i=1;i<n-1;i++){if(delta[i-1]===0||delta[i]===0||Math.sign(delta[i-1])!==Math.sign(delta[i]))d[i]=0;else{const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];d[i]=(w1+w2)/(w1/delta[i-1]+w2/delta[i])}}
+  return d
+}
+function pchipEval(x,y,xq){
+  if(x.length<2||xq<x[0]||xq>x[x.length-1])return NaN;const d=pchipSlopes(x,y);let i=x.length-2;
+  for(let k=0;k<x.length-1;k++)if(xq>=x[k]&&xq<=x[k+1]){i=k;break}
+  const h=x[i+1]-x[i],t=(xq-x[i])/h,h00=2*t**3-3*t**2+1,h10=t**3-2*t**2+t,h01=-2*t**3+3*t**2,h11=t**3-t**2;
+  return h00*y[i]+h10*h*d[i]+h01*y[i+1]+h11*h*d[i+1]
+}
+function filteredXY(x,y){
+  const z=x.map((v,i)=>[v,y[i]]).filter(p=>p.every(Number.isFinite)).sort((a,b)=>a[0]-b[0]),ux=[],uy=[];
+  for(let i=0;i<z.length;){let j=i+1,s=z[i][1],n=1;while(j<z.length&&Math.abs(z[j][0]-z[i][0])<1e-12){s+=z[j][1];n++;j++}
+    const xx=z[i][0],yy=s/n;if((xx<.1||xx>.5)||yy<Number($('#ditReject').value||2e13)){ux.push(xx);uy.push(yy)}i=j}
+  return{ux,uy}
+}
+function matlabSite(df){
+  if(!df||df.length<2)return{varMid:NaN,directMid:NaN,varRaw:[],directRaw:[],curve:[],directCurve:[]};
+  const mat=$('#material').value,dop=Number($('#doping').value),typ=$('#dtype').value,vs=df.map(r=>r.Vsb),qc=df.map(r=>r.Qc),qsc=vs.map(v=>qscDark(v,mat,dop,typ)),x=vs.slice(0,-1),vr=[],dr=[];
+  for(let i=0;i<df.length-1;i++){const dv=vs[i+1]-vs[i],dq=Math.abs(qc[i+1]-qc[i])-Math.abs(qsc[i+1]-qsc[i]);vr.push(Math.abs(dv)>0?Math.abs(dq)/Math.abs(dv):NaN)}
+  let p=0;while(p<vs.length&&vs[p]<.010)p++;if(p>=vs.length)p=vs.length-1;const qs=qc[p],qeff=qc.map(q=>q-qs),qit=qsc.map((q,i)=>-q-qeff[i]);
+  for(let i=0;i<df.length-1;i++){const dv=vs[i+1]-vs[i],dq=qit[i+1]-qit[i];dr.push(Math.abs(dv)>0?Math.abs(dq/dv):NaN)}
+  function make(y){const {ux,uy}=filteredXY(x,y),mg=midgapV();if(ux.length<2)return{mid:NaN,curve:[]};const mid=pchipEval(ux,uy,mg),curve=[];for(let xx=ux[0];xx<=ux[ux.length-1]+1e-12;xx+=.006)curve.push({x:xx,y:pchipEval(ux,uy,xx)});return{mid,curve}}
+  const a=make(vr),b=make(dr);return{varMid:a.mid,directMid:b.mid,varRaw:vr,directRaw:dr,curve:a.curve,directCurve:b.curve}
+}
+function validSite(i){const r=state.rawSites[i]||[],mx=finite(r.map(x=>Math.abs(x.Vsb)));return mx.length&&Math.max(...mx)>.1}
+function recalc(){
+  state.matlab=state.rawSites.map(matlabSite);
+  state.flat=state.rawSites.map((df,i)=>flatbandSite(df,state.summarySites[i]?.VDark));
+  state.summarySites.forEach((s,i)=>{
+    const m=state.matlab[i],f=state.flat[i],vals=(m?.varRaw||[]).filter(Number.isFinite);
+    s.Dit=vals.length?Math.min(...vals):NaN;
+    s.Qsc=Number.isFinite(s.Vsb)?Math.abs(qscDark(s.Vsb,$('#material').value,Number($('#doping').value),$('#dtype').value)):NaN;
+    if(validSite(i)&&f?.valid){s.Qtot=f.qtot;s.EOT=f.eot;s.Cox=f.cox;s.Qinit=f.qinit;s.Qfb=f.qfb;s.Mox=f.mox;s.Mfb=f.mfb}else{s.Qtot=s.EOT=s.Cox=s.Qinit=s.Qfb=s.Mox=s.Mfb=NaN}
+  })
+}
+
+
+function currentSystemTheme(){return window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+function appliedTheme(){const t=document.documentElement.dataset.theme;return t||currentSystemTheme()}
+function applyTheme(theme,manual=false){
+  if(manual){state.themeManual=true;document.documentElement.dataset.theme=theme}
+  else if(!state.themeManual){document.documentElement.removeAttribute('data-theme')}
+  const actual=appliedTheme(),btn=$('#themeBtn');
+  if(btn)btn.textContent=actual==='dark'?'Dark':'Light';
+}
+function toggleTheme(){applyTheme(appliedTheme()==='dark'?'light':'dark',true);drawVcpd();drawVsb();drawDit();drawMap()}
+if(window.matchMedia){
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');
+  mq.addEventListener?.('change',()=>{if(!state.themeManual){applyTheme(currentSystemTheme(),false);drawVcpd();drawVsb();drawDit();drawMap()}})
+}
+function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()}
+function csvEscape(v){const z=String(v??'');return /[",\n]/.test(z)?`"${z.replaceAll('"','""')}"`:z}
+function downloadCsv(name,headers,rows){
+  const text=[headers.map(csvEscape).join(','),...rows.map(r=>r.map(csvEscape).join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));a.download=name;document.body.appendChild(a);a.click();URL.revokeObjectURL(a.href);a.remove()
+}
+function exportVcpdData(){
+  const df=state.rawSites[state.site]||[],f=state.flat[state.site];
+  downloadCsv(`PV2000_site${state.site+1}_Vcpd-Qc.csv`,
+    ['Qc [q/cm2]','Vcpd Dark [V]','Vcpd Light [V]','Vsb [V]','q_initial [q/cm2]','q_flatband [q/cm2]'],
+    df.map((r,i)=>[r.Qc,r.VDark,r.VLight,r.Vsb,i===0?f?.qinit:'',i===0?f?.qfb:'']))
+}
+function exportVsbData(){
+  const df=state.rawSites[state.site]||[],f=state.flat[state.site];
+  downloadCsv(`PV2000_site${state.site+1}_Vsb-Qc.csv`,
+    ['Qc [q/cm2]','Vsb [V]','q_flatband [q/cm2]'],
+    df.map((r,i)=>[r.Qc,r.Vsb,i===0?f?.qfb:'']))
+}
+function exportDitData(){
+  const df=state.rawSites[state.site]||[],m=state.matlab[state.site]||{},rows=[];
+  (m.varRaw||[]).forEach((d,i)=>rows.push(['variation_raw',df[i]?.Vsb??'',d,'']));
+  (m.curve||[]).forEach(p=>rows.push(['pchip',p.x,p.y,'']));
+  if($('#showDirect')?.checked)(m.directCurve||[]).forEach(p=>rows.push(['legacy_direct',p.x,p.y,'']));
+  downloadCsv(`PV2000_site${state.site+1}_Dit-Vsb.csv`,['series','Vsb [V]','Dit [cm-2 eV-1]','note'],rows)
+}
+function exportMapData(){
+  const k=$('#mapMetric').value,[label,unit]=mapSpec(k);
+  downloadCsv(`PV2000_wafer_${k}.csv`,['Site','x','y',label,unit,'Valid'],
+    state.rawSites.map((_,i)=>[i+1,state.coords[i]?.x??'',state.coords[i]?.y??'',metric(i,k),unit,validSite(i)?'YES':'NO']))
+}
+async function loadFile(file){
+  if(!file)return;if(!file.name.toLowerCase().endsWith('.xml'))throw Error('Select a PV2000 XML file.');
+  state.files=[file.name];state.xml=parseXML(await file.text(),file.name);state.xmlInfo=state.xml.info;
+  const d=deriveXML(state.xml);state.rawSites=d.raw;state.summarySites=d.summ;state.coords=d.coords;
+  $('#doping').value=state.xmlInfo.doping;$('#dtype').value=state.xmlInfo.type;$('#vsbFactor').value=state.xmlInfo.factor;
+  recalc();if(!validSite(state.site)){const j=state.rawSites.findIndex((_,i)=>validSite(i));if(j>=0)state.site=j}
+  render()
+}
+function toggleSettings(show){const closed=show===undefined?!$('#settingsDrawer').classList.contains('hidden'):!show;$('#settingsDrawer').classList.toggle('hidden',closed);$('#settingsMask').classList.toggle('hidden',closed)}
+function setSite(i){if(i<0||i>=state.rawSites.length)return;state.site=i;renderDynamic()}
+function renderSites(){
+  const n=state.rawSites.length;$('#sites').innerHTML=`<button id="prevSite">‹</button><select id="siteSelect">${Array.from({length:n},(_,i)=>`<option value="${i}">Site ${i+1}${validSite(i)?'':' ⚠'}</option>`).join('')}</select><button id="nextSite">›</button>`;
+  $('#siteSelect').value=state.site;$('#siteSelect').onchange=e=>setSite(+e.target.value);$('#prevSite').onclick=()=>setSite(state.site-1);$('#nextSite').onclick=()=>setSite(state.site+1);
+  $('#prevSite').disabled=state.site===0;$('#nextSite').disabled=state.site===n-1
+}
+function metric(i,key){
+  const s=state.summarySites[i],m=state.matlab[i],r=state.rawSites[i]||[];
+  if(key==='MidgapDit')return m?.varMid;if(key==='MaxVsb'){const a=finite(r.map(x=>Math.abs(x.Vsb)));return a.length?Math.max(...a):NaN}
+  return s?.[key]
+}
+function stats(key){const a=[];for(let i=0;i<state.rawSites.length;i++)if(validSite(i))a.push(metric(i,key));return{m:mean(a),sd:popSD(a)}}
+function substat(key,unit=''){const s=stats(key);return Number.isFinite(s.m)?`valid-site mean ${sci(s.m,3)} ± ${sci(s.sd,2)}${unit}`:''}
+function render(){
+  $('#welcome').classList.add('hidden');$('#app').classList.remove('hidden');$('#fileLabel').textContent=state.files[0]||'';
+  $('#sampleTitle').textContent=state.xmlInfo.title||state.files[0]||'PV2000 measurement';
+  $('#sampleMeta').textContent=`${state.rawSites.length} sites · ${sci(state.xmlInfo.doping,2)} cm⁻³ · ${state.xmlInfo.type}-type · Vsb factor ${state.xmlInfo.factor}`;
+  renderSites();
+  $('#themeBtn').onclick=toggleTheme;applyTheme(currentSystemTheme(),false);
+  $('#settingsBtn').onclick=()=>toggleSettings(true);$('#settingsClose').onclick=()=>toggleSettings(false);$('#settingsCancel').onclick=()=>toggleSettings(false);$('#settingsMask').onclick=()=>toggleSettings(false);
+  $('#applySettings').onclick=()=>{recalc();toggleSettings(false);renderDynamic()};
+  $('#showDirect').onchange=drawDit;$('#mapMetric').onchange=drawMap;$('#exportVcpd').onclick=exportVcpdData;$('#exportVsb').onclick=exportVsbData;$('#exportDit').onclick=exportDitData;$('#exportMap').onclick=exportMapData;renderDynamic()
+}
+function renderDynamic(){
+  renderSites();const i=state.site,s=state.summarySites[i],m=state.matlab[i],f=state.flat[i],p=state.coords[i]||{},ok=validSite(i);
+  $('#coordLabel').textContent=`x ${fmt(p.x,1)} · y ${fmt(p.y,1)}`;$('#sitePill').textContent=ok?'VALID':'INVALID';$('#sitePill').className='pill '+(ok?'good':'bad');
+  const put=(curId,meanId,key,curFmt,meanFmt)=>{
+    const v=metric(i,key),st=stats(key);
+    $(curId).textContent=Number.isFinite(v)?curFmt(v):'—';
+    $(meanId).textContent=Number.isFinite(st.m)?`${meanFmt(st.m)} ± ${meanFmt(st.sd)}`:'—';
+    $(curId).classList.toggle('na',!Number.isFinite(v));$(meanId).classList.toggle('na',!Number.isFinite(st.m));
+  };
+  put('#vQtot','#mQtot','Qtot',v=>sci(v,3),v=>sci(v,3));
+  put('#vDit','#mDit','Dit',v=>sci(v,3),v=>sci(v,3));
+  put('#vMidDit','#mMidDit','MidgapDit',v=>sci(v,3),v=>sci(v,3));
+  put('#vEot','#mEot','EOT',v=>`${fmt(v,2)} nm`,v=>fmt(v,2));
+  if(Number.isFinite(stats('EOT').m))$('#mEot').textContent=`${fmt(stats('EOT').m,2)} ± ${fmt(stats('EOT').sd,2)} nm`;
+  put('#vCox','#mCox','Cox',v=>sci(v,3),v=>sci(v,3));
+  put('#vQsc','#mQsc','Qsc',v=>sci(v,3),v=>sci(v,3));
+  put('#vInitialQc','#mInitialQc','InitialQc',v=>sci(v,3),v=>sci(v,3));
+  put('#vMaxVsb','#mMaxVsb','MaxVsb',v=>`${fmt(v,3)} V`,v=>fmt(v,3));
+  if(Number.isFinite(stats('MaxVsb').m))$('#mMaxVsb').textContent=`${fmt(stats('MaxVsb').m,3)} ± ${fmt(stats('MaxVsb').sd,3)} V`;
+  $('#vQinit').textContent=sci(f?.qinit,3);$('#vQfb').textContent=sci(f?.qfb,3);
+  $('#vMox').textContent=Number.isFinite(f?.mox)?`${(f.mox*1e10).toFixed(5)} V/1e10`:'—';$('#vMfb').textContent=Number.isFinite(f?.mfb)?`${(f.mfb*1e10).toFixed(5)} V/1e10`:'—';
+  drawVcpd();drawVsb();drawDit();drawMap()
+}
+
+function axes(W,H,m,xmin,xmax,ymin,ymax,xFmt=x=>x.toExponential(1),yFmt=y=>y.toFixed(2),logY=false){
+  const X=x=>m.l+(x-xmin)/(xmax-xmin)*(W-m.l-m.r),Y=y=>{const yy=logY?Math.log10(y):y,a=logY?Math.log10(ymin):ymin,b=logY?Math.log10(ymax):ymax;return H-m.b-(yy-a)/(b-a)*(H-m.t-m.b)};
+  let out=`<rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;
+  for(let i=0;i<=4;i++){const yy=logY?10**(Math.log10(ymin)+(Math.log10(ymax)-Math.log10(ymin))*i/4):ymin+(ymax-ymin)*i/4,py=Y(yy);out+=`<line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${yFmt(yy)}</text>`}
+  for(let i=0;i<=4;i++){const xx=xmin+(xmax-xmin)*i/4,px=X(xx);out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-12}" text-anchor="middle" fill="var(--muted)" font-size="9">${xFmt(xx)}</text>`}
+  return{X,Y,out}
+}
+function pathXY(x,y,X,Y,color,w=2,dash=''){const pts=x.map((v,i)=>Number.isFinite(v)&&Number.isFinite(y[i])?`${X(v)},${Y(y[i])}`:null).filter(Boolean).join(' ');return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${w}" ${dash?`stroke-dasharray="${dash}"`:''}/>`}
+
+function drawVcpd(){
+  const df=state.rawSites[state.site]||[],f=state.flat[state.site],svg=$('#vcpdPlot');if(!df.length){svg.innerHTML='';return}
+  const q=df.map(r=>r.Qc),d=df.map(r=>r.VDark),l=df.map(r=>r.VLight),ys=finite([...d,...l,state.summarySites[state.site]?.VDark]),W=620,H=285,m={l:58,r:12,t:22,b:36};
+  let xmin=Math.min(...q),xmax=Math.max(...q),ymin=Math.min(...ys),ymax=Math.max(...ys),pad=(ymax-ymin||1)*.05;ymin-=pad;ymax+=pad;let{X,Y,out}=axes(W,H,m,xmin,xmax,ymin,ymax);
+  out+=pathXY(q,d,X,Y,'var(--red)',2)+pathXY(q,l,X,Y,'var(--blue)',2);
+  if(f?.valid){
+    const yi=state.summarySites[state.site].VDark;
+    out+=`<line x1="${X(f.qinit)}" x2="${X(f.qinit)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--yellow)" stroke-width="1.3" stroke-dasharray="4,4"/><circle cx="${X(f.qinit)}" cy="${Y(yi)}" r="4" fill="var(--yellow)"><title>Initial-condition projection: ${sci(f.qinit,4)} cm⁻²</title></circle>`;
+    out+=`<line x1="${X(f.qfb)}" x2="${X(f.qfb)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--green)" stroke-width="1.3" stroke-dasharray="4,4"><title>Flatband-capacitance crossing: ${sci(f.qfb,4)} cm⁻²</title></line>`
+  }
+  out+=`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Vcpd (V)</text>`;svg.innerHTML=out;
+  $('#vcpdLegend').innerHTML='<span><span class="dot" style="background:var(--red)"></span>Dark</span><span><span class="dot" style="background:var(--blue)"></span>Light</span><span style="color:var(--yellow)">│ initial</span><span style="color:var(--green)">│ flatband</span>';
+  $('#vcpdMeta').textContent=`Qtot ${sci(state.summarySites[state.site]?.Qtot,2)}`
+}
+function drawVsb(){
+  const df=state.rawSites[state.site]||[],f=state.flat[state.site],svg=$('#vsbPlot');if(!df.length){svg.innerHTML='';return}
+  const q=df.map(r=>r.Qc),v=df.map(r=>r.Vsb),W=620,H=285,m={l:52,r:12,t:22,b:36};let ymin=Math.min(0,...v),ymax=Math.max(...v)*1.05;if(ymax===ymin)ymax=ymin+1;let{X,Y,out}=axes(W,H,m,Math.min(...q),Math.max(...q),ymin,ymax,x=>x.toExponential(1),y=>y.toFixed(2));
+  out+=pathXY(q,v,X,Y,'var(--blue)',2.3);if(f?.valid)out+=`<line x1="${X(f.qfb)}" x2="${X(f.qfb)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--green)" stroke-width="1.3" stroke-dasharray="4,4"/>`;
+  out+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--soft)" stroke-dasharray="4,4"/><text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Vsb (V)</text>`;svg.innerHTML=out;
+  $('#vsbLegend').innerHTML='<span><span class="dot" style="background:var(--blue)"></span>Vsb</span><span style="color:var(--green)">│ Cfb point</span>';const a=finite(v.map(Math.abs));$('#vsbMeta').textContent=`max ${a.length?fmt(Math.max(...a),3):'—'} V`
+}
+function drawDit(){
+  const df=state.rawSites[state.site]||[],mth=state.matlab[state.site],svg=$('#ditPlot');if(!df.length){svg.innerHTML='';return}
+  const raw=(mth?.varRaw||[]).map((d,i)=>({x:df[i]?.Vsb,y:d})).filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.y)&&r.y>0),cur=mth?.curve||[],dir=$('#showDirect').checked?(mth?.directCurve||[]):[];
+  const xs=finite([...raw.map(r=>r.x),...cur.map(r=>r.x),...dir.map(r=>r.x)]),ys=finite([...raw.map(r=>r.y),...cur.map(r=>r.y),...dir.map(r=>r.y)]).filter(v=>v>0);if(!xs.length||!ys.length){svg.innerHTML='';return}
+  const W=620,H=285,m={l:62,r:12,t:22,b:36};let ymin=10**Math.floor(Math.log10(Math.min(...ys))),ymax=10**Math.ceil(Math.log10(Math.max(...ys)));if(ymin===ymax)ymax*=10;
+  let{X,Y,out}=axes(W,H,m,Math.min(0,...xs),Math.max(...xs)*1.02,ymin,ymax,x=>x.toFixed(2),y=>'1e'+Math.round(Math.log10(y)),true);
+  raw.forEach(r=>out+=`<circle cx="${X(r.x)}" cy="${Y(r.y)}" r="2.1" fill="var(--blue)" opacity=".72"/>`);
+  if(cur.length)out+=`<polyline points="${cur.filter(r=>r.y>0).map(r=>`${X(r.x)},${Y(r.y)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2.4"/>`;
+  if(dir.length)out+=`<polyline points="${dir.filter(r=>r.y>0).map(r=>`${X(r.x)},${Y(r.y)}`).join(' ')}" fill="none" stroke="var(--purple)" stroke-width="1.4" stroke-dasharray="5,4"/>`;
+  const mg=midgapV();out+=`<line x1="${X(mg)}" x2="${X(mg)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--yellow)" stroke-width="1.3" stroke-dasharray="4,4"/><text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Vsb (V)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Dit (cm⁻² eV⁻¹)</text>`;
+  svg.innerHTML=out;$('#ditLegend').innerHTML='<span><span class="dot" style="background:var(--blue)"></span>variation points</span><span><span class="dot" style="background:var(--green)"></span>PCHIP</span>'+($('#showDirect').checked?'<span><span class="dot" style="background:var(--purple)"></span>legacy direct</span>':'')+'<span style="color:var(--yellow)">│ midgap</span>';
+  $('#ditMeta').textContent=`min ${sci(state.summarySites[state.site]?.Dit,2)} · midgap ${sci(mth?.varMid,2)}`
+}
+function mapSpec(k){return{Qtot:['Qtot','cm⁻²',true],Dit:['Minimum Dit','cm⁻² eV⁻¹',true],MidgapDit:['Midgap Dit','cm⁻² eV⁻¹',true],EOT:['EOT (SiO₂ eq.)','nm',false],Cox:['Cox','F/cm²',true],Qsc:['Qsc','cm⁻²',true],InitialQc:['Initial Qc','cm⁻²',false],MaxVsb:['Max |Vsb|','V',false]}[k]}
+function mapValueText(v,k){
+  if(!Number.isFinite(v))return '—';if(k==='EOT')return v.toFixed(2);if(k==='MaxVsb')return v.toFixed(3);
+  const e=Math.floor(Math.log10(Math.abs(v)||1)),m=v/10**e;return `${m.toFixed(2)}e${e}`
+}
+function mapColor(t){t=Math.max(0,Math.min(1,t));const a=[79,124,255],b=[255,90,95];return`rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`}
+function drawMap(){
+  const svg=$('#waferMap'),k=$('#mapMetric').value,[label,unit,log]=mapSpec(k),n=state.rawSites.length,vals=Array.from({length:n},(_,i)=>metric(i,k)),f=vals.filter(Number.isFinite),tv=f.map(v=>log&&v>0?Math.log10(v):v).filter(Number.isFinite);
+  const lo=tv.length?Math.min(...tv):0,hi=tv.length?Math.max(...tv):1,W=620,H=315,cx=310,cy=154,R=125,maxRad=Math.max(1,...state.coords.map(p=>Math.hypot(p?.x||0,p?.y||0))),scale=R*.72/maxRad;
+  let out=`<rect width="${W}" height="${H}" fill="var(--chart-bg)"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--panel2)" stroke="var(--soft)" stroke-width="2"/><text x="${cx}" y="18" text-anchor="middle" fill="var(--muted)" font-size="10">${esc(label)} [${esc(unit)}]</text>`;
+  for(let i=0;i<n;i++){
+    const p=state.coords[i]||{x:0,y:0},v=vals[i],vv=Number.isFinite(v)?(log&&v>0?Math.log10(v):v):NaN,t=Number.isFinite(vv)&&hi>lo?(vv-lo)/(hi-lo):.5,col=Number.isFinite(vv)?mapColor(t):'#555b65',x=cx+(p.x||0)*scale,y=cy-(p.y||0)*scale,labelText=mapValueText(v,k);
+    out+=`<g data-site="${i}" style="cursor:pointer"><title>Site ${i+1}: ${labelText} ${unit}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title><circle cx="${x}" cy="${y}" r="16" fill="${col}" stroke="${i===state.site?'#fff':validSite(i)?'#252b35':'#ff8585'}" stroke-width="${i===state.site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">${i+1}</text><text x="${x}" y="${y+29}" text-anchor="middle" fill="${Number.isFinite(v)?'#dbe3ee':'#7c8898'}" font-size="9" font-weight="600">${labelText}</text></g>`
+  }
+  svg.innerHTML=out;svg.querySelectorAll('[data-site]').forEach(g=>g.onclick=()=>setSite(+g.dataset.site))
+}
+
+applyTheme(currentSystemTheme(),false);
+async function handle(files){try{const a=[...files];if(a.length)await loadFile(a[0])}catch(e){console.error(e);alert(e.message)}}
+$('#file').onchange=e=>handle(e.target.files);$('#fileTop').onchange=e=>handle(e.target.files);
+const drop=$('#drop');drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag')};drop.ondragleave=()=>drop.classList.remove('drag');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');handle(e.dataTransfer.files)};
+document.addEventListener('keydown',e=>{if($('#app').classList.contains('hidden'))return;const tag=(e.target?.tagName||'').toLowerCase();if(['input','select','textarea'].includes(tag))return;if(e.key==='ArrowLeft')setSite(state.site-1);if(e.key==='ArrowRight')setSite(state.site+1)})
+</script>
+</body></html>

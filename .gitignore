@@ -1,0 +1,28 @@
+# User / instrument data: never commit
+private/**
+!private/README.md
+*.xps
+*.xml
+*.csv
+*.pdf
+*.pptx
+*.docx
+*.xlsx
+*.xls
+*.png
+*.jpg
+*.jpeg
+*.zip
+
+# Explicitly allow repository-owned synthetic fixtures/assets when added later
+!tests/fixtures/**/*.xml
+!tests/fixtures/**/*.csv
+!docs/assets/**/*.png
+
+# Build / local tooling
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+coverage/
+.tmp/

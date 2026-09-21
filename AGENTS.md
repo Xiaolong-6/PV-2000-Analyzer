@@ -1,0 +1,43 @@
+# Agent instructions
+
+## Non-negotiable data rule
+
+Never commit, rename into a tracked path, or paste contents of `private/` into tracked files. Real PV-2000 XML/CSV/XPS, vendor manuals, screenshots, group MATLAB code, and user-provided documents are local validation material only.
+
+Before every commit run:
+
+```bash
+git status --short --ignored
+```
+
+If anything under `private/` is staged, unstage it immediately. Never use `git add -f` on ignored reference data.
+
+## Development workflow
+
+1. Preserve XML-only runtime operation. PV-2000 exports are regression references, never runtime dependencies.
+2. Detect measurement type from `Measurement/@xsi:type`; never infer it from filenames.
+3. Add each new result type as an isolated module registered through `PV2000.registry`.
+4. Shared XML/statistics/geometry/theme/export logic belongs in `src/core/`.
+5. Preserve the current responsive three-column UI; do not imitate the legacy PV-2000 application.
+6. Every chart must expose a data export.
+7. Explain scientific quantities/controls with hover text (`title`/`.help`) rather than permanent instructional clutter.
+8. Unknown XML types must fall back to Generic Inspector.
+9. Reverse-engineered calculations require regression against a PV-2000 export/display before being labelled validated.
+10. Run `npm test`, `npm run build`, and relevant private validators before handoff; update CHANGELOG/HANDOFF.
+
+## Validation labels
+
+- **validated** — numerically checked against a PV-2000 export/display.
+- **reproduced at shown precision** — only rounded screenshot values were available.
+- **inferred** — reverse-engineered but not confirmed by raw export.
+- **unsupported** — no implemented/validated calculation yet.
+
+Do not silently substitute a plausible formula for a vendor calculation.
+
+## Dit parity rule
+
+Do not simplify Dit below the functionality of the restored modular analyzer / `legacy/Semilab_PV2000_Dit_Analyzer_v1.0.html`: Vcpd-Qc, Vsb-Qc, log Dit-Vsb with PCHIP/midgap, selectable numeric wafer map, site navigation, valid-site/current-site summary, flatband details, full XML metadata and per-chart export are required. XML `UseCocosII=true` must invoke the COCOS-II correction path; `false` must preserve the standard path.
+
+## QSS-µPCD validity rule
+
+A QSS map can represent a full wafer, quarter wafer, coupon, or partially invalid field. Never assume every geometrically scheduled point belongs to the sample. Keep the user-controlled validity range and apply its mask consistently to summary statistics, derived metrics, maps and exports. Smooth maps must not extrapolate invalid/unsupported regions across the whole nominal wafer.
