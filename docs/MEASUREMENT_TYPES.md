@@ -8,12 +8,12 @@ Current implementation:
 |---|---|---|
 | `DITMeasurement` | COCOS / Dit | implemented; core quantities retained from previous standalone analyzer |
 | `QssUpcdMeasurement` | QSS-µPCD map | implemented through lifetime/Smax/implied-Voc map analysis |
-| `LBICMeasurement` | LBIC raster | implemented for dynamic beam/channel maps; coordinate orientation and derived Total R/EQE/IQE remain inferred pending vendor parity |
+| `LBICMeasurement` | LBIC raster | implemented; four paired reference instances validate the single-beam SquareRegionPattern Current/Direct/Scattered → Current/Reflectivity/IQE algorithm family; ordinary numeric wavelength/power/flux/grid changes stay in-family |
 | other | Generic Inspector | detected and displayed, no scientific calculations |
 
 Recommended next modules / validation work:
 
-1. Validate LBIC coordinate orientation and derived Total R/EQE/IQE against matching PV-2000 exports; add diffusion length only after a multi-wavelength DL reference is available.
+1. Extend LBIC with actual XML + matching PV-2000 exports when a categorical input/output path changes (for example multi-beam or different channels/results); add diffusion length only after a real multi-wavelength DL reference is available.
 2. QSS-µPCD Scan / J0 — intensity/laser-power scans, QDC, integrated steady-state lifetime, injection level, Basore-Hansen J0, Kane-Swanson J0.
 3. Emitter J0 Map.
 4. EOT.

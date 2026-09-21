@@ -72,26 +72,38 @@ The QSS result view separates Current dataset facts from fixed algorithm-validat
 
 ## LBIC status
 
-The former `feat/lbic-support` work was developed from an older main commit and has now been integrated onto the latest Dit/COCOS-II mainline without replacing newer Dit, XML parser or sidebar behavior.
+LBIC now has a paired vendor-regression baseline rather than structural-only validation.
 
-Implemented:
+Validated algorithm family, established by four matching PV-2000 XML + CSV reference instances:
 
-- generic raster × beam/wavelength × channel data model rather than fixed Current/Reflection fields;
-- dynamic numeric `BeamData` attributes, unknown-channel retention and raw-value precedence;
-- `SquareRegionPattern` Region/Dimension reconstruction with point-count guard;
-- 1–N iterations and arbitrary beam keys joined to `LaserSettings` / `FluxCache`;
-- current/direct/diffuse raw maps plus inferred Total R/EQE/IQE fallbacks;
-- raster map, histogram, selected-pixel inspector, X/Y profiles and CSV exports;
-- unit tests, structural private validator and detailed provenance/validation documentation.
+- single iteration / single beam;
+- SquareRegionPattern;
+- µA current;
+- finite positive photon FluxCache;
+- raw Current + DirectReflection + ScatteredReflection;
+- vendor Current / Reflectivity / IQE result path.
 
-Important limitations:
+The current four instances all use beam key 0, 984 nm, power 0.6 and FluxCache 1708439235302983. Those concrete values are evidence, not runtime validation gates.
 
-- coordinate acquisition order and Y orientation are **inferred** until a matching PV-2000 coordinate export or known-orientation map is available;
-- Total R, EQE and IQE calculations are **inferred** until pointwise vendor output is available;
-- supplied examples are single-beam, so real multi-wavelength XML still needs regression;
-- calculated diffusion length is intentionally **unsupported** until a two-wavelength XML plus matching PV-2000 DL result is supplied.
+Established behavior:
 
-See `docs/ALGORITHMS_LBIC.md`.
+- SquareRegionPattern coordinates are X-fast row-major with `y = Region.Y + row*dy`; all reference X/Y values match exactly;
+- PV-2000 Reflectivity is DirectReflection + ScatteredReflection for the reference profile;
+- PV-2000-compatible IQE requires `q = 1.602e-19 C`, not the exact modern SI value;
+- IQE uses `EQE/(1-Reflectivity)`;
+- calculated IQE >100% and non-computable cases are blank in the vendor export and excluded from summaries;
+- sample standard deviation is used;
+- default LBIC result selection mirrors vendor exports: Current / Reflectivity / IQE;
+- Direct/Scattered reflection, EQE and unknown numeric channels live under Advanced raw/intermediate channels;
+- raw XML Total R/EQE/IQE still override calculated candidates.
+
+Validation is scoped to the **input/output algorithm family**, not exact numeric settings. Different wavelength, power, finite photon FluxCache, Region origin/size, pitch, or grid dimensions (including a 4×4 versus 5×5 raster) remain in the family if the same single-beam channel/result path is used.
+
+The private validator requires same-basename XML/CSV pairs and reports NEW PROFILE only for categorical path changes such as another pattern/coordinate encoding, multiple-beam or iteration semantics, another unit convention, a different raw channel set, or a different vendor output/blanking path. Such cases must be redesigned from the actual XML + matching PV-2000 export where needed.
+
+Real multi-wavelength regression and diffusion-length calculation remain pending. Diffusion length stays unsupported until a matching multi-wavelength vendor result is available.
+
+See `docs/REFERENCE_PROFILES.md`, `docs/ALGORITHMS_LBIC.md` and `docs/VALIDATION.md`.
 
 ## Required commands before handoff/commit
 
@@ -103,7 +115,7 @@ npm run validate:lbic
 git status --short --ignored
 ```
 
-Current expected automated tests after LBIC integration: 28/28 PASS. QSS private pointwise validation should PASS when its ignored references are present; the LBIC private validator is structural only and should PASS when the ignored LBIC XML examples are present.
+Current automated suite includes the expanded LBIC vendor-compatibility tests in addition to Dit/QSS/XML/layout tests. QSS private pointwise validation should PASS when its ignored references are present. LBIC validation now requires same-basename private XML/CSV pairs and intentionally fails on a NEW PROFILE until its actual vendor output has been reviewed.
 
 ## Next scientific module
 
