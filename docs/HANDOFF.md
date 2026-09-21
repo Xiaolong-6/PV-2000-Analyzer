@@ -74,3 +74,23 @@ Current expected automated tests: 16/16 PASS after the Dit controls update. QSS 
 ## Next scientific module
 
 After stabilizing these two analyzers, add QSS-µPCD Scan/J0 as a separate module (intensity/laser-power scans, QDC, steady-state lifetime/injection, Basore-Hansen J0, Kane-Swanson J0). Do not cram scan/J0 logic into `qss-upcd.js`.
+## LBIC feature branch
+
+Branch `feat/lbic-support` adds `LBICMeasurement` without changing Dit or QSS scientific paths.
+
+Implemented:
+- generic raster × beam/wavelength × channel data model rather than fixed Current/Reflection fields;
+- dynamic numeric BeamData attributes, unknown-channel retention and raw-value precedence;
+- SquareRegionPattern Region/Dimension reconstruction with point-count guard;
+- 1–N iterations and arbitrary beam keys joined to LaserSettings/FluxCache;
+- current/direct/diffuse raw maps plus inferred Total R/EQE/IQE fallbacks;
+- raster map, histogram, selected-pixel inspector, X/Y profiles and CSV exports;
+- unit tests, structural private validator and detailed provenance/validation documentation.
+
+Important limitations before changing labels:
+- coordinate acquisition order and Y orientation are inferred from structure and need a matching PV-2000 coordinate export or known-orientation map;
+- Total R, EQE and IQE calculations are inferred from the manual and need vendor pointwise output for parity;
+- the supplied examples are single-beam only, so real multi-wavelength XML still needs regression;
+- diffusion-length calculation is intentionally unsupported until a two-wavelength XML + matching PV-2000 DL result is supplied.
+
+See `docs/ALGORITHMS_LBIC.md` for exact requirements and formulas.

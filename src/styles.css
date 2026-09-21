@@ -41,3 +41,12 @@
 .dit-module .legacy-methods>summary{font-size:10px;color:var(--muted);font-weight:650}
 .dit-module .legacy-methods .note{margin:7px 0}
 .dit-module .legacy-methods button{width:100%;font-size:10px}
+/* LBIC raster viewer */
+.lbic-module .chart canvas{max-height:none}
+.lbic-module .side .setting-row label,.lbic-module .side .setting-row select,.lbic-module .side table,.lbic-module .side th,.lbic-module .side .note{font-size:inherit}
+.lbic-module .side .setting-row select{font-family:inherit}
+.lbic-module .profile-grid{display:grid;grid-template-columns:1fr;gap:5px}
+.lbic-module .mini-title{padding:5px 8px 0;font-size:9px;color:var(--muted)}
+.lbic-module .canvas-wrap.compact{min-height:0}
+.lbic-module .canvas-wrap.compact canvas{max-height:230px}
+.lbic-module .panel.chart header{flex-wrap:wrap;height:auto;min-height:35px}

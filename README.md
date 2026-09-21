@@ -6,6 +6,7 @@ Current modules:
 
 - `DITMeasurement` — COCOS / Dit analysis with wafer map, log Dit plot, PCHIP midgap evaluation, flatband/Qtot/Cox/EOT extraction, XML metadata and contextual analysis-method routing. `Follow XML setting` resolves standard XMLs to Standard COCOS and `UseCocosII=true` XMLs to the inferred PV2000 COCOS-II path; the older guide-based path is kept under Advanced / legacy methods.
 - `QssUpcdMeasurement` — QSS-µPCD map analysis with lifetime, Smax, implied Voc, valid-data filtering, map/distribution/acquisition views and CSV export.
+- `LBICMeasurement` — rectangular LBIC raster analysis with dynamic beam/wavelength channels, current/reflectance maps, inferred Total R/EQE/IQE candidates, line profiles, pixel inspection and CSV export.
 - Unknown types — Generic XML Inspector rather than a hard failure.
 
 ## Run
@@ -18,6 +19,7 @@ Development:
 npm test
 npm run build
 npm run validate:qss
+npm run validate:lbic
 ```
 
 `npm run validate:qss` uses ignored local XML/CSV reference files under `private/reference/` when present.

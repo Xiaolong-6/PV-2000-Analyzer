@@ -71,4 +71,26 @@ The Analysis controls panel must remain open after Apply/recalculation. Method-s
 - PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
 - Legacy guide-based path: accessible only through Advanced / legacy methods;
 - Flatband and Dit-extraction controls remain available because they are shared by the active calculation path.
+## LBIC raster — structural validation only
 
+Four private LBIC XML examples were inspected during development. They cover 51×51 (2601 point) and 101×101 (10201 point) SquareRegionPattern rasters and consistently expose beam key 0 with 984 nm, power 0.6, FluxCache key 0, Current, DirectReflection and ScatteredReflection.
+
+Current status:
+
+| Quantity / behavior | Status |
+|---|---|
+| LBICMeasurement dispatch | tested |
+| Region + Dimension point count | structurally validated on 4 examples |
+| dynamic BeamData numeric-channel discovery | tested |
+| raw-channel precedence | tested |
+| multiple beam/wavelength data model | implemented, not yet exercised by supplied examples |
+| X-fast / row-major coordinate order | inferred |
+| Y direction from Region.Y downward | inferred |
+| Total R = direct + diffuse | inferred from manual description; no vendor export parity yet |
+| EQE from Current / FluxCache photon flux | inferred; no vendor export parity yet |
+| IQE from EQE / (1-Rtotal) | inferred; no vendor export parity yet |
+| calculated diffusion length | unsupported |
+
+Run `npm run validate:lbic` with private XMLs placed under `private/reference/lbic/`. This validator checks structure only and deliberately does not upgrade inferred algorithms to validated.
+
+To validate coordinates, provide one matching LBIC X/Y export or an orientation-known PV-2000 map. To validate Total R/EQE/IQE, provide matching vendor values. To implement diffusion length, provide a multi-wavelength LBIC XML and matching PV-2000 DL output; see `ALGORITHMS_LBIC.md`.

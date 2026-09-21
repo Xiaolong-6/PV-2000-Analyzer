@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added `LBICMeasurement` as an isolated raster analyzer with dynamic BeamData channel discovery, per-beam wavelength/power/FluxCache metadata and multi-iteration support.
+- Added SquareRegionPattern Region/Dimension coordinate reconstruction, raster maps, distribution, selectable X/Y line profiles, pixel inspection and selected/all-channel CSV export.
+- Added raw-channel precedence plus explicitly **inferred** Total reflectance, EQE and IQE candidates when equivalent XML channels are absent.
+- Added LBIC unit tests and a private structural validator covering 51×51 and 101×101 supplied examples without committing reference XML.
+- Documented unresolved LBIC vendor-parity work: coordinate orientation/order, Total R/EQE/IQE regression and future two-wavelength diffusion-length reverse engineering.
+
 - Refined Dit Analysis controls into contextual method-specific sections: Follow XML setting / Standard COCOS / PV2000 COCOS-II (inferred), with the older guide-based implementation moved under Advanced / legacy methods.
 - Follow XML setting now resolves `UseCocosII=true` to the inferred PV2000 COCOS-II path and shows the resolved method in the UI.
 - Kept Analysis controls open across Apply/recalculation and other Dit re-renders once the user has opened the panel; renamed the action to **Apply analysis settings**.

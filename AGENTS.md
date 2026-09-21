@@ -41,3 +41,8 @@ Do not simplify Dit below the functionality of the restored modular analyzer / `
 ## QSS-µPCD validity rule
 
 A QSS map can represent a full wafer, quarter wafer, coupon, or partially invalid field. Never assume every geometrically scheduled point belongs to the sample. Keep the user-controlled validity range and apply its mask consistently to summary statistics, derived metrics, maps and exports. Smooth maps must not extrapolate invalid/unsupported regions across the whole nominal wafer.
+## LBIC validity rule
+
+LBIC files may contain different combinations of beams/wavelengths and current/reflectance/QE channels. Do not hard-code the supplied single-beam examples as the schema. Preserve unknown numeric BeamData attributes, map BeamData Key to laser/FluxCache index, and prefer raw XML Total R/EQE/IQE over calculated candidates.
+
+Until matching vendor exports exist, rectangular scan orientation/order and calculated Total R/EQE/IQE must remain labelled **inferred**. Do not implement a calculated LBIC diffusion-length map from a plausible literature formula; require a multi-wavelength PV-2000 XML plus matching DL output and regression first.
