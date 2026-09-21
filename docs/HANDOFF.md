@@ -69,7 +69,7 @@ npm run validate:qss
 git status --short --ignored
 ```
 
-Current expected automated tests: 15/15 PASS after the Dit controls update. QSS private pointwise validator should also PASS when the ignored private reference files are present.
+Current expected automated tests: 16/16 PASS after the Dit controls update. QSS private pointwise validator should also PASS when the ignored private reference files are present.
 
 ## Next scientific module
 
