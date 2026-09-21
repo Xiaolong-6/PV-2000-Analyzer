@@ -10,6 +10,7 @@ Build a general **Semilab PV-2000 Analyzer**: the user drops any PV-2000 result 
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
 - `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
+- `LBICMeasurement` analyzer with dynamic beam/channel raster maps, line profiles, pixel inspection and CSV export;
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
@@ -61,7 +62,7 @@ Dit Analysis controls are contextual and compact:
 
 A parser fix now treats missing/empty numeric XML nodes as missing rather than as JavaScript numeric zero. This is required for COCOS-II Min/Max defaults and also improves numeric fallback behavior across modules.
 
-On desktop, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. Responsive layouts revert to normal page flow.
+In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. The scroll container now uses an explicit viewport height and stays enabled across the 900 px layout breakpoint, so browser zoom cannot make lower panels unreachable. Only the true single-column/mobile layout returns to normal page flow.
 
 LOG10 remains the default optional PCHIP interpolation scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
 
@@ -69,17 +70,41 @@ QSS Distribution has a Swap axes button beside Export. The map-selected metric (
 
 The QSS result view separates Current dataset facts from fixed algorithm-validation evidence for the 305-point reference. Importing another XML does not imply agreement with an unseen vendor export.
 
+## LBIC status
+
+The former `feat/lbic-support` work was developed from an older main commit and has now been integrated onto the latest Dit/COCOS-II mainline without replacing newer Dit, XML parser or sidebar behavior.
+
+Implemented:
+
+- generic raster × beam/wavelength × channel data model rather than fixed Current/Reflection fields;
+- dynamic numeric `BeamData` attributes, unknown-channel retention and raw-value precedence;
+- `SquareRegionPattern` Region/Dimension reconstruction with point-count guard;
+- 1–N iterations and arbitrary beam keys joined to `LaserSettings` / `FluxCache`;
+- current/direct/diffuse raw maps plus inferred Total R/EQE/IQE fallbacks;
+- raster map, histogram, selected-pixel inspector, X/Y profiles and CSV exports;
+- unit tests, structural private validator and detailed provenance/validation documentation.
+
+Important limitations:
+
+- coordinate acquisition order and Y orientation are **inferred** until a matching PV-2000 coordinate export or known-orientation map is available;
+- Total R, EQE and IQE calculations are **inferred** until pointwise vendor output is available;
+- supplied examples are single-beam, so real multi-wavelength XML still needs regression;
+- calculated diffusion length is intentionally **unsupported** until a two-wavelength XML plus matching PV-2000 DL result is supplied.
+
+See `docs/ALGORITHMS_LBIC.md`.
+
 ## Required commands before handoff/commit
 
 ```bash
 npm test
 npm run build
 npm run validate:qss
+npm run validate:lbic
 git status --short --ignored
 ```
 
-Current expected automated tests: 20/20 PASS after the Dit controls/COCOS-II/sidebar update. QSS private pointwise validator should also PASS when the ignored private reference files are present.
+Current expected automated tests after LBIC integration: 28/28 PASS. QSS private pointwise validation should PASS when its ignored references are present; the LBIC private validator is structural only and should PASS when the ignored LBIC XML examples are present.
 
 ## Next scientific module
 
-After stabilizing these two analyzers, add QSS-µPCD Scan/J0 as a separate module (intensity/laser-power scans, QDC, steady-state lifetime/injection, Basore-Hansen J0, Kane-Swanson J0). Do not cram scan/J0 logic into `qss-upcd.js`.
+After validating the remaining LBIC vendor-parity items, add QSS-µPCD Scan/J0 as a separate module (intensity/laser-power scans, QDC, steady-state lifetime/injection, Basore-Hansen J0, Kane-Swanson J0). Do not cram scan/J0 logic into `qss-upcd.js`.
