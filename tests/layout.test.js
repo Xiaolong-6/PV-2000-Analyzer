@@ -2,7 +2,8 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 
 test('desktop/multicolumn sidebar has its own viewport scroll container',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid>\.side\{[^}]*position:sticky[^}]*height:calc\(100dvh - 66px\)[^}]*overflow-y:auto/);
+  assert.match(css,/\.module-grid>\.side\{[^}]*position:sticky[^}]*height:calc\(100dvh - 66px\)[^}]*overflow-y:scroll/);
+  assert.match(css,/\.module-grid>\.side>\*\{flex:0 0 auto\}/);
   assert.doesNotMatch(css,/@media\(max-width:900px\)\{\.module-grid>\.side\{position:static/);
   assert.match(css,/@media\(max-width:700px\),\(pointer:coarse\) and \(orientation:portrait\) and \(max-width:950px\)\{\.module-grid>\.side\{position:static/);
 });
@@ -46,4 +47,21 @@ test('zoom-width layout keeps a dedicated sidebar column instead of a stretched 
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/@media\(max-width:900px\)\{\.module-grid\{grid-template-columns:minmax\(260px,300px\) minmax\(0,1fr\)\}\.module-grid>\.side\{grid-column:1;grid-row:1 \/ span 2;display:flex\}\.module-grid>\.plots\{grid-column:2\}/);
   assert.doesNotMatch(css,/\.side\{grid-column:1\/-1;display:grid;grid-template-columns:1fr 1fr\}/);
+});
+
+
+test('sidebar panels cannot flex-shrink away their overflow',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.module-grid>\.side>\*\{flex:0 0 auto\}/);
+  assert.match(css,/\.module-grid>\.side\{[^}]*overflow-y:scroll/);
+});
+
+
+test('Dit explanatory prose lives in hover help instead of persistent note paragraphs',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(src,/<p class="note min-dit-note">/);
+  assert.doesNotMatch(src,/COCOS-II and PCHIP can be used together:[^']*<\/p>/);
+  assert.doesNotMatch(src,/<p class="note analysis-note">/);
+  assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('COCOS-II and PCHIP can be used together/);
+  assert.match(src,/COCOS-II .*help\('Inferred, not vendor-exact/);
 });
