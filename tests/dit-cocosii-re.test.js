@@ -64,3 +64,15 @@ test('Follow XML setting resolves COCOS-II XMLs to the inferred PV2000 path', ()
   assert.equal(legacy.options.effectiveCocosMode, 'guide');
   assert.equal(legacy.mode, 'Legacy COCOS-II (guide-based)');
 });
+
+
+test('Analysis controls preserve open state and use contextual method labels', () => {
+  const fs = require('node:fs');
+  const source = fs.readFileSync(require.resolve('../src/modules/dit.js'), 'utf8');
+  assert.match(source, /analysisOpen=true/);
+  assert.match(source, /analysisOpen\?'open':''/);
+  assert.match(source, /Follow XML setting/);
+  assert.match(source, /PV2000 COCOS-II \(inferred\)/);
+  assert.match(source, /Advanced \/ legacy methods/);
+  assert.doesNotMatch(source, /<option value="guide">COCOS-II \(guide-derived\)<\/option>/);
+});
