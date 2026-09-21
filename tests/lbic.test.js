@@ -4,9 +4,23 @@ require('../src/core/stats.js');require('../src/core/geometry.js');require('../s
 PV2000.xml={};PV2000.exporter={csv(){}};
 require('../src/modules/lbic.js');
 const L=PV2000.modules.lbic;
-test('rect grid uses Region and Dimension with inferred downward Y',()=>{const p=PV2000.geometry.rectGrid(-37,42,5,5,51,51,2601,-1);assert.equal(p.length,2601);assert.deepEqual(p[0],{x:-37,y:42,row:0,col:0});assert.deepEqual(p[50],{x:-32,y:42,row:0,col:50});assert.deepEqual(p[51],{x:-37,y:41.9,row:1,col:0});assert.deepEqual(p.at(-1),{x:-32,y:37,row:50,col:50})});
+test('rect grid uses Region and Dimension with validated downward-Y ordering',()=>{const p=PV2000.geometry.rectGrid(-37,42,5,5,51,51,2601,-1);assert.equal(p.length,2601);assert.deepEqual(p[0],{x:-37,y:42,row:0,col:0});assert.deepEqual(p[50],{x:-32,y:42,row:0,col:50});assert.deepEqual(p[51],{x:-37,y:41.9,row:1,col:0});assert.deepEqual(p.at(-1),{x:-32,y:37,row:50,col:50})});
 test('total reflectance is direct plus diffuse',()=>{assert.equal(L.totalReflectance(31.2,7.8),39);assert.ok(Number.isNaN(L.totalReflectance(NaN,2)))});
 test('EQE candidate uses microamp current and FluxCache photon flux',()=>{const eqe=L.eqePercent(100,1708439235302983);assert.ok(eqe>36&&eqe<37)});
 test('IQE candidate corrects EQE by total reflectance',()=>{assert.ok(Math.abs(L.iqePercent(40,20)-50)<1e-12);assert.ok(Number.isNaN(L.iqePercent(40,100)))});
-test('derived channels are added only when their raw equivalents are absent',()=>{const raw={key:0,channels:{Current:[100],DirectReflection:[30],ScatteredReflection:[10]}},d={currentUnit:'μA'},laser={index:0,photonFlux:1708439235302983};const b=L.deriveBeam(raw,laser,d);const vals=Object.values(b.metrics);assert.ok(vals.some(m=>m.concept==='total'&&m.status==='inferred'));assert.ok(vals.some(m=>m.concept==='eqe'&&m.status==='inferred'));assert.ok(vals.some(m=>m.concept==='iqe'&&m.status==='inferred'))});
+test('derived channels are added only when their raw equivalents are absent',()=>{const raw={key:0,channels:{Current:[100],DirectReflection:[30],ScatteredReflection:[10]}},d={currentUnit:'μA'},laser={index:0,photonFlux:1708439235302983};const b=L.deriveBeam(raw,laser,d);const vals=Object.values(b.metrics);assert.ok(vals.some(m=>m.concept==='total'&&m.status==='validated'));assert.ok(vals.some(m=>m.concept==='eqe'&&m.status==='validated'));assert.ok(vals.some(m=>m.concept==='iqe'&&m.status==='validated'))});
 test('raw Total/EQE/IQE channels take precedence over calculated candidates',()=>{const raw={key:0,channels:{Current:[100],DirectReflection:[30],ScatteredReflection:[10],TotalReflectance:[41],EQE:[35],IQE:[60]}},d={currentUnit:'μA'},laser={index:0,photonFlux:1708439235302983};const b=L.deriveBeam(raw,laser,d),vals=Object.values(b.metrics);for(const c of ['total','eqe','iqe']){const ms=vals.filter(m=>m.concept===c);assert.equal(ms.length,1);assert.equal(ms[0].status,'raw')}});
+
+
+test('validation is combination-based rather than tied to one FluxCache value',()=>{
+  const raw={key:0,channels:{Current:[80],DirectReflection:[25],ScatteredReflection:[5]}},d={currentUnit:'µA'};
+  const a=L.deriveBeam(raw,{index:0,photonFlux:1.708439235302983e15},d);
+  const b=L.deriveBeam(raw,{index:0,photonFlux:1.82e15},d);
+  for(const beam of [a,b]){
+    const vals=Object.values(beam.metrics);
+    assert.equal(vals.find(m=>m.concept==='total').status,'validated');
+    assert.equal(vals.find(m=>m.concept==='eqe').status,'validated');
+    assert.equal(vals.find(m=>m.concept==='iqe').status,'validated');
+  }
+  assert.notEqual(a.metrics.__eqe.values[0],b.metrics.__eqe.values[0]);
+});
