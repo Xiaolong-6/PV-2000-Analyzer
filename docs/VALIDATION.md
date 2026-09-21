@@ -77,5 +77,36 @@ The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP
 
 COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
 
-On desktop, the left functional sidebar is independently scrollable/sticky within the viewport. Scrolling it must not move the plot columns; responsive layouts at <=900 px return to normal page flow.
+In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Scrolling it must not move the plot columns. Browser zoom must not disable the scroll container when the CSS viewport crosses 900 px; only the true single-column/mobile breakpoint returns it to normal page flow.
 
+
+
+## LBIC raster — structural validation only
+
+Private LBIC XML examples inspected during development cover 51×51 (2601 point) and 101×101 (10201 point) `SquareRegionPattern` rasters. The current module discovers `BeamData` numeric attributes dynamically and joins beam keys to `LaserSettings` / `FluxCache`.
+
+Current status:
+
+| Quantity / behavior | Status |
+|---|---|
+| `LBICMeasurement` dispatch | tested |
+| Region + Dimension point count | structurally validated on supplied examples |
+| dynamic BeamData numeric-channel discovery | tested |
+| raw-channel precedence | tested |
+| multiple beam/wavelength data model | implemented, not yet exercised by supplied examples |
+| X-fast / row-major coordinate order | inferred |
+| Y direction from Region.Y downward | inferred |
+| Total R = direct + diffuse | inferred; no vendor export parity yet |
+| EQE from Current / FluxCache photon flux | inferred; no vendor export parity yet |
+| IQE from EQE / (1-Rtotal) | inferred; no vendor export parity yet |
+| calculated diffusion length | unsupported |
+
+Run:
+
+```bash
+npm run validate:lbic
+```
+
+with private XMLs under `private/reference/lbic/`. The validator checks structure only and deliberately does not upgrade inferred algorithms to validated.
+
+To validate coordinates, provide one matching LBIC X/Y export or an orientation-known PV-2000 map. To validate Total R/EQE/IQE, provide matching vendor values. To implement diffusion length, provide a multi-wavelength LBIC XML and matching PV-2000 DL output; see `ALGORITHMS_LBIC.md`.
