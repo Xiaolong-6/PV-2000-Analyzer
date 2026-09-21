@@ -30,3 +30,13 @@ test('desktop zoom does not use portrait-only mobile fallback on fine pointers',
   assert.doesNotMatch(css,/@media\(max-width:700px\),\(orientation:portrait\) and \(max-width:950px\)/);
   assert.match(css,/@media\(max-width:700px\),\(pointer:coarse\) and \(orientation:portrait\) and \(max-width:950px\)/);
 });
+
+
+test('landing page advertises supported analyzers without overclaiming generic inspection',()=>{
+  const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
+  assert.match(html,/feature-tags/);
+  assert.match(html,/Dit \/ COCOS/);
+  assert.match(html,/QSS-µPCD/);
+  assert.match(html,/LBIC/);
+  assert.match(html,/Generic XML inspector/);
+});
