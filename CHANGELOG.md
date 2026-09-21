@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Reframed LBIC validation around semantic input/result combinations rather than exact fixture constants: SquareRegionPattern coordinates, direct+scattered total reflectance, and the µA current + FluxCache + reflectance IQE chain are vendor-regressed without whitelisting one wavelength/power/FluxCache value.
 - Reworked Dit Results summary from a fixed nowrap table into responsive result cards so Valid-site mean / Current-site values do not clip inside the sidebar.
 - Hardened responsive breakpoints: portrait/tablet fallback now requires a coarse pointer, preventing fine-pointer desktop browser zoom from being mistaken for a mobile layout; <=700 px remains the true narrow fallback.
 - Added min-width containment to sidebar panels/wrappers to prevent intrinsic table/content width from overflowing the functional column.
