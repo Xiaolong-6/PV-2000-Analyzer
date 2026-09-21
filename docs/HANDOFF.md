@@ -63,7 +63,7 @@ Dit Analysis controls are contextual and compact:
 
 A parser fix now treats missing/empty numeric XML nodes as missing rather than as JavaScript numeric zero. This is required for COCOS-II Min/Max defaults and also improves numeric fallback behavior across modules.
 
-In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. Fine-pointer desktop zoom now keeps a dedicated sidebar column instead of being mistaken for a portrait/mobile layout; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary is rendered as responsive result cards so Valid-site mean / Current-site values do not clip or require horizontal scrolling.
+In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. The actual root cause of the previous "no sidebar scroll" bug was flexbox shrink: sidebar panels were shrinking to the fixed sidebar height, making `scrollHeight == clientHeight`. Sidebar children are now `flex: 0 0 auto`, so they keep intrinsic height and create real overflow. Fine-pointer desktop zoom now keeps a dedicated sidebar column instead of being mistaken for a portrait/mobile layout; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary is rendered as responsive result cards so Valid-site mean / Current-site values do not clip or require horizontal scrolling.
 
 LOG10 remains the default optional PCHIP interpolation scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
 
@@ -89,7 +89,7 @@ The current four instances all use beam key 0, 984 nm, power 0.6 and FluxCache 1
 Established behavior:
 
 - SquareRegionPattern coordinates are X-fast row-major with `y = Region.Y + row*dy`; all reference X/Y values match exactly;
-- PV-2000 Reflectivity is DirectReflection + ScatteredReflection for the reference profile;
+- PV-2000 Reflectivity is `min(100%, DirectReflection + ScatteredReflection)`; one 51×51 reference contains a 100.0179668% raw sum that the vendor export caps at 100%;
 - PV-2000-compatible IQE requires `q = 1.602e-19 C`, not the exact modern SI value;
 - IQE uses `EQE/(1-Reflectivity)`;
 - calculated IQE >100% and non-computable cases are blank in the vendor export and excluded from summaries;
@@ -116,11 +116,11 @@ npm run validate:lbic
 git status --short --ignored
 ```
 
-Current automated suite includes the expanded LBIC vendor-compatibility tests in addition to Dit/QSS/XML/layout tests. QSS private pointwise validation should PASS when its ignored references are present. LBIC validation now requires same-basename private XML/CSV pairs and intentionally fails on a NEW PROFILE until its actual vendor output has been reviewed.
+Automated/local regression status before the final browser smoke: unit tests, build, the 305-point QSS private regression, and all four paired LBIC XML/CSV regressions have passed; private references were confirmed absent from tracked/build outputs. The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
 
 ## Remaining handoff tests
 
-Automated unit/build checks cover parser/calculation regressions and static responsive-layout contracts, but the following should still be exercised with the real browser and real PV-2000 files before treating this snapshot as release-ready:
+Automated and private numerical regressions are complete for the currently available references. The remaining release-gating work is manual browser/UI smoke plus COCOS-II manual testing when a real `UseCocosII=true` XML becomes available:
 
 1. **Responsive / zoom smoke test**
    - Desktop fine-pointer browser at approximately 100%, 125%, 150% and 175% zoom.
@@ -130,7 +130,8 @@ Automated unit/build checks cover parser/calculation regressions and static resp
    - On a real touch/coarse-pointer phone/tablet, verify the single-column fallback is still usable.
 
 2. **Dit / COCOS-II functional smoke**
-   - Import one Standard COCOS XML and one `UseCocosII=true` XML.
+   - Import one Standard COCOS XML.
+   - A real `UseCocosII=true` reference XML is still missing locally; the COCOS-II-specific manual smoke must remain pending until one is available.
    - Change EOT / Min Vsb / Max Vsb, Apply, and verify Vsb/Dit actually change where expected.
    - Confirm invalid `Max Vsb <= Min Vsb` shows an error with no silent Standard-Cocos fallback.
    - Confirm Analysis controls stays open after Apply/re-render.
