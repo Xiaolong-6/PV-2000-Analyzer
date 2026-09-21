@@ -17,8 +17,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
       - name: Test
         run: npm test
+      - name: Validator launcher smoke
+        run: |
+          npm run validate:qss
+          npm run validate:lbic
       - name: Build
         run: npm run build
       - name: Upload dist

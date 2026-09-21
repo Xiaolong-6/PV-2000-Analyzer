@@ -210,7 +210,7 @@ def parse_xml(path: Path):
     current = [r["Current"] for r in rows]
     direct = [r["DirectReflection"] for r in rows]
     scattered = [r["ScatteredReflection"] for r in rows]
-    reflectivity = [a + b for a, b in zip(direct, scattered)]
+    reflectivity = [min(100.0, a + b) for a, b in zip(direct, scattered)]
     eqe = [eqe_percent(v, photon_flux) for v in current]
     iqe = [iqe_percent(qe, r) for qe, r in zip(eqe, reflectivity)]
 

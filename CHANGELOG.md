@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed the real sidebar-scroll root cause: flex children were shrinking to the fixed viewport-height sidebar, so no overflow existed. Sidebar panels now keep intrinsic height and the sidebar uses a real vertical scroll container.
+- Moved long Dit/COCOS explanatory paragraphs out of the persistent UI and into contextual hover help.
+- Matched PV-2000 LBIC Reflectivity saturation at 100% when DirectReflection + ScatteredReflection slightly exceeds 100%, with regression coverage.
+- Added a cross-platform Python validator launcher for Windows/Linux/macOS and an explicit Generic Inspector unknown-type dispatch test.
 - Reworked Dit Results summary from a fixed nowrap table into responsive result cards so Valid-site mean / Current-site values do not clip inside the sidebar.
 - Hardened responsive breakpoints: fine-pointer desktop zoom keeps a dedicated sidebar column; portrait/tablet fallback now requires coarse-pointer input, while <=700 px remains the true narrow fallback.
 - Added landing-page capability tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector.

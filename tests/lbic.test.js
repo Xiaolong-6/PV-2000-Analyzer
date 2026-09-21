@@ -23,9 +23,11 @@ test('101x101 reference grid uses 0.05 mm pitch and reaches Region origin plus S
   assert.deepEqual(p.at(-1),{x:-32,y:47,row:100,col:100});
 });
 
-test('PV-2000 Reflectivity is DirectReflection plus ScatteredReflection',()=>{
+test('PV-2000 Reflectivity is DirectReflection plus ScatteredReflection with a 100% cap',()=>{
   const direct=33.2321503717211,scattered=4.95641556511122;
   assert.ok(Math.abs(L.totalReflectance(direct,scattered)-38.1885659368323)<1e-13);
+  assert.equal(L.totalReflectance(90.5,9.5179668),100);
+  assert.equal(L.totalReflectance(80,25),100);
   assert.ok(Number.isNaN(L.totalReflectance(NaN,2)));
 });
 
