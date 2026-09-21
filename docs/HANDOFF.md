@@ -34,22 +34,31 @@ Do not remove this behavior during refactors.
 
 ## Dit status
 
-The v0.2.1 parity restoration is retained: 2x2 plots, numeric selectable wafer map, log Dit/PCHIP/midgap, flatband markers/details, site navigation, valid-site/current-site summary and per-chart export.
+The restored Dit analyzer retains the required 2x2 plots, numeric selectable wafer map, log Dit/PCHIP/midgap, flatband markers/details, site navigation, valid-site/current-site summary, full XML metadata and per-chart export.
 
-v0.2.2 adds:
+Current analysis routing:
 
-- much fuller XML measurement metadata;
-- hover explanations for results/controls/plots;
-- automatic support for XML `UseCocosII=true` with synthetic-light reconstruction based on the supplied Aalto COCOS-II guide;
-- COCOS-II source/diagnostics in the UI and exports.
+- **Follow XML setting** is the normal default.
+- XML `UseCocosII=false` resolves to **Standard COCOS**.
+- XML `UseCocosII=true` resolves to **PV2000 COCOS-II (inferred)**.
+- **Legacy COCOS-II (guide-based)** remains only under Advanced / legacy methods for development comparison.
 
-**COCOS-II caution:** the XML-default COCOS-II implementation remains the earlier guide-derived path. A new selectable **PV2000 COCOS-II (reverse-engineered)** path has been added from same-raw-data parameter sweeps. It interprets vendor EOT as Å, reconstructs a signed Vsb, and applies configurable Min/Max Vsb when selecting minimum Dit. This new path is labelled **inferred**, not vendor-exact. Back Surface Shift is exposed for traceability but is intentionally not applied because the supplied True/False exports were identical.
+The inferred PV2000 path comes from same-raw-data parameter sweeps. It interprets vendor EOT as Å, reconstructs signed Vsb and applies configurable Min/Max Vsb when selecting minimum Dit. It is explicitly labelled **inferred**, not vendor-exact. Back Surface Shift is recorded but intentionally not applied because the supplied True/False reprocessing produced identical outputs.
 
-Post-baseline local updates: Dit Analysis controls now sits above Results summary and offers LOG10 (default) and Linear PCHIP fits. Changing mode recalculates all sites and the Results summary immediately. LOG10 fits positive `log10(Dit)` samples and transforms the fitted curve and midgap result back to Dit units. The Dit Results summary labels each parameter with its unit. Raw minimum Dit is unchanged; this option has no vendor-export regression yet. The historical charge-derivative diagnostic remains in backend results for regression, but its UI toggle, plot overlay and CSV column have been removed. QSS smooth maps now leave regions nearest to filtered-out sites uncolored while retaining their diagnostic markers. Dit and QSS sidebar metadata, controls, results, and notes share a consistent reading size.
+Dit Analysis controls are contextual rather than flat:
+
+- inferred COCOS-II shows EOT / Min Vsb / Max Vsb;
+- Standard COCOS hides COCOS-II-only settings;
+- shared flatband and Dit-extraction settings remain visible;
+- the legacy guide-based method is hidden under Advanced / legacy methods;
+- Follow XML displays the resolved method;
+- Apply/recalculation, method changes, PCHIP changes and site re-renders preserve the Analysis controls open state once the user has opened it.
+
+LOG10 remains the default PCHIP scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
 
 QSS Distribution has a Swap axes button beside Export. The map-selected metric (lifetime by default) starts on the horizontal axis with count vertically; swapping moves the metric to the vertical axis and count to the horizontal axis. Valid histogram bars use the same color scale and valid-point value range as the wafer map; excluded counts remain gray. The histogram CSV remains in metric bins and includes the selected metric's units in bin headers.
 
-The QSS result view now separates Current dataset (live XML point count, valid count, generated coordinate count and chuck temperature) from Algorithm validation — reference dataset (fixed results from the one 305-point XML/CSV pair). Coordinate generation for a new XML is only an internal completeness check; the app does not load or compare a matching vendor export at runtime.
+The QSS result view separates Current dataset facts from fixed algorithm-validation evidence for the 305-point reference. Importing another XML does not imply agreement with an unseen vendor export.
 
 ## Required commands before handoff/commit
 
@@ -60,7 +69,7 @@ npm run validate:qss
 git status --short --ignored
 ```
 
-Current expected tests: 10/10 PASS; QSS private pointwise validator PASS.
+Current expected automated tests: 15/15 PASS after the Dit controls update. QSS private pointwise validator should also PASS when the ignored private reference files are present.
 
 ## Next scientific module
 
