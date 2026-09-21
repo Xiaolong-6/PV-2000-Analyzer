@@ -5,7 +5,7 @@
   const direct=(e,n)=>children(e).find(c=>lname(c)===n)||null;
   const directs=(e,n)=>children(e).filter(c=>lname(c)===n);
   const text=(e,n,d='')=>{const x=direct(e,n);return x?x.textContent.trim():d};
-  const num=(e,n,d=NaN)=>{const v=Number(text(e,n,''));return Number.isFinite(v)?v:d};
+  const num=(e,n,d=NaN)=>{const raw=text(e,n,'');if(raw==='')return d;const v=Number(raw);return Number.isFinite(v)?v:d};
   function attrType(e){if(!e)return'';for(const a of [...e.attributes])if(a.localName==='type'||a.name==='xsi:type')return a.value;return''}
   function parse(textContent){const doc=new DOMParser().parseFromString(textContent,'application/xml');if(doc.querySelector('parsererror'))throw new Error('XML parse failed');const job=doc.documentElement,measurement=direct(job,'Measurement');if(!measurement)throw new Error('No <Measurement> found');return{doc,job,measurement,type:attrType(measurement)}}
   function headerPairs(measurement){const h=direct(measurement,'HeaderInfo'),out={};if(!h)return out;for(const p of children(h)){const k=text(p,'First',''),v=text(p,'Second','');if(k)out[k]=v}return out}

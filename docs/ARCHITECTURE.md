@@ -36,6 +36,12 @@ Source remains modular. `scripts/build.js` concatenates the CSS and JS into `dis
 
 No npm runtime dependencies are required.
 
+## UI layout contract
+
+At desktop widths the three-column measurement layout keeps the left functional sidebar sticky beneath the toolbar and gives that sidebar its own vertical scroll container. This prevents long control/metadata stacks from scrolling the plot columns. At responsive widths (<=900 px), the sidebar returns to normal document flow.
+
+Analyzer controls should expose only parameters relevant to the selected method. Derived/optional analysis controls such as Dit PCHIP midgap fitting belong in nested disclosures rather than the primary method controls.
+
 ## Extension contract
 
 A measurement module registers an object:

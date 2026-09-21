@@ -76,3 +76,65 @@ test('Analysis controls preserve open state and use contextual method labels', (
   assert.match(source, /Advanced \/ legacy methods/);
   assert.doesNotMatch(source, /<option value="guide">COCOS-II \(guide-derived\)<\/option>/);
 });
+
+
+test('invalid COCOS-II settings do not silently fall back to Standard COCOS', () => {
+  const site = factor => ({
+    VDark: 0, Vsb: 0.2, InitialQc: 0,
+    rows: Array.from({ length: 10 }, (_, i) => ({
+      Qc: i * factor * 1e11,
+      VDark: i * 0.03,
+      VLight: i * 0.015,
+      Vsb: 0.05 + i * 0.06
+    }))
+  });
+  const data = {
+    sites: [site(1), site(1.3)],
+    doping: 1e14,
+    dopingType: 'n',
+    useCocosII: true,
+    cocosIIEOT: 100,
+    cocosIIMinVsb: -0.1,
+    cocosIIMaxVsb: 0.65
+  };
+  const analysis = PV2000.modules.dit.analyze(data, {
+    cocosMode: 'pv2000-re',
+    cocosIIEOT_A: 100,
+    cocosIIMinVsb: 0,
+    cocosIIMaxVsb: 0
+  });
+  assert.match(analysis.error, /Max Vsb must be greater than Min Vsb/);
+  assert.ok(analysis.sites.every(siteResult => !Number.isFinite(siteResult.Dit)));
+});
+
+test('COCOS-II recommendation returns finite data-driven EOT and safe Vsb bounds', () => {
+  const site = factor => ({
+    VDark: 0, Vsb: 0.2, InitialQc: 0,
+    rows: Array.from({ length: 10 }, (_, i) => ({
+      Qc: i * factor * 1e11,
+      VDark: i * 0.03,
+      VLight: i * 0.015,
+      Vsb: 0.05 + i * 0.06
+    }))
+  });
+  const data = { sites: [site(1), site(1.3)], doping: 1e14, dopingType: 'n', useCocosII: true, cocosIIEOT: 100 };
+  const rec = PV2000.modules.dit.cocosRecommendation(data, 5);
+  assert.ok(Number.isFinite(rec.eotA) && rec.eotA > 0);
+  assert.ok(Number.isFinite(rec.minVsb));
+  assert.ok(Number.isFinite(rec.maxVsb));
+  assert.ok(rec.maxVsb > rec.minVsb);
+});
+
+test('COCOS-II PCHIP uses accepted window points while minimum Dit remains discrete', () => {
+  const data = { doping: 1e14, dopingType: 'n' };
+  const site = {
+    rows: [
+      { Qc: 0, Vsb: 0.05 }, { Qc: 1e11, Vsb: 0.15 },
+      { Qc: 2e11, Vsb: 0.25 }, { Qc: 3e11, Vsb: 0.35 }
+    ]
+  };
+  const result = PV2000.modules.dit.variation(site, data, 2e13, [0.05, 0.15, 0.25, 0.35], 'log10', { min: 0.1, max: 0.3 });
+  assert.deepEqual(result.accepted, [false, true, true]);
+  assert.equal(result.acceptedCount, 2);
+  assert.ok(Number.isFinite(result.min));
+});

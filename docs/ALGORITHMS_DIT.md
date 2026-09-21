@@ -16,11 +16,18 @@ Normal user choices are:
 
 The older guide-only implementation is retained under **Advanced / legacy methods** as **Legacy COCOS-II (guide-based)**. It is a development comparison path and is not presented as a normal analysis choice.
 
-Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband and Dit-extraction controls remain visible because they are used by the active calculation path. Applying settings or changing analysis method/PCHIP scale re-renders the analysis while keeping the Analysis controls panel open.
+Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. PCHIP controls live under a separate **Optional Midgap Dit (PCHIP)** disclosure because they do not participate in the PV2000-style minimum Dit result. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
 
-## PCHIP scale
+## Minimum Dit versus optional PCHIP Midgap Dit
 
-Analysis controls sits above Results summary and offers **LOG10** (the default) and **Linear** PCHIP modes for the Dit–Vsb fit. Both modes use the same filtered variation-method Dit samples. LOG10 excludes nonpositive Dit samples, interpolates `log10(Dit)` against Vsb, then applies `10^` to the curve and the midgap value. Changing modes recalculates all sites, the Results summary and the wafer map. The raw variation samples and minimum Dit do not change. LOG10 is an analyzer choice and has not been separately validated against a PV-2000 vendor export.
+The primary reported Dit is labelled **Minimum Dit (PV2000-style)**. It is the minimum accepted **discrete** variation-method Dit point. PCHIP interpolation never changes this value.
+
+The optional PCHIP branch is used for **Midgap Dit (PCHIP)** and the green fitted curve only. It offers:
+
+- **PCHIP outlier limit** — rejects high Dit points inside the 0.1–0.5 V fit window;
+- **Interpolation scale** — `LOG10` (default) fits `log10(Dit)`; `Linear` fits Dit directly.
+
+For COCOS-II, PCHIP is applied after COCOS-II reconstructs signed Vsb and after the Min/Max Vsb acceptance mask is formed. Therefore COCOS-II and PCHIP can be used together without PCHIP redefining the PV2000-style minimum Dit.
 
 ## Standard COCOS
 
@@ -42,6 +49,19 @@ Current inferred model:
 8. if no Dit segment survives the window, return NaN/invalid rather than PV-2000's apparent 1e99/1e100 sentinel values.
 
 Evidence from the supplied same-raw-data parameter sweeps: changing Min/Max Vsb changed Dit while VDark, VLight, summary Vsb, Vfb, Qsc, Qtot and Qit remained unchanged; EOT changes affected the COCOS-II result; toggling Back Surface Shift produced no observable output change on this dataset. The exact proprietary Min/Max selection semantics could still contain extra conditions, so the current window rule is the simplest model consistent with the observations.
+
+### COCOS-II parameter defaults and suggestions
+
+Missing numeric XML fields no longer collapse to JavaScript zero. An absent Min/Max setting therefore correctly falls back to the inferred defaults `-0.10 V` and `+0.65 V` instead of producing `0/0` and invalidating the calculation.
+
+The analyzer also computes a **data-derived suggestion**:
+
+- EOT suggestion = median dark-accumulation EOT across usable sites, converted to Å;
+- Min/Max suggestion = the inferred vendor default window, expanded outward in 0.05 V steps only when reconstructed signed-Vsb coverage extends beyond the default bounds, with a small margin.
+
+The suggestion is advisory. If XML contains a positive COCOS-II EOT, the XML value remains applied until the user presses **Use** and then applies the settings. Invalid user settings such as `Max Vsb <= Min Vsb` raise an explicit analysis error and do **not** silently fall back to Standard COCOS.
+
+The UI reports, for the current site, the number of accepted Dit intervals and the Vsb location of the discrete minimum to make Min/Max-window behavior auditable.
 
 `Back Surface Shift` is recorded for traceability but deliberately **not applied**. Its mathematical effect has not been identified.
 
