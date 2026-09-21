@@ -48,3 +48,5 @@ A QSS map can represent a full wafer, quarter wafer, coupon, or partially invali
 LBIC files may contain different combinations of beams/wavelengths and current/reflectance/QE channels. Do not hard-code the supplied single-beam examples as the schema. Preserve unknown numeric BeamData attributes, map BeamData Key to laser/FluxCache index, and prefer raw XML Total R/EQE/IQE over calculated candidates.
 
 Until matching vendor exports exist, rectangular scan orientation/order and calculated Total R/EQE/IQE must remain labelled **inferred**. Do not implement a calculated LBIC diffusion-length map from a plausible literature formula; require a multi-wavelength PV-2000 XML plus matching DL output and regression first.
+
+On fine-pointer desktop layouts, keep the left functional sidebar independently scrollable without scrolling the plot columns, including under browser zoom. Do not use portrait orientation alone to force the mobile layout on desktop; portrait/tablet fallbacks should require coarse-pointer input. Sidebar summaries must remain readable without horizontal clipping.
