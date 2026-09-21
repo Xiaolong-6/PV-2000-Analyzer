@@ -40,7 +40,7 @@ No npm runtime dependencies are required.
 
 ## UI layout contract
 
-In every multi-column layout the left functional sidebar stays sticky beneath the toolbar and uses an explicit viewport-height vertical scroll container. This prevents long control/metadata stacks from scrolling the plot columns and remains usable when browser zoom changes the CSS viewport width. The sidebar returns to normal document flow only in the true single-column/mobile breakpoint (<=700 px, or portrait <=950 px).
+In every multi-column layout the left functional sidebar stays sticky beneath the toolbar and uses an explicit viewport-height vertical scroll container. This prevents long control/metadata stacks from scrolling the plot columns and remains usable when browser zoom changes the CSS viewport width. Fine-pointer desktop layouts keep a dedicated sidebar column at intermediate widths; portrait/tablet fallback requires coarse-pointer input. The sidebar returns to normal document flow at <=700 px or on coarse-pointer portrait/tablet layouts. Dit sidebar summaries use responsive cards rather than fixed-width nowrap tables.
 
 Analyzer controls should expose only parameters relevant to the selected method. Derived/optional analysis controls such as Dit PCHIP midgap fitting belong in nested disclosures rather than the primary method controls.
 
