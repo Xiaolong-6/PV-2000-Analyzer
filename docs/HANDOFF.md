@@ -14,6 +14,7 @@ Build a general **Semilab PV-2000 Analyzer**: the user drops any PV-2000 result 
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
+- landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
 - real user/vendor files protected under ignored `private/reference/`.
 
 ## QSS-µPCD: reference export now available
@@ -62,7 +63,7 @@ Dit Analysis controls are contextual and compact:
 
 A parser fix now treats missing/empty numeric XML nodes as missing rather than as JavaScript numeric zero. This is required for COCOS-II Min/Max defaults and also improves numeric fallback behavior across modules.
 
-In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. The scroll container now uses an explicit viewport height and stays enabled across the 900 px layout breakpoint, so browser zoom cannot make lower panels unreachable. Only the true single-column/mobile layout returns to normal page flow.
+In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. Fine-pointer desktop zoom now keeps a dedicated sidebar column instead of being mistaken for a portrait/mobile layout; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary is rendered as responsive result cards so Valid-site mean / Current-site values do not clip or require horizontal scrolling.
 
 LOG10 remains the default optional PCHIP interpolation scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
 
@@ -116,6 +117,39 @@ git status --short --ignored
 ```
 
 Current automated suite includes the expanded LBIC vendor-compatibility tests in addition to Dit/QSS/XML/layout tests. QSS private pointwise validation should PASS when its ignored references are present. LBIC validation now requires same-basename private XML/CSV pairs and intentionally fails on a NEW PROFILE until its actual vendor output has been reviewed.
+
+## Remaining handoff tests
+
+Automated unit/build checks cover parser/calculation regressions and static responsive-layout contracts, but the following should still be exercised with the real browser and real PV-2000 files before treating this snapshot as release-ready:
+
+1. **Responsive / zoom smoke test**
+   - Desktop fine-pointer browser at approximately 100%, 125%, 150% and 175% zoom.
+   - Verify the left sidebar can scroll to its last panel while plot columns remain stationary.
+   - Check representative viewport widths around 1440, 1000, 900, 850, 720 and 500 CSS px.
+   - Verify Dit Results summary never clips Valid-site mean / Current-site values and never creates page-level horizontal overflow.
+   - On a real touch/coarse-pointer phone/tablet, verify the single-column fallback is still usable.
+
+2. **Dit / COCOS-II functional smoke**
+   - Import one Standard COCOS XML and one `UseCocosII=true` XML.
+   - Change EOT / Min Vsb / Max Vsb, Apply, and verify Vsb/Dit actually change where expected.
+   - Confirm invalid `Max Vsb <= Min Vsb` shows an error with no silent Standard-Cocos fallback.
+   - Confirm Analysis controls stays open after Apply/re-render.
+   - Change PCHIP scale/outlier limit and verify **Minimum Dit (PV2000-style)** stays unchanged while Midgap Dit / fitted curve may change.
+
+3. **LBIC paired-reference regression**
+   - Run `npm run validate:lbic` with all same-basename private XML+CSV pairs present.
+   - Open at least one 51×51 and one 101×101 reference XML in the browser and visually compare map orientation, Current / Reflectivity / IQE defaults, blank IQE pixels and Advanced raw/intermediate channels.
+   - Confirm ordinary numeric wavelength/power/FluxCache/raster-size changes remain in the validated profile family; categorical path changes must report **NEW PROFILE**.
+   - A real multi-beam/multi-wavelength paired file is still required before multi-beam semantics can be marked validated.
+
+4. **QSS regression smoke**
+   - Run `npm run validate:qss` with private references present.
+   - Import the reference XML and verify valid-range filtering, smooth-map masking, Distribution axis swap and CSV export still behave correctly after layout changes.
+
+5. **Landing / fallback / theme**
+   - Verify the welcome tags render correctly in light and dark mode.
+   - Open an unsupported XML type and confirm Generic XML Inspector fallback still works.
+   - Confirm no tracked/private reference data has leaked into the build or repository.
 
 ## Next scientific module
 
