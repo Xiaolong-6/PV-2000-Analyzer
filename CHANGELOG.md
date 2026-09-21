@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a selectable **PV2000 COCOS-II (reverse-engineered)** Dit algorithm derived from same-raw-data adjustment sweeps: EOT is interpreted in Å, synthetic-light slope uses q/Cox, Vsb is signed, and Min/Max Vsb gate the reported minimum Dit. Back Surface Shift is documented but intentionally not applied until its effect is identified.
+- Added COCOS processing controls and exports that show which Dit points pass the reverse-engineered Min/Max Vsb window; preserved XML-default and existing guide-derived behavior.
 - Separated live QSS Current dataset facts from fixed 305-point Algorithm validation evidence, and clarified that imported XMLs are not compared with an export at runtime.
 - Colored valid Distribution histogram bars by their metric bins using the wafer map's filtered value range and color scale; excluded counts remain gray in both axis orientations.
 - Added a Distribution Swap axes button: the selected metric (lifetime by default) starts on the horizontal axis, then moves to the vertical axis while count moves horizontally. Histogram export retains the same bins and counts.

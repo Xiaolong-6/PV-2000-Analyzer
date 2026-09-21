@@ -25,6 +25,25 @@ When XML `UseCocosII=true`, the analyzer automatically switches the primary Dit 
 
 The UI shows measured and synthetic light curves plus raw-standard and corrected Vsb for audit. This implementation follows the supplied COCOS-II guide, but **has not yet been regression-validated against a PV-2000 export from a measurement with `UseCocosII=true`**. Keep that caveat until such a reference is supplied.
 
+## PV2000 COCOS-II (reverse-engineered)
+
+A separate selectable algorithm, **PV2000 COCOS-II (reverse-engineered)**, is now available without changing the XML-default behavior. Its status is **inferred**, not vendor-exact. It is based on repeated PV-2000 reprocessing of the same raw dataset while changing one adjustment at a time, plus the displayed Vcpd-Qc curves.
+
+Current inferred model:
+
+1. retain the same dark V-Q curve and flatband anchor used by the analyzer;
+2. interpret the PV-2000 `COCOS II EOT` numeric setting as **ångström**, not nm;
+3. compute `Cox = 3.9 ε0 / EOT` and synthetic-light slope `dV/dQc = q/Cox`; therefore 100 Å gives ~0.46398 V per 1e12 q/cm²;
+4. create a straight synthetic light curve through the flatband anchor;
+5. use a **signed** surface barrier. For n-type, `Vsb = Vlight,synthetic - Vdark`; p-type uses the opposite polarity so accumulation retains the same sign convention;
+6. use the existing semiconductor-Qsc and adjacent-step variation Dit calculation;
+7. apply `COCOSII Min Vsb` / `COCOSII Max Vsb` only as a signed-Vsb acceptance window for selecting the reported minimum Dit. Defaults are -0.10 V and +0.65 V;
+8. if no Dit segment survives the window, return NaN/invalid rather than PV-2000's apparent 1e99/1e100 sentinel values.
+
+Evidence from the supplied same-raw-data parameter sweeps: changing Min/Max Vsb changed Dit while VDark, VLight, summary Vsb, Vfb, Qsc, Qtot and Qit remained unchanged; EOT changes affected the COCOS-II result; toggling Back Surface Shift produced no observable output change on this dataset. The exact proprietary Min/Max selection semantics could still contain extra conditions, so the current window rule is the simplest model consistent with the observations.
+
+`Back Surface Shift` is visible for traceability but deliberately **not applied**. Its mathematical effect has not been identified.
+
 ## Known boundaries
 
 - Exact proprietary PV-2000 `Vfb` and absolute `Qit` are not yet reproduced.
