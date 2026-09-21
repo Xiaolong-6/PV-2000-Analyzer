@@ -6,7 +6,7 @@ Implemented outputs include Vcpd dark/light curves, surface-barrier curve, barri
 
 ## PCHIP scale
 
-Analysis controls offers **Linear** (the original default) and **LOG10** PCHIP modes for the Dit–Vsb fit. Both modes use the same filtered variation-method Dit samples. LOG10 excludes nonpositive Dit samples, interpolates `log10(Dit)` against Vsb, then applies `10^` to the curve and the midgap value. Changing modes recalculates all sites, the Results summary and the wafer map. The raw variation samples and minimum Dit do not change. LOG10 is a display/analysis choice and has not been separately validated against a PV-2000 vendor export.
+Analysis controls sits above Results summary and offers **LOG10** (the default) and **Linear** PCHIP modes for the Dit–Vsb fit. Both modes use the same filtered variation-method Dit samples. LOG10 excludes nonpositive Dit samples, interpolates `log10(Dit)` against Vsb, then applies `10^` to the curve and the midgap value. Changing modes recalculates all sites, the Results summary and the wafer map. The raw variation samples and minimum Dit do not change. LOG10 is a display/analysis choice and has not been separately validated against a PV-2000 vendor export.
 
 ## Standard COCOS
 

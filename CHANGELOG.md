@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- Added a Linear / LOG10 PCHIP choice in Dit Analysis controls. LOG10 interpolates positive log10(Dit) values and restores the fitted curve and midgap Dit to the original units; Linear remains the default. Switching modes recalculates every site and the Results summary.
+- Separated live QSS Current dataset facts from fixed 305-point Algorithm validation evidence, and clarified that imported XMLs are not compared with an export at runtime.
+- Colored valid Distribution histogram bars by their metric bins using the wafer map's filtered value range and color scale; excluded counts remain gray in both axis orientations.
+- Added a Distribution Swap axes button: the selected metric (lifetime by default) starts on the horizontal axis, then moves to the vertical axis while count moves horizontally. Histogram export retains the same bins and counts.
+- Added units beneath every parameter in the Dit Results summary.
+- Moved Dit Analysis controls directly above Results summary and made LOG10 the default PCHIP scale. LOG10 interpolates positive log10(Dit) values and restores the fitted curve and midgap Dit to the original units. Switching modes recalculates every site and the Results summary.
 - Prevented QSS smooth wafer maps from coloring regions whose nearest measurement site is excluded by the valid-data filter.
 - Unified Dit and QSS sidebar typography across metadata, controls, results tables, and explanatory notes.
 - Removed the historical charge-derivative diagnostic from the Dit UI and chart export while retaining its calculation internally for regression checks.

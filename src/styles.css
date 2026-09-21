@@ -27,3 +27,4 @@
 .qss-module .side .filter-grid label,.qss-module .side .filter-actions,.qss-module .side table,.qss-module .side th,.qss-module .side .note{font-size:inherit}
 .dit-module .side table,.dit-module .side th,.dit-module .side .setting-row label,.dit-module .side .setting-row input,.dit-module .side .setting-row select,.dit-module .side .checkline,.dit-module .side .measurement-sub,.dit-module .side .mode-badge,.dit-module .side .site-controls .coord,.dit-module .side .note{font-size:inherit}
 .dit-module .side .setting-row input{font-family:inherit}
+.dit-module .side .result-unit{display:block;color:var(--muted)}

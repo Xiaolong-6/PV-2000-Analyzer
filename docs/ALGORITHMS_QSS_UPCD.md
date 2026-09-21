@@ -6,11 +6,15 @@ The reference result is `QssUpcdMeasurement`, with 305 `UpcdDataItem/Value` life
 
 For a round map, coordinates are generated in XML acquisition order: ascending Y, then ascending X within each row, retaining only points strictly inside the circular target (`x²+y² < R²`). The supplied PV-2000 CSV export confirms all 305 reconstructed X/Y coordinates exactly.
 
+The UI labels this comparison as fixed algorithm-validation evidence for the 305-point reference. The current XML's point count, generated-coordinate count and valid-data count are reported separately. Importing another XML does not establish agreement with an export for that new measurement.
+
 ## Statistics and valid-point filtering
 
 PV-2000 `Stdev` is sample standard deviation (`N-1`). The analyzer adds an independent **Valid-data filter** because the nominal map geometry can exceed the actual sample area (quarter wafer, coupon, broken/partial sample, etc.). The user chooses a filter metric and lower/upper limits after inspecting the distribution. One Boolean mask is then applied to every metric, summary statistic, map and export.
 
 Excluded sites remain visible in point/profile views, but are not used in statistics or smooth interpolation. Smooth-map interpolation is also distance-limited to the neighborhood of valid measured sites to avoid painting an unmeasured quarter/coupon across the full nominal wafer.
+
+The Distribution histogram follows the selected map metric (lifetime by default) and uses the same validity mask. Its valid bars use the wafer map's color function and valid-point minimum/maximum range at each metric bin midpoint; excluded counts remain gray. Swap axes turns its vertical bars into horizontal bars, with the metric on the vertical axis and count on the horizontal axis. The histogram CSV keeps metric bin limits and counts regardless of axis orientation.
 
 In smooth mode, the area nearest to each excluded scheduled site is left uncolored, even if valid neighboring sites could otherwise interpolate across it. The excluded site's diagnostic marker remains visible.
 

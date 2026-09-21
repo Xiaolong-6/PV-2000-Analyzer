@@ -12,7 +12,7 @@ const doping = 9.65e9 * Math.exp(targetVsb * 1.60218e-19 / (1.38e-23 * 300));
 const sample = { x: [0.1, 0.5], dit: [1e10, 1e12], data: { doping } };
 
 test('Linear PCHIP keeps the existing Dit-space midpoint', () => {
-  const fit = PV2000.modules.dit.makeCurve(sample.x, sample.dit, sample.data, Infinity);
+  const fit = PV2000.modules.dit.makeCurve(sample.x, sample.dit, sample.data, Infinity, 'linear');
   assert.ok(Math.abs(fit.mid / 5.05e11 - 1) < 1e-12);
 });
 
@@ -32,8 +32,11 @@ test('PCHIP mode recalculates every Dit site and the Results summary', () => {
     }))
   });
   const data = { sites: [site(1), site(1.7)], doping: 1e14, dopingType: 'n', useCocosII: false };
+  const defaultAnalysis = PV2000.modules.dit.analyze(data);
   const linear = PV2000.modules.dit.analyze(data, { pchipScale: 'linear' });
   const log = PV2000.modules.dit.analyze(data, { pchipScale: 'log10' });
+  assert.equal(defaultAnalysis.options.pchipScale, 'log10');
+  assert.equal(defaultAnalysis.stats.MidgapDit.mean, log.stats.MidgapDit.mean);
   assert.equal(log.options.pchipScale, 'log10');
   assert.equal(log.stats.MidgapDit.count, 2);
   for (let i = 0; i < data.sites.length; i++) {
