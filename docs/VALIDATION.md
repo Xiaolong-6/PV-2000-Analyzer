@@ -79,7 +79,7 @@ The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP
 
 COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
 
-In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Scrolling it must not move the plot columns. Fine-pointer desktop zoom must not trigger the portrait/mobile fallback merely because the viewport becomes taller than wide; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary must not require horizontal scrolling: parameter, valid-site mean and current-site values are rendered as responsive cards.
+In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Sidebar children must not flex-shrink to fit the viewport; they remain intrinsic-height blocks so overflow is real and the sidebar scroll container can scroll. Scrolling it must not move the plot columns. Fine-pointer desktop zoom must not trigger the portrait/mobile fallback merely because the viewport becomes taller than wide; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary must not require horizontal scrolling: parameter, valid-site mean and current-site values are rendered as responsive cards.
 
 
 
@@ -94,7 +94,7 @@ Four supplied private XML/CSV pairs establish a validated **single-beam algorith
 | X-fast / row-major coordinate order | pointwise CSV match | validated |
 | Y coordinate | `Region.Y + row × dy`; max error 0 mm | validated |
 | Current | raw XML vs CSV pointwise | validated |
-| Reflectivity | DirectReflection + ScatteredReflection | validated |
+| Reflectivity | min(100%, DirectReflection + ScatteredReflection); one 51×51 reference exercises the cap | validated |
 | compatibility charge constant | `q = 1.602e-19 C` required for vendor IQE parity | validated for algorithm family |
 | IQE | `EQE/(1-R)`; calculated >100% or non-computable becomes blank | validated |
 | IQE finite values | reproduced to ~1e-12 %-point scale | validated |
