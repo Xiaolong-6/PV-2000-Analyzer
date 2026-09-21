@@ -119,23 +119,20 @@
         <div class="setting-row compact-settings analysis-method-row">${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the inferred PV2000 COCOS-II implementation.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV2000 COCOS-II (inferred)</option>${o.cocosMode==='guide'?'<option value="guide">Legacy COCOS-II (guide-based)</option>':''}</select>`)}</div>
         ${xmlLine}
         ${analysis.error?`<div class="analysis-error">${esc(analysis.error)} Results are not silently replaced by Standard COCOS.</div>`:''}
-        ${isPv?`<div class="control-section-title">COCOS-II</div><div class="setting-row compact-settings">
+        ${isPv?`<div class="control-section-title">COCOS-II ${help('Inferred, not vendor-exact. Back Surface Shift exists in PV-2000 but its mathematical effect is not identified, so it is not applied.')}</div><div class="setting-row compact-settings">
           ${field('EOT [Å]','PV2000 inferred mode: SiO₂-equivalent EOT in ångström. The synthetic-light slope is q/Cox with Cox=3.9ε₀/EOT.',`<input id="ditCocosEotA" type="number" min="0.001" step="any" value="${o.cocosIIEOT_A}">`)}
           ${field('Min Vsb [V]','Lower signed-Vsb acceptance bound used when selecting the PV2000-style minimum Dit.',`<input id="ditCocosMin" type="number" step="any" value="${o.cocosIIMinVsb}">`)}
           ${field('Max Vsb [V]','Upper signed-Vsb acceptance bound used when selecting the PV2000-style minimum Dit.',`<input id="ditCocosMax" type="number" step="any" value="${o.cocosIIMaxVsb}">`)}
         </div>${recommendation}${diagnostics}`:''}
-        <div class="control-section-title">Flatband</div><div class="setting-row compact-settings">${field('Accumulation points','Number of deepest-accumulation dark V–Q points used to determine Cox/EOT and the flatband-capacitance criterion.',`<input id="ditAccumN" type="number" min="3" max="20" value="${o.accumN}">`)}</div>
-        <p class="note min-dit-note"><b>Minimum Dit (PV2000-style)</b> is taken directly from the accepted discrete Dit–Vsb points. PCHIP does not change it.</p>
-        <details id="ditMidgapControls" class="analysis-subdetails" ${midgapOpen?'open':''}><summary>Optional Midgap Dit (PCHIP)</summary>
+        <div class="control-section-title">Flatband</div><div class="setting-row compact-settings">${field('Accumulation points','Number of deepest-accumulation dark V–Q points used to determine Cox/EOT and the flatband-capacitance criterion. Minimum Dit (PV2000-style) is taken directly from accepted discrete Dit–Vsb points; PCHIP does not change it.',`<input id="ditAccumN" type="number" min="3" max="20" value="${o.accumN}">`)}</div>
+        <details id="ditMidgapControls" class="analysis-subdetails" ${midgapOpen?'open':''}><summary>Optional Midgap Dit (PCHIP) ${help('COCOS-II and PCHIP can be used together. COCOS-II first reconstructs Vsb and the accepted Dit points; PCHIP then interpolates those accepted points only for the optional Midgap Dit result. PCHIP does not change Minimum Dit (PV2000-style).')}</summary>
           <div class="setting-row compact-settings">
             ${field('PCHIP outlier limit','Only affects the optional PCHIP fit used for Midgap Dit. Points above this limit inside 0.1–0.5 V are rejected from that fit.',`<input id="ditReject" type="number" step="any" value="${o.ditReject}">`)}
             ${field('Interpolation scale','Only affects optional PCHIP Midgap Dit: LOG10 interpolates log10(Dit); Linear interpolates Dit directly.',`<select id="ditPchipScale"><option value="log10">LOG10</option><option value="linear">Linear</option></select>`)}
-          </div><p class="note">COCOS-II and PCHIP can be used together: COCOS-II first reconstructs Vsb/accepted Dit points; PCHIP then interpolates those accepted points for the optional Midgap Dit result.</p>
+          </div>
         </details>
-        ${isPv?'<p class="note analysis-note"><b>Inferred, not vendor-exact.</b> Back Surface Shift exists in PV-2000 but its mathematical effect is not identified, so it is not applied.</p>':''}
-        ${isGuide?'<p class="note analysis-note"><b>Legacy development path.</b> This older implementation follows the COCOS-II guide description and is retained only for comparison.</p>':''}
         <div class="analysis-actions"><button id="ditRecalc">Apply analysis settings</button></div>
-        <details id="ditLegacyControls" class="legacy-methods" ${legacyOpen?'open':''}><summary>Advanced / legacy methods</summary><p class="note">The guide-based COCOS-II path predates the same-raw-data reverse engineering and is kept for development comparisons.</p><button id="ditUseLegacy" type="button">Use Legacy COCOS-II (guide-based)</button></details>
+        <details id="ditLegacyControls" class="legacy-methods" ${legacyOpen?'open':''}><summary>Advanced / legacy methods ${help('Legacy development path. The guide-based COCOS-II implementation predates same-raw-data reverse engineering and is retained only for comparison.')}</summary><button id="ditUseLegacy" type="button">Use Legacy COCOS-II (guide-based)</button></details>
       </details>`;
     }
     function renderShell(){
