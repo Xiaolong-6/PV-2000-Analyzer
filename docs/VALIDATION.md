@@ -1,5 +1,7 @@
 # Validation record
 
+The central registry of validated reference envelopes is `docs/REFERENCE_PROFILES.md`. This file contains detailed regression evidence. Any materially new data/configuration outside a recorded envelope is a **NEW PROFILE** until its actual XML + matching PV-2000 output are regressed.
+
 ## QSS-µPCD map — XML + raw PV-2000 export
 
 Private references:
@@ -81,25 +83,25 @@ In multi-column layouts, the left functional sidebar is independently scrollable
 
 
 
-## LBIC raster — structural validation only
+## LBIC raster — paired XML + PV-2000 export regression
 
-Private LBIC XML examples inspected during development cover 51×51 (2601 point) and 101×101 (10201 point) `SquareRegionPattern` rasters. The current module discovers `BeamData` numeric attributes dynamically and joins beam keys to `LaserSettings` / `FluxCache`.
+Four supplied private XML/CSV pairs establish a validated **single-beam algorithm family**: SquareRegionPattern, µA Current + DirectReflection + ScatteredReflection, finite positive photon FluxCache, and vendor Current / Reflectivity / IQE outputs. The four concrete reference instances all happen to use 984 nm, power 0.6 and the same FluxCache, but those numeric values are not validation whitelist keys.
 
-Current status:
-
-| Quantity / behavior | Status |
-|---|---|
-| `LBICMeasurement` dispatch | tested |
-| Region + Dimension point count | structurally validated on supplied examples |
-| dynamic BeamData numeric-channel discovery | tested |
-| raw-channel precedence | tested |
-| multiple beam/wavelength data model | implemented, not yet exercised by supplied examples |
-| X-fast / row-major coordinate order | inferred |
-| Y direction from Region.Y downward | inferred |
-| Total R = direct + diffuse | inferred; no vendor export parity yet |
-| EQE from Current / FluxCache photon flux | inferred; no vendor export parity yet |
-| IQE from EQE / (1-Rtotal) | inferred; no vendor export parity yet |
-| calculated diffusion length | unsupported |
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| `LBICMeasurement` dispatch | unit tested | tested |
+| 51×51 / 101×101 point counts | XML = CSV | validated |
+| X-fast / row-major coordinate order | pointwise CSV match | validated |
+| Y coordinate | `Region.Y + row × dy`; max error 0 mm | validated |
+| Current | raw XML vs CSV pointwise | validated |
+| Reflectivity | DirectReflection + ScatteredReflection | validated |
+| compatibility charge constant | `q = 1.602e-19 C` required for vendor IQE parity | validated for algorithm family |
+| IQE | `EQE/(1-R)`; calculated >100% or non-computable becomes blank | validated |
+| IQE finite values | reproduced to ~1e-12 %-point scale | validated |
+| summary Stdev | sample standard deviation, finite values only | validated |
+| EQE as standalone output | vendor CSV does not expose it | inferred intermediate |
+| multiple beam/wavelength data model | implemented, no real paired reference yet | unvalidated |
+| calculated diffusion length | no paired vendor reference | unsupported |
 
 Run:
 
@@ -107,6 +109,14 @@ Run:
 npm run validate:lbic
 ```
 
-with private XMLs under `private/reference/lbic/`. The validator checks structure only and deliberately does not upgrade inferred algorithms to validated.
+Matching private references must use the same basename under `private/reference/lbic/`:
 
-To validate coordinates, provide one matching LBIC X/Y export or an orientation-known PV-2000 map. To validate Total R/EQE/IQE, provide matching vendor values. To implement diffusion length, provide a multi-wavelength LBIC XML and matching PV-2000 DL output; see `ALGORITHMS_LBIC.md`.
+```
+sample.xml
+sample.csv
+```
+
+The validator is intentionally **semantic-profile gated**. Numeric changes in wavelength, laser power, finite FluxCache, Region origin/size, pitch or grid dimensions remain inside the validated family when the same input/output path is used. A categorical change — such as another pattern type/coordinate encoding, multiple-beam semantics, another unit convention, a different raw channel set, or a different vendor result/blanking path — reports **NEW PROFILE** and requires inspection of the actual XML plus matching PV-2000 output.
+
+Runtime remains XML-only. The CSV is never consulted when a user imports an XML.
+

@@ -2,9 +2,12 @@
 
 ## Unreleased
 
+- Replaced LBIC structural-only assumptions with four paired PV-2000 XML/CSV regressions: X/Y coordinates now use validated X-fast row-major positive-Y reconstruction; Reflectivity reproduces DirectReflection + ScatteredReflection; IQE reproduces vendor output with q=1.602e-19 C and vendor >100% blanking.
+- Changed the default LBIC result view to PV-2000-style Current / Reflectivity / IQE; Direct/Scattered reflectance, EQE and unknown numeric channels are available as Advanced raw/intermediate diagnostics.
+- Added a paired LBIC validator and central reference-profile registry. Validation is attached to semantic input/output algorithm families: ordinary numeric wavelength/power/FluxCache/raster-size changes stay in-family, while categorical pattern/beam/channel/result/unit/blanking changes are NEW PROFILE until matched against actual PV-2000 output.
 - Integrated `LBICMeasurement` from the older `feat/lbic-support` line onto the latest Dit/COCOS-II mainline without reverting newer analysis changes.
 - Added dynamic LBIC beam/channel discovery, SquareRegionPattern raster reconstruction, current/reflectance maps, inferred Total R/EQE/IQE candidates, line profiles, selected-pixel inspection and CSV exports.
-- Added LBIC unit tests, structural private validator and provenance/validation documentation; diffusion length remains intentionally unsupported pending a matching multi-wavelength vendor reference.
+- Added LBIC unit tests, paired private regression validator and provenance/validation documentation; diffusion length remains intentionally unsupported pending a matching multi-wavelength vendor reference.
 - Fixed the left functional sidebar scroll container so browser zoom / the 900 px layout breakpoint no longer makes lower panels unreachable; independent scrolling is disabled only in the actual single-column/mobile layout.
 - Fixed missing/empty XML numeric values being coerced to zero; COCOS-II Min/Max now correctly fall back instead of appearing as 0/0.
 - COCOS-II invalid settings now show an explicit error and never silently fall back to Standard COCOS.

@@ -25,6 +25,25 @@ If anything under `private/` is staged, unstage it immediately. Never use `git a
 9. Reverse-engineered calculations require regression against a PV-2000 export/display before being labelled validated.
 10. Run `npm test`, `npm run build`, and relevant private validators before handoff; update CHANGELOG/HANDOFF.
 
+## Reference-profile rule
+
+Validation is attached to an explicit **reference envelope**, not to a measurement-type name in general. This applies to Dit, QSS-µPCD, LBIC and every future analyzer.
+
+A **reference instance** is one concrete XML/export pair. A **validated profile family** is the input→output algorithm path established by one or more reference instances. Ordinary numeric parameter changes inside the same path are not automatically NEW PROFILE. For example, changing raster dimensions/origin/pitch, wavelength, laser power or FluxCache value does not by itself create a new LBIC profile when the same single-beam channel/result path and formulas apply.
+
+Treat a dataset as **NEW PROFILE** when there is a categorical or semantic change that may alter parsing or calculation: a new XML schema/path, algorithm mode, pattern type/coordinate encoding, beam multiplicity, channel/result combination, unit convention, validity/blanking rule, or derived-result path. Then require the actual PV-2000 XML and matching vendor export/display before expanding validation.
+
+For a NEW PROFILE:
+
+1. keep runtime behavior conservative and label unconfirmed calculations **inferred**;
+2. obtain the real XML plus its matching PV-2000 output;
+3. perform pointwise regression where possible, including invalid/blank behavior and summaries;
+4. revise parser/calculation/UI assumptions if the new pair behaves differently;
+5. append the reference envelope and evidence to `docs/REFERENCE_PROFILES.md`;
+6. only then expand the validator and any **validated** label.
+
+Do not confuse a new numeric value with a new algorithm profile. Conversely, do not infer that a genuinely different input/output path is vendor-valid merely because it shares the same `xsi:type`.
+
 ## Validation labels
 
 - **validated** — numerically checked against a PV-2000 export/display.
@@ -45,6 +64,10 @@ A QSS map can represent a full wafer, quarter wafer, coupon, or partially invali
 
 ## LBIC validity rule
 
-LBIC files may contain different combinations of beams/wavelengths and current/reflectance/QE channels. Do not hard-code the supplied single-beam examples as the schema. Preserve unknown numeric BeamData attributes, map BeamData Key to laser/FluxCache index, and prefer raw XML Total R/EQE/IQE over calculated candidates.
+LBIC files may contain different combinations of beams/wavelengths and current/reflectance/QE channels. Do not hard-code the current single-beam examples as the parser schema. Preserve unknown numeric BeamData attributes, map BeamData Key to laser/FluxCache index, and prefer raw XML Total R/EQE/IQE over calculated candidates.
 
-Until matching vendor exports exist, rectangular scan orientation/order and calculated Total R/EQE/IQE must remain labelled **inferred**. Do not implement a calculated LBIC diffusion-length map from a plausible literature formula; require a multi-wavelength PV-2000 XML plus matching DL output and regression first.
+Four paired XML+CSV reference instances establish the current validated LBIC family: one iteration, one beam, `SquareRegionPattern`, µA current, raw Current + DirectReflection + ScatteredReflection, finite positive photon FluxCache, and vendor outputs Current + Reflectivity + IQE. Within this family, coordinate reconstruction, Reflectivity = Direct + Scattered, and IQE using q=1.602e-19 C with >100% blanking are validated.
+
+Numeric changes in wavelength, power, FluxCache, Region origin/size, pitch, or grid dimensions remain inside this family when the same measurement/result path is used. **NEW PROFILE** is reserved for categorical changes such as multi-beam/multi-iteration semantics, another pattern type/coordinate encoding, another unit convention, a different raw channel set, raw Total R/EQE/IQE taking over the path, or a different vendor output/blanking behavior. Such cases require the actual XML plus matching PV-2000 output and may require redesign before validation expands.
+
+Do not implement a calculated LBIC diffusion-length map from a plausible literature formula; require a real multi-wavelength PV-2000 XML plus matching DL output and regression first.
