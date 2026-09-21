@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Integrated `LBICMeasurement` from the older `feat/lbic-support` line onto the latest Dit/COCOS-II mainline without reverting newer analysis changes.
+- Added dynamic LBIC beam/channel discovery, SquareRegionPattern raster reconstruction, current/reflectance maps, inferred Total R/EQE/IQE candidates, line profiles, selected-pixel inspection and CSV exports.
+- Added LBIC unit tests, structural private validator and provenance/validation documentation; diffusion length remains intentionally unsupported pending a matching multi-wavelength vendor reference.
+- Fixed the left functional sidebar scroll container so browser zoom / the 900 px layout breakpoint no longer makes lower panels unreachable; independent scrolling is disabled only in the actual single-column/mobile layout.
 - Fixed missing/empty XML numeric values being coerced to zero; COCOS-II Min/Max now correctly fall back instead of appearing as 0/0.
 - COCOS-II invalid settings now show an explicit error and never silently fall back to Standard COCOS.
 - Added data-derived COCOS-II suggestions (dark-accumulation EOT plus safe Vsb-window expansion), current-site accepted-interval/minimum-Vsb diagnostics, and a Use recommendation action.
