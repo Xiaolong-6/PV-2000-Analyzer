@@ -40,3 +40,10 @@ test('landing page advertises supported analyzers without overclaiming generic i
   assert.match(html,/LBIC/);
   assert.match(html,/Generic XML inspector/);
 });
+
+
+test('zoom-width layout keeps a dedicated sidebar column instead of a stretched two-column sidebar grid',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/@media\(max-width:900px\)\{\.module-grid\{grid-template-columns:minmax\(260px,300px\) minmax\(0,1fr\)\}\.module-grid>\.side\{grid-column:1;grid-row:1 \/ span 2;display:flex\}\.module-grid>\.plots\{grid-column:2\}/);
+  assert.doesNotMatch(css,/\.side\{grid-column:1\/-1;display:grid;grid-template-columns:1fr 1fr\}/);
+});
