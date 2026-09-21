@@ -4,30 +4,31 @@ The modular Dit analyzer continues the standalone COCOS work while keeping XML a
 
 Implemented outputs include Vcpd dark/light curves, surface-barrier curve, barrier-adjustment Initial Qc bookkeeping, semiconductor Qsc, variation-method minimum/midgap Dit, accumulation-slope Cox and SiO2-equivalent EOT, differential-capacitance flatband and Qtot.
 
+## Analysis-method routing
+
+The Dit sidebar exposes **Analysis method** rather than one flat list of unrelated COCOS controls.
+
+Normal user choices are:
+
+- **Follow XML setting** — the default. `UseCocosII=false` resolves to Standard COCOS; `UseCocosII=true` resolves to **PV2000 COCOS-II (inferred)**.
+- **Standard COCOS** — force the measured dark/light path regardless of the XML flag.
+- **PV2000 COCOS-II (inferred)** — force the current same-raw-data reverse-engineered model.
+
+The older guide-only implementation is retained under **Advanced / legacy methods** as **Legacy COCOS-II (guide-based)**. It is a development comparison path and is not presented as a normal analysis choice.
+
+Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband and Dit-extraction controls remain visible because they are used by the active calculation path. Applying settings or changing analysis method/PCHIP scale re-renders the analysis while keeping the Analysis controls panel open.
+
 ## PCHIP scale
 
-Analysis controls sits above Results summary and offers **LOG10** (the default) and **Linear** PCHIP modes for the Dit–Vsb fit. Both modes use the same filtered variation-method Dit samples. LOG10 excludes nonpositive Dit samples, interpolates `log10(Dit)` against Vsb, then applies `10^` to the curve and the midgap value. Changing modes recalculates all sites, the Results summary and the wafer map. The raw variation samples and minimum Dit do not change. LOG10 is a display/analysis choice and has not been separately validated against a PV-2000 vendor export.
+Analysis controls sits above Results summary and offers **LOG10** (the default) and **Linear** PCHIP modes for the Dit–Vsb fit. Both modes use the same filtered variation-method Dit samples. LOG10 excludes nonpositive Dit samples, interpolates `log10(Dit)` against Vsb, then applies `10^` to the curve and the midgap value. Changing modes recalculates all sites, the Results summary and the wafer map. The raw variation samples and minimum Dit do not change. LOG10 is an analyzer choice and has not been separately validated against a PV-2000 vendor export.
 
 ## Standard COCOS
 
-When XML `UseCocosII=false`, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the group MATLAB-compatible variation/PCHIP path. On the supplied W1 reference, previous regression found about 2.6% mean relative difference versus PV-2000 for minimum Dit and about 2.6% mean absolute relative error for Qtot across valid sites.
+When Standard COCOS is active, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the group MATLAB-compatible variation/PCHIP path. On the supplied W1 reference, previous regression found about 2.6% mean relative difference versus PV-2000 for minimum Dit and about 2.6% mean absolute relative error for Qtot across valid sites.
 
-## COCOS-II XML support
+## PV2000 COCOS-II (inferred)
 
-When XML `UseCocosII=true`, the analyzer automatically switches the primary Dit calculation to a guide-derived COCOS-II correction:
-
-1. keep the measured dark V-Q curve;
-2. use the same extracted flatband anchor;
-3. replace the measured light curve with a straight synthetic light curve;
-4. take its slope from XML `CocosIIEOT` when present/positive, otherwise from the dark accumulation slope;
-5. calculate corrected `|Vsb| = |Vdark - Vlight,synthetic|`;
-6. run the same variation/PCHIP Dit extraction on corrected Vsb.
-
-The UI shows measured and synthetic light curves plus raw-standard and corrected Vsb for audit. This implementation follows the supplied COCOS-II guide, but **has not yet been regression-validated against a PV-2000 export from a measurement with `UseCocosII=true`**. Keep that caveat until such a reference is supplied.
-
-## PV2000 COCOS-II (reverse-engineered)
-
-A separate selectable algorithm, **PV2000 COCOS-II (reverse-engineered)**, is now available without changing the XML-default behavior. Its status is **inferred**, not vendor-exact. It is based on repeated PV-2000 reprocessing of the same raw dataset while changing one adjustment at a time, plus the displayed Vcpd-Qc curves.
+This is now the default COCOS-II path when **Follow XML setting** sees `UseCocosII=true`. Its status is **inferred**, not vendor-exact. It is based on repeated PV-2000 reprocessing of the same raw dataset while changing one adjustment at a time, plus the displayed Vcpd-Qc curves.
 
 Current inferred model:
 
@@ -42,7 +43,20 @@ Current inferred model:
 
 Evidence from the supplied same-raw-data parameter sweeps: changing Min/Max Vsb changed Dit while VDark, VLight, summary Vsb, Vfb, Qsc, Qtot and Qit remained unchanged; EOT changes affected the COCOS-II result; toggling Back Surface Shift produced no observable output change on this dataset. The exact proprietary Min/Max selection semantics could still contain extra conditions, so the current window rule is the simplest model consistent with the observations.
 
-`Back Surface Shift` is visible for traceability but deliberately **not applied**. Its mathematical effect has not been identified.
+`Back Surface Shift` is recorded for traceability but deliberately **not applied**. Its mathematical effect has not been identified.
+
+## Legacy COCOS-II (guide-based)
+
+The earlier implementation is retained only under **Advanced / legacy methods**. It follows the supplied guide description:
+
+1. keep the measured dark V-Q curve;
+2. use the extracted flatband anchor;
+3. replace measured light with a straight synthetic light curve;
+4. take the slope from XML `CocosIIEOT` when positive, otherwise from the dark accumulation slope;
+5. use `|Vdark - Vlight,synthetic|`;
+6. run the same variation/PCHIP Dit extraction.
+
+This path predates the parameter-sweep reverse engineering and is not the default for `UseCocosII=true`.
 
 ## Known boundaries
 

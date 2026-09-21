@@ -34,18 +34,41 @@ The new valid-range UI is an analyzer feature rather than a vendor-output replic
 
 ## DIT reference
 
-Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. Existing regression established approximately 2.6% mean error for Qtot and minimum Dit. The richer modular Dit UI must preserve that baseline.
+Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. Existing Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The richer modular Dit UI must preserve that baseline.
 
-COCOS-II processing is now implemented when XML `UseCocosII=true`, but is currently **guide-derived / not vendor-export validated** because the available W1 reference explicitly has `UseCocosII=false`. A COCOS-II-on XML plus PV-2000 export is the next required reference for that branch.
+### Standard COCOS
 
+Status: **validated against the available W1 export to the documented approximate error level**.
 
-## PV2000 COCOS-II reverse-engineering
+The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS, preserving the measured dark/light path and existing regression behavior.
 
-The selectable `PV2000 COCOS-II (reverse-engineered)` path is **inferred** from a same-raw-data adjustment series rather than a raw vendor algorithm disclosure. The supplied reprocessed exports established these behavioral constraints:
+### PV2000 COCOS-II (inferred)
 
-- the vendor EOT value 100 is consistent with 100 Å (10 nm): the corresponding synthetic-line slope is ~0.464 V per 1e12 q/cm²;
+Status: **inferred**, not vendor-exact.
+
+The current default COCOS-II path is derived from a same-raw-data adjustment series rather than a vendor algorithm disclosure. The supplied reprocessed exports established these behavioral constraints:
+
+- vendor EOT value 100 is consistent with 100 Å (10 nm): the corresponding synthetic-line slope is ~0.464 V per 1e12 q/cm²;
 - changing COCOS-II Min/Max Vsb affected reported Dit but did not alter exported VDark, VLight, summary Vsb, Vfb, Qsc, Qtot or Qit;
 - the observed transition behavior is consistent with Min/Max acting late in Dit selection rather than in Vcpd reconstruction;
 - Back Surface Shift True/False produced identical supplied exports for this dataset.
 
-The implementation therefore labels this branch **inferred**. Its Min/Max rule is the current best-fit model and should be tightened if a pointwise vendor Dit-Vsb export or a dataset where Back Surface Shift is active becomes available.
+The implementation therefore labels this path **inferred**. Its Min/Max rule is the current best-fit model and should be tightened if a pointwise vendor Dit-Vsb export or a dataset where Back Surface Shift is active becomes available.
+
+Follow XML setting now resolves `UseCocosII=true` to this inferred path. That routing choice is intentional: it reflects the strongest available same-raw-data evidence. It does **not** upgrade the algorithm's validation label.
+
+### Legacy COCOS-II (guide-based)
+
+Status: **legacy / development comparison**.
+
+The older guide-based synthetic-light implementation remains available only under Advanced / legacy methods. It is no longer the default for `UseCocosII=true` and must not be described as the normal PV-2000 COCOS-II implementation.
+
+### UI regression expectations
+
+The Analysis controls panel must remain open after Apply/recalculation. Method-specific parameters are shown contextually:
+
+- Standard COCOS: no COCOS-II EOT or Min/Max inputs;
+- PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
+- Legacy guide-based path: accessible only through Advanced / legacy methods;
+- Flatband and Dit-extraction controls remain available because they are shared by the active calculation path.
+

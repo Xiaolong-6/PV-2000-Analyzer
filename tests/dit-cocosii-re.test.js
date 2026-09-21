@@ -49,3 +49,30 @@ test('Back Surface Shift is deliberately recorded but not applied', () => {
   assert.equal(on.backSurfaceShiftRequested, true);
   assert.equal(on.backSurfaceShiftApplied, false);
 });
+
+
+test('Follow XML setting resolves COCOS-II XMLs to the inferred PV2000 path', () => {
+  const base = { sites: [], doping: 1e14, dopingType: 'n', cocosIIEOT: 100 };
+  const standard = PV2000.modules.dit.analyze({ ...base, useCocosII: false });
+  const inferred = PV2000.modules.dit.analyze({ ...base, useCocosII: true });
+  const legacy = PV2000.modules.dit.analyze({ ...base, useCocosII: true }, { cocosMode: 'guide' });
+  assert.equal(standard.options.cocosMode, 'xml');
+  assert.equal(standard.options.effectiveCocosMode, 'standard');
+  assert.equal(inferred.options.cocosMode, 'xml');
+  assert.equal(inferred.options.effectiveCocosMode, 'pv2000-re');
+  assert.equal(inferred.mode, 'PV2000 COCOS-II (inferred)');
+  assert.equal(legacy.options.effectiveCocosMode, 'guide');
+  assert.equal(legacy.mode, 'Legacy COCOS-II (guide-based)');
+});
+
+
+test('Analysis controls preserve open state and use contextual method labels', () => {
+  const fs = require('node:fs');
+  const source = fs.readFileSync(require.resolve('../src/modules/dit.js'), 'utf8');
+  assert.match(source, /analysisOpen=true/);
+  assert.match(source, /analysisOpen\?'open':''/);
+  assert.match(source, /Follow XML setting/);
+  assert.match(source, /PV2000 COCOS-II \(inferred\)/);
+  assert.match(source, /Advanced \/ legacy methods/);
+  assert.doesNotMatch(source, /<option value="guide">COCOS-II \(guide-derived\)<\/option>/);
+});

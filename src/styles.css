@@ -28,3 +28,16 @@
 .dit-module .side table,.dit-module .side th,.dit-module .side .setting-row label,.dit-module .side .setting-row input,.dit-module .side .setting-row select,.dit-module .side .checkline,.dit-module .side .measurement-sub,.dit-module .side .mode-badge,.dit-module .side .site-controls .coord,.dit-module .side .note{font-size:inherit}
 .dit-module .side .setting-row input{font-family:inherit}
 .dit-module .side .result-unit{display:block;color:var(--muted)}
+.dit-module .analysis-method-row label{grid-template-columns:1fr minmax(170px,195px)}
+.dit-module .analysis-method-row select{width:100%}
+.dit-module .analysis-resolved{margin:7px 9px 10px;padding:7px 8px;border:1px solid var(--border);border-radius:6px;background:var(--panel2);color:var(--muted);font-size:10px;line-height:1.4}
+.dit-module .analysis-resolved b{color:var(--text)}
+.dit-module .analysis-resolved span{padding:0 4px}
+.dit-module .control-section-title{margin:10px 9px 2px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;font-weight:750;color:var(--text)}
+.dit-module .analysis-actions{margin:10px 9px}
+.dit-module .analysis-actions button{width:100%}
+.dit-module .analysis-note{padding:7px 8px;border-radius:6px;background:var(--panel2)}
+.dit-module .legacy-methods{margin:0 9px 9px;border-top:1px solid var(--border);padding-top:7px}
+.dit-module .legacy-methods>summary{font-size:10px;color:var(--muted);font-weight:650}
+.dit-module .legacy-methods .note{margin:7px 0}
+.dit-module .legacy-methods button{width:100%;font-size:10px}

@@ -36,7 +36,7 @@ Do not silently substitute a plausible formula for a vendor calculation.
 
 ## Dit parity rule
 
-Do not simplify Dit below the functionality of the restored modular analyzer / `legacy/Semilab_PV2000_Dit_Analyzer_v1.0.html`: Vcpd-Qc, Vsb-Qc, log Dit-Vsb with PCHIP/midgap, selectable numeric wafer map, site navigation, valid-site/current-site summary, flatband details, full XML metadata and per-chart export are required. XML `UseCocosII=true` must invoke the COCOS-II correction path; `false` must preserve the standard path.
+Do not simplify Dit below the functionality of the restored modular analyzer / `legacy/Semilab_PV2000_Dit_Analyzer_v1.0.html`: Vcpd-Qc, Vsb-Qc, log Dit-Vsb with PCHIP/midgap, selectable numeric wafer map, site navigation, valid-site/current-site summary, flatband details, full XML metadata and per-chart export are required. Under Follow XML setting, `UseCocosII=true` must invoke the current **PV2000 COCOS-II (inferred)** path; `false` must preserve Standard COCOS. The older guide-based implementation is legacy/development-only. Analysis controls must be contextual, and recalculation/re-rendering must not unexpectedly collapse an Analysis controls panel the user left open.
 
 ## QSS-µPCD validity rule
 
