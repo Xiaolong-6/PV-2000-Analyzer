@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reworked Dit Results summary from a fixed nowrap table into responsive result cards so Valid-site mean / Current-site values do not clip inside the sidebar.
+- Hardened responsive breakpoints: portrait/tablet fallback now requires a coarse pointer, preventing fine-pointer desktop browser zoom from being mistaken for a mobile layout; <=700 px remains the true narrow fallback.
+- Added min-width containment to sidebar panels/wrappers to prevent intrinsic table/content width from overflowing the functional column.
 - Integrated `LBICMeasurement` from the older `feat/lbic-support` line onto the latest Dit/COCOS-II mainline without reverting newer analysis changes.
 - Added dynamic LBIC beam/channel discovery, SquareRegionPattern raster reconstruction, current/reflectance maps, inferred Total R/EQE/IQE candidates, line profiles, selected-pixel inspection and CSV exports.
 - Added LBIC unit tests, structural private validator and provenance/validation documentation; diffusion length remains intentionally unsupported pending a matching multi-wavelength vendor reference.
