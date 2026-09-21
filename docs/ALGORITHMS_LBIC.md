@@ -67,10 +67,12 @@ Status: **raw XML; pointwise reproduced by the supplied PV-2000 CSV exports**.
 For the validated profile, PV-2000 `Reflectivity [%]` is reproduced point-by-point by:
 
 ```
-Reflectivity[%] = DirectReflection[%] + ScatteredReflection[%]
+Reflectivity[%] = min(100, DirectReflection[%] + ScatteredReflection[%])
 ```
 
 The browser therefore presents **Reflectivity** as the primary quantity and keeps the two component channels under Advanced raw/intermediate channels.
+
+One 51×51 reference contains a point where Direct + Scattered = 100.0179668%, while the PV-2000 export reports Reflectivity = 100%. The validated compatibility rule therefore includes a 100% upper cap.
 
 Status: **validated for the current single-beam Direct+Scattered → Reflectivity family**, based on four paired reference instances.
 
