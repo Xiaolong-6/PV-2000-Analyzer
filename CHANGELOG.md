@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Added a Linear / LOG10 PCHIP choice in Dit Analysis controls. LOG10 interpolates positive log10(Dit) values and restores the fitted curve and midgap Dit to the original units; Linear remains the default. Switching modes recalculates every site and the Results summary.
+- Prevented QSS smooth wafer maps from coloring regions whose nearest measurement site is excluded by the valid-data filter.
+- Unified Dit and QSS sidebar typography across metadata, controls, results tables, and explanatory notes.
+- Removed the historical charge-derivative diagnostic from the Dit UI and chart export while retaining its calculation internally for regression checks.
+
 ## 0.2.0 — 2026-09-21
 
 - Re-architected the Dit-only prototype into the generic Semilab PV-2000 Analyzer.

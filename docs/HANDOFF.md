@@ -45,6 +45,8 @@ v0.2.2 adds:
 
 **COCOS-II caution:** the available Dit reference has `UseCocosII=false`. The COCOS-II implementation is therefore guide-derived but not yet validated against a vendor COCOS-II-on export. Do not label it vendor-exact until such a fixture is supplied.
 
+Post-baseline local updates: Dit Analysis controls now offers Linear (default) and LOG10 PCHIP fits. Changing mode recalculates all sites and the Results summary immediately. LOG10 fits positive `log10(Dit)` samples and transforms the fitted curve and midgap result back to Dit units. Raw minimum Dit is unchanged; this option has no vendor-export regression yet. The historical charge-derivative diagnostic remains in backend results for regression, but its UI toggle, plot overlay and CSV column have been removed. QSS smooth maps now leave regions nearest to filtered-out sites uncolored while retaining their diagnostic markers. Dit and QSS sidebar metadata, controls, results, and notes share a consistent reading size.
+
 ## Required commands before handoff/commit
 
 ```bash
@@ -54,7 +56,7 @@ npm run validate:qss
 git status --short --ignored
 ```
 
-Current expected tests: 6/6 PASS; QSS private pointwise validator PASS.
+Current expected tests: 10/10 PASS; QSS private pointwise validator PASS.
 
 ## Next scientific module
 
