@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fixed missing/empty XML numeric values being coerced to zero; COCOS-II Min/Max now correctly fall back instead of appearing as 0/0.
+- COCOS-II invalid settings now show an explicit error and never silently fall back to Standard COCOS.
+- Added data-derived COCOS-II suggestions (dark-accumulation EOT plus safe Vsb-window expansion), current-site accepted-interval/minimum-Vsb diagnostics, and a Use recommendation action.
+- Clarified Dit semantics: **Minimum Dit (PV2000-style)** is the discrete accepted minimum; PCHIP controls are now nested under **Optional Midgap Dit (PCHIP)** and do not alter the primary minimum.
+- Made Dit parameter rows compact with label/help and input on one line; parameter edits mark **Apply analysis settings** as pending.
+- Made the desktop left functional sidebar independently scrollable beneath the sticky toolbar so scrolling controls/metadata does not move the plot columns.
 - Refined Dit Analysis controls into contextual method-specific sections: Follow XML setting / Standard COCOS / PV2000 COCOS-II (inferred), with the older guide-based implementation moved under Advanced / legacy methods.
 - Follow XML setting now resolves `UseCocosII=true` to the inferred PV2000 COCOS-II path and shows the resolved method in the UI.
 - Kept Analysis controls open across Apply/recalculation and other Dit re-renders once the user has opened the panel; renamed the action to **Apply analysis settings**.
