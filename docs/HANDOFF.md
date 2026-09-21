@@ -118,9 +118,23 @@ git status --short --ignored
 
 Automated/local regression status before the final browser smoke: unit tests, build, the 305-point QSS private regression, and all four paired LBIC XML/CSV regressions have passed; private references were confirmed absent from tracked/build outputs. The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
 
+## Browser self-test completed
+
+The sidebar fix was exercised in headless Chromium against the built single-file dist using a deliberately overflowing synthetic LBIC-style sidebar. This test is important because the previous CSS-only assertions missed the real flex-shrink failure.
+
+Test matrix:
+
+- 1440×900 CSS px;
+- 1152×576 CSS px with device scale factor 1.5 (representative of a high-zoom desktop viewport);
+- 900×700;
+- 850×650;
+- 720×650.
+
+In every case the sidebar had real overflow (`scrollHeight > clientHeight`), every sidebar child reported `flex-shrink: 0`, a mouse-wheel event moved sidebar `scrollTop` from 0 to 500, document `scrollTop` stayed 0, and no page-level horizontal overflow was created.
+
 ## Remaining handoff tests
 
-Automated and private numerical regressions are complete for the currently available references. The remaining release-gating work is manual browser/UI smoke plus COCOS-II manual testing when a real `UseCocosII=true` XML becomes available:
+Automated/private numerical regressions and the synthetic Chromium sidebar test are complete. The remaining release-gating work is manual browser/UI smoke with real PV-2000 files plus COCOS-II manual testing when a real `UseCocosII=true` XML becomes available:
 
 1. **Responsive / zoom smoke test**
    - Desktop fine-pointer browser at approximately 100%, 125%, 150% and 175% zoom.
