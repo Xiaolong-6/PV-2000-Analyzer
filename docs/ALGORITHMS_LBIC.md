@@ -4,7 +4,7 @@
 
 The `LBICMeasurement` module is an XML-only spatial raster viewer. It is intentionally designed around **raster position × beam/wavelength × channel**, because LBIC files may contain multiple wavelengths and different combinations of current, direct/diffuse/total reflectance, EQE and IQE.
 
-The supplied development examples cover only one 984 nm beam and raw `Current`, `DirectReflection` and `ScatteredReflection`. The parser therefore discovers numeric BeamData attributes dynamically instead of hard-coding those three fields.
+The paired XML+CSV validation references currently use one beam per file and expose raw `Current`, `DirectReflection` and `ScatteredReflection`. Their concrete wavelength/power/FluxCache values are **reference values, not validation gates**. Validation is attached to the input/output relationship and units: e.g. a different wavelength or a slightly different calibrated photon flux does not by itself make the same current/FluxCache calculation unvalidated. The parser therefore discovers numeric BeamData attributes dynamically instead of hard-coding one fixture.
 
 ## Raw data and provenance
 
@@ -28,19 +28,13 @@ x = x0 + col * dx
 y = y0 - row * dy
 ```
 
-The current **X-fast, row-major, downward-Y** convention is **inferred**, not vendor-export validated. The point-count invariant `DataItem count == nx*ny` is checked before coordinates are exposed.
+The **X-fast, row-major, downward-Y** convention is vendor-validated for the paired `SquareRegionPattern` references. The validated contract is the transformation from structured `Region` + `Dimension` + acquisition index to coordinates, not one specific region size or beam setting. The point-count invariant `DataItem count == nx*ny` is checked before coordinates are exposed.
 
-### What is needed to validate orientation/order
-
-Provide one LBIC XML plus either:
-- its matching PV-2000 point export containing X/Y, or
-- a PV-2000 map screenshot/export with an unmistakably asymmetric physical feature whose orientation is known.
-
-Then compare every reconstructed coordinate and acquisition index. If a serpentine or opposite-Y case is found, geometry should become explicit per pattern rather than silently flipping data.
+This validation does not automatically cover a different pattern type, a serpentine acquisition mode, or a future XML schema with different ordering semantics. Those would need their own paired reference.
 
 ## Derived optical/electrical quantities
 
-The PV-2000 manual states that total reflectance includes direct and scattered reflectance, QE is short-circuit current normalized to laser photon flux, and IQE is determined using total reflectance. Based on that description, the module exposes these **inferred** candidates only when equivalent raw XML channels are absent:
+The PV-2000 manual states that total reflectance includes direct and scattered reflectance, QE is short-circuit current normalized to laser photon flux, and IQE is determined using total reflectance. The paired vendor references validate the following derived relationships when equivalent raw XML channels are absent and the documented units/semantics apply:
 
 ```
 Rtotal[%] = Rdirect[%] + Rdiffuse[%]
@@ -48,17 +42,18 @@ EQE[%]    = (I[µA] * 1e-6 / q / photonFlux) * 100
 IQE[%]    = EQE[%] / (1 - Rtotal[%] / 100)
 ```
 
-Signed current is preserved. IQE is invalid when `Rtotal >= 100%`. These calculations are not labelled vendor-exact.
+Signed current is preserved. IQE is blanked when `Rtotal >= 100%`; that blanking behavior is part of the validated relationship.
 
-### What is needed to validate Total R / EQE / IQE
+### Validation domain
 
-Provide a matching PV-2000 export or display that reports pointwise (preferred) or summary:
-- Total reflectance,
-- QE/EQE,
-- IQE,
-- wavelength/beam index and photon flux calibration.
+The current validation applies to the **combination of inputs, units and transformation**, not to exact fixture constants. In particular:
 
-Regression should check pointwise values and units. If the vendor uses gain/sign/offset/calibration factors, the formulas above must be revised before changing their status from **inferred** to **validated**.
+- `Rtotal = Rdirect + Rscattered` is validated for percentage reflectance channels;
+- current-to-photon-flux normalization is validated for current expressed in µA and `FluxCache` interpreted as calibrated photons/s;
+- IQE is validated for the above normalization combined with total reflectance and the electron charge constant used by the implementation;
+- changing wavelength, laser power or the numeric `FluxCache` value does not alone invalidate those relationships, provided the channel meanings and units are unchanged.
+
+A new input **kind** or semantic combination still needs regression. Examples include current in a different unit, reflectance encoded as a 0–1 fraction instead of percent, a different meaning for `FluxCache`, or a vendor correction/gain field not present in the validated references.
 
 ## Multi-wavelength support
 
@@ -82,13 +77,10 @@ Reverse-engineer against the vendor output, add pointwise regression tests, and 
 
 ## Current validation evidence
 
-The four supplied examples structurally pass:
-- 51×51 → 2601 points,
-- 101×101 → 10201 points,
-- SquareRegionPattern Region/Dimension parsing,
-- Beam key 0,
-- 984 nm / power 0.6,
-- Current + DirectReflection + ScatteredReflection,
-- FluxCache key 0.
+The four paired XML+CSV references establish vendor parity for the relationships listed above. Observed fixture values include 51×51 and 101×101 rasters, a single beam, 984 nm, power 0.6 and one calibrated FluxCache value. Those exact numbers describe the fixtures; they are **not** used as a whitelist.
 
-This is structural validation, not vendor numerical parity for coordinate orientation or derived quantities.
+What remains outside the current vendor-regressed domain:
+- true multi-beam / multi-wavelength files and any beam-interleaving edge cases;
+- non-`SquareRegionPattern` geometry/order;
+- alternative units or channel semantics;
+- calculated diffusion length.
