@@ -49,3 +49,18 @@ test('Back Surface Shift is deliberately recorded but not applied', () => {
   assert.equal(on.backSurfaceShiftRequested, true);
   assert.equal(on.backSurfaceShiftApplied, false);
 });
+
+
+test('Follow XML setting resolves COCOS-II XMLs to the inferred PV2000 path', () => {
+  const base = { sites: [], doping: 1e14, dopingType: 'n', cocosIIEOT: 100 };
+  const standard = PV2000.modules.dit.analyze({ ...base, useCocosII: false });
+  const inferred = PV2000.modules.dit.analyze({ ...base, useCocosII: true });
+  const legacy = PV2000.modules.dit.analyze({ ...base, useCocosII: true }, { cocosMode: 'guide' });
+  assert.equal(standard.options.cocosMode, 'xml');
+  assert.equal(standard.options.effectiveCocosMode, 'standard');
+  assert.equal(inferred.options.cocosMode, 'xml');
+  assert.equal(inferred.options.effectiveCocosMode, 'pv2000-re');
+  assert.equal(inferred.mode, 'PV2000 COCOS-II (inferred)');
+  assert.equal(legacy.options.effectiveCocosMode, 'guide');
+  assert.equal(legacy.mode, 'Legacy COCOS-II (guide-based)');
+});
