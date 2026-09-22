@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-21 — v0.2.2
+# Agent handoff — 2026-09-22 — v20260922.1
 
 ## Goal
 
