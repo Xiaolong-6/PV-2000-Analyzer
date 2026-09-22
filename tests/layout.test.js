@@ -95,7 +95,7 @@ test('persistent scientific explanatory paragraphs are moved into hover help',()
   assert.doesNotMatch(lbic,/<p class="note">All point X\/Y coordinates/);
   assert.match(lbic,/View \$\{help\('Default quantities mirror/);
   assert.doesNotMatch(qss,/<p class="note">These results describe the 305-point reference only/);
-  assert.doesNotMatch(qss,/<details class="panel"><summary>Algorithm notes<\/summary><p class="note">/);
+  assert.doesNotMatch(qss,/Algorithm notes/);
 });
 
 test('Vcpd-Qc is point-line and data markers stay smaller than the initial marker',()=>{

@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260922.4 — 2026-09-22
+
+- Removed the empty QSS `Algorithm notes` runtime panel. Algorithm/reference explanations remain in the project documentation and hover help, where they provide actual content.
+
 ## v20260922.3 — 2026-09-22
 
 - Fix QSS-µPCD RoundWafer coordinate reconstruction to honor XML `EdgeExclusion` before the strict circular site test, including the 100 mm / 3 mm exclusion / 2 mm pitch 1741-point case.
