@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Pointwise validator for paired private LBIC XML + PV-2000 CSV references.
+"""Validator for private LBIC XML + matching PV-2000 CSV/XPS references.
 
-Runtime stays XML-only. CSV files are development references. The validator
-recognizes the documented LBIC-SINGLE-001 and LBIC-MULTI-002 semantic families;
-ordinary numeric wavelength, flux and geometry values are not whitelist keys.
+Runtime stays XML-only. CSV/XPS files are development references. The validator
+recognizes LBIC-SINGLE-001, LBIC-MULTI-002 and LBIC-REFLECTANCE-003; ordinary
+numeric wavelength, flux and geometry values are not whitelist keys.
 """
 from __future__ import annotations
 
 import csv
 import glob
+import html
 import math
 import re
 import statistics
 import sys
 import xml.etree.ElementTree as ET
+import zipfile
 from pathlib import Path
 
 Q_PV2000 = 1.602e-19
@@ -24,6 +26,7 @@ TOL_CURRENT = 1e-12
 TOL_REFLECTIVITY = 1e-10
 TOL_IQE = 1e-10
 TOL_SUMMARY = 1e-10
+TOL_XPS_ROUNDED_SUMMARY = 0.0051
 
 
 def lname(tag: str) -> str:
@@ -65,6 +68,15 @@ def finite_float(s: str):
     except (TypeError, ValueError):
         return math.nan
     return v if math.isfinite(v) else math.nan
+
+
+def flag_state(value: str):
+    v = str(value or "").strip().lower()
+    if v in {"true", "1", "yes"}:
+        return True
+    if v in {"false", "0", "no"}:
+        return False
+    return None
 
 
 def max_abs(a, b, allow_nan=False):
@@ -196,14 +208,19 @@ def parse_xml(path: Path):
         key = int(num(child(item, "Key"), "int", -1))
         flux[key] = num(child(item, "Value"), "double")
 
+    measure_current = flag_state(text(m, "MeasureCurrent", ""))
+    measure_direct = flag_state(text(m, "MeasureDirectReflectance", ""))
+    measure_diffuse = flag_state(text(m, "MeasureScatteredReflectance", ""))
+    reflectance_only = measure_current is False and measure_direct is True and measure_diffuse is True
+
     for key in beam_keys:
         if key not in lasers:
             raise AssertionError(f"NEW PROFILE: LaserSettings row missing for beam {key}")
-        if not math.isfinite(flux.get(key, math.nan)) or flux[key] <= 0:
+        if not reflectance_only and (not math.isfinite(flux.get(key, math.nan)) or flux[key] <= 0):
             raise AssertionError(f"NEW PROFILE: missing/invalid FluxCache[{key}]={flux.get(key)!r}")
 
     unit = text(m, "MicroAmps", "")
-    if unit.replace("μ", "µ").lower() not in {"µa", "ua"}:
+    if not reflectance_only and unit.replace("μ", "µ").lower() not in {"µa", "ua"}:
         raise AssertionError(f"NEW PROFILE: current unit={unit!r}")
 
     pat = child(m, "Pattern")
@@ -225,7 +242,7 @@ def parse_xml(path: Path):
         dx = width / (nx - 1) if nx > 1 else 0.0
         dy = height / (ny - 1) if ny > 1 else 0.0
         coords = [(x0 + col * dx, y0 + row * dy) for row in range(ny) for col in range(nx)]
-        profile = "LBIC-SINGLE-001"
+        profile = "LBIC-REFLECTANCE-003" if reflectance_only else "LBIC-SINGLE-001"
     elif pattern_type == "MapPattern" and target_type == "PseudoSquareCell":
         if len(beam_keys) < 2:
             raise AssertionError(f"NEW PROFILE: PseudoSquareCell multi-beam reference expects >=2 beams, got {len(beam_keys)}")
@@ -252,20 +269,25 @@ def parse_xml(path: Path):
         scattered = [row[key]["ScatteredReflection"] for row in point_beams]
         optical = [a + b for a, b in zip(direct, scattered)]
         reflectivity = [max(0.0, min(100.0, r)) for r in optical]
-        eqe = [eqe_percent(v, flux[key]) for v in current]
-        iqe = [iqe_percent(qe, r) for qe, r in zip(eqe, optical)]
-        beams[key] = {
+        beam = {
             "laser": lasers[key],
-            "photon_flux": flux[key],
-            "current": current,
             "reflectivity": reflectivity,
-            "iqe": iqe,
         }
+        if not reflectance_only:
+            eqe = [eqe_percent(v, flux[key]) for v in current]
+            iqe = [iqe_percent(qe, r) for qe, r in zip(eqe, optical)]
+            beam.update({
+                "photon_flux": flux[key],
+                "current": current,
+                "iqe": iqe,
+            })
+        beams[key] = beam
 
     return {
         "profile": profile,
         "coords": coords,
         "beams": beams,
+        "reflectance_only": reflectance_only,
     }
 
 
@@ -328,6 +350,78 @@ def vendor_beam(vendor, wavelength):
     }
 
 
+
+def normalize_filename(value: str):
+    return re.sub(r"[^a-z0-9]+", "", value.lower())
+
+
+def matching_xps_files(xml_path: Path):
+    base = normalize_filename(xml_path.stem)
+    return sorted(
+        path for path in xml_path.parent.glob("*.xps")
+        if normalize_filename(path.stem).startswith(base)
+    )
+
+
+def parse_vendor_xps_summary(path: Path):
+    with zipfile.ZipFile(path) as archive:
+        page_names = [
+            name for name in archive.namelist()
+            if name.endswith("Documents/1/Pages/1.fpage/[0].piece")
+            or "Documents/1/Pages/1.fpage/[0].piece" in name
+        ]
+        if len(page_names) != 1:
+            raise AssertionError(f"expected one XPS first-page piece, got {page_names}")
+        page = archive.read(page_names[0]).decode("utf-8-sig", errors="ignore")
+
+    strings = [html.unescape(value) for value in re.findall(r'UnicodeString="([^"]*)"', page)]
+    if not any("Reflectivity" in value for value in strings):
+        raise AssertionError("XPS does not identify a Reflectivity result")
+
+    labels = ["Average", "Median", "Stdev", "Minimum", "Maximum"]
+    for i in range(len(strings) - len(labels)):
+        if strings[i:i + len(labels)] != labels:
+            continue
+        values = []
+        for value in strings[i + len(labels):]:
+            parsed = finite_float(value)
+            if math.isfinite(parsed):
+                values.append(parsed)
+                if len(values) == 5:
+                    return values
+            elif values:
+                break
+    raise AssertionError("Reflectivity summary statistics not found in XPS")
+
+
+def validate_reflectance_xps(xml_path: Path, xps_paths):
+    x = parse_xml(xml_path)
+    if x["profile"] != "LBIC-REFLECTANCE-003":
+        raise AssertionError(f"expected LBIC-REFLECTANCE-003, got {x['profile']}")
+    if len(x["beams"]) != 1:
+        raise AssertionError(f"expected one reflectance beam, got {len(x['beams'])}")
+
+    reflectivity = next(iter(x["beams"].values()))["reflectivity"]
+    calculated = summary(reflectivity)
+    checked = 0
+    worst = 0.0
+    for xps_path in xps_paths:
+        expected = parse_vendor_xps_summary(xps_path)
+        error = max_abs(calculated, expected)
+        if error > TOL_XPS_ROUNDED_SUMMARY:
+            raise AssertionError(
+                f"{xps_path.name}: Reflectivity summary max error={error:g}; "
+                f"tolerance={TOL_XPS_ROUNDED_SUMMARY:g}"
+            )
+        worst = max(worst, error)
+        checked += 1
+
+    return (
+        f"{xml_path.name}: LBIC-REFLECTANCE-003; points={len(x['coords'])}; "
+        f"XPS={checked}; Reflectivity summary max error={worst:.4g} %-point"
+    )
+
+
 def validate_pair(xml_path: Path, csv_path: Path):
     x = parse_xml(xml_path)
     v = parse_vendor_csv(csv_path)
@@ -384,13 +478,18 @@ def main():
 
     ok = True
     for xml_path in raw:
-        csv_path = xml_path.with_suffix(".csv")
-        if not csv_path.exists():
-            print(f"FAIL {xml_path.name}: matching vendor CSV missing: {csv_path.name}")
-            ok = False
-            continue
         try:
-            msg = validate_pair(xml_path, csv_path)
+            parsed = parse_xml(xml_path)
+            if parsed["profile"] == "LBIC-REFLECTANCE-003":
+                xps_paths = matching_xps_files(xml_path)
+                if not xps_paths:
+                    raise AssertionError("matching PV-2000 Reflectivity XPS missing")
+                msg = validate_reflectance_xps(xml_path, xps_paths)
+            else:
+                csv_path = xml_path.with_suffix(".csv")
+                if not csv_path.exists():
+                    raise AssertionError(f"matching vendor CSV missing: {csv_path.name}")
+                msg = validate_pair(xml_path, csv_path)
         except Exception as exc:
             label = "NEW PROFILE" if "NEW PROFILE:" in str(exc) else "FAIL"
             print(f"{label} {xml_path.name}: {type(exc).__name__}: {exc}")
