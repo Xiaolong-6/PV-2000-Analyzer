@@ -1,0 +1,50 @@
+name: Share PV-2000 data
+description: Provide a matching PV-2000 XML + vendor output to extend or validate analyzer support.
+title: "[Data] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing a real reference case. A matching XML + PV-2000 export/display is the most useful evidence for adding or validating a measurement/result path.
+  - type: dropdown
+    id: measurement
+    attributes:
+      label: Measurement family
+      options:
+        - Dit / COCOS
+        - QSS-µPCD
+        - LBIC
+        - Other / unsupported
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: What should the analyzer support or reproduce?
+      placeholder: Result, channel, algorithm path, map, export, or behavior you want added/checked.
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Reference files
+      description: Drag a ZIP here containing the raw PV-2000 XML, the matching exported CSV/XPS (or equivalent vendor result), and preferably a screenshot of the selected PV-2000 result/settings. You may instead link a data-only pull request under reference_data/.
+      placeholder: Drop files here or paste links.
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Relevant PV-2000 settings
+      placeholder: Include settings that may affect interpretation. Leave blank only if none are relevant.
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Publication / pairing checks
+      options:
+        - label: The XML and vendor output belong to the same measurement/result context.
+          required: true
+        - label: I have the right to share the submitted files publicly on GitHub.
+          required: true
+        - label: Any anonymization is limited to identifiers/names and does not silently alter scientific values.
+          required: true

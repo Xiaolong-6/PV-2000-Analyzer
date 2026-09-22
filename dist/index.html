@@ -95,9 +95,44 @@
   .feature-tag{font-size:9.5px;padding:3px 7px}
   .drop{padding:26px 18px}
 }
+
+/* Project provenance / contribution links */
+.icon-sprite{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+.project-strip{display:flex;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;margin-top:15px;padding-top:13px;border-top:1px solid var(--border)}
+.project-link{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:5px 9px;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--panel) 82%,var(--bg));color:var(--muted);font-size:10px;font-weight:650;line-height:1;text-decoration:none;box-shadow:0 1px 0 rgba(0,0,0,.04);transition:transform .14s ease,border-color .14s ease,color .14s ease,background .14s ease}
+a.project-link:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--blue) 45%,var(--border));color:var(--text);background:color-mix(in srgb,var(--blue) 7%,var(--panel))}
+.project-icon{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.project-local{cursor:default;color:var(--good)}
+.project-live{color:var(--good)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 14%,transparent)}
+.project-commit code,.footer-commit code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:9.5px;color:inherit}
+.app-footer{display:flex;justify-content:center;align-items:center;gap:11px;flex-wrap:wrap;min-height:38px;margin-top:4px;padding:8px 12px;border-top:1px solid var(--border);color:var(--muted);font-size:9.5px}
+.app-footer a{display:inline-flex;align-items:center;gap:4px;color:var(--muted);text-decoration:none}
+.app-footer a:hover{color:var(--text)}
+.footer-brand{font-weight:700;color:var(--text)}
+.app-footer .project-icon{width:11px;height:11px}
+@media(max-width:430px){.project-strip{gap:5px;margin-top:12px;padding-top:11px}.project-link{min-height:27px;padding:5px 8px;font-size:9.5px}.app-footer{gap:8px}}
+@media(prefers-reduced-motion:reduce){.project-link{transition:none}a.project-link:hover{transform:none}}
 </style></head><body>
-<div id="landing" class="landing"><div class="landing-card"><h1>PV-2000 Analyzer</h1><div class="feature-tags" aria-label="Supported analysis modules"><span class="feature-tag">Dit / COCOS</span><span class="feature-tag">QSS-µPCD</span><span class="feature-tag">LBIC</span><span class="feature-tag feature-tag-muted">Generic XML inspector</span></div><div id="dropZone" class="drop"><div class="drop-title">Drop a PV-2000 XML result here</div><label class="btn">Open XML<input id="openLanding" type="file" accept=".xml,text/xml,application/xml"></label><div class="privacy">Local analysis only.</div></div></div></div>
-<div id="app" class="hidden"><div class="toolbar"><div class="brand">PV-2000 Analyzer</div><div id="measurementType" class="type"></div><label class="btn">Open XML<input id="openTop" type="file" accept=".xml,text/xml,application/xml"></label><div id="fileName" class="filename"></div><div id="status" class="status"></div><div class="grow"></div><button id="themeBtn" title="Toggle the interface between light and dark themes. The initial theme follows the operating-system preference.">Theme</button></div><main class="content"><div id="moduleHost"></div></main></div>
+<svg class="icon-sprite" aria-hidden="true">
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-repo" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M4 5.5v16M8 7h7"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 24 24"><circle cx="6" cy="5" r="2"/><circle cx="18" cy="7" r="2"/><circle cx="6" cy="19" r="2"/><path d="M6 7v10M8 7h4a6 6 0 0 1 6 6v-4"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5"/><path d="m8 9 4-4 4 4"/><path d="M5 14v5h14v-5"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="12" rx="5"/><path d="M9 7V5m6 2V5M4 11h3m10 0h3M4 16h3m10 0h3"/></symbol>
+  <symbol id="i-commit" viewBox="0 0 24 24"><path d="M2 12h6m8 0h6"/><circle cx="12" cy="12" r="4"/></symbol>
+</svg>
+<div id="landing" class="landing"><div class="landing-card"><h1>PV-2000 Analyzer</h1><div class="feature-tags" aria-label="Supported analysis modules"><span class="feature-tag">Dit / COCOS</span><span class="feature-tag">QSS-µPCD</span><span class="feature-tag">LBIC</span><span class="feature-tag feature-tag-muted">Generic XML inspector</span></div><div id="dropZone" class="drop"><div class="drop-title">Drop a PV-2000 XML result here</div><label class="btn">Open XML<input id="openLanding" type="file" accept=".xml,text/xml,application/xml"></label></div>
+<div class="project-strip" aria-label="Project status and links">
+  <span class="project-link project-local" title="Files are processed locally in your browser and are not uploaded."><svg class="project-icon"><use href="#i-lock"/></svg>Local</span>
+  <a class="project-link project-live" href="https://xiaolong-6.github.io/PV-2000-Analyzer/" target="_blank" rel="noopener" title="Open the deployed PV-2000 Analyzer"><span class="status-dot"></span>Live</a>
+  <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer" target="_blank" rel="noopener" title="Open the project repository"><svg class="project-icon"><use href="#i-repo"/></svg>GitHub</a>
+  <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" title="How to contribute code or reference data"><svg class="project-icon"><use href="#i-branch"/></svg>Contribute</a>
+  <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml" target="_blank" rel="noopener" title="Share a matching PV-2000 XML + vendor export + screenshot"><svg class="project-icon"><use href="#i-upload"/></svg>Share data</a>
+  <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new" target="_blank" rel="noopener" title="Report a problem or request a feature"><svg class="project-icon"><use href="#i-bug"/></svg>Report</a>
+  <a class="project-link project-commit" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/commits/main" target="_blank" rel="noopener" title="Build commit local"><svg class="project-icon"><use href="#i-commit"/></svg><code>local</code></a>
+</div></div></div>
+<div id="app" class="hidden"><div class="toolbar"><div class="brand">PV-2000 Analyzer</div><div id="measurementType" class="type"></div><label class="btn">Open XML<input id="openTop" type="file" accept=".xml,text/xml,application/xml"></label><div id="fileName" class="filename"></div><div id="status" class="status"></div><div class="grow"></div><button id="themeBtn" title="Toggle the interface between light and dark themes. The initial theme follows the operating-system preference.">Theme</button></div><main class="content"><div id="moduleHost"></div></main><footer class="app-footer"><span class="footer-brand">PV-2000 Analyzer</span><a href="https://github.com/Xiaolong-6/PV-2000-Analyzer" target="_blank" rel="noopener">GitHub</a><a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contribute</a><a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml" target="_blank" rel="noopener">Share data</a><a class="footer-commit" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/commits/main" target="_blank" rel="noopener" title="Build commit local"><svg class="project-icon"><use href="#i-commit"/></svg><code>local</code></a></footer></div>
 <script>// src/core/stats.js
 (function(root){
   const PV=root.PV2000=root.PV2000||{};
