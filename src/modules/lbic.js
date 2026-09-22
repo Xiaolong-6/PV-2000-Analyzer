@@ -175,7 +175,8 @@
       raw:parsed
     };
   }
-  const rawReflectance=(direct,diffuse)=>Number.isFinite(direct)&&Number.isFinite(diffuse)?direct+diffuse:NaN;\n  const totalReflectance=(direct,diffuse)=>{const v=rawReflectance(direct,diffuse);return Number.isFinite(v)?Math.max(0,Math.min(100,v)):NaN};
+  const rawReflectance=(direct,diffuse)=>Number.isFinite(direct)&&Number.isFinite(diffuse)?direct+diffuse:NaN;
+  const totalReflectance=(direct,diffuse)=>{const v=rawReflectance(direct,diffuse);return Number.isFinite(v)?Math.max(0,Math.min(100,v)):NaN};
   const eqePercent=(currentMicroA,photonFlux)=>Number.isFinite(currentMicroA)&&Number.isFinite(photonFlux)&&photonFlux>0?(currentMicroA*1e-6/Q_PV2000/photonFlux)*100:NaN;
   const iqePercent=(eqe,totalR)=>{if(!Number.isFinite(eqe)||!Number.isFinite(totalR)||totalR>=100)return NaN;const v=eqe/(1-totalR/100);return Number.isFinite(v)&&v<=100?v:NaN};
   function referenceFamily(raw,laser,d){
