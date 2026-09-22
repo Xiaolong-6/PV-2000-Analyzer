@@ -18,7 +18,19 @@ Build a general **Semilab PV-2000 Analyzer**: the user drops any PV-2000 result 
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale;
 - LBIC Distribution axis swap, matching the existing QSS Distribution interaction;
 - long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
-- real user/vendor files protected under ignored `private/reference/`.
+- confidential/local user/vendor files protected under ignored `private/reference/`;
+- opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
+
+## Community reference contribution workflow
+
+The repository now supports two deliberately separate reference-data paths:
+
+- `private/reference/` remains local-only for confidential or not-yet-cleared XML/CSV/XPS/screenshots;
+- `reference_data/` is the opt-in public area for contributors who explicitly intend to publish a paired PV-2000 reference case and have the right to do so.
+
+A contributor does not need to write code. A data-only PR containing raw XML + matching PV-2000 export and preferably a screenshot is useful evidence for a new measurement/result combination. Developers may branch from current `main`, add implementation + regression coverage + the public case, and request merge. See `CONTRIBUTING.md` and `reference_data/README.md`.
+
+This does not weaken the reference-profile rule: numeric parameter changes inside an established semantic path are not automatically NEW PROFILE, while genuinely new schema/algorithm/channel/result/unit/validity paths require matching vendor evidence before the validation envelope expands.
 
 ## QSS-µPCD: reference export now available
 
