@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.15 — 2026-09-22
+
+- Added inferred QSS-µPCD `HighDensityPattern` coordinate support using explicit normalized XML `Coefficients`, covering observed 15×15 and 20×20 RoundWafer maps plus 35×35 SquareCell maps without changing the existing validated MapPattern/SquareRegionPattern paths.
+- Map `HighDensityPattern + SquareCell` coefficients to the EdgeExclusion-adjusted rectangle; map `HighDensityPattern + RoundWafer` to the inscribed square of the EdgeExclusion-adjusted circle so scheduled sites remain on-wafer. This coordinate path remains inferred pending a matching PV-2000 X/Y export.
+- Added previous/next XML controls around the toolbar `Open XML` button. After one folder authorization, adjacent XML files can be opened rapidly in natural filename order; browsers without the File System Access API use a folder-input fallback.
+
 ## v20260922.14 — 2026-09-22
 
 - Added **Material: Silicon (Si) / Germanium (Ge)** to Dit Analysis controls, defaulting to Si without inferring material from filenames or substrate names.
