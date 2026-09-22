@@ -46,7 +46,7 @@ Current analysis routing:
 - **Follow XML setting** is the normal default.
 - XML `UseCocosII=false` resolves to **Standard COCOS**.
 - XML `UseCocosII=true` resolves to **PV2000 COCOS-II (inferred)**.
-- **Legacy COCOS-II (guide-based)** remains only under Advanced / legacy methods for development comparison.
+- the obsolete guide-based COCOS-II path has been removed from the runtime/UI.
 
 The inferred PV2000 path comes from same-raw-data parameter sweeps. It interprets vendor EOT as Å, reconstructs signed Vsb and applies configurable Min/Max Vsb when selecting minimum Dit. It is explicitly labelled **inferred**, not vendor-exact. Back Surface Shift is recorded but intentionally not applied because the supplied True/False reprocessing produced identical outputs.
 
@@ -56,11 +56,10 @@ Dit Analysis controls are contextual and compact:
 - Standard COCOS hides COCOS-II-only settings;
 - shared Flatband accumulation points remain visible;
 - **Minimum Dit (PV2000-style)** is the accepted discrete minimum and does not use PCHIP;
-- optional PCHIP controls are nested under **Optional Midgap Dit (PCHIP)** and affect Midgap Dit / fitted curve only;
+- **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox; disabling it removes Midgap Dit / the green fit while leaving Minimum Dit unchanged;
 - COCOS-II and PCHIP can be combined because PCHIP runs after COCOS-II Vsb reconstruction and acceptance masking;
 - data-derived COCOS-II suggestions are shown but do not silently overwrite XML/user values;
 - invalid COCOS-II settings are shown as errors and no longer fall back silently to Standard COCOS;
-- the legacy guide-based method is hidden under Advanced / legacy methods;
 - Follow XML displays the resolved method;
 - Apply/recalculation, method changes, PCHIP changes and site re-renders preserve the Analysis controls open state once the user has opened it.
 
@@ -152,7 +151,7 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - Change EOT / Min Vsb / Max Vsb, Apply, and verify Vsb/Dit actually change where expected.
    - Confirm invalid `Max Vsb <= Min Vsb` shows an error with no silent Standard-Cocos fallback.
    - Confirm Analysis controls stays open after Apply/re-render.
-   - Change PCHIP scale/outlier limit and verify **Minimum Dit (PV2000-style)** stays unchanged while Midgap Dit / fitted curve may change.
+   - Verify Optional Midgap Dit is enabled by default; uncheck it and confirm Midgap Dit / green PCHIP fit disappear while **Minimum Dit (PV2000-style)** stays unchanged. Re-enable it, then change PCHIP scale/outlier limit and verify only the optional PCHIP result changes.
    - Exercise all four Dit plots: wheel zoom, X-only/Y-only axis zoom and double-click auto-scale. Confirm Vcpd–Qc is point-line and ordinary data markers are smaller than the initial-condition marker.
 
 3. **LBIC paired-reference regression**
