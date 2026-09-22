@@ -328,7 +328,7 @@
       if(!bins.length)return bins;
       
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
-      autoCount=[0,Math.max(...bins.map(b=>b.valid+b.invalid),1)],
+      autoCount=[0,Math.max(...bins.map(b=>b.valid),1)],
       mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
       cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),
       plotW=W-p.l-p.r,
@@ -370,29 +370,22 @@
       ctx.clip();
       
     bins.forEach(b=>{
-      const mid=(b.lo+b.hi)/2;if(swapped){
+      if(swapped){
         const y1=H-p.b-metricPos(b.lo)*plotH,
         y2=H-p.b-metricPos(b.hi)*plotH,
         xBase=p.l+countPos(0)*plotW,
-        xInv=p.l+countPos(b.invalid)*plotW,
-        xTot=p.l+countPos(b.invalid+b.valid)*plotW;
-          ctx.fillStyle=css('--soft');
-          ctx.globalAlpha=.42;
-          ctx.fillRect(Math.min(xBase,xInv),Math.min(y1,y2),Math.abs(xInv-xBase),Math.max(1,Math.abs(y2-y1)-1));
-          ctx.globalAlpha=1;
-          ctx.fillStyle=barColor(b);
-          ctx.fillRect(Math.min(xInv,xTot),Math.min(y1,y2),Math.abs(xTot-xInv),Math.max(1,Math.abs(y2-y1)-1))}else{
+        xValid=p.l+countPos(b.valid)*plotW;
+        ctx.fillStyle=barColor(b);
+        ctx.fillRect(Math.min(xBase,xValid),Math.min(y1,y2),Math.abs(xValid-xBase),Math.max(1,Math.abs(y2-y1)-1));
+      }else{
         const x1=p.l+metricPos(b.lo)*plotW,
         x2=p.l+metricPos(b.hi)*plotW,
         yBase=H-p.b-countPos(0)*plotH,
-        yInv=H-p.b-countPos(b.invalid)*plotH,
-        yTot=H-p.b-countPos(b.invalid+b.valid)*plotH;
-          ctx.fillStyle=css('--soft');
-          ctx.globalAlpha=.42;
-          ctx.fillRect(Math.min(x1,x2),Math.min(yBase,yInv),Math.max(1,Math.abs(x2-x1)-1),Math.abs(yInv-yBase));
-          ctx.globalAlpha=1;
-          ctx.fillStyle=barColor(b);
-          ctx.fillRect(Math.min(x1,x2),Math.min(yInv,yTot),Math.max(1,Math.abs(x2-x1)-1),Math.abs(yTot-yInv))}});
+        yValid=H-p.b-countPos(b.valid)*plotH;
+        ctx.fillStyle=barColor(b);
+        ctx.fillRect(Math.min(x1,x2),Math.min(yBase,yValid),Math.max(1,Math.abs(x2-x1)-1),Math.abs(yValid-yBase));
+      }
+    });
           
       
     if(key===filterKey){ctx.strokeStyle=css('--yellow');
@@ -544,7 +537,7 @@
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
       </aside><section class="plots">
         <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Valid counts use the wafer-map color scale; gray counts are excluded. Yellow lines show active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
       </section><section class="plots">
         <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
 
