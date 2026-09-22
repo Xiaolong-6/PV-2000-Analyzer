@@ -156,13 +156,13 @@ See `docs/ALGORITHMS_ISC.md`, `docs/ALGORITHMS_VCPD.md`, `docs/REFERENCE_PROFILE
 
 ## LBIC status
 
-LBIC now has two paired vendor-regression families.
+LBIC now has three vendor-regression families.
 
 **LBIC-SINGLE-001**
 
 - one iteration / one beam;
 - `SquareRegionPattern`;
-- µA Current + DirectReflection + ScatteredReflection;
+- active µA Current + DirectReflection + ScatteredReflection;
 - finite positive photon FluxCache;
 - vendor Current / Reflectivity / IQE result path;
 - four paired 51×51 / 101×101 references with exact X/Y reconstruction.
@@ -171,31 +171,51 @@ LBIC now has two paired vendor-regression families.
 
 - one iteration / multiple independent beams;
 - `MapPattern + PseudoSquareCell`;
-- the same per-beam raw/result path;
+- the same active per-beam raw/result path;
 - one paired **54,449-point**, four-beam reference (984 / 952 / 855 / 656 nm);
 - target Size 125 × 125 mm, Diameter 150 mm, EdgeExclusion 3 mm, Pitch 0.5 × 0.5 mm in the supplied instance;
 - scheduled geometry is the intersection of the adjusted rectangle (±59.5 mm) and adjusted circle (radius 72 mm);
 - reconstructed X/Y match all 54,449 vendor rows exactly, from (-40.5, -59.5) mm to (40.5, 59.5) mm.
 
+**LBIC-REFLECTANCE-003**
+
+- one iteration / one beam;
+- `SquareRegionPattern`;
+- `MeasureCurrent=false`, Direct reflectance=true, Scattered reflectance=true;
+- current corpus: **62 XML files**, spanning 656 / 855 / 984 nm;
+- BeamData still contain `Current=0` at every site, but this is an inactive placeholder and must not appear as a measured result;
+- **44 XML measurements** have **60 matching PV-2000 XPS Reflectivity printouts**;
+- Direct + Scattered reproduces XPS Average / Median / sample Stdev / Min / Max with <0.005 %-point maximum discrepancy, i.e. vendor display rounding;
+- default UI result is Reflectivity; no EQE/IQE is synthesized when current measurement is disabled.
+
 Established result behavior:
 
 - displayed Reflectivity is `clamp(DirectReflection + ScatteredReflection, 0, 100)`;
-- the new reference establishes the lower clamp through four negative 656 nm raw-reflectivity sites that PV-2000 displays as 0%;
-- IQE uses the **unclamped raw optical sum** in `EQE/(1-Rraw)`; this is required to reproduce those same negative-reflectivity sites;
+- current-enabled families retain Current / Reflectivity / IQE;
+- reflectance-only files expose Reflectivity by default and Direct/Scattered under Advanced;
+- explicitly disabled BeamData concepts are suppressed even if placeholder numeric attributes are present;
+- IQE uses the **unclamped raw optical sum** in `EQE/(1-Rraw)` only for current-enabled families;
 - `Rraw >= 100%`, calculated IQE >100%, and other non-computable cases are unavailable; vendor `Ud.` is represented as unavailable;
-- `q = 1.602e-19 C` remains required for vendor parity;
-- finite multi-beam IQE values reproduce the supplied CSV to approximately 1e-13 percentage-point scale;
+- `q = 1.602e-19 C` remains required for current-enabled vendor parity;
 - sample standard deviation and finite-only summary behavior remain unchanged.
 
-UI/geometry changes in this branch:
+Partial acquisition handling:
 
-- pseudo-square LBIC maps reconstruct instead of showing a blank geometry error;
-- nominal PseudoSquareCell outline and dashed EdgeExclusion boundary are drawn at equal physical X/Y scale;
-- raster cells are clipped to the scheduled pseudo-square;
-- X/Y profiles select sites by physical coordinate equality, so masked rows/columns do not depend on dense rectangular indexing;
-- Measurement metadata shows target geometry, pitch, reconstructed point count and the active validated profile ID.
+- one supplied 61×61 reflectance recipe contains only **2814 / 3721** DataItems;
+- the runtime now maps available points onto the leading X-fast / ascending-Y SquareRegionPattern schedule so the partial map remains visible;
+- that incomplete-prefix coordinate interpretation is labelled **partial / inferred** and is excluded from validated-family matching until matching vendor coordinate evidence is available.
 
-Validation remains scoped to semantic input/output families rather than exact numeric values. Within `LBIC-MULTI-002`, beam count, wavelength, power, finite FluxCache and pseudo-square numeric geometry may vary when the independent per-beam channel/result path is unchanged.
+UI behavior added here:
+
+- Measurement metadata shows `Reflectance only` when the XML flags select that path;
+- reflectance-only scans open directly on Reflectivity rather than a meaningless all-zero Current map;
+- Results summary / Selected pixel / export no longer synthesize disabled Current, EQE or IQE;
+- complete reflectance-only files show `validated · LBIC-REFLECTANCE-003`;
+- partial SquareRegion scans remain usable but visibly identified as inferred.
+
+Validation remains scoped to semantic input/output families rather than exact numeric values. Ordinary wavelength/power/complete SquareRegion geometry changes remain inside `LBIC-REFLECTANCE-003` when the measurement flags and Direct+Scattered → Reflectivity result path are unchanged.
+
+The LBIC private validator now supports both same-basename XML+CSV current-enabled references and matching Reflectivity XPS printouts for reflectance-only cases. Runtime still reads XML only.
 
 Diffusion length (DL) remains unsupported as a calculated quantity. The supplied multi-beam CSV contains DL, but the XML does not expose a raw DL channel and the vendor DL algorithm has not been established.
 
