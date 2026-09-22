@@ -33,7 +33,7 @@ The canonical project version is the single line in root `VERSION`. Do not use s
 2. Detect measurement type from `Measurement/@xsi:type`; never infer it from filenames.
 3. Add each new result type as an isolated module registered through `PV2000.registry`.
 4. Shared XML/statistics/geometry/theme/export/UI logic belongs in `src/core/`; do not duplicate common HTML escaping, help markup or tooltip helpers in measurement modules.
-5. Preserve the responsive scientific-workspace layout: wide screens use sidebar + two analysis columns; at medium widths (<=1200 CSS px) keep the sidebar and stack the two analysis columns into one scrollable column; narrow/mobile layouts collapse to one column. Do not imitate the legacy PV-2000 application. Plot axis-range controls must remain floating overlays inside the chart area rather than taking permanent vertical layout space. LBIC uses a two-column right workspace (Map/Distribution above, X/Y profiles below), with Selected pixel and Channel provenance in the sidebar; QSS Current dataset also belongs in the sidebar.
+5. Preserve the responsive scientific-workspace layout: wide screens use sidebar + two analysis columns; at medium widths (<=1200 CSS px) keep the sidebar and stack the two analysis columns into one scrollable column; narrow/mobile layouts collapse to one column. Do not imitate the legacy PV-2000 application. Plot axis-range controls must remain compact header popovers immediately before Export rather than taking permanent chart height. LBIC uses a two-column right workspace (Map/Distribution above, X/Y profiles below), with Selected pixel and Channel provenance in the sidebar; QSS Current dataset also belongs in the sidebar.
 6. Every chart must expose a data export and shared zoom behavior: wheel in the plot zooms both axes, wheel over one axis zooms only that axis, and double-click restores auto scale.
 7. Explain scientific quantities/controls with hover text (`title`/`.help`) rather than permanent instructional clutter.
 8. Unknown XML types must fall back to Generic Inspector.
@@ -50,7 +50,7 @@ Public files under `reference_data/` additionally require the exact PR-author ac
 
 ## Reference-profile rule
 
-Validation is attached to an explicit **reference envelope**, not to a measurement-type name in general. This applies to Dit, QSS-µPCD, LBIC and every future analyzer.
+Validation is attached to an explicit **reference envelope**, not to a measurement-type name in general. This applies to Dit, QSS-µPCD, Dual QSS, JZero, ISC/VCPD, LBIC and every future analyzer.
 
 A **reference instance** is one concrete XML/export pair. A **validated profile family** is the input→output algorithm path established by one or more reference instances. Ordinary numeric parameter changes inside the same path are not automatically NEW PROFILE. For example, changing raster dimensions/origin/pitch, wavelength, laser power or FluxCache value does not by itself create a new LBIC profile when the same single-beam channel/result path and formulas apply.
 
@@ -85,6 +85,12 @@ Do not simplify Dit below the functionality of the restored modular analyzer / `
 A QSS map can represent a full wafer, quarter wafer, coupon, or partially invalid field. Never assume every geometrically scheduled point belongs to the sample. For `MapPattern + RoundWafer`, reconstruct the scheduled radius from `Diameter/2 - EdgeExclusion` when EdgeExclusion is present before the strict circular site test; do not use nominal wafer radius alone. Keep the user-controlled validity range and apply its mask consistently to summary statistics, derived metrics, maps and exports. Smooth maps must not extrapolate invalid/unsupported regions across the whole nominal wafer.
 
 
+## JZero validity rule
+
+The current `JZERO-MAP-001` family is a dedicated `JZeroMeasurement` path with two `UpcdIterationData` lifetime maps, two QSS intensities, `MapPattern + PseudoSquareCell`, and seven vendor outputs: Basore J0, two τeff.d channels, two Smax channels and two Implied Voc channels. Preserve site pairing by iteration index and X-fast pseudo-square coordinate order. Basore J0 and Smax are pointwise vendor-regressed; JZero Implied Voc uses its own documented compatibility calibration and must not silently reuse the general QSS-map `ni(T)` model.
+
+Another pattern/target encoding, iteration count/order, raw data schema or result set is **NEW PROFILE** until paired vendor output is supplied. Do not map `JZeroMeasurement` to `QssUpcdMeasurement` merely because both contain `UpcdDataItem` lifetime values.
+
 ## ISC validity rule
 
 The current validated ISC family is one iteration of repeated `VcpdDark` / `VcpdLight` readings using `MapPattern + SquareCell`, finite `VcpdOffset` and `VsbCorrectionFactor`, and vendor outputs Vcpd Dark / Vcpd Light / Vsb. For raw means `D` and `L`, offset `O`, and factor `F`, preserve the paired-reference equations `Vcpd Dark = D-O`, `Vsb = F(D-L)`, and `Vcpd Light = Vcpd Dark-Vsb`.
@@ -95,8 +101,8 @@ Numeric pitch/target/edge/read-count/offset/factor changes remain within this fa
 
 LBIC files may contain different combinations of beams/wavelengths and current/reflectance/QE channels. Do not hard-code the current single-beam examples as the parser schema. Preserve unknown numeric BeamData attributes, map BeamData Key to laser/FluxCache index, and prefer raw XML Total R/EQE/IQE over calculated candidates.
 
-Four paired XML+CSV reference instances establish the current validated LBIC family: one iteration, one beam, `SquareRegionPattern`, µA current, raw Current + DirectReflection + ScatteredReflection, finite positive photon FluxCache, and vendor outputs Current + Reflectivity + IQE. Within this family, coordinate reconstruction, Reflectivity = min(100%, Direct + Scattered), and IQE using q=1.602e-19 C with >100% blanking are validated.
+Two LBIC profile families are currently validated. `LBIC-SINGLE-001` covers the one-iteration, single-beam `SquareRegionPattern` path. `LBIC-MULTI-002` independently covers one-iteration multi-beam `MapPattern + PseudoSquareCell`. Both use µA current, raw Current + DirectReflection + ScatteredReflection, finite positive per-beam photon FluxCache, and vendor Current + Reflectivity + IQE outputs. Preserve the documented display clamp for Reflectivity while using the unclamped raw optical sum in the IQE denominator.
 
-Numeric changes in wavelength, power, FluxCache, Region origin/size, pitch, or grid dimensions remain inside this family when the same measurement/result path is used. **NEW PROFILE** is reserved for categorical changes such as multi-beam/multi-iteration semantics, another pattern type/coordinate encoding, another unit convention, a different raw channel set, raw Total R/EQE/IQE taking over the path, or a different vendor output/blanking behavior. Such cases require the actual XML plus matching PV-2000 output and may require redesign before validation expands.
+Numeric changes in wavelength, power, FluxCache, region/target dimensions, pitch, grid size, or beam count remain inside the applicable established family when the same semantic path is used. **NEW PROFILE** is reserved for categorical changes such as multi-iteration semantics, another pattern/target coordinate encoding, another unit convention, a different raw channel set, raw Total R/EQE/IQE taking over the path, coupled cross-beam calculations, or a different vendor output/blanking behavior. Such cases require the actual XML plus matching PV-2000 output before validation expands.
 
 Do not implement a calculated LBIC diffusion-length map from a plausible literature formula; require a real multi-wavelength PV-2000 XML plus matching DL output and regression first.

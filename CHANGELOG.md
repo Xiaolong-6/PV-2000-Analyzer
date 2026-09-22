@@ -1,23 +1,20 @@
 # Changelog
 
-## v20260922.15 — 2026-09-22
+## v20260922.16 — 2026-09-22
 
-- Added `VcpdMeasurement` support to the shared ISC/Kelvin-probe analyzer while keeping VCPD and ISC as separate XML/result profiles. VCPD exposes only Vcpd Dark and does not synthesize ISC-only Vcpd Light or VSB.
-- Validated the supplied VCPD reference point-by-point: 1649 direct XML readings equal the vendor Vcpd Dark export exactly; `MapPattern + RoundWafer` reconstruction with 200 mm diameter, 8 mm edge exclusion and 4 mm pitch reproduces all X/Y coordinates exactly.
-- Matched vendor Average / Median / sample Stdev / Min / Max and added a private paired-reference validator. Non-zero VcpdOffset, LightOn=true, multiple readings/site and alternate result paths remain explicit NEW PROFILE cases.
-
-## v20260922.15 — 2026-09-22
-
-- Added inferred QSS-µPCD `HighDensityPattern` coordinate support using explicit normalized XML `Coefficients`, covering observed 15×15 and 20×20 RoundWafer maps plus 35×35 SquareCell maps without changing the existing validated MapPattern/SquareRegionPattern paths.
-- Map `HighDensityPattern + SquareCell` coefficients to the EdgeExclusion-adjusted rectangle; for `HighDensityPattern + RoundWafer`, select the strict normalized unit-circle coefficient subset (`x²+y² < 1`) and scale it by the EdgeExclusion-adjusted radius; the supplied 15×15 and 20×20 XMLs then reproduce their 145/276 measured-point counts exactly. This coordinate path remains inferred pending a matching PV-2000 X/Y export.
-- Added previous/next XML controls around the toolbar `Open XML` button. After one folder authorization, adjacent XML files can be opened rapidly in natural filename order; browsers without the File System Access API use a folder-input fallback.
+- Added a dedicated `JZeroMeasurement` Emitter J0 analyzer instead of aliasing the result to QSS-µPCD. It pairs the two `UpcdIterationData` lifetime maps, exposes Basore J0 plus both τeff.d/Smax/Implied-Voc channels, and provides map, Distribution, filtering, axes/bins controls and CSV export.
+- Added `MapPattern + PseudoSquareCell` JZero geometry using the EdgeExclusion-adjusted rectangle∩circle schedule. The supplied 156 × 156 mm / Ø205 mm / 7 mm exclusion / 2 mm pitch reference reconstructs all 5017 coordinates exactly.
+- Added JZERO-MAP-001 regression documentation and a private paired-reference validator. On the supplied ES560 XML/CSV pair, both lifetime and Smax channels match to floating-point precision, Basore J0 matches to ~9.1e-13 fA/cm² max error, and the separate JZero Implied-Voc compatibility path remains within ~0.066 mV max error.
+- Changed `← Open XML →` semantics so arrow clicks never launch a file/folder picker. Folder authorization is a separate explicit action; after authorization the arrows directly load adjacent XML files in natural filename order.
+- Audited README, architecture, measurement roadmap, reference profiles, validation record, handoff, contributor checks and agent instructions for the current analyzer/profile set.
 
 ## v20260922.15 — 2026-09-22
 
-- Added validated LBIC `MapPattern + PseudoSquareCell` geometry reconstruction for the supplied 54,449-point, four-beam reference, including nominal/EdgeExclusion outlines, equal physical aspect, +Y-up Cartesian orientation and masked raster clipping.
-- Reworked LBIC X/Y profiles to slice by physical coordinates instead of dense rectangular indexing, so masked pseudo-square rows and columns remain correct.
-- Expanded LBIC vendor parity to independent multi-beam Current / Reflectivity / IQE handling; displayed Reflectivity now clamps raw Direct+Scattered to 0–100%, while IQE correctly retains the unclamped raw optical sum in its denominator.
-- Extended LBIC unit/reference validation and documentation as `LBIC-MULTI-002`; calculated diffusion length remains unsupported pending its proprietary vendor algorithm.
+- Added `VcpdMeasurement` support to the shared ISC/Kelvin-probe analyzer while keeping VCPD and ISC as separate XML/result profiles. The supplied 1649-site `MapPattern + RoundWafer` reference validates direct Vcpd Dark readings, coordinates and vendor summary statistics point-by-point.
+- Added QSS-µPCD `HighDensityPattern` runtime coordinate support from explicit normalized XML coefficients for observed RoundWafer and SquareCell cases. This coordinate path remains inferred pending matching vendor X/Y exports.
+- Added initial adjacent-XML navigation infrastructure around the toolbar Open XML control.
+- Added validated LBIC `MapPattern + PseudoSquareCell` support for the supplied 54,449-site four-beam reference, including geometry-aware masking, physical-coordinate profiles and independent per-beam Current / Reflectivity / IQE parity. This is recorded as `LBIC-MULTI-002`; calculated diffusion length remains unsupported.
+- Added the dedicated `DualQssMeasurement` raw injection-sweep analyzer with XML lifetime curves, stored transient inspection, LP/HP/repeat overlays and CSV export. Fifty-seven paired raw CSV exports validate 1003 injection rows and the raw transient path; vendor result-table Lifetime/Δn/Implied-Voc/J0 post-processing remains unresolved.
 
 ## v20260922.14 — 2026-09-22
 

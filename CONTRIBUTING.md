@@ -82,6 +82,8 @@ Before opening an implementation PR, run:
 ```bash
 npm run check
 npm run validate:qss
+npm run validate:dual-qss
+npm run validate:jzero
 npm run validate:isc
 npm run validate:vcpd
 npm run validate:lbic

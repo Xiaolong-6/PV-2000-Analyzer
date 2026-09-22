@@ -249,15 +249,20 @@ test('landing page removes the redundant deployed-site Live shortcut and its dea
 });
 
 
-test('toolbar Open XML is flanked by previous/next folder navigation controls',()=>{
+test('toolbar XML arrows navigate only within an explicitly authorized folder',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const app=fs.readFileSync(require.resolve('../src/app.js'),'utf8');
   const prev=html.indexOf('id="prevXml"'),open=html.indexOf('id="openTop"'),next=html.indexOf('id="nextXml"');
   assert.ok(prev>=0&&prev<open&&open<next);
+  assert.match(html,/id="folderXmlAccess"/);
   assert.match(html,/id="folderXmlFallback"[^>]*webkitdirectory/);
   assert.match(app,/showDirectoryPicker/);
-  assert.match(app,/Previous XML in selected folder/);
-  assert.match(app,/Next XML in selected folder/);
+  assert.match(app,/Load previous XML in the authorized folder/);
+  assert.match(app,/Load next XML in the authorized folder/);
+  assert.match(app,/folderXmlAccess'\)\.onclick=\(\)=>authorizeFolder\(\)/);
+  const nav=app.match(/async function navigateFolder\(step\)\{([\s\S]*?)\n  \}/)?.[1]||'';
+  assert.doesNotMatch(nav,/showDirectoryPicker|folderXmlFallback.*click/);
+  assert.match(nav,/never open a picker/);
   assert.match(app,/\.filter\(file=>\/\\\.xml\$\/i\.test\(file\.name\)\)/);
 });
 
