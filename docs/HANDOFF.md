@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.5
+# Agent handoff — 2026-09-22 — v20260922.6
 
 ## Goal
 
@@ -97,6 +97,8 @@ A parser fix now treats missing/empty numeric XML nodes as missing rather than a
 In multi-column layouts, the entire left functional sidebar scrolls independently beneath the sticky toolbar; the plot columns stay in place while long metadata/control stacks are scrolled. The actual root cause of the previous "no sidebar scroll" bug was flexbox shrink: sidebar panels were shrinking to the fixed sidebar height, making `scrollHeight == clientHeight`. Sidebar children are now `flex: 0 0 auto`, so they keep intrinsic height and create real overflow. Fine-pointer desktop zoom now keeps a dedicated sidebar column instead of being mistaken for a portrait/mobile layout; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary is rendered as responsive result cards so Valid-site mean / Current-site values do not clip or require horizontal scrolling.
 
 LOG10 remains the default optional PCHIP interpolation scale; Linear remains available. The Results summary labels each parameter with its unit. The historical charge-derivative diagnostic remains backend-only for regression.
+
+Dit intrinsic-carrier concentration cleanup: the current Dit model now uses `ni = 9.65e9 cm^-3` at 300 K for both the midgap target and semiconductor Qsc. This is the legacy MATLAB midgap value. The inherited Qsc code previously used the rounded `1.00e10 cm^-3`; the original MATLAB provides no documented reason for the mismatch. The change is intentional model cleanup, not a claim about a proprietary PV-2000 constant. The historical ~2.6% W1 regression figures predate this change and should be re-run with the private reference before being quoted as post-change accuracy.
 
 QSS Distribution has a Swap axes button beside Export. The map-selected metric (lifetime by default) starts on the horizontal axis with count vertically; swapping moves the metric to the vertical axis and count to the horizontal axis. Valid histogram bars use the same color scale and valid-point value range as the wafer map; excluded counts remain gray. The histogram CSV remains in metric bins and includes the selected metric's units in bin headers.
 

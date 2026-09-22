@@ -29,10 +29,10 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 
 **Validated / established**
 
-- Standard COCOS path is the current vendor-regressed baseline.
-- Qtot and Minimum Dit reproduce the available reference at the documented approximate error level.
-- Existing validation record reports about **2.6% mean error** for Qtot and minimum Dit.
-- The richer Dit UI/plots must preserve this baseline.
+- Standard COCOS remains the established reference family and measured dark/light algorithm path.
+- The historical validation record, obtained before the intrinsic-carrier-concentration cleanup, reported about **2.6% mean error** for Qtot and minimum Dit.
+- The current implementation uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc; Qsc previously used the rounded `1.00e10 cm^-3`.
+- Re-run the private DIT-STD-001 regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
 
 **Not validated by this profile**
 

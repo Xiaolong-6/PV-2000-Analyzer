@@ -43,13 +43,13 @@ The new valid-range UI is an analyzer feature rather than a vendor-output replic
 
 ## DIT reference
 
-Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. Existing Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The richer modular Dit UI must preserve that baseline.
+Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The Dit model now uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that is an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.
 
 ### Standard COCOS
 
 Status: **validated against the available W1 export to the documented approximate error level**.
 
-The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS, preserving the measured dark/light path and existing regression behavior.
+The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS and preserves the measured dark/light path. The reference family is unchanged, but exact post-change numerical parity is pending re-run of the private W1 regression after the ni unification.
 
 ### PV2000 COCOS-II (inferred)
 
