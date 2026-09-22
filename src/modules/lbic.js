@@ -14,6 +14,8 @@
     iqe:['iqe','internalquantumefficiency']
   };
   const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const flagState=value=>{const v=String(value??'').trim().toLowerCase();if(['true','1','yes'].includes(v))return true;if(['false','0','no'].includes(v))return false;return null};
+  function channelActive(concept,d){if(concept==='current')return flagState(d.measureCurrent)!==false;if(concept==='direct')return flagState(d.measureDirect)!==false;if(concept==='diffuse')return flagState(d.measureDiffuse)!==false;return true}
   function conceptFor(name){const n=norm(name);for(const [k,list] of Object.entries(aliases))if(list.includes(n))return k;return''}
   function labelFor(name){const c=conceptFor(name);return c==='current'?'Current':c==='direct'?'Direct reflectance':c==='diffuse'?'Scattered reflectance':c==='total'?'Reflectivity':c==='eqe'?'EQE':c==='iqe'?'IQE':name}
   function unitFor(name,d){const c=conceptFor(name);if(c==='current')return d.currentUnit||'µA';if(['direct','diffuse','total','eqe','iqe'].includes(c))return'%';return''}
@@ -188,9 +190,14 @@
       pseudoGeometry=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell'&&[d.targetWidth,d.targetHeight,d.diameter,d.pitchX,d.pitchY,d.edgeExclusion].every(Number.isFinite)&&d.targetWidth>0&&d.targetHeight>0&&d.diameter>0&&d.pitchX>0&&d.pitchY>0,
       beamCount=d.beamCount??1,
       iterationCount=d.iterationCount??1,
-      common=exactChannels&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&iterationCount===1;
-    if(common&&squareGeometry&&beamCount===1)return'LBIC-SINGLE-001';
-    if(common&&pseudoGeometry&&beamCount>=2)return'LBIC-MULTI-002';
+      currentFlag=flagState(d.measureCurrent),
+      directFlag=flagState(d.measureDirect),
+      diffuseFlag=flagState(d.measureDiffuse),
+      currentCommon=exactChannels&&currentFlag!==false&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&iterationCount===1,
+      reflectanceOnly=exactChannels&&currentFlag===false&&directFlag===true&&diffuseFlag===true&&iterationCount===1;
+    if(currentCommon&&squareGeometry&&beamCount===1)return'LBIC-SINGLE-001';
+    if(currentCommon&&pseudoGeometry&&beamCount>=2)return'LBIC-MULTI-002';
+    if(reflectanceOnly&&squareGeometry&&beamCount===1)return'LBIC-REFLECTANCE-003';
     return'';
   }
   function isReferenceProfile(raw,laser,d){return Boolean(referenceFamily(raw,laser,d))}
@@ -202,6 +209,7 @@
       metrics={};
     for(const [name,values] of Object.entries(raw?.channels||{})){
       const concept=conceptFor(name);
+      if(!channelActive(concept,d))continue;
       metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',concept,xmlName:name,tier:tierFor(concept)};
     }
 
@@ -619,7 +627,7 @@
       const beam=it?.beams?.[beamKey],
       metrics=beam?.metrics||{},
       mkeys=visibleMetrics(metrics).map(m=>m.key);
-      if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=mkeys.find(k=>metrics[k].concept==='current')||mkeys[0]||'';
+      if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=mkeys.find(k=>metrics[k].concept==='current')||mkeys.find(k=>metrics[k].concept==='total')||mkeys[0]||'';
       return{it,beam,metrics,metric:metrics[metricKey]}}
     function metricOptions(metrics){return visibleMetrics(metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.label)}${m.status==='inferred'?' · inferred':''}</option>`).join('')}
     function beamOptions(it){return Object.entries(it?.beams||{}).map(([k,b])=>{const wl=b.laser?.wavelengthNm;return`<option value="${esc(k)}">${Number.isFinite(wl)?`${fmt(wl,0)} nm`:`Beam ${esc(k)}`}</option>`}).join('')}
@@ -633,10 +641,11 @@
       pseudo=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell',
       patternText=pseudo?`${d.patternDisplayName||d.patternType} · PseudoSquareCell`:`${d.patternDisplayName||d.patternType} · ${fmt(d.nx,0)} × ${fmt(d.ny,0)}`,
       regionText=pseudo?`${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm · Ø${fmt(d.diameter)} mm · edge ${fmt(d.edgeExclusion)} mm`:`${fmt(d.width)} × ${fmt(d.height)} mm @ (${fmt(d.regionX)}, ${fmt(d.regionY)})`,
-      stepText=pseudo?`${fmt(d.pitchX,4)} × ${fmt(d.pitchY,4)} mm`:`${d.nx>1?fmt(d.width/(d.nx-1),4):'—'} × ${d.ny>1?fmt(d.height/(d.ny-1),4):'—'} mm`;
+      stepText=pseudo?`${fmt(d.pitchX,4)} × ${fmt(d.pitchY,4)} mm`:`${d.nx>1?fmt(d.width/(d.nx-1),4):'—'} × ${d.ny>1?fmt(d.height/(d.ny-1),4):'—'} mm`,
+      measurementMode=flagState(d.measureCurrent)===false&&flagState(d.measureDirect)===true&&flagState(d.measureDiffuse)===true?'Reflectance only':flagState(d.measureCurrent)===true?'Current + optical':'From XML flags';
       host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
-      <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Pattern',patternText)}${metaRow(pseudo?'Target':'Region',regionText)}${metaRow(pseudo?'Pitch':'Step',stepText)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?'Point count matches the reconstructed geometry schedule.':'A mismatch disables coordinate-based maps.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl></section>
-      <section class="panel"><h3>View ${help('Default quantities mirror the validated PV-2000 exports: Current, Reflectivity and IQE. Advanced adds raw Direct/Scattered reflectance, intermediate EQE and unknown numeric XML channels. Raw XML values always take priority. Numeric wavelength/power/flux/geometry changes stay within the validated family when the same measurement/result path is used. New beam/channel/pattern/result combinations require paired XML + PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
+      <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}${metaRow('Pattern',patternText)}${metaRow(pseudo?'Target':'Region',regionText)}${metaRow(pseudo?'Pitch':'Step',stepText)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?'Point count matches the reconstructed geometry schedule.':'A mismatch disables coordinate-based maps.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl></section>
+      <section class="panel"><h3>View ${help('Primary quantities follow the active XML measurement flags. Current-enabled validated scans expose Current / Reflectivity / IQE. Reflectance-only scans default to Reflectivity and do not synthesize Current, EQE or IQE from disabled placeholder fields. Advanced exposes active raw/intermediate channels. New semantic paths still require paired PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
       <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows(metrics)}</tbody></table></div></section>
       <section class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></section>
       <section class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></section>
