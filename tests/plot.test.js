@@ -51,3 +51,18 @@ test('downward-Y maps anchor vertical zoom in screen-down direction',()=>{
   assert.ok(next[0] < 10);
   assert.ok(next[1] < 100);
 });
+
+
+test('equal-aspect auto ranges expand only the constrained axis and preserve centers',()=>{
+  const wide=P.equalAspectRanges([-1,1],[-1,1],600,300);
+  assert.deepEqual(wide.y,[-1,1]);
+  assert.deepEqual(wide.x,[-2,2]);
+  assert.equal((wide.x[0]+wide.x[1])/2,0);
+
+  const tall=P.equalAspectRanges([0,4],[10,12],300,300);
+  assert.deepEqual(tall.x,[0,4]);
+  assert.deepEqual(tall.y,[9,13]);
+
+  const sx=600/(wide.x[1]-wide.x[0]),sy=300/(wide.y[1]-wide.y[0]);
+  assert.ok(Math.abs(sx-sy)<1e-12);
+});

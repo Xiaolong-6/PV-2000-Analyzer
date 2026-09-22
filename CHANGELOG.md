@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fixed all spatial maps to preserve equal physical X/Y scale by default: circular wafer maps remain circular and rectangular LBIC rasters retain their true geometric aspect instead of stretching to the chart box.
+- Hide the redundant **Live** shortcut when the app is already running on its GitHub Pages deployment; local builds still show it as a quick link to the hosted analyzer.
 - Added **AGPL-3.0-only** community licensing, a separate commercial-licensing notice, copyright notice, and contributor CLA designed to preserve future dual-licensing/proprietary relicensing options while contributors retain their copyrights.
 - Added AGPL / Commercial License / CLA badges, package metadata, contribution guidance, and a PR CLA acknowledgement.
 - Added a compact landing-page project/status strip and in-app footer with inline icons for local-processing status, live site, repository, contribution guide, reference-data submission, issue reporting and exact deployed commit provenance.
