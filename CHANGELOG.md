@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added shared wheel zoom to every scientific plot: zoom both axes inside the plot, zoom one axis when hovering that axis, and double-click to restore auto scale.
+- Added LBIC Distribution `Swap axes`, matching QSS Distribution.
+- Changed Dit Vcpd–Qc to a point-line plot; ordinary data markers are smaller than the initial-condition marker.
+- Moved remaining LBIC/QSS long explanatory paragraphs into contextual hover help.
 - Fixed the real sidebar-scroll root cause: flex children were shrinking to the fixed viewport-height sidebar, so no overflow existed. Sidebar panels now keep intrinsic height and the sidebar uses a real vertical scroll container.
 - Moved long Dit/COCOS explanatory paragraphs out of the persistent UI and into contextual hover help.
 - Matched PV-2000 LBIC Reflectivity saturation at 100% when DirectReflection + ScatteredReflection slightly exceeds 100%, with regression coverage.
