@@ -16,12 +16,13 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - per-chart CSV exports and extensive hover explanations;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale;
+- spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
 - LBIC Distribution axis swap, matching the existing QSS Distribution interaction;
 - long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
-- landing page and analysis footer expose compact project provenance links (Live / GitHub / Contribute / Share data / Report) plus the exact deployed short commit SHA; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied.
+- landing page and analysis footer expose compact project provenance links (Live / GitHub / Contribute / Share data / Report) plus the exact deployed short commit SHA; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied. The Live shortcut is hidden when already running on the official GitHub Pages URL.
 
 ## GitHub Pages deployment
 
