@@ -6,7 +6,7 @@ A measurement type being supported does **not** mean every possible algorithm pa
 
 A **reference instance** is one concrete XML + vendor-output pair. A **validated profile family** is the semantic input→output path established by one or more reference instances. Numeric settings can vary inside a validated family when they are inputs to the same already-validated formulas or coordinate rules. A new profile is triggered by a categorical/semantic path change, not merely by a different numeric value.
 
-When new real XML + matching PV-2000 output become available, append them as evidence to an existing family when they exercise the same path. Create a NEW PROFILE only when the new data change the schema, algorithm branch, coordinate encoding, channel/result combination, unit convention, validity behavior, or other logic that could require different software behavior.
+When new real XML + matching PV-2000 output become available, append them as evidence to an existing family when they exercise the same path. Reference material may remain private under `private/reference/` or, when a contributor explicitly has the right to publish it, be tracked as a public case under `reference_data/`. Create a NEW PROFILE only when the new data change the schema, algorithm branch, coordinate encoding, channel/result combination, unit convention, validity behavior, or other logic that could require different software behavior.
 
 ## Status vocabulary
 
@@ -213,17 +213,18 @@ For a NEW PROFILE, runtime may still calculate candidates, but derived values re
 
 When a new real data combination arrives:
 
-1. place the private XML and matching PV-2000 export under ignored `private/reference/` storage;
-2. identify whether it exercises the same semantic input/output path as an existing validated family;
-3. if not, assign a new profile ID in this document;
-4. compare parser structure and point count first;
-5. compare coordinates/acquisition order point-by-point where applicable;
-6. compare raw quantities point-by-point;
-7. reverse-engineer derived quantities only from the matching vendor output;
-8. check validity/blank/mask behavior and summary statistics;
-9. revise software logic if the new profile behaves differently;
-10. add or extend a private validator;
-11. update this registry, `docs/VALIDATION.md`, the relevant algorithm document, HANDOFF and CHANGELOG;
-12. only then change a result from **inferred** to **validated**.
+1. place confidential/local material under ignored `private/reference/`, or add explicitly publishable contribution material under `reference_data/<measurement>/<case-id>/` with a case README; never copy private material into the public tree merely for convenience;
+2. confirm the XML and vendor export are from the same measurement/result context and record any screenshot/display evidence;
+3. identify whether it exercises the same semantic input/output path as an existing validated family;
+4. if not, assign a new profile ID in this document;
+5. compare parser structure and point count first;
+6. compare coordinates/acquisition order point-by-point where applicable;
+7. compare raw quantities point-by-point;
+8. reverse-engineer derived quantities only from the matching vendor output;
+9. check validity/blank/mask behavior and summary statistics;
+10. revise software logic if the new profile behaves differently;
+11. add or extend the appropriate validator; public reference cases should be regression-testable without becoming runtime dependencies;
+12. update this registry, `docs/VALIDATION.md`, the relevant algorithm document, HANDOFF and CHANGELOG;
+13. only then change a result from **inferred** to **validated**.
 
 Do not create artificial NEW PROFILE boundaries around ordinary numeric parameter changes. At the same time, do not expand validation across a genuinely different input/output path merely because a formula is physically reasonable or the `xsi:type` is unchanged.
