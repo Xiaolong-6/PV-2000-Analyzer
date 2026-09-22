@@ -14,6 +14,19 @@ git status --short --ignored
 
 If anything under `private/` is staged, unstage it immediately. Never use `git add -f` on ignored reference data. Public reference files must be added only under `reference_data/` through the normal contribution workflow described in `CONTRIBUTING.md`.
 
+## Repository versioning rule
+
+The canonical project version is the single line in root `VERSION`. Do not use semantic versions such as `v0.2.2`.
+
+- On `main`, use `vYYYYMMDD.N`, where `N` is the chronological order of commits merged to `main` on that calendar date. The first main baseline/commit of a date is `.1`.
+- A branch created from main version `vYYYYMMDD.N` uses `vYYYYMMDD.N.1`, `vYYYYMMDD.N.2`, ... for successive branch commits.
+- Immediately before merging, re-read the current `main` version. The merged main commit discards the branch suffix and becomes the next main ordinal for that date. Example: a branch from `.52` may reach `.52.2`; if main has meanwhile reached `.55`, the squash merge is `.56`.
+- If the calendar date changes, main restarts at `.1` for the new date.
+- Prefer squash merges so each accepted PR becomes one mainline commit/version.
+- The merge commit title should start with the resolved version, e.g. `v20260922.56 — ...`.
+- Before merge, update `VERSION` and the current CHANGELOG entry to the resolved main version. If main moves before merge, recompute rather than reusing a stale ordinal.
+- `package.json` intentionally has no package version; this private project uses `VERSION` as the authoritative identifier.
+
 ## Development workflow
 
 1. Preserve XML-only runtime operation. PV-2000 exports are regression references, never runtime dependencies.
