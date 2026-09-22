@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.13
+# Agent handoff — 2026-09-22 — v20260922.14
 
 ## Goal
 
@@ -83,6 +83,7 @@ The inferred PV2000 path comes from same-raw-data parameter sweeps. It interpret
 
 Dit Analysis controls are contextual and compact:
 
+- **Material** is selectable as Silicon (Si) or Germanium (Ge), with Si as the default. Ge uses the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selected material consistently feeds Qsc, variation/Minimum Dit, flatband/Qtot and the Midgap Dit target. Ge remains unvalidated against matching PV-2000 Ge output;
 - inferred COCOS-II shows EOT / Min Vsb / Max Vsb on one-line label/input rows;
 - Standard COCOS hides COCOS-II-only settings;
 - shared Flatband accumulation points remain visible;

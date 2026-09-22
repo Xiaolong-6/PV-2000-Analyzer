@@ -16,7 +16,7 @@ Normal user choices are:
 
 The obsolete guide-only COCOS-II implementation has been removed from the runtime and user interface.
 
-Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. **Optional Midgap Dit (PCHIP)** is always visible in Analysis controls with a checkbox; it is enabled by default. When unchecked, Midgap Dit and the PCHIP curve are disabled while the discrete Minimum Dit calculation is unchanged. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
+Controls are contextual. **Material** is selected in Analysis controls and defaults to **Silicon (Si)**. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. **Optional Midgap Dit (PCHIP)** is always visible in Analysis controls with a checkbox; it is enabled by default. When unchecked, Midgap Dit and the PCHIP curve are disabled while the discrete Minimum Dit calculation is unchanged. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
 
 ## Minimum Dit versus optional PCHIP Midgap Dit
 
@@ -39,13 +39,26 @@ The 10 mV default was selected after comparing the supplied real Dit–Vsb data 
 
 For COCOS-II, PCHIP preprocessing is applied after COCOS-II reconstructs signed Vsb and after the Min/Max Vsb acceptance mask is formed. Therefore COCOS-II and either PCHIP method can be used together without redefining the PV2000-style minimum Dit.
 
+## Semiconductor material model
+
+The **Material** selector is part of Analysis controls because the semiconductor model affects more than the PCHIP target. The selected material is used by semiconductor Qsc, the adjacent-step variation Dit calculation (and therefore Minimum Dit), the flatband semiconductor-capacitance criterion, Qtot, and the theoretical Midgap Dit target.
+
+Current 300 K compatibility parameters are inherited from the legacy MATLAB path:
+
+| Material | ni [cm^-3] | εr | Validation status |
+|---|---:|---:|---|
+| Silicon (Si) | 9.65e9 | 11.68 | default; existing Si reference path |
+| Germanium (Ge) | 2e13 | 16.2 | legacy MATLAB compatibility; no matching PV-2000 Ge export yet |
+
+The active Si implementation uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc. The earlier inherited Qsc code used the rounded `1.00e10 cm^-3`; that mismatch was removed previously.
+
+For Ge, the analyzer restores the legacy MATLAB constants rather than claiming a new PV-2000 vendor model. Ge results remain **unvalidated against PV-2000 Ge output** until a real Ge DIT XML plus matching vendor export/display is regressed. The analyzer never infers material from a sample name or substrate identifier.
+
+The previously documented Si W1 regression (about 2.6% mean difference for minimum Dit and Qtot) predates the Si ni unification. Re-run the private Standard COCOS reference regression before quoting an exact post-change error figure.
+
 ## Standard COCOS
 
-When Standard COCOS is active, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the group MATLAB-compatible variation/PCHIP path.
-
-The Dit model now uses one 300 K silicon intrinsic-carrier concentration throughout: `ni = 9.65e9 cm^-3`. This is the **legacy MATLAB midgap value**, adopted as the unified Dit-model value. The inherited Qsc implementation previously used the rounded `1.00e10 cm^-3` while the midgap target used `9.65e9 cm^-3`; the original program documents no reason for that difference. This cleanup therefore changes Qsc slightly and is not presented as a vendor-algorithm claim.
-
-The previously documented W1 regression (about 2.6% mean difference for minimum Dit and Qtot) predates this ni unification. Re-run the private Standard COCOS reference regression before quoting an exact post-change error figure.
+When Standard COCOS is active, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the selected-material MATLAB-compatible variation/PCHIP path.
 
 ## PV2000 COCOS-II (inferred)
 

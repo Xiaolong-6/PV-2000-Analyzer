@@ -29,15 +29,17 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 
 **Validated / established**
 
-- Standard COCOS remains the established reference family and measured dark/light algorithm path.
+- Standard COCOS remains the established reference family and measured dark/light algorithm path for the current **Si** reference material.
 - The historical validation record, obtained before the intrinsic-carrier-concentration cleanup, reported about **2.6% mean error** for Qtot and minimum Dit.
-- The current implementation uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc; Qsc previously used the rounded `1.00e10 cm^-3`.
-- Re-run the private DIT-STD-001 regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
+- The current Si implementation uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc, with `εr = 11.68`; Qsc previously used the rounded `1.00e10 cm^-3`.
+- The analyzer also supports a **Ge legacy-MATLAB compatibility path** using `ni = 2e13 cm^-3` and `εr = 16.2`, but no matching PV-2000 Ge export has been supplied, so Ge is not validated by DIT-STD-001.
+- Re-run the private DIT-STD-001 Si regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
 
 **Not validated by this profile**
 
 - PV2000 COCOS-II vendor algorithm.
 - Back Surface Shift behavior outside the supplied adjustment set.
+- Germanium or another semiconductor material until a matching PV-2000 material-specific reference is regressed.
 - Any new Dit XML/data path that changes the extraction behavior materially.
 
 **NEW PROFILE triggers**
@@ -48,7 +50,8 @@ Treat as a new profile when a real dataset introduces a materially different Dit
 - a case where Back Surface Shift changes vendor results;
 - new COCOS-II acceptance/window behavior;
 - a different pointwise Dit/Vsb export structure;
-- materially different flatband/extraction fields that require new parser or calculation assumptions.
+- materially different flatband/extraction fields that require new parser or calculation assumptions;
+- a new semiconductor material reference (including the first PV-2000 Ge reference) that establishes material-specific vendor parity.
 
 Current COCOS-II status remains **inferred** until matching vendor pointwise output validates it.
 
