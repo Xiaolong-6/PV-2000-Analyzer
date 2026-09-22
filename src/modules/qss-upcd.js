@@ -243,6 +243,9 @@
         ctx.stroke();
       };
       ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx-R,cy-R,2*R,2*R);
+      ctx.clip();
       ctx.strokeStyle=css('--soft');
       ctx.lineWidth=1.7;
       ctx.setLineDash([]);
