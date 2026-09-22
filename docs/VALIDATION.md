@@ -194,34 +194,43 @@ npm run validate:vcpd
 
 Matching private references use the same basename under `private/reference/vcpd/`. Runtime remains XML-only; the CSV is never consulted during user analysis.
 
-## LBIC raster — paired XML + PV-2000 export regression
+## LBIC raster — paired XML + PV-2000 export/display regression
 
-Five paired XML/CSV references now establish two validated LBIC families:
+The current evidence establishes three validated LBIC families:
 
-- `LBIC-SINGLE-001`: one beam, `SquareRegionPattern`, Current + DirectReflection + ScatteredReflection → Current / Reflectivity / IQE;
-- `LBIC-MULTI-002`: multiple independent beams, `MapPattern + PseudoSquareCell`, the same per-beam raw/result path.
+- `LBIC-SINGLE-001`: one beam, `SquareRegionPattern`, active Current + DirectReflection + ScatteredReflection → Current / Reflectivity / IQE;
+- `LBIC-MULTI-002`: multiple independent beams, `MapPattern + PseudoSquareCell`, the same active per-beam raw/result path;
+- `LBIC-REFLECTANCE-003`: one beam, `SquareRegionPattern`, `MeasureCurrent=false`, Direct/Scattered active → Reflectivity only.
 
-The four single-beam references use 51×51 or 101×101 rectangular rasters. The multi-beam reference contains **54,449** points and four beams (984, 952, 855 and 656 nm).
+The current-enabled set contains five paired XML/CSV references: four 51×51/101×101 single-beam rasters plus one **54,449-point** four-beam reference (984, 952, 855 and 656 nm).
+
+The reflectance-only corpus contains **62 XML files**. All 62 use `MeasureCurrent=false`, `MeasureDirectReflectance=true`, `MeasureScatteredReflectance=true`; their BeamData still include `Current`, but every supplied Current value is exactly zero. **44** of those XMLs have **60 matching PV-2000 XPS result printouts** because several measurements were printed at more than one display color scale.
 
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
 | `LBICMeasurement` dispatch | unit tested | tested |
-| SquareRegionPattern coordinates | pointwise max error 0 mm | validated |
+| SquareRegionPattern coordinates, complete scans | pointwise max error 0 mm in paired CSV references | validated |
 | PseudoSquareCell schedule | 54,449 reconstructed = 54,449 export rows | validated |
 | PseudoSquare X/Y | pointwise max error 0 mm | validated |
-| Current | raw XML vs CSV pointwise, all validated beams | validated |
+| Current | raw XML vs CSV pointwise when `MeasureCurrent` is active | validated |
+| disabled Current placeholder | reflectance-only corpus: Current=0 everywhere but `MeasureCurrent=false`; suppressed from measured results | validated semantic handling |
 | displayed Reflectivity | `clamp(DirectReflection + ScatteredReflection, 0, 100)` | validated |
-| negative reflectivity display edge | four 656 nm sites clamp to 0% | validated |
-| compatibility charge constant | `q = 1.602e-19 C` | validated |
-| IQE denominator | uses the **unclamped raw optical sum**; `Rraw >= 100%` is unavailable | validated |
+| reflectance-only XPS summaries | 60 XPS Average / Median / sample Stdev / Min / Max comparisons; max discrepancy <0.005 %-point | validated to XPS display rounding |
+| negative reflectivity display edge | four 656 nm sites clamp to 0% in current-enabled multi-beam reference | validated |
+| compatibility charge constant | `q = 1.602e-19 C` | validated for current-enabled IQE path |
+| IQE denominator | uses the **unclamped raw optical sum**; `Rraw >= 100%` is unavailable | validated for current-enabled families |
 | IQE finite values | ~1e-12 %-point for single-beam refs; ~1e-13 %-point for multi-beam ref | validated |
+| reflectance-only EQE/IQE | not synthesized because current measurement is disabled | validated semantic handling |
 | vendor unavailable IQE | blank / `Ud.` represented as unavailable and excluded from summaries | validated |
 | summary Stdev | sample standard deviation, finite values only | validated |
 | independent multi-beam switching | four-beam paired reference | validated |
+| incomplete SquareRegion acquisition | one 61×61 recipe contains 2814/3721 points; leading schedule prefix is displayed | partial / inferred |
 | EQE as standalone vendor output | vendor CSV does not expose it | inferred intermediate |
 | calculated diffusion length (DL) | CSV contains DL but XML does not expose a raw DL channel and the vendor algorithm is not established | unsupported |
 
 For the multi-beam reference, the XML geometry is Target Size 125 × 125 mm, Diameter 150 mm, EdgeExclusion 3 mm and Pitch 0.5 × 0.5 mm. The scheduled lattice uses halfWidth = halfHeight = 59.5 mm and radius = 72 mm; it is X-fast with ascending Y. First/last sites are (-40.5, -59.5) and (40.5, 59.5) mm.
+
+For the reflectance-only family, one representative XML→XPS pair gives Average 30.8180159→30.82%, Median 8.5744989→8.57%, Stdev 32.2960455→32.30%, Min 0.2193933→0.22% and Max 83.0026011→83.00%.
 
 Run:
 
@@ -229,7 +238,9 @@ Run:
 npm run validate:lbic
 ```
 
-Matching private references use same-basename XML/CSV pairs under `private/reference/lbic/`. The validator recognizes both documented semantic families. Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch and, within `LBIC-MULTI-002`, the number of independent beam keys do not by themselves create a new profile. A different coordinate encoding, target scheduling rule, raw channel set, unit convention, coupled cross-beam calculation, iteration path, or vendor result/validity behavior remains **NEW PROFILE**.
+Current-enabled private references use same-basename XML/CSV pairs under `private/reference/lbic/`. Reflectance-only cases may use matching Reflectivity XPS printouts; the validator matches them by normalized XML-result-name prefix and checks the five vendor summary statistics at display precision.
 
-Runtime remains XML-only. The CSV is never consulted when a user imports an XML.
+Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch and, within `LBIC-MULTI-002`, the number of independent beam keys do not by themselves create a new profile. A different coordinate encoding, target scheduling rule, active measurement-flag combination, raw channel set, unit convention, coupled cross-beam calculation, iteration path, or vendor result/validity behavior remains **NEW PROFILE**. Incomplete acquisition ordering is not promoted to validated parity without matching vendor coordinate evidence.
+
+Runtime remains XML-only. CSV/XPS references are never consulted when a user imports an XML.
 
