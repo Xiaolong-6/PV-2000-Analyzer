@@ -17,13 +17,13 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
-- shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
+- shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; measurement modules reuse the shared helpers instead of carrying duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, QSS Injection, Emitter J0, ISC, LBIC and Generic XML inspector;
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a header Axes popover placed immediately before Export. Distribution plots default to Count on X, keep Swap axes beside Auto/Apply inside that Axes action row, and expose a separate Bins header control (5–200 bins) for histogram spacing; Axes popovers are allowed to overflow chart panels so adjacent plots do not clip them, and canvas wrappers no longer force a 300 px minimum height;
-- spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
+- spatial maps use equal physical X/Y scale at auto/default view and follow the applicable XML target geometry: circular, rectangular or pseudo-square outlines are kept distinct from the plot frame and EdgeExclusion-adjusted scheduled boundary;
 - LBIC right workspace uses Map + Distribution side-by-side with equal top-row chart sizing and X/Y profiles side-by-side below; Selected pixel and Channel provenance are in the left sidebar. Distribution retains axis swap and numeric ticks;
-- long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
+- long measurement-specific scientific explanations stay in hover help/documentation instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
