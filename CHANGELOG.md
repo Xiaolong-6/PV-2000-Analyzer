@@ -1,9 +1,11 @@
 # Changelog
 
-## v20260922.9.1 — 2026-09-22
+## v20260922.9.3 — 2026-09-22
 
 - Hardened ISC validation semantics so a missing `VcpdOffset` remains missing instead of silently becoming zero; the private validator now requires both offset and VSB correction factor for the validated result path.
 - Added regression coverage for missing-offset behavior.
+- Added `Swap axes` to ISC Distribution, matching the existing QSS/LBIC distribution controls.
+- Made ISC maps geometry-aware: solid nominal RoundWafer/SquareCell outline, dashed EdgeExclusion-adjusted scheduled boundary, equal physical X/Y scale, and clipping of map cells to the scheduled region.
 
 ## v20260922.9 — 2026-09-22
 
