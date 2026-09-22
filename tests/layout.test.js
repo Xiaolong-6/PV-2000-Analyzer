@@ -138,3 +138,26 @@ test('Optional Midgap Dit exposes original and median-binned PCHIP methods with 
   assert.match(src,/id="ditPchipMedianMv"/);
   assert.match(src,/pchipMedianWindowV=.*\.010/);
 });
+
+
+test('landing page and app footer expose project links and build provenance',()=>{
+  const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(html,/class="project-strip"/);
+  assert.match(html,/github\.com\/Xiaolong-6\/PV-2000-Analyzer/);
+  assert.match(html,/Contribute/);
+  assert.match(html,/Share data/);
+  assert.match(html,/Report/);
+  assert.match(html,/__BUILD_COMMIT_SHORT__/);
+  assert.match(html,/__BUILD_COMMIT_URL__/);
+  assert.match(html,/class="app-footer"/);
+  assert.match(css,/\.project-link\{/);
+  assert.match(css,/\.status-dot\{/);
+});
+
+test('build injects exact CI commit provenance and has an explicit local fallback',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  assert.match(build,/process\.env\.PV2000_BUILD_SHA\|\|process\.env\.GITHUB_SHA\|\|'local'/);
+  assert.match(build,/replaceAll\('__BUILD_COMMIT_SHORT__'/);
+  assert.match(build,/replaceAll\('__BUILD_COMMIT_URL__'/);
+});
