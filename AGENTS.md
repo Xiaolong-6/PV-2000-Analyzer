@@ -19,7 +19,7 @@ If anything under `private/` is staged, unstage it immediately. Never use `git a
 3. Add each new result type as an isolated module registered through `PV2000.registry`.
 4. Shared XML/statistics/geometry/theme/export logic belongs in `src/core/`.
 5. Preserve the current responsive three-column UI; do not imitate the legacy PV-2000 application.
-6. Every chart must expose a data export.
+6. Every chart must expose a data export and shared zoom behavior: wheel in the plot zooms both axes, wheel over one axis zooms only that axis, and double-click restores auto scale.
 7. Explain scientific quantities/controls with hover text (`title`/`.help`) rather than permanent instructional clutter.
 8. Unknown XML types must fall back to Generic Inspector.
 9. Reverse-engineered calculations require regression against a PV-2000 export/display before being labelled validated.
