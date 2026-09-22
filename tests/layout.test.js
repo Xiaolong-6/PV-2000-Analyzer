@@ -244,8 +244,8 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   assert.match(lbic,/fillText\(axisFmt\(v\)/);
   assert.match(lbic,/axisControls\('lMapAxes'\)/);
   assert.match(lbic,/axisControls\('lHistAxes'/);
-  assert.match(lbic,/axisControls\('lXProfileAxes'\)/);
-  assert.match(lbic,/axisControls\('lYProfileAxes'\)/);
+  assert.match(lbic,/axisControls\('lXProfileAxes'/);
+  assert.match(lbic,/axisControls\('lYProfileAxes'/);
   assert.match(lbic,/class="lbic-workspace"/);
   assert.ok(lbic.indexOf('Selected pixel')<lbic.indexOf('</aside><section class="lbic-workspace">'));
   assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="lbic-workspace">'));
@@ -320,17 +320,17 @@ test('all plot Axes controls are rendered in chart headers immediately before ex
   for(const src of [dit,qss,lbic,isc]){
     assert.doesNotMatch(src,/class="(?:canvas-wrap|chart-stage)[^"]*"[^>]*>\$\{PV\.plot\.axisControls/);
   }
-  assert.match(dit,/axisControls\('ditVcpdAxes'\)<button id="e1"/);
-  assert.match(dit,/axisControls\('ditDitAxes'\)<button id="e2"/);
-  assert.match(dit,/axisControls\('ditVsbAxes'\)<button id="e3"/);
-  assert.match(dit,/axisControls\('ditMapAxes'\)<button id="e4"/);
-  assert.match(qss,/axisControls\('qMapAxes'\)<button id="qExportMap"/);
-  assert.match(qss,/binControls\('qHistBins',histBins\)<button id="qExportHist"/);
-  assert.match(qss,/axisControls\('qProfileAxes'\)<button id="qExportProfile"/);
-  assert.match(lbic,/axisControls\('lMapAxes'\)<button id="lExportMap"/);
-  assert.match(lbic,/binControls\('lHistBins',histBins\)<button id="lExportHist"/);
-  assert.match(lbic,/axisControls\('lYProfileAxes',\{label:'Y axes'\}\)<button id="lExportProfile"/);
-  assert.match(isc,/axisControls\('iMapAxes'\)<button id="iExportMap"/);
-  assert.match(isc,/binControls\('iHistBins',histBins\)<button id="iExportHist"/);
-  assert.match(isc,/axisControls\('iRawAxes'\)<button id="iExportRaw"/);
+  assert.match(dit,/axisControls\('ditVcpdAxes'\)\}<button id="e1"/);
+  assert.match(dit,/axisControls\('ditDitAxes'\)\}<button id="e2"/);
+  assert.match(dit,/axisControls\('ditVsbAxes'\)\}<button id="e3"/);
+  assert.match(dit,/axisControls\('ditMapAxes'\)\}<button id="e4"/);
+  assert.match(qss,/axisControls\('qMapAxes'\)\}<button id="qExportMap"/);
+  assert.match(qss,/binControls\('qHistBins',histBins\)\}<button id="qExportHist"/);
+  assert.match(qss,/axisControls\('qProfileAxes'\)\}<button id="qExportProfile"/);
+  assert.match(lbic,/axisControls\('lMapAxes'\)\}<button id="lExportMap"/);
+  assert.match(lbic,/binControls\('lHistBins',histBins\)\}<button id="lExportHist"/);
+  assert.match(lbic,/axisControls\('lYProfileAxes',\{label:'Y axes'\}\)\}<button id="lExportProfile"/);
+  assert.match(isc,/axisControls\('iMapAxes'\)\}<button id="iExportMap"/);
+  assert.match(isc,/binControls\('iHistBins',histBins\)\}<button id="iExportHist"/);
+  assert.match(isc,/axisControls\('iRawAxes'\)\}<button id="iExportRaw"/);
 });
