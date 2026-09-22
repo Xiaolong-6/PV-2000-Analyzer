@@ -104,3 +104,9 @@ test('Vcpd-Qc is point-line and data markers stay smaller than the initial marke
   assert.match(src,/pointsXY\(qc,vl,X,Y,'var\(--blue\)',2\.5\)/);
   assert.match(src,/r="4" fill="var\(--yellow\)"/);
 });
+
+
+test('PCHIP outlier input is rendered in E scientific notation',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/ditReject[^>]*value="\$\{Number\.isFinite\(o\.ditReject\)\?o\.ditReject\.toExponential\(3\)\.replace\('e','E'\)/);
+});
