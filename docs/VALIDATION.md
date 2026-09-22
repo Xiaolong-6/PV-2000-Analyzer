@@ -1,5 +1,14 @@
 # Validation record
 
+The central registry of validated reference envelopes is `docs/REFERENCE_PROFILES.md`. This file contains detailed regression evidence. Any materially new data/configuration outside a recorded envelope is a **NEW PROFILE** until its actual XML + matching PV-2000 output are regressed.
+
+## Reference data locations
+
+- `private/reference/` — ignored local/confidential validation material. It must never be committed.
+- `reference_data/` — intentionally public contributor-supplied regression cases. Each case must pair the raw PV-2000 XML with its matching vendor export and should include a PV-2000 screenshot plus a short case README.
+
+Public reference data do not change the runtime contract: the analyzer still consumes XML only. CSV/XPS/screenshots are test and reverse-engineering evidence. A public dataset also does not by itself prove the PV-2000 internal algorithm; the validation label applies only to the observed input→output envelope.
+
 ## QSS-µPCD map — XML + raw PV-2000 export
 
 Private references:
@@ -26,7 +35,7 @@ Run:
 npm run validate:qss
 ```
 
-The validator also verifies coordinate acquisition order. Real references remain ignored and are not required for the shipped browser application.
+The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
 ### Valid-data filtering
 
@@ -34,6 +43,86 @@ The new valid-range UI is an analyzer feature rather than a vendor-output replic
 
 ## DIT reference
 
-Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. Existing regression established approximately 2.6% mean error for Qtot and minimum Dit. The richer modular Dit UI must preserve that baseline.
+Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. Existing Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The richer modular Dit UI must preserve that baseline.
 
-COCOS-II processing is now implemented when XML `UseCocosII=true`, but is currently **guide-derived / not vendor-export validated** because the available W1 reference explicitly has `UseCocosII=false`. A COCOS-II-on XML plus PV-2000 export is the next required reference for that branch.
+### Standard COCOS
+
+Status: **validated against the available W1 export to the documented approximate error level**.
+
+The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS, preserving the measured dark/light path and existing regression behavior.
+
+### PV2000 COCOS-II (inferred)
+
+Status: **inferred**, not vendor-exact.
+
+The current default COCOS-II path is derived from a same-raw-data adjustment series rather than a vendor algorithm disclosure. The supplied reprocessed exports established these behavioral constraints:
+
+- vendor EOT value 100 is consistent with 100 Å (10 nm): the corresponding synthetic-line slope is ~0.464 V per 1e12 q/cm²;
+- changing COCOS-II Min/Max Vsb affected reported Dit but did not alter exported VDark, VLight, summary Vsb, Vfb, Qsc, Qtot or Qit;
+- the observed transition behavior is consistent with Min/Max acting late in Dit selection rather than in Vcpd reconstruction;
+- Back Surface Shift True/False produced identical supplied exports for this dataset.
+
+The implementation therefore labels this path **inferred**. Its Min/Max rule is the current best-fit model and should be tightened if a pointwise vendor Dit-Vsb export or a dataset where Back Surface Shift is active becomes available.
+
+Follow XML setting now resolves `UseCocosII=true` to this inferred path. That routing choice is intentional: it reflects the strongest available same-raw-data evidence. It does **not** upgrade the algorithm's validation label.
+
+### UI / control regression expectations
+
+The Analysis controls panel must remain open after Apply/recalculation. Method-specific parameters are shown contextually and compactly, with the label/help icon and its input on one row:
+
+- Standard COCOS: no COCOS-II EOT or Min/Max inputs;
+- PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
+- no legacy/guide-based COCOS-II user path remains;
+- Flatband accumulation points remain shared;
+- **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox;
+- disabling that checkbox must remove the PCHIP curve/Midgap Dit result without changing Minimum Dit (PV2000-style);
+- the method selector exposes **Median-binned PCHIP** and **PCHIP (original)**;
+- Median-binned PCHIP is the default with a 10 mV Vsb bin width, and that width is user-adjustable;
+- LOG10 / Linear remain shared interpolation-scale choices for both methods;
+- PCHIP outlier limit is displayed in uppercase-E scientific notation.
+
+The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP method, median width, interpolation scale, outlier threshold, or enabled state changes. Those settings may change Midgap Dit and the fitted curve only. The 10 mV default is an analyzer behavior selected from the supplied raw Dit–Vsb comparison, not a claim about PV-2000's proprietary fitting algorithm.
+
+COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
+
+In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Sidebar children must not flex-shrink to fit the viewport; they remain intrinsic-height blocks so overflow is real and the sidebar scroll container can scroll. Scrolling it must not move the plot columns. Fine-pointer desktop zoom must not trigger the portrait/mobile fallback merely because the viewport becomes taller than wide; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary must not require horizontal scrolling: parameter, valid-site mean and current-site values are rendered as responsive cards.
+
+
+
+## LBIC raster — paired XML + PV-2000 export regression
+
+Four supplied private XML/CSV pairs establish a validated **single-beam algorithm family**: SquareRegionPattern, µA Current + DirectReflection + ScatteredReflection, finite positive photon FluxCache, and vendor Current / Reflectivity / IQE outputs. The four concrete reference instances all happen to use 984 nm, power 0.6 and the same FluxCache, but those numeric values are not validation whitelist keys.
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| `LBICMeasurement` dispatch | unit tested | tested |
+| 51×51 / 101×101 point counts | XML = CSV | validated |
+| X-fast / row-major coordinate order | pointwise CSV match | validated |
+| Y coordinate | `Region.Y + row × dy`; max error 0 mm | validated |
+| Current | raw XML vs CSV pointwise | validated |
+| Reflectivity | min(100%, DirectReflection + ScatteredReflection); one 51×51 reference exercises the cap | validated |
+| compatibility charge constant | `q = 1.602e-19 C` required for vendor IQE parity | validated for algorithm family |
+| IQE | `EQE/(1-R)`; calculated >100% or non-computable becomes blank | validated |
+| IQE finite values | reproduced to ~1e-12 %-point scale | validated |
+| summary Stdev | sample standard deviation, finite values only | validated |
+| EQE as standalone output | vendor CSV does not expose it | inferred intermediate |
+| multiple beam/wavelength data model | implemented, no real paired reference yet | unvalidated |
+| calculated diffusion length | no paired vendor reference | unsupported |
+
+Run:
+
+```bash
+npm run validate:lbic
+```
+
+Matching private references must use the same basename under `private/reference/lbic/`:
+
+```
+sample.xml
+sample.csv
+```
+
+The validator is intentionally **semantic-profile gated**. Numeric changes in wavelength, laser power, finite FluxCache, Region origin/size, pitch or grid dimensions remain inside the validated family when the same input/output path is used. A categorical change — such as another pattern type/coordinate encoding, multiple-beam semantics, another unit convention, a different raw channel set, or a different vendor result/blanking path — reports **NEW PROFILE** and requires inspection of the actual XML plus matching PV-2000 output.
+
+Runtime remains XML-only. The CSV is never consulted when a user imports an XML.
+
