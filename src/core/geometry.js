@@ -19,6 +19,15 @@
     for(let row=0;row<ny;row++)for(let col=0;col<nx;col++)pts.push({x:x+col*dx,y:y+yDirection*row*dy,row,col});
     return count==null||pts.length===count?pts:[];
   }
+  function centeredRectGrid(halfWidth,halfHeight,pitchX,pitchY,count){
+    if(![halfWidth,halfHeight,pitchX,pitchY].every(Number.isFinite)||halfWidth<0||halfHeight<0||pitchX<=0||pitchY<=0)return[];
+    const nx=Math.floor(halfWidth/pitchX+1e-9),ny=Math.floor(halfHeight/pitchY+1e-9),pts=[];
+    for(let iy=-ny;iy<=ny;iy++){
+      const y=iy*pitchY;
+      for(let ix=-nx;ix<=nx;ix++)pts.push({x:ix*pitchX,y});
+    }
+    return count==null||pts.length===count?pts:[];
+  }
   function bounds(points){const xs=points.map(p=>p.x).filter(Number.isFinite),ys=points.map(p=>p.y).filter(Number.isFinite);return{xmin:Math.min(...xs),xmax:Math.max(...xs),ymin:Math.min(...ys),ymax:Math.max(...ys)}}
-  PV.geometry={roundGrid,rectGrid,bounds};
+  PV.geometry={roundGrid,rectGrid,centeredRectGrid,bounds};
 })(typeof window!=='undefined'?window:globalThis);
