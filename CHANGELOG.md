@@ -1,11 +1,17 @@
 # Changelog
 
-## v20260922.6.2 — 2026-09-22
+## v20260922.7.1 — 2026-09-22
 
 - Changed the optional Midgap Dit PCHIP outlier limit from a fixed default of 2E13 to an opt-in manual threshold: blank disables absolute-value rejection while finite positive values preserve the legacy filter behavior.
 - Made Midgap Dit explicitly interpolation-only. The theoretical target must be covered by both measured Vsb and the retained PCHIP fit domain; unavailable results state whether measured or post-filter fit coverage is insufficient instead of implying an extrapolated value.
 - Added PCHIP threshold/coverage metadata to Dit CSV export and explicit out-of-coverage status in the Dit result/chart UI.
 - Added numeric tick values and grid guides to both axes of QSS-µPCD Distribution, including Swap axes mode.
+
+## v20260922.7 — 2026-09-22
+
+- Added inferred QSS-µPCD `MapPattern + SquareCell` coordinate reconstruction from target `Size`, `EdgeExclusion` and `Pitch`, fixing blank maps when the XML contains valid raster data but no `RoundWafer` target.
+- SquareCell maps now use their effective rectangular bounds for default display and smoothing instead of the circular RoundWafer mask; the existing RoundWafer path remains unchanged and separately validated.
+- Added regression coverage for a centered 31 × 31 SquareCell schedule while keeping the new geometry explicitly labelled inferred pending a matching PV-2000 export.
 
 ## v20260922.6 — 2026-09-22
 

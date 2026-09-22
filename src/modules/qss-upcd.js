@@ -14,20 +14,37 @@
     if(!Number.isFinite(edgeExclusion))edgeExclusion=0;
     if(edgeExclusion<0||edgeExclusion>=radius)return NaN;
     return radius-edgeExclusion}
+  function effectiveMapHalfExtent(size,edgeExclusion=0){const half=size/2;
+    if(!Number.isFinite(half)||!(half>0))return NaN;
+    if(!Number.isFinite(edgeExclusion))edgeExclusion=0;
+    if(edgeExclusion<0||edgeExclusion>=half)return NaN;
+    return half-edgeExclusion}
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),iter=X.direct(itd,'Iteration'),data=X.direct(iter,'Data');
     const values=X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value')).filter(Number.isFinite);
     const pattern=X.direct(m,'Pattern'),
       target=X.direct(m,'Target'),
+      targetType=X.attrType(target),
+      targetSize=X.direct(target,'Size'),
+      targetWidth=X.num(targetSize,'Width',NaN),
+      targetHeight=X.num(targetSize,'Height',NaN),
       pitch=X.direct(pattern,'Pitch'),
       diameter=X.num(target,'Diameter',Number.isFinite(c.radius)?2*c.radius:NaN),
       edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0)),
       mapRadius=effectiveMapRadius(diameter,edgeExclusion),
+      mapHalfWidth=effectiveMapHalfExtent(targetWidth,edgeExclusion),
+      mapHalfHeight=effectiveMapHalfExtent(targetHeight,edgeExclusion),
       pitchX=X.num(pitch,'X'),
       pitchY=X.num(pitch,'Y');
       
     let coords=[];
-      if(X.attrType(pattern)==='MapPattern'&&X.attrType(target)==='RoundWafer'&&Number.isFinite(mapRadius)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY))coords=GEO.roundGrid(mapRadius,pitchX,pitchY,values.length);
+    if(X.attrType(pattern)==='MapPattern'){
+      if(targetType==='RoundWafer'&&Number.isFinite(mapRadius)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+        coords=GEO.roundGrid(mapRadius,pitchX,pitchY,values.length);
+      }else if(targetType==='SquareCell'&&Number.isFinite(mapHalfWidth)&&Number.isFinite(mapHalfHeight)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+        coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,values.length);
+      }
+    }
       
     const preArray=X.direct(X.direct(m,'PreProcessings'),'ArrayOfPreProcessSettings'),pre0=preArray?X.children(preArray)[0]:null;
     const avgIndex=X.num(m,'Averaging',NaN),
@@ -41,7 +58,7 @@
       evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'';
       
     const qssRange=X.direct(m,'QSSRange');
-    return{...c,values,coords,patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),pitchX,pitchY,diameter,edgeExclusion,mapRadius,
+    return{...c,values,coords,patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
       waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor',1),doping:X.num(m,'Doping',NaN),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower',NaN),
       avgMode,averagingIndex:avgIndex,evaluationMode,autoset:X.text(m,'DoAutoSetting',''),qssMilli:X.num(pre0,'QssLampIntensity',Number(c.header['QSS Intensity'])),temperatureC:X.num(iter,'ChuckTemperature',NaN),measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),tauSteadyStateFactor:X.num(iter,'TauSteadyStateFactor',NaN),qdcValue:X.num(iter,'QDCValue',NaN),
       probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),doRastering:X.text(m,'DoRastering',''),saveTransient:X.text(m,'SaveTransient',''),transient:c.header['Transient']||'',pointAverage:X.text(m,'DoPointAveraging',''),pointAverageCount:X.num(m,'PointAverageCount',NaN),
@@ -117,13 +134,14 @@
       W=canvas.width=760,
       H=canvas.height=420,
       p={l:54,r:76,t:28,b:46},
-      rad=d.diameter/2||50,
+      squareTarget=d.targetType==='SquareCell'&&Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight),
+      rad=squareTarget?Math.max(d.mapHalfWidth,d.mapHalfHeight):(d.diameter/2||50),
       plot=Math.min(W-p.l-p.r,H-p.t-p.b),
       cx=p.l+(W-p.l-p.r)/2,
       cy=p.t+(H-p.t-p.b)/2,
       R=plot/2,
-      autoX=[-rad,rad],
-      autoY=[-rad,rad],
+      autoX=squareTarget?[-d.mapHalfWidth,d.mapHalfWidth]:[-rad,rad],
+      autoY=squareTarget?[-d.mapHalfHeight,d.mapHalfHeight]:[-rad,rad],
       xr=PV.plot.resolve(autoX,zoom?.x),
       yr=PV.plot.resolve(autoY,zoom?.y),
       X=x=>cx-R+(x-xr[0])/(xr[1]-xr[0]||1)*2*R,
@@ -150,7 +168,7 @@
         for(let px=Math.floor(cx-R);px<=Math.ceil(cx+R);px+=step){
           const x=xr[0]+(px-(cx-R))/(2*R)*(xr[1]-xr[0]),
           y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
-          if(x*x+y*y>=rad*rad)continue;
+          if(squareTarget?(Math.abs(x)>d.mapHalfWidth||Math.abs(y)>d.mapHalfHeight):x*x+y*y>=rad*rad)continue;
           const v=smoothValueAt(x,y,d.coords,vals,mask,maxDist);
           if(!Number.isFinite(v))continue;
           const t=(v-lo)/(hi-lo||1),
@@ -458,6 +476,9 @@
       mask=validMask(a,filterKey,filterLo,filterHi);
       
     const statsFor=k=>summaryMasked(a.metrics[k].values,mask);
+    const targetSummary=()=>d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)
+      ?`${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm square · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm · inferred geometry`
+      :`${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`;
     function summaryRows(){
       return Object.values(a.metrics).map(m=>{
         const st=statsFor(m.key);return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
@@ -466,7 +487,7 @@
       const validN=mask.filter(Boolean).length;
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
-          ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and X/Y site pitch. For MapPattern XMLs the analyzer reconstructs site coordinates from this geometry and acquisition order.')}${metaRow('Target',`${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`,'Nominal wafer diameter, XML edge exclusion used to reconstruct the scheduled map radius, and wafer thickness. The physical sample may occupy only part of this nominal target; use the Valid-data filter for quarter wafers or coupons.')}${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
+          ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and X/Y site pitch. For MapPattern XMLs the analyzer reconstructs site coordinates from this geometry and acquisition order.')}${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer reconstruction is vendor-regression validated for the current reference family. SquareCell MapPattern reconstruction is inferred from Size, EdgeExclusion and Pitch until a matching PV-2000 export is supplied.')}${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
         </dl></section>
         <section class="panel"><h3>Valid-data filter ${help('Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.')}</h3>
           <div class="filter-grid"><label>Filter metric<select id="qFilterMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select></label><label>Lower<input id="qFilterLo" type="number" step="any" value="${filterLo}"></label><label>Upper<input id="qFilterHi" type="number" step="any" value="${filterHi}"></label></div>
@@ -526,7 +547,7 @@
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,niCompat,validMask,smoothValueAt,effectiveMapRadius,constants:{NI300_MANUAL,NI300_PV2000_COMPAT}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,niCompat,validMask,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,constants:{NI300_MANUAL,NI300_PV2000_COMPAT}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);
