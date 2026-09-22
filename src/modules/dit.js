@@ -9,7 +9,8 @@
   function vectorMeans(e){return e?[...e.children].map(scalarMean):[]}
   function firstNum(parents,names,d=NaN){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.num(p,n,NaN);if(Number.isFinite(v))return v}return d}
   function firstBool(parents,names,d=false){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.text(p,n,'');if(v!=='')return v.toLowerCase()==='true'}return d}
-  function settings(m,name){const n=X.direct(m,name),
+  function settings(m,name){
+    const n=X.direct(m,name),
     s=X.direct(n,'Settings'),
     tr=X.direct(s,'TargetRange');
     return{charge:X.num(s,'CoronaCharge'),attempts:X.num(s,'MaxNumberOfAttemps'),extra:X.num(s,'ExtraScans'),delay:X.num(s,'ChargeDelay'),targetMin:X.text(tr,'Min',''),targetMax:X.text(tr,'Max','')}}
@@ -114,9 +115,20 @@
     return{min:Number.isFinite(min)?min:NaN,minIndex,accepted,count,total:raw.length};
   }
   function cocosRecommendation(d,accumN=5){
-    const fs=d.sites.map(s=>flat(s,d,accumN)),eotVals=fs.map(f=>f.eot*10).filter(v=>Number.isFinite(v)&&v>0),dataEot=S.median(eotVals),eotA=Number.isFinite(dataEot)&&dataEot>0?dataEot:(Number.isFinite(d.cocosIIEOT)&&d.cocosIIEOT>0?d.cocosIIEOT:100),all=[];
+    const fs=d.sites.map(s=>flat(s,d,accumN)),
+      eotVals=fs.map(f=>f.eot*10).filter(v=>Number.isFinite(v)&&v>0),
+      dataEot=S.median(eotVals),
+      eotA=Number.isFinite(dataEot)&&dataEot>0?dataEot:(Number.isFinite(d.cocosIIEOT)&&d.cocosIIEOT>0?d.cocosIIEOT:100),
+      all=[];
+      
     d.sites.forEach((s,i)=>{const f=fs[i],c=cocosIIReverse(s,d,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:-99,cocosIIMaxVsb:99});if(c.valid)all.push(...c.vsb.filter(Number.isFinite))});
-    const lo=all.length?Math.min(...all):NaN,hi=all.length?Math.max(...all):NaN,step=.05,margin=.02,minVsb=Number.isFinite(lo)?Math.min(-.1,Math.floor((lo-margin)/step)*step):-.1,maxVsb=Number.isFinite(hi)?Math.max(.65,Math.ceil((hi+margin)/step)*step):.65;
+    const lo=all.length?Math.min(...all):NaN,
+      hi=all.length?Math.max(...all):NaN,
+      step=.05,
+      margin=.02,
+      minVsb=Number.isFinite(lo)?Math.min(-.1,Math.floor((lo-margin)/step)*step):-.1,
+      maxVsb=Number.isFinite(hi)?Math.max(.65,Math.ceil((hi+margin)/step)*step):.65;
+      
     return{eotA,minVsb,maxVsb,eotSource:eotVals.length?`dark accumulation median (${eotVals.length} sites)`:'fallback',coverageCount:all.length};
   }
 
@@ -140,7 +152,8 @@
         const w1=2*h[i]+h[i-1],
         w2=h[i]+2*h[i-1];
         d[i]=(w1+w2)/(w1/delta[i-1]+w2/delta[i])}}return d}
-  function pchipEval(x,y,xq){if(x.length<2||xq<x[0]||xq>x[x.length-1])return NaN;
+  function pchipEval(x,y,xq){
+    if(x.length<2||xq<x[0]||xq>x[x.length-1])return NaN;
     const d=pchipSlopes(x,y);
     let i=x.length-2;
     for(let k=0;k<x.length-1;k++)if(xq>=x[k]&&xq<=x[k+1]){i=k;
@@ -151,10 +164,12 @@
     h01=-2*t**3+3*t**2,
     h11=t**3-t**2;
     return h00*y[i]+h10*h*d[i]+h01*y[i+1]+h11*h*d[i+1]}
-  function filteredXY(x,y,reject=2e13){const z=x.map((v,i)=>[v,y[i]]).filter(p=>p.every(Number.isFinite)).sort((a,b)=>a[0]-b[0]),
+  function filteredXY(x,y,reject=2e13){
+    const z=x.map((v,i)=>[v,y[i]]).filter(p=>p.every(Number.isFinite)).sort((a,b)=>a[0]-b[0]),
     ux=[],
     uy=[];
-    for(let i=0;i<z.length;){let j=i+1,
+    for(let i=0;i<z.length;){
+      let j=i+1,
       sum=z[i][1],
       n=1;
       while(j<z.length&&Math.abs(z[j][0]-z[i][0])<1e-12){sum+=z[j][1];
@@ -186,7 +201,8 @@
       qc=r.map(x=>x.Qc),
       qs=vs.map(v=>qsc(v,d.doping,d.dopingType)),
       raw=[];
-      for(let i=0;i<r.length-1;i++){const dv=vs[i+1]-vs[i],
+      for(let i=0;i<r.length-1;i++){
+      const dv=vs[i+1]-vs[i],
       dq=Math.abs(qc[i+1]-qc[i])-Math.abs(qs[i+1]-qs[i]);
       raw.push(Math.abs(dv)>0?Math.abs(dq)/Math.abs(dv):NaN)}
     const x=vs.slice(0,-1),
@@ -266,7 +282,8 @@
   function pointsXY(x,y,X,Y,color,r=2.5){return x.map((v,i)=>Number.isFinite(v)&&Number.isFinite(y[i])?`<circle cx="${X(v)}" cy="${Y(y[i])}" r="${r}" fill="${color}" stroke="var(--chart-bg)" stroke-width=".7"/>`:'').join('')}
 
   function metric(s,key){if(key==='EOT')return s.eot;return s[key]}
-  function mapSpec(k){return{Qtot:['Qtot','cm⁻²',true],Dit:['Minimum Dit (PV2000-style)','cm⁻² eV⁻¹',true],MidgapDit:['Midgap Dit (PCHIP)','cm⁻² eV⁻¹',true],EOT:['EOT (SiO₂ eq.)','nm',false],Cox:['Cox','F/cm²',true],Qsc:['Qsc','cm⁻²',true],InitialQc:['Initial Qc','cm⁻²',false],MaxVsb:['Max |Vsb|','V',false]}[k]}
+  function mapSpec(k){
+    return{Qtot:['Qtot','cm⁻²',true],Dit:['Minimum Dit (PV2000-style)','cm⁻² eV⁻¹',true],MidgapDit:['Midgap Dit (PCHIP)','cm⁻² eV⁻¹',true],EOT:['EOT (SiO₂ eq.)','nm',false],Cox:['Cox','F/cm²',true],Qsc:['Qsc','cm⁻²',true],InitialQc:['Initial Qc','cm⁻²',false],MaxVsb:['Max |Vsb|','V',false]}[k]}
   function mapValue(v,k){if(!Number.isFinite(v))return'—';if(k==='EOT')return v.toFixed(2);if(k==='MaxVsb')return v.toFixed(3);const e=Math.floor(Math.log10(Math.abs(v)||1)),m=v/10**e;return`${m.toFixed(2)}e${e}`}
   function mapColor(t){t=Math.max(0,Math.min(1,t));const a=[79,124,255],b=[255,90,95];return`rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`}
 
@@ -309,6 +326,7 @@
         field=(label,tip,control,cls='')=>`<label class="compact-field ${cls}"><span class="field-name">${label} ${help(tip)}</span>${control}</label>`;
         
       const diagnostics=isPv?`<div class="cocos-diagnostics"><span>Accepted intervals <b>${current.ditAcceptedCount??0}/${current.ditIntervalCount??0}</b></span><span>Minimum at Vsb <b>${fmt(current.ditMinVsb,3)} V</b></span></div>`:'';
+        
       const recommendation=isPv?`<div class="cocos-recommendation"><span><b>Suggested from data:</b> EOT ${fmt(rec.eotA,1)} Å · window ${fmt(rec.minVsb,2)}…${fmt(rec.maxVsb,2)} V <small>${esc(rec.eotSource||'')}</small></span><button id="ditUseRecommendation" type="button">Use</button></div>`:'';
         
       return `<details id="ditAnalysisControls" class="panel" ${analysisOpen?'open':''}><summary>Analysis controls</summary>
@@ -333,7 +351,10 @@
     }
     function renderShell(){
       if(!analysis.options.pchipEnabled&&mapKey==='MidgapDit')mapKey='Dit';
-      const s=analysis.sites[site],coord=s.coord||{x:0,y:0},rows=[['Qtot','Qtot'],['Minimum Dit (PV2000-style)','Dit'],['Midgap Dit (PCHIP)','MidgapDit'],['EOT (SiO₂ eq.)','eot'],['Cox','Cox'],['Qsc','Qsc'],['Initial Qc','InitialQc'],['Max |Vsb|','MaxVsb']];
+      const s=analysis.sites[site],
+        coord=s.coord||{x:0,y:0},
+        rows=[['Qtot','Qtot'],['Minimum Dit (PV2000-style)','Dit'],['Midgap Dit (PCHIP)','MidgapDit'],['EOT (SiO₂ eq.)','eot'],['Cox','Cox'],['Qsc','Qsc'],['Initial Qc','InitialQc'],['Max |Vsb|','MaxVsb']];
+        
       host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div></section>
         ${analysisControls()}
@@ -342,10 +363,10 @@
         <details class="panel"><summary>Recipe charge sequence ${help('Corona charge increments, target ranges and loop limits controlling barrier adjustment and the main COCOS sweep.')}</summary><dl class="meta meta-detail">${md('PreProcess ΔQc',`${sci(d.pre.charge,3)} cm⁻²`,metaHelp.preCharge)}${md('PreProcess target',`${esc(d.pre.targetMin)} to ${esc(d.pre.targetMax)}`,metaHelp.preTarget)}${md('Pre attempts / extra',`${fmt(d.pre.attempts,0)} / ${fmt(d.pre.extra,0)}`,metaHelp.preAttempts)}${md('Process ΔQc',`${sci(d.process.charge,3)} cm⁻²`,metaHelp.processCharge)}${md('Process target',`${esc(d.process.targetMin)} to ${esc(d.process.targetMax)}`,metaHelp.processTarget)}${md('Process attempts / extra',`${fmt(d.process.attempts,0)} / ${fmt(d.process.extra,0)}`,metaHelp.processAttempts)}</dl></details>
         <details class="panel"><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV2000 inferred mode uses the flatband anchor, EOT in Å, signed Vsb, and Min/Max Vsb for reported-minimum Dit acceptance. Back Surface Shift remains unresolved and is not applied.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
       </aside><section class="plots">
-        <div class="panel chart"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span><button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
-        <div class="panel chart"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Interface-state density versus Vsb on a logarithmic Y axis. Standard COCOS use |Vsb|. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span><button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
+        <div class="panel chart"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span><button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header>${PV.plot.axisControls('ditVcpdAxes')}<div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
+        <div class="panel chart"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS use |Vsb|. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span><button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header>${PV.plot.axisControls('ditDitAxes')}<div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
       </section><section class="plots">
-        <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Surface barrier versus corona charge. Standard COCOS display |Vsb|. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Raw standard |Vsb| is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span><button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
+        <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS display |Vsb|. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Raw standard |Vsb| is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span><button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header>${PV.plot.axisControls('ditVsbAxes')}<div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
         <div class="panel chart map-panel"><header><b>Wafer map</b>${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. Map any calculated Dit/COCOS parameter across the measured sites. Each site displays its numeric value; click a site to select it.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select><button id="e4" title="Export the selected wafer-map quantity for every site.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 620 315"></svg></div></div>
       </section></div>`;
       host.querySelector('#ditMapMetric').value=mapKey;
@@ -414,6 +435,7 @@
         applyBtn.onclick=()=>rebuild();
         
       host.querySelector('#e1').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vcpd.csv`,['Qc','VDark','Measured VLight','Analysis Vsb','COCOS-II synthetic VLight'],s.rows.map((r,i)=>[r.Qc,r.VDark,r.VLight,s.analysisVsb[i],s.c2?.light?.[i]??'']));
+        
       host.querySelector('#e2').onclick=()=>{
         const fitMethod=analysis.options.pchipEnabled?(analysis.options.pchipMethod==='median'?'Median-binned PCHIP':'PCHIP (original)'):'Off',
         medianMv=analysis.options.pchipMethod==='median'?analysis.options.pchipMedianWindowV*1e3:'',
@@ -455,6 +477,7 @@
       parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Vcpd (V)</text>`);
       svg.innerHTML=parts.join('');
       PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vcpd=n;drawVcpd()},onReset:()=>{zoom.vcpd={x:null,y:null};drawVcpd()}});
+      PV.plot.bindAxisControls(host,'ditVcpdAxes',zoom.vcpd,n=>{zoom.vcpd=n;drawVcpd()});
       host.querySelector('#ditVcpdLegend').innerHTML='<span><i style="background:var(--red)"></i>Dark</span><span><i style="background:var(--blue)"></i>Measured light</span>'+(c2.length?'<span><i style="background:var(--green)"></i>COCOS-II synthetic light</span>':'')+'<span class="yellow">│ initial</span><span class="green">│ flatband</span>';
       host.querySelector('#ditVcpdMeta').textContent=`${analysis.mode} · Qtot ${sci(s.Qtot,2)}`}
     function drawVsb(){
@@ -487,6 +510,7 @@
       parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">${signed?'Vsb':'|Vsb|'} (V)</text>`);
       svg.innerHTML=parts.join('');
       PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vsb=n;drawVsb()},onReset:()=>{zoom.vsb={x:null,y:null};drawVsb()}});
+      PV.plot.bindAxisControls(host,'ditVsbAxes',zoom.vsb,n=>{zoom.vsb=n;drawVsb()});
       host.querySelector('#ditVsbLegend').innerHTML='<span><i style="background:var(--blue)"></i>'+(signed?'PV2000 RE signed Vsb':'Vsb')+'</span>'+(analysis.options.effectiveCocosMode!=='standard'?'<span><i style="background:var(--soft)"></i>raw standard</span>':'')+'<span class="green">│ flatband</span>';
       host.querySelector('#ditVsbMeta').textContent=`max |Vsb| ${fmt(s.MaxVsb,3)} V`}
     function drawDit(){
@@ -516,6 +540,7 @@
       parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">${signed?'Vsb':'|Vsb|'} (V)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Dit (cm⁻² eV⁻¹)</text>`);
       svg.innerHTML=parts.join('');
       PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},yLog:true,onChange:n=>{zoom.dit=n;drawDit()},onReset:()=>{zoom.dit={x:null,y:null};drawDit()}});
+      PV.plot.bindAxisControls(host,'ditDitAxes',zoom.dit,n=>{zoom.dit=n;drawDit()},{yLog:true});
       const fitLabel=analysis.options.pchipMethod==='median'?'Median-PCHIP '+fmt(analysis.options.pchipMedianWindowV*1e3,1)+' mV':'PCHIP (original)',
       scaleLabel=analysis.options.pchipScale==='log10'?'LOG10':'Linear';
       host.querySelector('#ditDitLegend').innerHTML='<span><i style="background:var(--blue)"></i>accepted variation points</span>'+(signed?'<span><i style="background:var(--soft)"></i>outside Min/Max Vsb</span>':'')+(analysis.options.pchipEnabled?'<span><i style="background:var(--green)"></i>'+fitLabel+'</span>':'')+(signed||!analysis.options.pchipEnabled?'':'<span class="yellow">│ midgap</span>');
