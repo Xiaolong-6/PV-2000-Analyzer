@@ -1,5 +1,18 @@
 # PV-2000 Analyzer
 
+<p align="center">
+  <a href="https://xiaolong-6.github.io/PV-2000-Analyzer/"><img alt="Open live analyzer" src="https://img.shields.io/badge/OPEN-LIVE%20ANALYZER-2da44e?style=for-the-badge&logo=githubpages&logoColor=white"></a>
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer"><img alt="Source" src="https://img.shields.io/badge/SOURCE-GITHUB-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md"><img alt="Contribute" src="https://img.shields.io/badge/CONTRIBUTE-GUIDE-0969da?style=for-the-badge&logo=git&logoColor=white"></a>
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml"><img alt="Share PV-2000 data" src="https://img.shields.io/badge/SHARE-PV--2000%20DATA-8250df?style=for-the-badge&logo=github&logoColor=white"></a>
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new"><img alt="Report issue" src="https://img.shields.io/badge/REPORT-ISSUE-d73a49?style=for-the-badge&logo=github&logoColor=white"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/pages.yml"><img alt="GitHub Pages" src="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/pages.yml/badge.svg"></a>
+</p>
+
 Local, browser-based analysis of Semilab PV-2000 XML result files. The user imports one XML; the app detects `Measurement/@xsi:type` and dispatches it to a measurement-specific analyzer.
 
 Current modules:
@@ -36,7 +49,7 @@ Anyone using PV-2000 can help expand the supported measurement/result combinatio
 
 Developers may instead branch from current `main`, implement support, include the matching reference case and regression coverage, and request merge. Validation follows semantic input→output profile families rather than exact numeric settings such as raster size, wavelength, power or FluxCache values.
 
-See `CONTRIBUTING.md`, `reference_data/README.md` and `docs/REFERENCE_PROFILES.md` before submitting data or code.
+Use the **Share PV-2000 data** shortcut above for a guided issue, or see `CONTRIBUTING.md`, `reference_data/README.md` and `docs/REFERENCE_PROFILES.md` before submitting data or code.
 
 ## UI principles
 
