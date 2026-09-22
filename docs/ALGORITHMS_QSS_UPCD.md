@@ -2,11 +2,13 @@
 
 ## XML and coordinate order
 
-The reference result is `QssUpcdMeasurement`, with 305 `UpcdDataItem/Value` lifetime values, a 5 mm `MapPattern`, 100 mm round target, 300 µm thickness, optical factor 0.708, n-type doping 1e14 cm^-3 and QSS intensity 30 mSun.
+Two QSS map coordinate families currently have paired PV-2000 export evidence.
 
-For a round map, coordinates are generated in XML acquisition order: ascending Y, then ascending X within each row. The scheduled radius is `Diameter / 2 - EdgeExclusion` when `EdgeExclusion` is present, and only lattice points strictly inside that effective circle are retained (`x²+y² < Rmap²`). This matters for dense maps: a 100 mm target with 3 mm edge exclusion and 2 mm pitch schedules 1741 sites, whereas using the nominal 50 mm radius would incorrectly generate 1941. The supplied 305-point PV-2000 CSV reference still confirms its reconstructed X/Y coordinates exactly.
+**QSS-MAP-001 — MapPattern + RoundWafer.** Coordinates are generated in XML acquisition order: ascending Y, then ascending X within each row. The scheduled radius is `Diameter / 2 - EdgeExclusion` when `EdgeExclusion` is present, and only lattice points strictly inside that effective circle are retained (`x²+y² < Rmap²`). A 100 mm target with 3 mm edge exclusion and 2 mm pitch therefore schedules 1741 sites rather than the 1941 sites produced by the nominal 50 mm radius. The supplied 305-point PV-2000 CSV reference confirms its reconstructed X/Y coordinates exactly.
 
-The UI labels this comparison as fixed algorithm-validation evidence for the 305-point reference. The current XML's point count, generated-coordinate count and valid-data count are reported separately. Importing another XML does not establish agreement with an export for that new measurement.
+**QSS-MAP-002 — SquareRegionPattern + SquareCell.** The raster is read from `Pattern/Region` plus `Pattern/Dimension`. The paired 35 × 30 reference uses Region (-40, -30) mm with Width 70 mm and Height 60 mm, giving 1050 sites. PV-2000 export order is X-fast row-major with both axes increasing: X runs -40 → +30 within each row, then Y advances -30 → +30. With no explicit `Pitch` node, effective spacing is derived as `Width/(Nx-1)` and `Height/(Ny-1)`. All 1050 reconstructed X/Y coordinates match the paired export to floating-point precision.
+
+For SquareRegionPattern, the nominal SquareCell outline and explicit measured Region are distinct. The Region is used as the raster/smoothing support; the target remains the nominal sample boundary. Runtime remains XML-only: current point/coordinate counts are diagnostics, and importing another XML does not imply that a vendor export was compared at runtime.
 
 ## Statistics and valid-point filtering
 
@@ -14,7 +16,7 @@ PV-2000 `Stdev` is sample standard deviation (`N-1`). The analyzer adds an indep
 
 Excluded sites remain visible in point/profile views, but are not used in statistics or smooth interpolation. Smooth-map interpolation is also distance-limited to the neighborhood of valid measured sites to avoid painting an unmeasured quarter/coupon across the full nominal wafer.
 
-The Distribution histogram follows the selected map metric (lifetime by default) and uses the same validity mask. Its valid bars use the wafer map's color function and valid-point minimum/maximum range at each metric bin midpoint; excluded counts remain gray. Swap axes turns its vertical bars into horizontal bars, with the metric on the vertical axis and count on the horizontal axis. The histogram CSV keeps metric bin limits and counts regardless of axis orientation.
+The Distribution histogram follows the selected map metric (lifetime by default) and uses the same validity mask. The plotted Count is the number of **valid** points only; excluded points do not add to bar height. Yellow lines mark the active lower/upper filter bounds. Swap axes changes only presentation, placing metric on the vertical axis and Count on the horizontal axis; it does not change the filter mask or counts. The histogram CSV keeps both valid and excluded diagnostic counts regardless of axis orientation.
 
 In smooth mode, the area nearest to each excluded scheduled site is left uncolored, even if valid neighboring sites could otherwise interpolate across it. The excluded site's diagnostic marker remains visible.
 
