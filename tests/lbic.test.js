@@ -181,3 +181,18 @@ test('active-channel filtering follows disabled optical measurement flags too',(
   assert.equal(concepts.includes('eqe'),true);
   assert.equal(concepts.includes('iqe'),false);
 });
+
+
+test('partial SquareRegion acquisition can use the leading validated row-major schedule without claiming profile parity',()=>{
+  const full=PV2000.geometry.rectGrid(-10,-50,60,60,61,61,null,1),
+    partial=full.slice(0,2814);
+  assert.equal(full.length,3721);
+  assert.equal(partial.length,2814);
+  assert.deepEqual(partial[0],{x:-10,y:-50,row:0,col:0});
+  assert.deepEqual(partial.at(-1),{x:-3,y:-4,row:46,col:7});
+
+  const raw={key:0,channels:{Current:[0],DirectReflection:[1],ScatteredReflection:[2]}},
+    laser={index:0,wavelengthNm:984},
+    d={measureCurrent:'false',measureDirect:'true',measureDiffuse:'true',patternType:'SquareRegionPattern',nx:61,ny:61,regionX:-10,regionY:-50,width:60,height:60,beamCount:1,iterationCount:1,pointCount:2814,expectedPointCount:3721};
+  assert.equal(L.referenceFamily(raw,laser,d),'');
+});
