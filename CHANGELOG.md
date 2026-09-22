@@ -12,6 +12,13 @@
 - Map `HighDensityPattern + SquareCell` coefficients to the EdgeExclusion-adjusted rectangle; for `HighDensityPattern + RoundWafer`, select the strict normalized unit-circle coefficient subset (`x²+y² < 1`) and scale it by the EdgeExclusion-adjusted radius; the supplied 15×15 and 20×20 XMLs then reproduce their 145/276 measured-point counts exactly. This coordinate path remains inferred pending a matching PV-2000 X/Y export.
 - Added previous/next XML controls around the toolbar `Open XML` button. After one folder authorization, adjacent XML files can be opened rapidly in natural filename order; browsers without the File System Access API use a folder-input fallback.
 
+## v20260922.15 — 2026-09-22
+
+- Added validated LBIC `MapPattern + PseudoSquareCell` geometry reconstruction for the supplied 54,449-point, four-beam reference, including nominal/EdgeExclusion outlines, equal physical aspect, +Y-up Cartesian orientation and masked raster clipping.
+- Reworked LBIC X/Y profiles to slice by physical coordinates instead of dense rectangular indexing, so masked pseudo-square rows and columns remain correct.
+- Expanded LBIC vendor parity to independent multi-beam Current / Reflectivity / IQE handling; displayed Reflectivity now clamps raw Direct+Scattered to 0–100%, while IQE correctly retains the unclamped raw optical sum in its denominator.
+- Extended LBIC unit/reference validation and documentation as `LBIC-MULTI-002`; calculated diffusion length remains unsupported pending its proprietary vendor algorithm.
+
 ## v20260922.14 — 2026-09-22
 
 - Added **Material: Silicon (Si) / Germanium (Ge)** to Dit Analysis controls, defaulting to Si without inferring material from filenames or substrate names.

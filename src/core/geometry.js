@@ -28,6 +28,22 @@
     }
     return count==null||pts.length===count?pts:[];
   }
+  function pseudoSquareGrid(halfWidth,halfHeight,radius,pitchX,pitchY,count){
+    if(![halfWidth,halfHeight,radius,pitchX,pitchY].every(Number.isFinite)||halfWidth<0||halfHeight<0||radius<=0||pitchX<=0||pitchY<=0)return[];
+    const nx=Math.floor(halfWidth/pitchX+1e-9),
+      ny=Math.floor(halfHeight/pitchY+1e-9),
+      pts=[],
+      r2=radius*radius,
+      eps=1e-9;
+    for(let iy=-ny;iy<=ny;iy++){
+      const y=iy*pitchY;
+      for(let ix=-nx;ix<=nx;ix++){
+        const x=ix*pitchX;
+        if(x*x+y*y<=r2+eps)pts.push({x,y,row:iy+ny,col:ix+nx});
+      }
+    }
+    return count==null||pts.length===count?pts:[];
+  }
   function bounds(points){const xs=points.map(p=>p.x).filter(Number.isFinite),ys=points.map(p=>p.y).filter(Number.isFinite);return{xmin:Math.min(...xs),xmax:Math.max(...xs),ymin:Math.min(...ys),ymax:Math.max(...ys)}}
-  PV.geometry={roundGrid,rectGrid,centeredRectGrid,bounds};
+  PV.geometry={roundGrid,rectGrid,centeredRectGrid,pseudoSquareGrid,bounds};
 })(typeof window!=='undefined'?window:globalThis);

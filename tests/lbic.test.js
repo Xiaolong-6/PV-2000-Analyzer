@@ -23,11 +23,41 @@ test('101x101 reference grid uses 0.05 mm pitch and reaches Region origin plus S
   assert.deepEqual(p.at(-1),{x:-32,y:47,row:100,col:100});
 });
 
+test('PseudoSquareCell MapPattern reconstructs the 54,449-point 0.5 mm raster',()=>{
+  const p=PV2000.geometry.pseudoSquareGrid(59.5,59.5,72,0.5,0.5,54449);
+  assert.equal(p.length,54449);
+  assert.deepEqual(p[0],{x:-40.5,y:-59.5,row:0,col:38});
+  assert.deepEqual(p.at(-1),{x:40.5,y:59.5,row:238,col:200});
+  const center=p.findIndex(pt=>pt.x===0&&pt.y===0);
+  assert.ok(center>=0);
+  assert.deepEqual(p[center],{x:0,y:0,row:119,col:119});
+  const firstRow=p.filter(pt=>pt.y===-59.5);
+  assert.equal(firstRow.length,163);
+  assert.equal(firstRow[0].x,-40.5);
+  assert.equal(firstRow.at(-1).x,40.5);
+});
+
+test('coordinate-based LBIC profiles work on masked pseudo-square rows and columns',()=>{
+  const coords=PV2000.geometry.pseudoSquareGrid(59.5,59.5,72,0.5,0.5,54449),
+    metric={values:coords.map((_,i)=>i)},
+    center=coords.findIndex(pt=>pt.x===0&&pt.y===0),
+    edge=0;
+  const xp=L.profilePoints({coords,pitchX:0.5,pitchY:0.5},metric,center,'x'),
+    yp=L.profilePoints({coords,pitchX:0.5,pitchY:0.5},metric,center,'y'),
+    edgeXp=L.profilePoints({coords,pitchX:0.5,pitchY:0.5},metric,edge,'x');
+  assert.equal(xp.length,239);
+  assert.equal(yp.length,239);
+  assert.equal(xp[0].pos,-59.5);
+  assert.equal(xp.at(-1).pos,59.5);
+  assert.equal(edgeXp.length,163);
+});
+
 test('PV-2000 Reflectivity is DirectReflection plus ScatteredReflection with a 100% cap',()=>{
   const direct=33.2321503717211,scattered=4.95641556511122;
   assert.ok(Math.abs(L.totalReflectance(direct,scattered)-38.1885659368323)<1e-13);
   assert.equal(L.totalReflectance(90.5,9.5179668),100);
   assert.equal(L.totalReflectance(80,25),100);
+  assert.equal(L.totalReflectance(0,-21.0514365493424),0);
   assert.ok(Number.isNaN(L.totalReflectance(NaN,2)));
 });
 
@@ -88,4 +118,28 @@ test('raw Reflectivity EQE IQE channels take precedence over calculated candidat
     assert.equal(ms.length,1);
     assert.equal(ms[0].status,'raw');
   }
+});
+
+
+test('multi-beam MapPattern + PseudoSquareCell is a validated LBIC family',()=>{
+  const raw={key:3,channels:{Current:[346.805782580645],DirectReflection:[0],ScatteredReflection:[-21.0514365493424]}},
+    laser={index:3,wavelengthNm:656,power:1,photonFlux:Number('2209056601073362.2')},
+    d={currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1};
+  assert.equal(L.referenceFamily(raw,laser,d),'LBIC-MULTI-002');
+  assert.equal(L.isReferenceProfile(raw,laser,d),true);
+  assert.equal(L.isReferenceProfile(raw,laser,{...d,beamCount:1}),false);
+});
+
+test('PseudoSquare multi-beam Reflectivity display clamps negative raw optical sum but IQE uses the raw sum',()=>{
+  const raw={key:3,channels:{Current:[346.805782580645],DirectReflection:[0],ScatteredReflection:[-21.0514365493424]}},
+    laser={index:3,wavelengthNm:656,power:1,photonFlux:Number('2209056601073362.2')},
+    d={currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1},
+    b=L.deriveBeam(raw,laser,d),
+    metrics=Object.values(b.metrics),
+    refl=metrics.find(m=>m.concept==='total'),
+    iqe=metrics.find(m=>m.concept==='iqe');
+  assert.equal(refl.values[0],0);
+  assert.ok(Math.abs(iqe.values[0]-80.9556244658789)<1e-12);
+  assert.equal(refl.status,'validated');
+  assert.equal(iqe.status,'validated');
 });
