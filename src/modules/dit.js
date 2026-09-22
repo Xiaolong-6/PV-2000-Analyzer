@@ -1,5 +1,12 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,q=1.60218e-19,k=1.38e-23,T=300;
+  const PV=root.PV2000=root.PV2000||{},
+    X=PV.xml,
+    S=PV.stats,
+    q=1.60218e-19,
+    k=1.38e-23,
+    T=300;
+  // Legacy MATLAB midgap value, adopted as the unified Si intrinsic-carrier concentration for the Dit model.
+  const NI_SI_300K_CM3=9.65e9;
   const finite=a=>(a||[]).filter(Number.isFinite),mean=S.mean;
   const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
@@ -49,7 +56,7 @@
   }
 
   function qsc(vsb,doping,type){
-    const ni=1e10*1e6,
+    const ni=NI_SI_300K_CM3*1e6,
       eps0=8.85e-12,
       eps=11.68,
       Nd=doping*1e6,
@@ -189,7 +196,7 @@
     const useLog=pchipScale==='log10';
     if(useLog){const positive=ux.map((v,i)=>[v,uy[i]]).filter(([,v])=>v>0);ux=positive.map(p=>p[0]);uy=positive.map(p=>Math.log10(p[1]))}
     if(pchipMethod==='median'){({ux,uy}=medianBinnedXY(ux,uy,medianWindowV))}
-    const target=Math.abs(k*T/q*Math.log(d.doping/9.65e9)),restore=v=>useLog?10**v:v;
+    const target=Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3)),restore=v=>useLog?10**v:v;
     if(ux.length<2)return{mid:NaN,curve:[],knots:ux.map((v,i)=>({x:v,y:restore(uy[i])}))};
     const mid=restore(pchipEval(ux,uy,target)),curve=[];
     for(let xx=ux[0];xx<=ux[ux.length-1]+1e-12;xx+=.006)curve.push({x:xx,y:restore(pchipEval(ux,uy,xx))});
@@ -223,7 +230,7 @@
       const dv=vs[i+1]-vs[i],
       dq=qit[i+1]-qit[i];
       direct.push(Math.abs(dv)>0?Math.abs(dq/dv):NaN)}const dfit=pchipEnabled?makeCurve(x,direct,d,reject,pchipScale,'original',pchipMedianWindowV):{mid:NaN,curve:[]};
-      return{vsb:vs,raw,min:gate.min,minIndex:gate.minIndex,minVsbAt:gate.minIndex>=0?x[gate.minIndex]:NaN,accepted:gate.accepted,acceptedCount:gate.count,totalIntervals:gate.total,window,mid:fit.mid,curve:fit.curve,fitKnots:fit.knots||[],directRaw:direct,directMid:dfit.mid,directCurve:dfit.curve,midgapV:Math.abs(k*T/q*Math.log(d.doping/9.65e9))};
+      return{vsb:vs,raw,min:gate.min,minIndex:gate.minIndex,minVsbAt:gate.minIndex>=0?x[gate.minIndex]:NaN,accepted:gate.accepted,acceptedCount:gate.count,totalIntervals:gate.total,window,mid:fit.mid,curve:fit.curve,fitKnots:fit.knots||[],directRaw:direct,directMid:dfit.mid,directCurve:dfit.curve,midgapV:Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3))};
       
   }
   function analyze(d,opts={}){

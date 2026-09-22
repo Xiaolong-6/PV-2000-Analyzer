@@ -39,7 +39,11 @@ For COCOS-II, PCHIP preprocessing is applied after COCOS-II reconstructs signed 
 
 ## Standard COCOS
 
-When Standard COCOS is active, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the group MATLAB-compatible variation/PCHIP path. On the supplied W1 reference, previous regression found about 2.6% mean relative difference versus PV-2000 for minimum Dit and about 2.6% mean absolute relative error for Qtot across valid sites.
+When Standard COCOS is active, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the group MATLAB-compatible variation/PCHIP path.
+
+The Dit model now uses one 300 K silicon intrinsic-carrier concentration throughout: `ni = 9.65e9 cm^-3`. This is the **legacy MATLAB midgap value**, adopted as the unified Dit-model value. The inherited Qsc implementation previously used the rounded `1.00e10 cm^-3` while the midgap target used `9.65e9 cm^-3`; the original program documents no reason for that difference. This cleanup therefore changes Qsc slightly and is not presented as a vendor-algorithm claim.
+
+The previously documented W1 regression (about 2.6% mean difference for minimum Dit and Qtot) predates this ni unification. Re-run the private Standard COCOS reference regression before quoting an exact post-change error figure.
 
 ## PV2000 COCOS-II (inferred)
 

@@ -11,6 +11,33 @@ const targetVsb = 0.3;
 const doping = 9.65e9 * Math.exp(targetVsb * 1.60218e-19 / (1.38e-23 * 300));
 const sample = { x: [0.1, 0.5], dit: [1e10, 1e12], data: { doping } };
 
+test('Qsc uses the same legacy MATLAB ni as the midgap target', () => {
+  const q = 1.60218e-19;
+  const k = 1.38e-23;
+  const T = 300;
+  const eps0 = 8.85e-12;
+  const eps = 11.68;
+  const vsb = 0.6;
+  const dopingCm3 = 1e15;
+
+  const expectedQsc = niCm3 => {
+    const ni = niCm3 * 1e6;
+    const Nd = dopingCm3 * 1e6;
+    const p0 = ni * ni / Nd;
+    const n0 = Nd;
+    const beta = q / (k * T);
+    const term = (Math.exp(-beta * vsb) + beta * vsb - 1)
+      + (p0 / n0) * (Math.exp(beta * vsb) - beta * vsb - 1);
+    return -Math.sqrt(2 * k * T * eps0 * eps * n0) * Math.sqrt(Math.max(0, term)) * 1e-4 / q;
+  };
+
+  const actual = PV2000.modules.dit.qsc(vsb, dopingCm3, 'n');
+  const legacyMidgapExpected = expectedQsc(9.65e9);
+  const roundedLegacyExpected = expectedQsc(1.00e10);
+  assert.ok(Math.abs(actual / legacyMidgapExpected - 1) < 1e-12);
+  assert.ok(Math.abs(actual / roundedLegacyExpected - 1) > 1e-4);
+});
+
 test('Linear PCHIP keeps the existing Dit-space midpoint', () => {
   const fit = PV2000.modules.dit.makeCurve(sample.x, sample.dit, sample.data, Infinity, 'linear');
   assert.ok(Math.abs(fit.mid / 5.05e11 - 1) < 1e-12);
