@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.6
+# Agent handoff — 2026-09-22 — v20260922.6.1
 
 ## Goal
 
@@ -86,6 +86,8 @@ Dit Analysis controls are contextual and compact:
 - **Minimum Dit (PV2000-style)** is the accepted discrete minimum and does not use PCHIP;
 - **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox; disabling it removes Midgap Dit / the green fit while leaving Minimum Dit unchanged;
 - Midgap fitting defaults to **Median-binned PCHIP** with a 10 mV Vsb window; the window is adjustable, **PCHIP (original)** remains available for compatibility, and LOG10/Linear remain shared scale options;
+- the absolute **PCHIP outlier limit** remains available as an optional manual threshold but is disabled by default (blank), so high-Dit samples are not truncated merely because they exceed the old fixed 2E13 limit;
+- Midgap Dit is never extrapolated: the theoretical target must lie inside measured Vsb coverage and the retained PCHIP fit domain, otherwise the result remains unavailable and the UI states the coverage reason;
 - COCOS-II and PCHIP can be combined because PCHIP runs after COCOS-II Vsb reconstruction and acceptance masking;
 - data-derived COCOS-II suggestions are shown but do not silently overwrite XML/user values;
 - invalid COCOS-II settings are shown as errors and no longer fall back silently to Standard COCOS;
@@ -100,7 +102,7 @@ LOG10 remains the default optional PCHIP interpolation scale; Linear remains ava
 
 Dit intrinsic-carrier concentration cleanup: the current Dit model now uses `ni = 9.65e9 cm^-3` at 300 K for both the midgap target and semiconductor Qsc. This is the legacy MATLAB midgap value. The inherited Qsc code previously used the rounded `1.00e10 cm^-3`; the original MATLAB provides no documented reason for the mismatch. The change is intentional model cleanup, not a claim about a proprietary PV-2000 constant. The historical ~2.6% W1 regression figures predate this change and should be re-run with the private reference before being quoted as post-change accuracy.
 
-QSS Distribution has a Swap axes button beside Export. The map-selected metric (lifetime by default) starts on the horizontal axis with count vertically; swapping moves the metric to the vertical axis and count to the horizontal axis. Valid histogram bars use the same color scale and valid-point value range as the wafer map; excluded counts remain gray. The histogram CSV remains in metric bins and includes the selected metric's units in bin headers.
+QSS Distribution has a Swap axes button beside Export. The map-selected metric (lifetime by default) starts on the horizontal axis with count vertically; swapping moves the metric to the vertical axis and count to the horizontal axis. Both axes render numeric tick values in either orientation. Valid histogram bars use the same color scale and valid-point value range as the wafer map; excluded counts remain gray. The histogram CSV remains in metric bins and includes the selected metric's units in bin headers.
 
 The QSS runtime shows only facts for the currently imported dataset. Fixed reference-validation evidence for the 305-point paired dataset remains in project documentation rather than being presented as if it belonged to a newly imported XML. The empty `Algorithm notes` disclosure has also been removed from the runtime; detailed algorithm notes stay in `docs/ALGORITHMS_QSS_UPCD.md`.
 

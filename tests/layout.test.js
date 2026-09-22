@@ -106,9 +106,11 @@ test('Vcpd-Qc is point-line and data markers stay smaller than the initial marke
 });
 
 
-test('PCHIP outlier input is rendered in E scientific notation',()=>{
+test('PCHIP outlier input is optional, blank by default, and keeps E notation for finite manual limits',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
-  assert.match(src,/ditReject[^>]*value="\$\{Number\.isFinite\(o\.ditReject\)\?o\.ditReject\.toExponential\(3\)\.replace\('e','E'\)/);
+  assert.match(src,/id="ditReject"[^>]*placeholder="disabled"/);
+  assert.match(src,/Number\.isFinite\(o\.ditReject\)\?o\.ditReject\.toExponential\(3\)\.replace\('e','E'\):''/);
+  assert.match(src,/ditReject=Number\.isFinite\(opts\.ditReject\)\?opts\.ditReject:Infinity/);
 });
 
 
@@ -235,4 +237,15 @@ test('Dit numeric line plots expose manual X and Y limits',()=>{
   assert.match(dit,/analysisOpen=true,resultsOpen=true/);
   assert.match(dit,/id="ditResultsSummary" class="panel results-summary-panel" \$\{resultsOpen\?'open':''\}/);
   assert.match(dit,/bindAxisControls\(host,'ditDitAxes'[^]*\{yLog:true\}/);
+});
+
+
+test('QSS Distribution draws numeric tick labels on both axes in normal and swapped modes',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/histXRange=swapped\?cr:mr/);
+  assert.match(src,/histYRange=swapped\?mr:cr/);
+  assert.match(src,/niceTicks\(histXRange\[0\],histXRange\[1\],5\)/);
+  assert.match(src,/niceTicks\(histYRange\[0\],histYRange\[1\],5\)/);
+  assert.match(src,/ctx\.fillText\(axisFmt\(t\),x,H-17\)/);
+  assert.match(src,/ctx\.fillText\(axisFmt\(t\),p\.l-8,y\+4\)/);
 });

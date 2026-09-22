@@ -24,14 +24,16 @@ The primary reported Dit is labelled **Minimum Dit (PV2000-style)**. It is the m
 
 The optional PCHIP branch is used for **Midgap Dit (PCHIP)** and the green fitted curve only. It offers two preprocessing methods:
 
-- **Median-binned PCHIP** — default. After the existing accepted-point/outlier filtering, nearby points are grouped into fixed Vsb bins. The default bin width is **10 mV**. Each bin is represented by median Vsb and the median Dit value in the selected interpolation space, then PCHIP is applied to those representatives.
+- **Median-binned PCHIP** — default. After the accepted-point filtering and any optional manual outlier threshold, nearby points are grouped into fixed Vsb bins. The default bin width is **10 mV**. Each bin is represented by median Vsb and the median Dit value in the selected interpolation space, then PCHIP is applied to those representatives.
 - **PCHIP (original)** — preserves the previous raw-point preprocessing for compatibility/regression. Only essentially identical Vsb values (<1e-12 V apart) are collapsed before PCHIP.
 
 Shared controls:
 
 - **Median Vsb window** — adjustable in mV and used only by Median-binned PCHIP; default 10 mV.
-- **PCHIP outlier limit** — rejects high Dit points inside the 0.1–0.5 V fit window.
+- **PCHIP outlier limit** — optional manual upper Dit threshold inside the 0.1–0.5 V fit window. It is **disabled by default**; leaving the field blank keeps all finite points. Entering a finite positive value preserves the previous absolute-threshold behavior for difficult datasets. It affects only the optional PCHIP branch, never Minimum Dit.
 - **Interpolation scale** — `LOG10` (default) fits `log10(Dit)`; `Linear` fits Dit directly. Median-binned PCHIP also computes its per-bin median in the selected interpolation space.
+
+Midgap PCHIP is interpolation-only. The theoretical midgap Vsb must lie inside the measured Vsb coverage and inside the retained PCHIP knot domain after preprocessing. The analyzer never extrapolates a Midgap Dit beyond measured/retained coverage. When coverage is insufficient, Midgap Dit remains unavailable and the UI reports the target Vsb and the limiting coverage range.
 
 The 10 mV default was selected after comparing the supplied real Dit–Vsb data against 5 mV, 10 mV, 20 mV, original PCHIP, LOWESS, MAKIMA and smoothing-spline candidates. It suppresses dense end-region zig-zagging while leaving the sparse midgap trend essentially unchanged on that dataset. This is an analyzer smoothing choice, not a vendor PV-2000 algorithm claim.
 
