@@ -142,7 +142,7 @@ test('Optional Midgap Dit exposes original and median-binned PCHIP methods with 
 });
 
 
-test('landing page has a structured product shell, local-processing message and concise project provenance',()=>{
+test('landing page has a structured product shell, compact README-style shortcuts and same-row build provenance',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.ok(html.includes('class="landing-shell"'));
@@ -150,11 +150,18 @@ test('landing page has a structured product shell, local-processing message and 
   assert.ok(html.includes('class="drop-icon"'));
   assert.ok(html.includes('class="btn drop-open"'));
   assert.ok(html.includes('Local processing'));
-  assert.ok(html.includes('class="project-strip"'));
-  assert.ok(html.includes('https://github.com/Xiaolong-6/PV-2000-Analyzer'));
-  assert.ok(html.includes('Contribute'));
-  assert.ok(html.includes('Share data'));
-  assert.ok(html.includes('Report issue'));
+  assert.ok(html.includes('class="landing-status"'));
+  assert.ok(html.includes('class="project-shortcuts"'));
+  assert.ok(html.includes('class="readme-badge"'));
+  assert.ok(html.includes('>Guide</span>'));
+  assert.ok(html.includes('>Source</span>'));
+  assert.ok(html.includes('>Contribute</span>'));
+  assert.ok(html.includes('PV-2000 data'));
+  assert.ok(html.includes('>Report</span>'));
+  assert.ok(html.includes('>Download</span>'));
+  assert.ok(html.includes('href="./PV-2000-Analyzer.html"'));
+  assert.ok(html.includes('download="PV-2000-Analyzer.html"'));
+  assert.ok(!html.includes('class="landing-repo"'));
   assert.ok(!html.includes('project-live'));
   assert.ok(!html.includes('>Live</a>'));
   assert.ok(html.includes('__BUILD_COMMIT_SHORT__'));
@@ -163,8 +170,8 @@ test('landing page has a structured product shell, local-processing message and 
   assert.ok(css.includes('.landing-shell{'));
   assert.ok(css.includes('.drop::before{'));
   assert.ok(css.includes('.drop-open{'));
-  assert.ok(css.includes('.landing-privacy{'));
-  assert.ok(css.includes('.project-link{'));
+  assert.ok(css.includes('.landing-status{'));
+  assert.ok(css.includes('.readme-badge{'));
 });
 
 test('build injects exact CI commit provenance and has an explicit local fallback',()=>{
@@ -172,6 +179,12 @@ test('build injects exact CI commit provenance and has an explicit local fallbac
   assert.match(build,/process\.env\.PV2000_BUILD_SHA\|\|process\.env\.GITHUB_SHA\|\|'local'/);
   assert.match(build,/replaceAll\('__BUILD_COMMIT_SHORT__'/);
   assert.match(build,/replaceAll\('__BUILD_COMMIT_URL__'/);
+});
+
+test('build emits the same single-file analyzer for Pages and offline download',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  assert.match(build,/const outputs=\['index\.html','PV-2000-Analyzer\.html'\]/);
+  assert.match(build,/for\(const output of outputs\) fs\.writeFileSync/);
 });
 
 
