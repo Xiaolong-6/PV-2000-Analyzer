@@ -143,26 +143,26 @@ test('Optional Midgap Dit exposes original and median-binned PCHIP methods with 
 test('landing page has a structured product shell, local-processing message and concise project provenance',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(html,/class="landing-shell"/);
-  assert.match(html,/PV-2000 XML analysis and visualization/);
-  assert.match(html,/class="drop-icon"/);
-  assert.match(html,/class="btn drop-open"/);
-  assert.match(html,/Local processing/);
-  assert.match(html,/class="project-strip"/);
-  assert.match(html,/github\\.com\\/Xiaolong-6\\/PV-2000-Analyzer/);
-  assert.match(html,/Contribute/);
-  assert.match(html,/Share data/);
-  assert.match(html,/Report issue/);
-  assert.doesNotMatch(html,/project-live/);
-  assert.doesNotMatch(html,/>Live<\\/a>/);
-  assert.match(html,/__BUILD_COMMIT_SHORT__/);
-  assert.match(html,/__BUILD_COMMIT_URL__/);
-  assert.match(html,/class="app-footer"/);
-  assert.match(css,/\\.landing-shell\\{/);
-  assert.match(css,/\\.drop::before\\{/);
-  assert.match(css,/\\.drop-open\\{/);
-  assert.match(css,/\\.landing-privacy\\{/);
-  assert.match(css,/\\.project-link\\{/);
+  assert.ok(html.includes('class="landing-shell"'));
+  assert.ok(html.includes('PV-2000 XML analysis and visualization'));
+  assert.ok(html.includes('class="drop-icon"'));
+  assert.ok(html.includes('class="btn drop-open"'));
+  assert.ok(html.includes('Local processing'));
+  assert.ok(html.includes('class="project-strip"'));
+  assert.ok(html.includes('https://github.com/Xiaolong-6/PV-2000-Analyzer'));
+  assert.ok(html.includes('Contribute'));
+  assert.ok(html.includes('Share data'));
+  assert.ok(html.includes('Report issue'));
+  assert.ok(!html.includes('project-live'));
+  assert.ok(!html.includes('>Live</a>'));
+  assert.ok(html.includes('__BUILD_COMMIT_SHORT__'));
+  assert.ok(html.includes('__BUILD_COMMIT_URL__'));
+  assert.ok(html.includes('class="app-footer"'));
+  assert.ok(css.includes('.landing-shell{'));
+  assert.ok(css.includes('.drop::before{'));
+  assert.ok(css.includes('.drop-open{'));
+  assert.ok(css.includes('.landing-privacy{'));
+  assert.ok(css.includes('.project-link{'));
 });
 
 test('build injects exact CI commit provenance and has an explicit local fallback',()=>{
@@ -193,7 +193,7 @@ test('all spatial maps preserve equal physical X/Y scale by default',()=>{
 test('landing page removes the redundant deployed-site Live shortcut and its dead runtime handling',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const app=fs.readFileSync(require.resolve('../src/app.js'),'utf8');
-  assert.doesNotMatch(html,/project-live/);
-  assert.doesNotMatch(app,/project-live/);
-  assert.doesNotMatch(app,/xiaolong-6\\.github\\.io/);
+  assert.ok(!html.includes('project-live'));
+  assert.ok(!app.includes('project-live'));
+  assert.ok(!app.includes('xiaolong-6.github.io'));
 });
