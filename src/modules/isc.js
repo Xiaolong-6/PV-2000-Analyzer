@@ -31,6 +31,11 @@
     return{dark,light,vsb,darkMean,lightMean};
   }
 
+  function reconstructVcpdSite(readings){
+    const mean=S.mean(readings);
+    return{dark:mean,light:NaN,vsb:NaN,darkMean:mean,lightMean:NaN};
+  }
+
   function effectiveHalf(size,edge){
     const half=size/2;
     if(!Number.isFinite(half)||!(half>0))return NaN;
@@ -67,13 +72,14 @@
   function parse(parsed){
     const m=parsed.measurement,
       c=X.common(parsed),
+      isVcpd=parsed.type==='VcpdMeasurement',
       md=X.direct(m,'MeasurementData'),
       itd=X.direct(md,'IterationData'),
       iter=X.direct(itd,'Iteration'),
       data=X.direct(iter,'Data'),
       items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
-      offset=firstNum(md,['VcpdOffset','VcpdOffsett'],NaN),
-      factor=X.num(md,'VsbCorrectionFactor',NaN),
+      offset=isVcpd?firstNum(iter,['VcpdOffset','VcpdOffsett'],NaN):firstNum(md,['VcpdOffset','VcpdOffsett'],NaN),
+      factor=isVcpd?NaN:X.num(md,'VsbCorrectionFactor',NaN),
       pattern=X.direct(m,'Pattern'),
       target=X.direct(m,'Target'),
       targetType=X.attrType(target),
@@ -88,9 +94,10 @@
       edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0));
 
     const sites=items.map((item,index)=>{
-      const darkRaw=scalarValues(X.direct(item,'VcpdDark')),
-        lightRaw=scalarValues(X.direct(item,'VcpdLight')),
-        result=reconstructSite(darkRaw,lightRaw,offset,factor);
+      const vcpdRaw=isVcpd?scalarValues(X.direct(item,'Readings')):[],
+        darkRaw=isVcpd?vcpdRaw:scalarValues(X.direct(item,'VcpdDark')),
+        lightRaw=isVcpd?[]:scalarValues(X.direct(item,'VcpdLight')),
+        result=isVcpd?reconstructVcpdSite(vcpdRaw):reconstructSite(darkRaw,lightRaw,offset,factor);
       return{index,darkRaw,lightRaw,...result,coord:null};
     });
 
@@ -129,6 +136,7 @@
       ...c,
       sites,
       coords,
+      measurementKind:isVcpd?'vcpd':'isc',
       offset,
       factor,
       coordinateSource,
@@ -142,7 +150,10 @@
       pitchX,
       pitchY,
       numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),
+      numberOfReadings:X.num(m,'NumberOfReadings',NaN),
+      readingsPerSite:isVcpd?X.num(m,'NumberOfReadings',NaN):X.num(m,'NumberOfDataPoints',NaN),
       measurementInterval:X.num(m,'MeasurementInterval',NaN),
+      lightOn:X.text(m,'LightOn',''),
       doRastering:X.text(m,'DoRastering',''),
       temperatureC:X.num(iter,'ChuckTemperature',NaN),
       measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),
@@ -151,32 +162,37 @@
   }
 
   function analyze(d){
-    const metrics={
-      dark:{
-        key:'dark',
-        label:'Vcpd Dark',
-        short:'Vcpd Dark',
-        unit:'V',
-        values:d.sites.map(s=>s.dark),
-        help:'PV-2000 dark contact-potential result: mean dark reading minus the XML Vcpd offset.'
-      },
-      light:{
+    const isVcpd=d.measurementKind==='vcpd',
+      metrics={
+        dark:{
+          key:'dark',
+          label:'Vcpd Dark',
+          short:'Vcpd Dark',
+          unit:'V',
+          values:d.sites.map(s=>s.dark),
+          help:isVcpd
+            ?'PV-2000 Vcpd Dark result. In the validated VcpdMeasurement reference this equals the mean of XML Readings; the reference has one reading per site and VcpdOffset = 0.'
+            :'PV-2000 dark contact-potential result: mean dark reading minus the XML Vcpd offset.'
+        }
+      };
+    if(!isVcpd){
+      metrics.light={
         key:'light',
         label:'Vcpd Light',
         short:'Vcpd Light',
         unit:'V',
         values:d.sites.map(s=>s.light),
         help:'PV-2000 illuminated contact-potential result reconstructed as Vcpd Dark − VSB, including the XML VsbCorrectionFactor.'
-      },
-      vsb:{
+      };
+      metrics.vsb={
         key:'vsb',
         label:'VSB',
         short:'VSB',
         unit:'V',
         values:d.sites.map(s=>s.vsb),
         help:'Surface barrier reconstructed as VsbCorrectionFactor × (mean dark raw Vcpd − mean illuminated raw Vcpd).'
-      }
-    };
+      };
+    }
     const summaries={};
     for(const [key,metric] of Object.entries(metrics))summaries[key]=S.summary(metric.values);
     return{metrics,summaries};
@@ -519,8 +535,9 @@
   function drawRaw(canvas,d,selected,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       site=d.sites[selected],
-      dark=site?site.darkRaw.map(v=>v-d.offset):[],
-      light=site?site.lightRaw.map(v=>v-d.offset):[],
+      isVcpd=d.measurementKind==='vcpd',
+      dark=site?(isVcpd?site.darkRaw.slice():site.darkRaw.map(v=>v-d.offset)):[],
+      light=site&&!isVcpd?site.lightRaw.map(v=>v-d.offset):[],
       n=Math.max(dark.length,light.length),
       W=canvas.width=760,
       H=canvas.height=300,
@@ -569,11 +586,13 @@
     ctx.fillRect(p.l+8,p.t+8,10,3);
     ctx.fillStyle=css('--muted');
     ctx.textAlign='left';
-    ctx.fillText('Dark raw (offset corrected)',p.l+23,p.t+12);
-    ctx.fillStyle=css('--blue');
-    ctx.fillRect(p.l+162,p.t+8,10,3);
-    ctx.fillStyle=css('--muted');
-    ctx.fillText('Light raw (offset corrected)',p.l+177,p.t+12);
+    ctx.fillText(isVcpd?'Vcpd reading':'Dark raw (offset corrected)',p.l+23,p.t+12);
+    if(!isVcpd){
+      ctx.fillStyle=css('--blue');
+      ctx.fillRect(p.l+162,p.t+8,10,3);
+      ctx.fillStyle=css('--muted');
+      ctx.fillText('Light raw (offset corrected)',p.l+177,p.t+12);
+    }
 
     PV.plot.bind(canvas,{
       W,
@@ -602,6 +621,14 @@
   function downloadRaw(d,selected){
     const s=d.sites[selected];
     if(!s)return;
+    if(d.measurementKind==='vcpd'){
+      PV.exporter.csv(
+        `${safe(d.resultName)}_site_${selected+1}_raw.csv`,
+        ['Reading','Vcpd raw [V]'],
+        s.darkRaw.map((v,i)=>[i+1,v])
+      );
+      return;
+    }
     const n=Math.max(s.darkRaw.length,s.lightRaw.length);
     PV.exporter.csv(
       `${safe(d.resultName)}_site_${selected+1}_raw.csv`,
@@ -617,6 +644,21 @@
   }
 
   function render(host,d,a){
+    const isVcpd=d.measurementKind==='vcpd',
+      moduleLabel=isVcpd?'VCPD':'ISC',
+      measurementHelp=isVcpd
+        ?'VcpdMeasurement maps dark contact potential directly from XML Readings. The browser runtime reads only the XML; vendor exports are development references.'
+        :'ISC measures VCPD in dark and illuminated states. The browser runtime reads only the PV-2000 XML; vendor exports are used only for development regression.',
+      selectedHelp=isVcpd
+        ?'Click a map cell to inspect that site. The current validated VcpdMeasurement reference stores one direct XML Reading per site.'
+        :'Click a map cell to inspect that site. Raw-reading plots show the underlying dark/light readings after subtraction of the Vcpd offset; the reported scalar Vcpd Light additionally includes the VSB correction factor.',
+      mapHelp=isVcpd
+        ?'Vcpd Dark map. The solid outline follows the nominal XML target geometry and the dashed inner outline shows the EdgeExclusion-adjusted scheduled region. Click a cell to inspect its XML reading.'
+        :'Select Vcpd Dark, Vcpd Light or VSB. The solid outline follows the nominal XML target geometry (RoundWafer or SquareCell); when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.',
+      rawHelp=isVcpd
+        ?'Direct XML Readings for the selected VcpdMeasurement site. The validated reference has one reading/site and VcpdOffset = 0; non-zero VcpdOffset semantics are intentionally not inferred.'
+        :'Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.',
+      metricOptions=Object.values(a.metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.short)}</option>`).join('');
     let metricKey='dark',
       histSwapped=true,
       histBins=30,
@@ -645,14 +687,15 @@
         ${metaRow('Point',String(selected+1))}
         ${metaRow('Coordinate',p?`X ${fmt(p.x,2)} mm · Y ${fmt(p.y,2)} mm`:'—')}
         ${metaRow('Vcpd Dark',`${fmt(s.dark,6)} V`)}
-        ${metaRow('Vcpd Light',`${fmt(s.light,6)} V`)}
-        ${metaRow('VSB',`${fmt(s.vsb,6)} V`)}
-        ${metaRow('Raw readings',`${Math.min(s.darkRaw?.length||0,s.lightRaw?.length||0)}`)}
+        ${isVcpd?'':metaRow('Vcpd Light',`${fmt(s.light,6)} V`)}
+        ${isVcpd?'':metaRow('VSB',`${fmt(s.vsb,6)} V`)}
+        ${metaRow('Raw readings',String(isVcpd?(s.darkRaw?.length||0):Math.min(s.darkRaw?.length||0,s.lightRaw?.length||0)))}
       </dl>`;
     }
 
     host.innerHTML=`<div class="module-grid isc-module"><aside class="side">
-      <section class="panel"><h3>Measurement ${help('ISC measures VCPD in dark and illuminated states. The browser runtime reads only the PV-2000 XML; vendor exports are used only for development regression.')}</h3><dl class="meta">
+      <section class="panel"><h3>Measurement ${help(measurementHelp)}</h3><dl class="meta">
+        ${metaRow('Type',isVcpd?'VCPD · VcpdMeasurement':'ISC · ISCMeasurement')}
         ${metaRow('Result',d.resultName)}
         ${metaRow('Recipe',d.name)}
         ${metaRow('Substrate',d.substrateId||'—')}
@@ -661,14 +704,15 @@
         ${metaRow('Target',d.targetType==='SquareCell'?`${fmt(d.targetWidth,1)} × ${fmt(d.targetHeight,1)} mm ${d.targetType}`:`${fmt(d.diameter,1)} mm ${d.targetType||'—'}`)}
         ${metaRow('Edge exclusion',`${fmt(d.edgeExclusion,2)} mm`)}
         ${metaRow('Sites',String(d.sites.length))}
-        ${metaRow('Readings/site',fmt(d.numberOfDataPoints,0),'PV-2000 recipe setting for repeated VCPD readings averaged at each site.')}
-        ${metaRow('Interval',`${fmt(d.measurementInterval,4)} s`)}
-        ${metaRow('Vcpd offset',`${fmt(d.offset,7)} V`,'Subtracted from the dark raw mean before reporting Vcpd Dark.')}
-        ${metaRow('VSB factor',fmt(d.factor,5),'Applied to the dark-minus-light raw mean difference before VSB and reported Vcpd Light are formed.')}
+        ${metaRow('Readings/site',fmt(d.readingsPerSite,0),isVcpd?'PV-2000 VcpdMeasurement NumberOfReadings.':'PV-2000 recipe setting for repeated VCPD readings averaged at each ISC site.')}
+        ${!isVcpd&&Number.isFinite(d.measurementInterval)?metaRow('Interval',`${fmt(d.measurementInterval,4)} s`):''}
+        ${isVcpd?metaRow('Illumination',d.lightOn==='true'?'On':d.lightOn==='false'?'Off':d.lightOn||'—'):''}
+        ${metaRow('Vcpd offset',`${fmt(d.offset,7)} V`,isVcpd?'Stored at the Vcpd iteration level. The current validated VCPD reference has 0 V; non-zero offset behavior is a new profile.':'Subtracted from the dark raw mean before reporting Vcpd Dark.')}
+        ${isVcpd?'':metaRow('VSB factor',fmt(d.factor,5),'Applied to the dark-minus-light raw mean difference before VSB and reported Vcpd Light are formed.')}
         ${metaRow('Coordinates',d.coordinateSource)}
       </dl></section>
       <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max are calculated over finite sites. Stdev is the sample standard deviation, matching the current paired PV-2000 reference export.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statRows()}</tbody></table></div></section>
-      <section class="panel"><h3>Selected site ${help('Click a map cell to inspect that site. Raw-reading plots show the underlying dark/light readings after subtraction of the Vcpd offset; the reported scalar Vcpd Light additionally includes the VSB correction factor.')}</h3><div id="iSelected">${selectedHtml()}</div></section>
+      <section class="panel"><h3>Selected site ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <details class="panel"><summary>Acquisition metadata</summary><dl class="meta">
         ${metaRow('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}
         ${metaRow('Measurement velocity',fmt(d.measurementVelocity,4))}
@@ -678,10 +722,10 @@
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
     </aside><section class="plots">
-      <div class="panel chart"><header><b>ISC map</b>${help('Select Vcpd Dark, Vcpd Light or VSB. The solid outline follows the nominal XML target geometry (RoundWafer or SquareCell); when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.')}<span class="grow"></span><select id="iMetric"><option value="dark">Vcpd Dark</option><option value="light">Vcpd Light</option><option value="vsb">VSB</option></select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
+      <div class="panel chart"><header><b>${moduleLabel} map</b>${help(mapHelp)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
       <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
     </section><section class="plots">
-      <div class="panel chart"><header><b>Raw readings</b>${help('Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.')}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
+      <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
     </section></div>`;
 
     const metricSelect=host.querySelector('#iMetric');
@@ -757,11 +801,12 @@
 
   PV.modules=PV.modules||{};
   PV.modules.isc={
-    types:['ISCMeasurement'],
+    types:['ISCMeasurement','VcpdMeasurement'],
     parse,
     analyze,
     render,
     reconstructSite,
+    reconstructVcpdSite,
     effectiveHalf,
     targetGeometry
   };
