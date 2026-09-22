@@ -33,21 +33,21 @@ test('HighDensityPattern maps explicit normalized 35 x 35 coefficients to the Ed
   assert.deepEqual(g.scheduled,{halfWidth:71,halfHeight:71});
 });
 
-test('HighDensityPattern RoundWafer uses an inscribed square inside the effective radius',()=>{
+test('HighDensityPattern RoundWafer selects the strict unit-circle subset before physical scaling',()=>{
   const coeff15=[];
   for(let row=0;row<15;row++)for(let col=0;col<15;col++)coeff15.push({x:-1+2*col/14,y:-1+2*row/14});
-  const radius=PV2000.modules.qss.effectiveMapRadius(100,7),scale=radius/Math.SQRT2;
-  const p15=PV2000.modules.qss.highDensityCoords(coeff15,scale,scale,225);
-  assert.equal(p15.length,225);
-  assert.ok(Math.hypot(p15[0].x,p15[0].y)<=radius+1e-12);
-  assert.ok(Math.abs(p15[112].x)<1e-12&&Math.abs(p15[112].y)<1e-12);
-  assert.ok(Math.abs((p15[1].x-p15[0].x)-(2*scale/14))<1e-12);
+  const radius=PV2000.modules.qss.effectiveMapRadius(100,7);
+  const p15=PV2000.modules.qss.highDensityCoords(coeff15,radius,radius,145,true);
+  assert.equal(p15.length,145);
+  assert.ok(p15.every(({x,y})=>x*x+y*y<radius*radius+1e-9));
+  assert.ok(p15.some(({x,y})=>Math.abs(x)<1e-12&&Math.abs(y)<1e-12));
+  assert.deepEqual(PV2000.modules.qss.highDensityCoords(coeff15,radius,radius,225,true),[]);
 
   const coeff20=[];
   for(let row=0;row<20;row++)for(let col=0;col<20;col++)coeff20.push({x:-1+2*col/19,y:-1+2*row/19});
-  const p20=PV2000.modules.qss.highDensityCoords(coeff20,scale,scale,400);
-  assert.equal(p20.length,400);
-  assert.ok(p20.every(({x,y})=>x*x+y*y<=radius*radius+1e-9));
+  const p20=PV2000.modules.qss.highDensityCoords(coeff20,radius,radius,276,true);
+  assert.equal(p20.length,276);
+  assert.ok(p20.every(({x,y})=>x*x+y*y<radius*radius+1e-9));
 });
 
 test('SquareRegionPattern reference raster reproduces the 35 x 30 vendor coordinate order',()=>{const p=PV2000.geometry.rectGrid(-40,-30,70,60,35,30,1050,1);assert.equal(p.length,1050);assert.deepEqual(p[0],{x:-40,y:-30,row:0,col:0});assert.ok(Math.abs(p[34].x-30)<1e-12&&Math.abs(p[34].y+30)<1e-12);assert.ok(Math.abs(p[35].x+40)<1e-12&&Math.abs(p[35].y-(-30+60/29))<1e-12);assert.ok(Math.abs(p.at(-1).x-30)<1e-12&&Math.abs(p.at(-1).y-30)<1e-12)});
