@@ -2,7 +2,7 @@
 
 ## v20260922.15 — 2026-09-22
 
-- Added validated LBIC `MapPattern + PseudoSquareCell` geometry reconstruction for the supplied 54,449-point, four-beam reference, including nominal/EdgeExclusion outlines, equal physical aspect and masked raster clipping.
+- Added validated LBIC `MapPattern + PseudoSquareCell` geometry reconstruction for the supplied 54,449-point, four-beam reference, including nominal/EdgeExclusion outlines, equal physical aspect, +Y-up Cartesian orientation and masked raster clipping.
 - Reworked LBIC X/Y profiles to slice by physical coordinates instead of dense rectangular indexing, so masked pseudo-square rows and columns remain correct.
 - Expanded LBIC vendor parity to independent multi-beam Current / Reflectivity / IQE handling; displayed Reflectivity now clamps raw Direct+Scattered to 0–100%, while IQE correctly retains the unclamped raw optical sum in its denominator.
 - Extended LBIC unit/reference validation and documentation as `LBIC-MULTI-002`; calculated diffusion length remains unsupported pending its proprietary vendor algorithm.
