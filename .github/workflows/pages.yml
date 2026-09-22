@@ -26,8 +26,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Test
-        run: npm test
+      - name: Install dev tooling
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Quality gates
+        run: npm run check
 
       - name: Build
         run: npm run build

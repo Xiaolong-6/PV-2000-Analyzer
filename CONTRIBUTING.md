@@ -64,6 +64,28 @@ If you want to implement support yourself:
 
 Do not make the runtime depend on CSV/XPS/screenshots. Runtime input remains XML-only.
 
+### Development checks
+
+Install the pinned development tooling once with:
+
+```bash
+npm install --ignore-scripts --no-audit --no-fund
+```
+
+Before opening an implementation PR, run:
+
+```bash
+npm run check
+npm run validate:qss
+npm run validate:lbic
+npm run build
+```
+
+`npm run check` runs ESLint, the source-density guard, and the unit tests. Keep executable JavaScript split into reviewable statements instead of hand-minified one-line functions. Reuse shared helpers from `src/core/` rather than copying module-local variants.
+
+`dist/` is generated output. Do not commit `dist/index.html`; CI and GitHub Pages rebuild it from `src/`.
+
+
 ## Validation model
 
 Validation belongs to a semantic **input→output profile family**, not to one exact file or one exact numeric setting.

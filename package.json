@@ -5,8 +5,14 @@
     "build": "node scripts/build.js",
     "test": "node --test tests/*.test.js",
     "validate:qss": "node scripts/run_python.js scripts/validate_qss_reference.py",
-    "validate:lbic": "node scripts/run_python.js scripts/validate_lbic_reference.py"
+    "validate:lbic": "node scripts/run_python.js scripts/validate_lbic_reference.py",
+    "lint": "eslint src scripts tests",
+    "style:check": "node scripts/check-source-density.js",
+    "check": "npm run lint && npm run style:check && npm test"
   },
   "license": "AGPL-3.0-only",
-  "author": "Xiaolong Liu"
+  "author": "Xiaolong Liu",
+  "devDependencies": {
+    "eslint": "10.11.0"
+  }
 }

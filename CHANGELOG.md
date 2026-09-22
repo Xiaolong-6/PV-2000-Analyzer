@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260922.2 — 2026-09-22
+
+- Reformatted dense executable JavaScript in Dit/QSS/LBIC into reviewable multi-line statements without changing scientific formulas or runtime data paths.
+- Added shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS variables and plot tooltips; removed duplicated module-local implementations.
+- Added ESLint 10.11.0 and a source-density regression guard to CI and GitHub Pages quality gates.
+- Stopped tracking generated `dist/index.html`; `dist/` is now ignored and rebuilt by CI/Pages.
+- Updated contributor/agent/handoff guidance and added regression tests for the shared helpers and hygiene rules.
+
 ## v20260922.1 — 2026-09-22 — baseline
 
 This is the new versioning baseline for **PV-2000 Analyzer**. Earlier development used temporary 0.x semantic versions; those identifiers are retired.

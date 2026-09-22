@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.1
+# Agent handoff — 2026-09-22 — v20260922.2
 
 ## Goal
 
@@ -6,7 +6,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 
 ## Current implementation
 
-- modular dependency-free source + single-file `dist/index.html` build;
+- modular source + generated single-file `dist/index.html` build; `dist/` is ignored and rebuilt by CI/Pages rather than tracked;
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
 - `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
@@ -14,6 +14,8 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
+- shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
+- ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale;
 - spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
@@ -137,7 +139,8 @@ See `docs/REFERENCE_PROFILES.md`, `docs/ALGORITHMS_LBIC.md` and `docs/VALIDATION
 ## Required commands before handoff/commit
 
 ```bash
-npm test
+npm install --ignore-scripts --no-audit --no-fund
+npm run check
 npm run build
 npm run validate:qss
 npm run validate:lbic

@@ -1,0 +1,30 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+
+require('../src/core/ui.js');
+
+test('shared UI helpers escape HTML and build safe help markup',()=>{
+  const UI=globalThis.PV2000.ui;
+  assert.equal(UI.escapeHtml('<a x="1">&\'test\'</a>'),'&lt;a x=&quot;1&quot;&gt;&amp;&#39;test&#39;&lt;/a&gt;');
+  assert.equal(UI.help('A "quoted" hint'),'<span class="help" title="A &quot;quoted&quot; hint">i</span>');
+});
+
+test('measurement modules reuse core UI helpers instead of redefining them',()=>{
+  for(const file of ['dit.js','qss-upcd.js','lbic.js','generic.js']){
+    const text=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.doesNotMatch(text,/const esc=s=>/);
+    assert.doesNotMatch(text,/function showTip\(/);
+    assert.doesNotMatch(text,/function setupTooltip\(/);
+  }
+});
+
+test('single-file build loads shared UI helpers before analyzers',()=>{
+  const text=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  const ui=text.indexOf("'src/core/ui.js'");
+  const dit=text.indexOf("'src/modules/dit.js'");
+  const generic=text.indexOf("'src/modules/generic.js'");
+  assert.ok(ui>=0);
+  assert.ok(dit>ui);
+  assert.ok(generic>ui);
+});
