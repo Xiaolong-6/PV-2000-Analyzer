@@ -291,10 +291,21 @@
     }
 
     const b=GEO.bounds(d.coords),
+      geometry=targetGeometry(d),
       dx=Number.isFinite(d.pitchX)&&d.pitchX>0?d.pitchX:0,
       dy=Number.isFinite(d.pitchY)&&d.pitchY>0?d.pitchY:0,
-      autoX=[b.xmin-(dx||1)/2,b.xmax+(dx||1)/2],
-      autoY=[b.ymin-(dy||1)/2,b.ymax+(dy||1)/2],
+      pointX=[b.xmin-(dx||1)/2,b.xmax+(dx||1)/2],
+      pointY=[b.ymin-(dy||1)/2,b.ymax+(dy||1)/2],
+      autoX=geometry?.shape==='circle'
+        ?[-geometry.nominal.radius*1.06,geometry.nominal.radius*1.06]
+        :geometry?.shape==='rect'
+          ?[-geometry.nominal.halfWidth*1.06,geometry.nominal.halfWidth*1.06]
+          :pointX,
+      autoY=geometry?.shape==='circle'
+        ?[-geometry.nominal.radius*1.06,geometry.nominal.radius*1.06]
+        :geometry?.shape==='rect'
+          ?[-geometry.nominal.halfHeight*1.06,geometry.nominal.halfHeight*1.06]
+          :pointY,
       aspect=PV.plot.equalAspectRanges(autoX,autoY,W-p.l-p.r,H-p.t-p.b),
       xr=PV.plot.resolve(aspect.x,zoom?.x),
       yr=PV.plot.resolve(aspect.y,zoom?.y),
@@ -305,10 +316,29 @@
       lo=vr[0],
       hi=vr[1];
 
+    const traceBoundary=boundary=>{
+      ctx.beginPath();
+      if(geometry?.shape==='circle'){
+        const rx=Math.abs(X(boundary.radius)-X(0)),
+          ry=Math.abs(Y(boundary.radius)-Y(0));
+        ctx.ellipse(X(0),Y(0),rx,ry,0,0,2*Math.PI);
+      }else if(geometry?.shape==='rect'){
+        const x0=X(-boundary.halfWidth),
+          x1=X(boundary.halfWidth),
+          y0=Y(boundary.halfHeight),
+          y1=Y(-boundary.halfHeight);
+        ctx.rect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0));
+      }
+    };
+
     ctx.save();
     ctx.beginPath();
     ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
     ctx.clip();
+    if(geometry?.scheduled){
+      traceBoundary(geometry.scheduled);
+      ctx.clip();
+    }
     d.coords.forEach((pt,i)=>{
       const v=values[i];
       if(!Number.isFinite(v))return;
@@ -325,6 +355,26 @@
       }
     });
     ctx.restore();
+
+    if(geometry){
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
+      ctx.clip();
+      ctx.strokeStyle=css('--soft');
+      ctx.lineWidth=1.7;
+      ctx.setLineDash([]);
+      traceBoundary(geometry.nominal);
+      ctx.stroke();
+      if(d.edgeExclusion>0&&geometry.scheduled){
+        ctx.strokeStyle=css('--muted');
+        ctx.lineWidth=1.1;
+        ctx.setLineDash([6,4]);
+        traceBoundary(geometry.scheduled);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     const cbx=W-46,
       cby=p.t+12,
@@ -627,7 +677,7 @@
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
     </aside><section class="plots">
-      <div class="panel chart"><header><b>ISC map</b>${help('Select Vcpd Dark, Vcpd Light or VSB. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.')}<span class="grow"></span><select id="iMetric"><option value="dark">Vcpd Dark</option><option value="light">Vcpd Light</option><option value="vsb">VSB</option></select><button id="iExportMap">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iMapAxes')}<canvas id="iMap"></canvas></div></div>
+      <div class="panel chart"><header><b>ISC map</b>${help('Select Vcpd Dark, Vcpd Light or VSB. The solid outline follows the nominal XML target geometry (RoundWafer or SquareCell); when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.')}<span class="grow"></span><select id="iMetric"><option value="dark">Vcpd Dark</option><option value="light">Vcpd Light</option><option value="vsb">VSB</option></select><button id="iExportMap">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iMapAxes')}<canvas id="iMap"></canvas></div></div>
       <div class="panel chart"><header><b>Distribution</b>${help('Distribution of the currently selected ISC result across all finite sites. Wheel/double-click and Axes use the shared plot controls. Swap axes exchanges the result and count axes.')}<span class="grow"></span><button id="iSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution result and count axes.">Swap axes</button><button id="iExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iHistAxes')}<canvas id="iHist"></canvas></div></div>
     </section><section class="plots">
       <div class="panel chart"><header><b>Raw readings</b>${help('Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.')}<span class="grow"></span><button id="iExportRaw">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iRawAxes')}<canvas id="iRaw"></canvas></div></div>
@@ -714,7 +764,8 @@
     analyze,
     render,
     reconstructSite,
-    effectiveHalf
+    effectiveHalf,
+    targetGeometry
   };
   PV.registry.register(PV.modules.isc);
 })(typeof window!=='undefined'?window:globalThis);
