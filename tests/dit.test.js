@@ -65,7 +65,7 @@ test('material selection moves theoretical midgap target and defaults to Si', ()
 
 test('variation-method Dit changes with semiconductor material', () => {
   const site = { rows: [0.05,0.12,0.20,0.30,0.42].map((vsb,i)=>({
-    Qc:i*3e11, VDark:i*0.02, VLight:i*0.01, Vsb
+    Qc:i*3e11, VDark:i*0.02, VLight:i*0.01, Vsb:vsb
   })) };
   const base = { doping: 1.5e15, dopingType: 'n' };
   const si = PV2000.modules.dit.variation(site, { ...base, material: 'Si' });
