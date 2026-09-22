@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.6.1 — 2026-09-22
+
+- Added inferred QSS-µPCD `MapPattern + SquareCell` coordinate reconstruction from target `Size`, `EdgeExclusion` and `Pitch`, fixing blank maps when the XML contains valid raster data but no `RoundWafer` target.
+- SquareCell maps now use their effective rectangular bounds for default display and smoothing instead of the circular RoundWafer mask; the existing RoundWafer path remains unchanged and separately validated.
+- Added regression coverage for a centered 31 × 31 SquareCell schedule while keeping the new geometry explicitly labelled inferred pending a matching PV-2000 export.
+
 ## v20260922.6 — 2026-09-22
 
 - Unified the Dit model's 300 K silicon intrinsic-carrier concentration at `9.65e9 cm^-3`, the legacy MATLAB midgap value, so semiconductor Qsc and the midgap target no longer use different ni constants.
