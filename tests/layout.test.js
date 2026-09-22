@@ -128,3 +128,13 @@ test('legacy COCOS-II controls are removed completely',()=>{
   assert.doesNotMatch(src,/value="guide"/);
   assert.doesNotMatch(src,/function cocosII\(/);
 });
+
+
+test('Optional Midgap Dit exposes original and median-binned PCHIP methods with a 10 mV default window',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/Median-binned PCHIP/);
+  assert.match(src,/PCHIP \(original\)/);
+  assert.match(src,/id="ditPchipMethod"/);
+  assert.match(src,/id="ditPchipMedianMv"/);
+  assert.match(src,/pchipMedianWindowV=.*\.010/);
+});
