@@ -271,4 +271,8 @@ test('ISC module keeps the three manual-defined quantities, raw-reading view, Di
   assert.match(isc,/axisControls\('iHistAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
   assert.match(isc,/equalAspectRanges\(autoX,autoY/);
+  assert.match(isc,/targetGeometry\(d\)/);
+  assert.match(isc,/setLineDash\(\[6,4\]\)/);
+  assert.match(isc,/geometry\.nominal/);
+  assert.match(isc,/geometry\.scheduled/);
 });
