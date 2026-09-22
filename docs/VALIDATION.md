@@ -43,7 +43,7 @@ Status: **inferred coordinate reconstruction**, not vendor-validated.
 
 Older QSS XMLs in the current development set use `HighDensityPattern` with explicit normalized `Coefficients` and a scalar `Dimension`. Observed examples include 15 × 15 and 20 × 20 grids on a 100 mm RoundWafer with 7 mm edge exclusion, and a 35 × 35 grid on a 156 × 156 mm SquareCell with 7 mm edge exclusion. Runtime now requires coefficient count to equal measured-value count and preserves coefficient order.
 
-For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle. For RoundWafer, the normalized square is placed inside the effective circular region using half-span `(Diameter/2 - EdgeExclusion)/sqrt(2)`. This makes these XMLs renderable while keeping every scheduled site on-wafer. A matching PV-2000 X/Y export is still required before this path can be marked validated.
+For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle. For RoundWafer, the full normalized coefficient template is filtered with `x²+y² < 1` before scaling by `Diameter/2 - EdgeExclusion`. This exactly reproduces the observed XML point counts: 145 from a 15×15 template and 276 from a 20×20 template. A matching PV-2000 X/Y export is still required before this path can be marked validated.
 
 ### Valid-data filtering
 
