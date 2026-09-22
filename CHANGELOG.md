@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.12.1 — 2026-09-22
+## v20260922.13 — 2026-09-22
 
 - Added `REFERENCE_DATA_LICENSE.md` with explicit public-use, redistribution and Project Owner sublicensing/relicensing grants for intentionally contributed reference material, while preserving third-party-rights limits.
 - Added the `Legal / contributor grants` GitHub Actions status: external PR authors must personally post the exact CLA acceptance; PRs touching `reference_data/` must also post the exact Reference Data License acceptance. Editing/deleting those comments triggers reevaluation.
