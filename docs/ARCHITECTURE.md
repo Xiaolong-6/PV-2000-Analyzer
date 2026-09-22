@@ -25,6 +25,7 @@ The user imports one XML file. A PV-2000 export is never required at runtime.
 - `src/core/geometry.js` — PV wafer/grid geometry.
 - `src/core/export.js` — CSV download.
 - `src/core/theme.js` — system theme + explicit light/dark override.
+- `src/core/plot.js` — shared axis-aware wheel zoom and double-click auto-scale behavior for canvas/SVG plots.
 - `src/core/registry.js` — measurement-module registry.
 - `src/modules/dit.js` — COCOS/DIT parser, calculations, UI.
 - `src/modules/qss-upcd.js` — QSS-µPCD map parser, calculations, UI.
@@ -42,7 +43,7 @@ No npm runtime dependencies are required.
 
 In every multi-column layout the left functional sidebar stays sticky beneath the toolbar and uses an explicit viewport-height vertical scroll container. This prevents long control/metadata stacks from scrolling the plot columns and remains usable when browser zoom changes the CSS viewport width. Fine-pointer desktop layouts keep a dedicated sidebar column at intermediate widths; portrait/tablet fallback requires coarse-pointer input. The sidebar returns to normal document flow at <=700 px or on coarse-pointer portrait/tablet layouts. Dit sidebar summaries use responsive cards rather than fixed-width nowrap tables.
 
-Analyzer controls should expose only parameters relevant to the selected method. Derived/optional analysis controls such as Dit PCHIP midgap fitting belong in nested disclosures rather than the primary method controls.
+Analyzer controls should expose only parameters relevant to the selected method. Derived/optional analysis controls such as Dit PCHIP midgap fitting belong in nested disclosures rather than the primary method controls. Persistent instructional paragraphs should be avoided; put scientific/context explanations in hover help. Plot interaction is shared: wheel in the plotting area zooms X+Y, wheel over an axis zooms only that axis, and double-click restores automatic ranges.
 
 ## Extension contract
 
