@@ -49,11 +49,6 @@
 .dit-module .control-section-title{margin:10px 9px 2px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;font-weight:750;color:var(--text)}
 .dit-module .analysis-actions{margin:10px 9px}
 .dit-module .analysis-actions button{width:100%}
-.dit-module .analysis-note{padding:7px 8px;border-radius:6px;background:var(--panel2)}
-.dit-module .legacy-methods{margin:0 9px 9px;border-top:1px solid var(--border);padding-top:7px}
-.dit-module .legacy-methods>summary{font-size:10px;color:var(--muted);font-weight:650}
-.dit-module .legacy-methods .note{margin:7px 0}
-.dit-module .legacy-methods button{width:100%;font-size:10px}
 .dit-module .compact-settings{gap:4px;margin:5px 9px 7px}
 .dit-module .compact-field{display:grid!important;grid-template-columns:minmax(0,1fr) 112px!important;align-items:center;gap:8px;min-height:30px;color:var(--muted)}
 .dit-module .compact-field .field-name{display:flex;align-items:center;gap:3px;min-width:0}
@@ -70,10 +65,11 @@
 .dit-module .cocos-recommendation button{padding:4px 7px;font-size:9.5px}
 .dit-module .cocos-diagnostics{display:flex;gap:10px;flex-wrap:wrap;margin:4px 9px 7px;color:var(--muted);font-size:9.5px}
 .dit-module .cocos-diagnostics b{color:var(--text)}
-.dit-module .analysis-subdetails{margin:5px 9px 7px;border-top:1px solid var(--border);padding-top:5px}
-.dit-module .analysis-subdetails>summary{font-size:10px;color:var(--text)}
-.dit-module .analysis-subdetails .compact-settings{margin-left:0;margin-right:0}
-.dit-module .analysis-subdetails .note{margin:5px 0!important}
+.dit-module .optional-section-title{display:flex;align-items:center;gap:4px}
+.dit-module .option-toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.dit-module .option-toggle input{width:auto!important;margin:0}
+.dit-module .pchip-settings.disabled{opacity:.5}
+.dit-module .pchip-settings.disabled input,.dit-module .pchip-settings.disabled select{cursor:not-allowed}
 @media(max-width:700px),(pointer:coarse) and (orientation:portrait) and (max-width:950px){.module-grid>.side{position:static;top:auto;height:auto;max-height:none;min-height:0;overflow:visible;padding-right:0;scrollbar-gutter:auto}}
 
 /* LBIC raster viewer */
