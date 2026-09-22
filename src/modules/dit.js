@@ -282,7 +282,7 @@
       usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
       window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
       v=variation(s,model,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
-      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,midgapStatus:v.midgapStatus,midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,midgapFitMinVsb:v.fitMinVsb,midgapFitMaxVsb:v.fitMaxVsb,Qsc:Math.abs(qsc(s.Vsb,model.doping,model.dopingType,material)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
+      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,midgapStatus:v.midgapStatus,midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,midgapFitMinVsb:v.midgapFitMinVsb,midgapFitMaxVsb:v.midgapFitMaxVsb,Qsc:Math.abs(qsc(s.Vsb,model.doping,model.dopingType,material)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
       
     const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],
       stats={};
@@ -370,7 +370,6 @@
         xmlLine=o.cocosMode==='xml'?`<div class="analysis-resolved"><b>XML:</b> UseCocosII = ${d.useCocosII?'true':'false'} <span>→</span> <b>${resolved}</b></div>`:'',
         current=analysis.sites[site]||{},
         rec=analysis.recommendation||{},
-        material=MATERIALS[o.material]||MATERIALS.Si,
         field=(label,tip,control,cls='')=>`<label class="compact-field ${cls}"><span class="field-name">${label} ${help(tip)}</span>${control}</label>`;
         
       const diagnostics=isPv?`<div class="cocos-diagnostics"><span>Accepted intervals <b>${current.ditAcceptedCount??0}/${current.ditIntervalCount??0}</b></span><span>Minimum at Vsb <b>${fmt(current.ditMinVsb,3)} V</b></span></div>`:'';
