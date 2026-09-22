@@ -321,7 +321,7 @@
       x0=p.l,
       y0=p.t,
       X=x=>x0+(x-xr[0])/(xr[1]-xr[0]||1)*plotW,
-      Y=y=>y0+(y-yr[0])/(yr[1]-yr[0]||1)*plotH;
+      Y=y=>y0+plotH-(y-yr[0])/(yr[1]-yr[0]||1)*plotH;
 
     ctx.save();
     ctx.beginPath();
@@ -440,7 +440,7 @@
         return;
       }
       const x=xr[0]+(mx-x0)/plotW*(xr[1]-xr[0]),
-        y=yr[0]+(my-y0)/plotH*(yr[1]-yr[0]);
+        y=yr[0]+(y0+plotH-my)/plotH*(yr[1]-yr[0]);
       let best=-1,
         bd=Infinity;
       for(let i=0;i<coords.length;i++){
@@ -461,7 +461,7 @@
         my=(e.clientY-r.top)*H/r.height;
       if(mx<x0||mx>x0+plotW||my<y0||my>y0+plotH)return;
       const x=xr[0]+(mx-x0)/plotW*(xr[1]-xr[0]),
-        y=yr[0]+(my-y0)/plotH*(yr[1]-yr[0]);
+        y=yr[0]+(y0+plotH-my)/plotH*(yr[1]-yr[0]);
       let best=-1,
         bd=Infinity;
       coords.forEach((pt,i)=>{
@@ -471,7 +471,7 @@
       });
       if(best>=0)onSelect?.(best);
     };
-    PV.plot.bind(canvas,{W,H,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH},ranges:{x:xr,y:yr},yDown:true,onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+    PV.plot.bind(canvas,{W,H,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
     return rg;
   }
   function drawHist(canvas,metric,binCount=30,swapped=true,zoom,onZoom){
