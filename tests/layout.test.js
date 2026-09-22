@@ -62,6 +62,69 @@ test('Dit explanatory prose lives in hover help instead of persistent note parag
   assert.doesNotMatch(src,/<p class="note min-dit-note">/);
   assert.doesNotMatch(src,/COCOS-II and PCHIP can be used together:[^']*<\/p>/);
   assert.doesNotMatch(src,/<p class="note analysis-note">/);
-  assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('COCOS-II and PCHIP can be used together/);
+  assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('Optional analysis\./);
   assert.match(src,/COCOS-II .*help\('Inferred, not vendor-exact/);
+});
+
+
+test('all scientific plots expose shared zoom interactions and reset semantics',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(build,/'src\/core\/plot\.js'/);
+  assert.equal((dit.match(/PV\.plot\.bind/g)||[]).length,4);
+  assert.equal((qss.match(/PV\.plot\.bind/g)||[]).length,3);
+  assert.equal((lbic.match(/PV\.plot\.bind/g)||[]).length,3);
+  assert.match(dit,/onReset:\(\)=>\{zoom\.vcpd=\{x:null,y:null\}/);
+  assert.match(qss,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
+  assert.match(lbic,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
+});
+
+test('LBIC Distribution supports axis swapping',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(src,/id="lSwapHistAxes"/);
+  assert.match(src,/histSwapped=!histSwapped/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histSwapped/);
+});
+
+test('persistent scientific explanatory paragraphs are moved into hover help',()=>{
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.doesNotMatch(lbic,/<p class="note">Default quantities mirror/);
+  assert.doesNotMatch(lbic,/<p class="note">All point X\/Y coordinates/);
+  assert.match(lbic,/View \$\{help\('Default quantities mirror/);
+  assert.doesNotMatch(qss,/<p class="note">These results describe the 305-point reference only/);
+  assert.doesNotMatch(qss,/<details class="panel"><summary>Algorithm notes<\/summary><p class="note">/);
+});
+
+test('Vcpd-Qc is point-line and data markers stay smaller than the initial marker',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/pointsXY\(qc,vd,X,Y,'var\(--red\)',2\.5\)/);
+  assert.match(src,/pointsXY\(qc,vl,X,Y,'var\(--blue\)',2\.5\)/);
+  assert.match(src,/r="4" fill="var\(--yellow\)"/);
+});
+
+
+test('PCHIP outlier input is rendered in E scientific notation',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/ditReject[^>]*value="\$\{Number\.isFinite\(o\.ditReject\)\?o\.ditReject\.toExponential\(3\)\.replace\('e','E'\)/);
+});
+
+
+test('Optional Midgap Dit is always visible with a default-on checkbox, not collapsible',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/id="ditUsePchip" type="checkbox"/);
+  assert.match(src,/o\.pchipEnabled\?'checked':''/);
+  assert.doesNotMatch(src,/id="ditMidgapControls"/);
+  assert.doesNotMatch(src,/midgapOpen/);
+  assert.match(src,/pchipEnabled=opts\.pchipEnabled!==false/);
+});
+
+test('legacy COCOS-II controls are removed completely',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(src,/Advanced \/ legacy methods/);
+  assert.doesNotMatch(src,/Use Legacy COCOS-II/);
+  assert.doesNotMatch(src,/value="guide"/);
+  assert.doesNotMatch(src,/function cocosII\(/);
 });

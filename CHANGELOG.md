@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Removed the obsolete Advanced / legacy COCOS-II method and its guide-based runtime path.
+- Made Optional Midgap Dit (PCHIP) always visible with a default-on checkbox; disabling it suppresses the PCHIP curve/Midgap Dit only, while Minimum Dit stays unchanged.
+- Rendered the PCHIP outlier-limit input in uppercase-E scientific notation.
+- Added shared wheel zoom to every scientific plot: zoom both axes inside the plot, zoom one axis when hovering that axis, and double-click to restore auto scale.
+- Added LBIC Distribution `Swap axes`, matching QSS Distribution.
+- Changed Dit Vcpd–Qc to a point-line plot; ordinary data markers are smaller than the initial-condition marker.
+- Moved remaining LBIC/QSS long explanatory paragraphs into contextual hover help.
 - Fixed the real sidebar-scroll root cause: flex children were shrinking to the fixed viewport-height sidebar, so no overflow existed. Sidebar panels now keep intrinsic height and the sidebar uses a real vertical scroll container.
 - Moved long Dit/COCOS explanatory paragraphs out of the persistent UI and into contextual hover help.
 - Matched PV-2000 LBIC Reflectivity saturation at 100% when DirectReflection + ScatteredReflection slightly exceeds 100%, with regression coverage.
@@ -20,10 +27,10 @@
 - Fixed missing/empty XML numeric values being coerced to zero; COCOS-II Min/Max now correctly fall back instead of appearing as 0/0.
 - COCOS-II invalid settings now show an explicit error and never silently fall back to Standard COCOS.
 - Added data-derived COCOS-II suggestions (dark-accumulation EOT plus safe Vsb-window expansion), current-site accepted-interval/minimum-Vsb diagnostics, and a Use recommendation action.
-- Clarified Dit semantics: **Minimum Dit (PV2000-style)** is the discrete accepted minimum; PCHIP controls are now nested under **Optional Midgap Dit (PCHIP)** and do not alter the primary minimum.
+- Clarified Dit semantics: **Minimum Dit (PV2000-style)** is the discrete accepted minimum; Optional Midgap Dit (PCHIP) does not alter the primary minimum.
 - Made Dit parameter rows compact with label/help and input on one line; parameter edits mark **Apply analysis settings** as pending.
 - Made the desktop left functional sidebar independently scrollable beneath the sticky toolbar so scrolling controls/metadata does not move the plot columns.
-- Refined Dit Analysis controls into contextual method-specific sections: Follow XML setting / Standard COCOS / PV2000 COCOS-II (inferred), with the older guide-based implementation moved under Advanced / legacy methods.
+- Refined Dit Analysis controls into contextual method-specific sections: Follow XML setting / Standard COCOS / PV2000 COCOS-II (inferred).
 - Follow XML setting now resolves `UseCocosII=true` to the inferred PV2000 COCOS-II path and shows the resolved method in the UI.
 - Kept Analysis controls open across Apply/recalculation and other Dit re-renders once the user has opened the panel; renamed the action to **Apply analysis settings**.
 - Added a selectable **PV2000 COCOS-II (inferred)** Dit algorithm derived from same-raw-data adjustment sweeps: EOT is interpreted in Å, synthetic-light slope uses q/Cox, Vsb is signed, and Min/Max Vsb gate the reported minimum Dit. Back Surface Shift is documented but intentionally not applied until its effect is identified.

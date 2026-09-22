@@ -59,21 +59,17 @@ The implementation therefore labels this path **inferred**. Its Min/Max rule is 
 
 Follow XML setting now resolves `UseCocosII=true` to this inferred path. That routing choice is intentional: it reflects the strongest available same-raw-data evidence. It does **not** upgrade the algorithm's validation label.
 
-### Legacy COCOS-II (guide-based)
-
-Status: **legacy / development comparison**.
-
-The older guide-based synthetic-light implementation remains available only under Advanced / legacy methods. It is no longer the default for `UseCocosII=true` and must not be described as the normal PV-2000 COCOS-II implementation.
-
 ### UI / control regression expectations
 
 The Analysis controls panel must remain open after Apply/recalculation. Method-specific parameters are shown contextually and compactly, with the label/help icon and its input on one row:
 
 - Standard COCOS: no COCOS-II EOT or Min/Max inputs;
 - PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
-- Legacy guide-based path: accessible only through Advanced / legacy methods;
+- no legacy/guide-based COCOS-II user path remains;
 - Flatband accumulation points remain shared;
-- PCHIP outlier limit and interpolation scale live only under **Optional Midgap Dit (PCHIP)**.
+- **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox;
+- disabling that checkbox must remove the PCHIP curve/Midgap Dit result without changing Minimum Dit (PV2000-style);
+- PCHIP outlier limit is displayed in uppercase-E scientific notation.
 
 The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP settings change. PCHIP settings may change Midgap Dit and the fitted curve only.
 

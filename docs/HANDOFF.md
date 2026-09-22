@@ -15,6 +15,9 @@ Build a general **Semilab PV-2000 Analyzer**: the user drops any PV-2000 result 
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
+- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale;
+- LBIC Distribution axis swap, matching the existing QSS Distribution interaction;
+- long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - real user/vendor files protected under ignored `private/reference/`.
 
 ## QSS-µPCD: reference export now available
@@ -43,7 +46,7 @@ Current analysis routing:
 - **Follow XML setting** is the normal default.
 - XML `UseCocosII=false` resolves to **Standard COCOS**.
 - XML `UseCocosII=true` resolves to **PV2000 COCOS-II (inferred)**.
-- **Legacy COCOS-II (guide-based)** remains only under Advanced / legacy methods for development comparison.
+- the obsolete guide-based COCOS-II path has been removed from the runtime/UI.
 
 The inferred PV2000 path comes from same-raw-data parameter sweeps. It interprets vendor EOT as Å, reconstructs signed Vsb and applies configurable Min/Max Vsb when selecting minimum Dit. It is explicitly labelled **inferred**, not vendor-exact. Back Surface Shift is recorded but intentionally not applied because the supplied True/False reprocessing produced identical outputs.
 
@@ -53,11 +56,10 @@ Dit Analysis controls are contextual and compact:
 - Standard COCOS hides COCOS-II-only settings;
 - shared Flatband accumulation points remain visible;
 - **Minimum Dit (PV2000-style)** is the accepted discrete minimum and does not use PCHIP;
-- optional PCHIP controls are nested under **Optional Midgap Dit (PCHIP)** and affect Midgap Dit / fitted curve only;
+- **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox; disabling it removes Midgap Dit / the green fit while leaving Minimum Dit unchanged;
 - COCOS-II and PCHIP can be combined because PCHIP runs after COCOS-II Vsb reconstruction and acceptance masking;
 - data-derived COCOS-II suggestions are shown but do not silently overwrite XML/user values;
 - invalid COCOS-II settings are shown as errors and no longer fall back silently to Standard COCOS;
-- the legacy guide-based method is hidden under Advanced / legacy methods;
 - Follow XML displays the resolved method;
 - Apply/recalculation, method changes, PCHIP changes and site re-renders preserve the Analysis controls open state once the user has opened it.
 
@@ -149,7 +151,8 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - Change EOT / Min Vsb / Max Vsb, Apply, and verify Vsb/Dit actually change where expected.
    - Confirm invalid `Max Vsb <= Min Vsb` shows an error with no silent Standard-Cocos fallback.
    - Confirm Analysis controls stays open after Apply/re-render.
-   - Change PCHIP scale/outlier limit and verify **Minimum Dit (PV2000-style)** stays unchanged while Midgap Dit / fitted curve may change.
+   - Verify Optional Midgap Dit is enabled by default; uncheck it and confirm Midgap Dit / green PCHIP fit disappear while **Minimum Dit (PV2000-style)** stays unchanged. Re-enable it, then change PCHIP scale/outlier limit and verify only the optional PCHIP result changes.
+   - Exercise all four Dit plots: wheel zoom, X-only/Y-only axis zoom and double-click auto-scale. Confirm Vcpd–Qc is point-line and ordinary data markers are smaller than the initial-condition marker.
 
 3. **LBIC paired-reference regression**
    - Run `npm run validate:lbic` with all same-basename private XML+CSV pairs present.
@@ -160,6 +163,7 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
 4. **QSS regression smoke**
    - Run `npm run validate:qss` with private references present.
    - Import the reference XML and verify valid-range filtering, smooth-map masking, Distribution axis swap and CSV export still behave correctly after layout changes.
+   - Exercise map / Distribution / acquisition-profile wheel zoom, axis-only zoom and double-click auto-scale.
 
 5. **Landing / fallback / theme**
    - Verify the welcome tags render correctly in light and dark mode.
