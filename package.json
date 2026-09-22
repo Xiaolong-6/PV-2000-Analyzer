@@ -7,5 +7,7 @@
     "test": "node --test tests/*.test.js",
     "validate:qss": "node scripts/run_python.js scripts/validate_qss_reference.py",
     "validate:lbic": "node scripts/run_python.js scripts/validate_lbic_reference.py"
-  }
+  },
+  "license": "AGPL-3.0-only",
+  "author": "Xiaolong Liu"
 }

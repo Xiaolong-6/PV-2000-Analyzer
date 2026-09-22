@@ -13,6 +13,12 @@
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/pages.yml"><img alt="GitHub Pages" src="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/pages.yml/badge.svg"></a>
 </p>
 
+<p align="center">
+  <a href="LICENSE"><img alt="License AGPL-3.0" src="https://img.shields.io/badge/LICENSE-AGPL--3.0-663399?style=flat-square&logo=gnu&logoColor=white"></a>
+  <a href="COMMERCIAL_LICENSE.md"><img alt="Commercial license available" src="https://img.shields.io/badge/COMMERCIAL%20LICENSE-AVAILABLE-b8860b?style=flat-square"></a>
+  <a href="CLA.md"><img alt="CLA required" src="https://img.shields.io/badge/CONTRIBUTIONS-CLA%20REQUIRED-1f6feb?style=flat-square"></a>
+</p>
+
 Local, browser-based analysis of Semilab PV-2000 XML result files. The user imports one XML; the app detects `Measurement/@xsi:type` and dispatches it to a measurement-specific analyzer.
 
 Current modules:
@@ -36,6 +42,14 @@ npm run validate:lbic
 ```
 
 `npm run validate:qss` uses ignored local XML/CSV reference files under `private/reference/` when present. `npm run validate:lbic` uses same-basename ignored XML/CSV pairs under `private/reference/lbic/` for pointwise vendor regression. The LBIC validator allows ordinary numeric wavelength/power/flux/geometry changes within the validated algorithm family and reserves NEW PROFILE for categorical input/output-path changes.
+
+## Licensing
+
+The community edition is licensed under **AGPL-3.0-only**. Commercial use under the AGPL is allowed when its terms are followed. Separate commercial licensing is available for organizations that need negotiated terms for proprietary integration, closed-source/OEM distribution, or other uses that are incompatible with their desired AGPL compliance model.
+
+External contributions require agreement to the project [CLA](CLA.md), which lets contributors keep their copyright while granting the Project Owner the rights needed to continue dual licensing. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for the commercial-licensing route.
+
+Copyright © 2026 Xiaolong Liu. The full community license is in [LICENSE](LICENSE).
 
 ## Runtime/data rule
 

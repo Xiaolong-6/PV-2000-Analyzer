@@ -27,6 +27,12 @@ If anything under `private/` is staged, unstage it immediately. Never use `git a
 9. Reverse-engineered calculations require regression against a PV-2000 export/display before being labelled validated.
 10. Run `npm test`, `npm run build`, and relevant private validators before handoff; update CHANGELOG/HANDOFF.
 
+## Licensing / CLA rule
+
+The repository community license is **AGPL-3.0-only**. Separate commercial licensing is intentionally preserved. Do not replace or weaken the repository license, CLA, commercial-licensing notice, or copyright notice without an explicit project-owner decision.
+
+External pull requests containing copyrightable code, documentation, tests, UI assets or other material must affirm the current `CLA.md` before merge. Contributors retain copyright, while the CLA grants Xiaolong Liu the sublicensing/relicensing rights needed for dual licensing. Reference-data publication rights remain a separate requirement.
+
 ## Reference-profile rule
 
 Validation is attached to an explicit **reference envelope**, not to a measurement-type name in general. This applies to Dit, QSS-µPCD, LBIC and every future analyzer.
