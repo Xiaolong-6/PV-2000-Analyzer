@@ -68,4 +68,24 @@ test('equal-aspect auto ranges expand only the constrained axis and preserve cen
 });
 
 
-test('manual axis control markup is a floating popover with independent X/Y limits',()=>{const html=P.axisControls('demoAxes');assert.match(html,/class="axis-popover"/);assert.match(html,/class="axis-popover-card"/);assert.match(html,/data-axis-controls="demoAxes"/);for(const k of ['xmin','xmax','ymin','ymax'])assert.match(html,new RegExp(`data-axis="${k}"`));assert.match(html,/data-axis-apply/);assert.match(html,/data-axis-auto/)});
+test('manual axis control markup is a reusable header popover with independent X/Y limits',()=>{
+  const html=P.axisControls('demoAxes');
+  assert.match(html,/class="axis-popover"/);
+  assert.match(html,/class="axis-popover-card"/);
+  assert.match(html,/data-axis-controls="demoAxes"/);
+  for(const k of ['xmin','xmax','ymin','ymax'])assert.match(html,new RegExp(`data-axis="${k}"`));
+  assert.match(html,/data-axis-apply/);
+  assert.match(html,/data-axis-auto/);
+});
+
+test('Distribution controls keep Swap axes inside Axes and expose a separate Bins popover',()=>{
+  const axes=P.axisControls('histAxes',{distribution:true,swapped:true});
+  const bins=P.binControls('histBins',42);
+  assert.match(axes,/data-axis-swap/);
+  assert.match(axes,/aria-pressed="true"/);
+  assert.doesNotMatch(axes,/data-bin-count/);
+  assert.match(bins,/data-bin-controls="histBins"/);
+  assert.match(bins,/>Bins<\/summary>/);
+  assert.match(bins,/data-bin-count/);
+  assert.match(bins,/value="42"/);
+});
