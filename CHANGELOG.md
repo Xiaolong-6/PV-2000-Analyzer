@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.13.2 — 2026-09-22
+## v20260922.14 — 2026-09-22
 
 - Added **Material: Silicon (Si) / Germanium (Ge)** to Dit Analysis controls, defaulting to Si without inferring material from filenames or substrate names.
 - Restored the legacy MATLAB Ge semiconductor constants (`ni = 2e13 cm^-3`, `εr = 16.2`) and applied the selected material consistently to Qsc, variation/Minimum Dit, flatband/Qtot and Midgap Dit targeting. Ge is explicitly unvalidated against PV-2000 Ge output.
