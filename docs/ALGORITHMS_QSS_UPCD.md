@@ -4,7 +4,7 @@
 
 The reference result is `QssUpcdMeasurement`, with 305 `UpcdDataItem/Value` lifetime values, a 5 mm `MapPattern`, 100 mm round target, 300 µm thickness, optical factor 0.708, n-type doping 1e14 cm^-3 and QSS intensity 30 mSun.
 
-For a round map, coordinates are generated in XML acquisition order: ascending Y, then ascending X within each row, retaining only points strictly inside the circular target (`x²+y² < R²`). The supplied PV-2000 CSV export confirms all 305 reconstructed X/Y coordinates exactly.
+For a round map, coordinates are generated in XML acquisition order: ascending Y, then ascending X within each row. The scheduled radius is `Diameter / 2 - EdgeExclusion` when `EdgeExclusion` is present, and only lattice points strictly inside that effective circle are retained (`x²+y² < Rmap²`). This matters for dense maps: a 100 mm target with 3 mm edge exclusion and 2 mm pitch schedules 1741 sites, whereas using the nominal 50 mm radius would incorrectly generate 1941. The supplied 305-point PV-2000 CSV reference still confirms its reconstructed X/Y coordinates exactly.
 
 The UI labels this comparison as fixed algorithm-validation evidence for the 305-point reference. The current XML's point count, generated-coordinate count and valid-data count are reported separately. Importing another XML does not establish agreement with an export for that new measurement.
 

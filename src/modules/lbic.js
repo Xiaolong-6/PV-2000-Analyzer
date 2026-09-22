@@ -18,11 +18,15 @@
   function labelFor(name){const c=conceptFor(name);return c==='current'?'Current':c==='direct'?'Direct reflectance':c==='diffuse'?'Scattered reflectance':c==='total'?'Reflectivity':c==='eqe'?'EQE':c==='iqe'?'IQE':name}
   function unitFor(name,d){const c=conceptFor(name);if(c==='current')return d.currentUnit||'µA';if(['direct','diffuse','total','eqe','iqe'].includes(c))return'%';return''}
   function numericAttrs(el){const out={};if(!el)return out;for(const a of [...el.attributes]){if(norm(a.name)==='key')continue;const v=Number(a.value);if(Number.isFinite(v))out[a.name]=v}return out}
-  function parseLasers(m){const node=X.direct(m,'LaserSettings');if(!node)return[];return X.children(node).map(e=>({index:X.num(e,'Index',NaN),power:X.num(e,'Power',NaN),wavelengthNm:X.num(e,'Wavelength',NaN)})).filter(x=>Number.isFinite(x.index))}
-  function parseFlux(m){const out={},
+  function parseLasers(m){const node=X.direct(m,'LaserSettings');
+    if(!node)return[];
+    return X.children(node).map(e=>({index:X.num(e,'Index',NaN),power:X.num(e,'Power',NaN),wavelengthNm:X.num(e,'Wavelength',NaN)})).filter(x=>Number.isFinite(x.index))}
+  function parseFlux(m){
+    const out={},
     node=X.direct(m,'FluxCache');
     if(!node)return out;
-    for(const item of X.children(node)){const kNode=X.direct(item,'Key'),
+    for(const item of X.children(node)){
+      const kNode=X.direct(item,'Key'),
       vNode=X.direct(item,'Value'),
       key=X.num(kNode,'int',NaN),
       value=X.num(vNode,'double',NaN);
@@ -30,7 +34,8 @@
   function collectBeamSeries(records){
     const beamKeys=new Set();for(const rec of records)for(const k of Object.keys(rec))beamKeys.add(String(k));
     const beams={};
-      for(const key of [...beamKeys].sort((a,b)=>Number(a)-Number(b))){const names=new Set();
+      for(const key of [...beamKeys].sort((a,b)=>Number(a)-Number(b))){
+      const names=new Set();
       for(const rec of records)for(const n of Object.keys(rec[key]||{}))names.add(n);
       const channels={};
       for(const name of names)channels[name]=records.map(rec=>Number.isFinite(rec[key]?.[name])?rec[key][name]:NaN);
@@ -76,27 +81,44 @@
   function deriveBeam(raw,laser,d){
     const referenceProfile=isReferenceProfile(raw,laser,d),
       metrics={};
-      for(const [name,values] of Object.entries(raw?.channels||{})){const concept=conceptFor(name);
+      for(const [name,values] of Object.entries(raw?.channels||{})){
+      const concept=conceptFor(name);
       metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',concept,xmlName:name,tier:tierFor(concept)}}
     let total=findMetric(metrics,'total'),direct=findMetric(metrics,'direct'),diffuse=findMetric(metrics,'diffuse');
-    if(!total&&direct&&diffuse){const key='__reflectivity';
+    if(!total&&direct&&diffuse){
+      const key='__reflectivity';
       metrics[key]={key,label:'Reflectivity',short:'Reflectivity',unit:'%',values:direct.values.map((v,i)=>totalReflectance(v,diffuse.values[i])),source:referenceProfile?'PV-2000 reproduced: DirectReflection + ScatteredReflection':'candidate: direct + scattered',status:referenceProfile?'validated':'inferred',concept:'total',tier:'primary'}}
     total=findMetric(metrics,'total');let eqe=findMetric(metrics,'eqe'),current=findMetric(metrics,'current');
     const flux=laser?.photonFlux;
-    if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,''))){const key='__eqe';
+    if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,''))){
+      const key='__eqe';
       metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',concept:'eqe',tier:'advanced'}}
     eqe=findMetric(metrics,'eqe');let iqe=findMetric(metrics,'iqe');
-    if(!iqe&&eqe&&total){const key='__iqe';
+    if(!iqe&&eqe&&total){
+      const key='__iqe';
       metrics[key]={key,label:'IQE',short:'IQE',unit:'%',values:eqe.values.map((v,i)=>iqePercent(v,total.values[i])),source:referenceProfile?'PV-2000 reproduced: EQE / (1 - Reflectivity); calculated IQE > 100% is blank':'candidate: EQE / (1 - Reflectivity), >100% invalid',status:referenceProfile?'validated':'inferred',concept:'iqe',tier:'primary'}}
     return{key:raw?.key??laser?.index??0,laser:laser||{},metrics,referenceProfile};
   }
-  function analyze(d){return{iterations:d.iterations.map(it=>{const keys=new Set([...Object.keys(it.beams),...Object.keys(d.laserByKey)]),
+  function analyze(d){
+    return{iterations:d.iterations.map(it=>{
+        const keys=new Set([...Object.keys(it.beams),...Object.keys(d.laserByKey)]),
         beams={},
         profileContext={...d,beamCount:keys.size,iterationCount:d.iterations.length};for(const key of [...keys].sort((a,b)=>Number(a)-Number(b)))beams[key]=deriveBeam(it.beams[key]||{key:Number(key),channels:{}},
         d.laserByKey[key]||{index:Number(key),photonFlux:d.flux[key]},
         profileContext);return{...it,beams}})}}
   function qtile(a,p){const z=(a||[]).filter(Number.isFinite).slice().sort((x,y)=>x-y);if(!z.length)return NaN;const q=(z.length-1)*p,i=Math.floor(q),f=q-i;return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f}
   function range(values,mode='full'){const z=values.filter(Number.isFinite);if(!z.length)return{lo:NaN,hi:NaN};return mode==='p1p99'?{lo:qtile(z,.01),hi:qtile(z,.99)}:{lo:Math.min(...z),hi:Math.max(...z)}}
+  function niceTicks(lo,hi,n=5){
+    if(!Number.isFinite(lo)||!Number.isFinite(hi)||lo===hi)return[lo];
+    const raw=(hi-lo)/n,
+    p=10**Math.floor(Math.log10(Math.abs(raw))),
+    q=raw/p,
+    step=(q<=1?1:q<=2?2:q<=5?5:10)*p,
+    start=Math.ceil(lo/step)*step,
+    out=[];
+    for(let x=start;x<=hi+step*1e-9;x+=step)out.push(x);
+    return out}
+  function axisFmt(v){if(!Number.isFinite(v))return'';const a=Math.abs(v);return a>=1e4||a>0&&a<1e-2?v.toExponential(1):Number(v.toPrecision(4)).toString()}
   function color(t){t=Math.max(0,Math.min(1,t));
     const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];
     let i=0;
@@ -145,7 +167,8 @@
       ctx.beginPath();
       ctx.rect(x0,y0,plotW,plotH);
       ctx.clip();
-      for(let i=0;i<vals.length&&i<coords.length;i++){const v=vals[i],
+      for(let i=0;i<vals.length&&i<coords.length;i++){
+      const v=vals[i],
       pt=coords[i];
       if(!Number.isFinite(v)||!pt)continue;
       const dx=d.nx>1?d.width/(d.nx-1):d.width||1,
@@ -156,7 +179,8 @@
       yb=Y(pt.y+dy/2);
       ctx.fillStyle=color((v-rg.lo)/(rg.hi-rg.lo||1));
       ctx.fillRect(Math.min(xa,xb),Math.min(ya,yb),Math.abs(xb-xa)+.5,Math.abs(yb-ya)+.5)}
-    if(selected&&selected.index<coords.length){const pt=coords[selected.index],
+    if(selected&&selected.index<coords.length){
+      const pt=coords[selected.index],
       dx=d.nx>1?d.width/(d.nx-1):d.width||1,
       dy=d.ny>1?d.height/(d.ny-1):d.height||1,
       xa=X(pt.x-dx/2),
@@ -244,28 +268,22 @@
       
   }
   function drawHist(canvas,metric,swapped=false,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),
-    bins=S.histogram(metric.values,30),
-    W=canvas.width=760,
-    H=canvas.height=300,
-    p={l:58,r:18,t:24,b:48};
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle=css('--chart-bg');
-    ctx.fillRect(0,0,W,H);
-    if(!bins.length)return bins;
+    const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,30),W=canvas.width=760,H=canvas.height=260,p={l:64,r:18,t:20,b:48};
+    ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!bins.length)return bins;
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
-    autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
-    mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
-    cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),
-    plotW=W-p.l-p.r,
-    plotH=H-p.t-p.b,
-    metricPos=v=>(v-mr[0])/(mr[1]-mr[0]||1),
-    countPos=v=>(v-cr[0])/(cr[1]-cr[0]||1);
-    ctx.font='10px system-ui';
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(p.l,p.t,plotW,plotH);
-    ctx.clip();
+      autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
+      mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
+      cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),
+      xr=swapped?cr:mr,
+      yr=swapped?mr:cr,
+      plotW=W-p.l-p.r,
+      plotH=H-p.t-p.b;
+      
+    const xPos=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*plotW,yPos=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*plotH,metricPos=v=>(v-mr[0])/(mr[1]-mr[0]||1),countPos=v=>(v-cr[0])/(cr[1]-cr[0]||1);
+    ctx.font='10px system-ui';ctx.strokeStyle=css('--grid2');ctx.fillStyle=css('--muted');
+    for(const v of niceTicks(xr[0],xr[1],5)){const x=xPos(v);ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,H-p.b);ctx.stroke();ctx.textAlign='center';ctx.fillText(axisFmt(v),x,H-20)}
+    ctx.strokeStyle=css('--grid');for(const v of niceTicks(yr[0],yr[1],5)){const y=yPos(v);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();ctx.textAlign='right';ctx.fillText(axisFmt(v),p.l-7,y+3)}
+    ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,plotW,plotH);ctx.clip();
     bins.forEach(b=>{
       const mid=(b.lo+b.hi)/2,
       t=(mid-autoMetric[0])/(autoMetric[1]-autoMetric[0]||1);ctx.fillStyle=color(t);if(swapped){
@@ -277,76 +295,83 @@
         x2=p.l+metricPos(b.hi)*plotW,
         y0=H-p.b-countPos(0)*plotH,
         y1=H-p.b-countPos(b.count)*plotH;ctx.fillRect(Math.min(x1,x2),Math.min(y0,y1),Math.max(1,Math.abs(x2-x1)-1),Math.abs(y1-y0))}});
+      
     ctx.restore();
-    ctx.strokeStyle=css('--soft');
-    ctx.strokeRect(p.l,p.t,plotW,plotH);
-    ctx.fillStyle=css('--muted');
-    ctx.textAlign='center';
-    ctx.fillText(swapped?'Count':`${metric.short} [${metric.unit||'a.u.'}]`,(p.l+W-p.r)/2,H-4);
-    ctx.save();
-    ctx.translate(13,(p.t+H-p.b)/2);
-    ctx.rotate(-Math.PI/2);
-    ctx.fillText(swapped?`${metric.short} [${metric.unit||'a.u.'}]`:'Count',0,0);
-    ctx.restore();
-    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:swapped?cr:mr,y:swapped?mr:cr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
-    return bins}
+      ctx.strokeStyle=css('--soft');
+      ctx.strokeRect(p.l,p.t,plotW,plotH);
+      ctx.fillStyle=css('--muted');
+      ctx.textAlign='center';
+      ctx.fillText(swapped?'Count':`${metric.short} [${metric.unit||'a.u.'}]`,(p.l+W-p.r)/2,H-4);
+      ctx.save();
+      ctx.translate(13,(p.t+H-p.b)/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(swapped?`${metric.short} [${metric.unit||'a.u.'}]`:'Count',0,0);
+      ctx.restore();
+      
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return bins;
+  }
   function drawProfile(canvas,d,metric,selected,axis,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),
-    W=canvas.width=760,
-    H=canvas.height=220,
-    p={l:58,r:18,t:22,b:42},
-    nx=d.nx,
-    ny=d.ny,
-    row=Math.floor(selected.index/nx),
-    col=selected.index%nx,
-    pts=[];
-    if(axis==='x'){
-      for(let cc=0;cc<nx;cc++){
-        const i=row*nx+cc;
-        pts.push({i,pos:d.coords[i]?.x,v:metric.values[i]})}}else{
-      for(let rr=0;rr<ny;rr++){
-        const i=rr*nx+col;
-        pts.push({i,pos:d.coords[i]?.y,v:metric.values[i]})}}const valid=pts.filter(p=>Number.isFinite(p.v)&&Number.isFinite(p.pos));
-    ctx.clearRect(0,0,W,H);
-    ctx.fillStyle=css('--chart-bg');
-    ctx.fillRect(0,0,W,H);
-    if(!valid.length)return[];
+    const ctx=canvas.getContext('2d'),W=canvas.width=760,H=canvas.height=220,p={l:64,r:18,t:18,b:44},nx=d.nx,ny=d.ny,row=Math.floor(selected.index/nx),col=selected.index%nx,pts=[];
+    if(axis==='x'){for(let cc=0;cc<nx;cc++){const i=row*nx+cc;pts.push({i,pos:d.coords[i]?.x,v:metric.values[i]})}}else{for(let rr=0;rr<ny;rr++){const i=rr*nx+col;pts.push({i,pos:d.coords[i]?.y,v:metric.values[i]})}}
+    const valid=pts.filter(p=>Number.isFinite(p.v)&&Number.isFinite(p.pos));ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!valid.length)return[];
     const autoX=[Math.min(...valid.map(p=>p.pos)),Math.max(...valid.map(p=>p.pos))],
-    autoY=[Math.min(...valid.map(p=>p.v)),Math.max(...valid.map(p=>p.v))],
-    xr=PV.plot.resolve(autoX,zoom?.x),
-    yr=PV.plot.resolve(autoY,zoom?.y),
-    X=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),
-    Y=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b);
+      autoY=[Math.min(...valid.map(p=>p.v)),Math.max(...valid.map(p=>p.v))],
+      xr=PV.plot.resolve(autoX,zoom?.x),
+      yr=PV.plot.resolve(autoY,zoom?.y),
+      X=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),
+      Y=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b);
+      
+    ctx.font='10px system-ui';
+      ctx.strokeStyle=css('--grid2');
+      ctx.fillStyle=css('--muted');
+      for(const v of niceTicks(xr[0],xr[1],5)){const x=X(v);
+      ctx.beginPath();
+      ctx.moveTo(x,p.t);
+      ctx.lineTo(x,H-p.b);
+      ctx.stroke();
+      ctx.textAlign='center';
+      ctx.fillText(axisFmt(v),x,H-19)}
+    ctx.strokeStyle=css('--grid');for(const v of niceTicks(yr[0],yr[1],5)){const y=Y(v);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();ctx.textAlign='right';ctx.fillText(axisFmt(v),p.l-7,y+3)}
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
-    ctx.clip();
-    ctx.strokeStyle=css('--blue');
-    ctx.lineWidth=1.5;
-    ctx.beginPath();
-    let pen=false;
-    valid.forEach(pt=>{
+      ctx.beginPath();
+      ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
+      ctx.clip();
+      ctx.strokeStyle=css('--blue');
+      ctx.lineWidth=1.5;
+      ctx.beginPath();
+      let pen=false;
+      valid.forEach(pt=>{
       const x=X(pt.pos),
       y=Y(pt.v);if(x<p.l||x>W-p.r||y<p.t||y>H-p.b){pen=false;return}pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true});
-    ctx.stroke();
-    ctx.restore();
+      ctx.stroke();
+      ctx.restore();
+      
     ctx.strokeStyle=css('--soft');
-    ctx.strokeRect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
-    ctx.fillStyle=css('--muted');
-    ctx.font='10px system-ui';
-    ctx.textAlign='center';
-    ctx.fillText(`${axis.toUpperCase()} [mm]`,(p.l+W-p.r)/2,H-4);
-    ctx.save();
-    ctx.translate(13,(p.t+H-p.b)/2);
-    ctx.rotate(-Math.PI/2);
-    ctx.fillText(`${metric.short} [${metric.unit||'a.u.'}]`,0,0);
-    ctx.restore();
-    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
-    return valid}
+      ctx.strokeRect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
+      ctx.fillStyle=css('--muted');
+      ctx.textAlign='center';
+      ctx.fillText(`${axis.toUpperCase()} [mm]`,(p.l+W-p.r)/2,H-4);
+      ctx.save();
+      ctx.translate(13,(p.t+H-p.b)/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillText(`${metric.short} [${metric.unit||'a.u.'}]`,0,0);
+      ctx.restore();
+      
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return valid;
+  }
   function render(host,d,a){
-    let iterationIndex=0,beamKey='',metricKey='',scaleMode='full',showAdvanced=false,histSwapped=false,selected={index:Math.floor((d.coords.length||1)/2)},zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
+    let iterationIndex=0,
+      beamKey='',
+      metricKey='',
+      scaleMode='full',
+      showAdvanced=false,
+      histSwapped=false,
+      selected={index:Math.floor((d.coords.length||1)/2)},
+      zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
+      
     const visibleMetrics=metrics=>Object.values(metrics).filter(m=>showAdvanced||m.tier==='primary');
-    function current(){const it=a.iterations[iterationIndex]||a.iterations[0],
+    function current(){
+      const it=a.iterations[iterationIndex]||a.iterations[0],
       keys=Object.keys(it?.beams||{});
       if(!beamKey||!it?.beams?.[beamKey])beamKey=keys[0]||'';
       const beam=it?.beams?.[beamKey],
@@ -356,14 +381,19 @@
       return{it,beam,metrics,metric:metrics[metricKey]}}
     function metricOptions(metrics){return visibleMetrics(metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.label)}${m.status==='inferred'?' · inferred':''}</option>`).join('')}
     function beamOptions(it){return Object.entries(it?.beams||{}).map(([k,b])=>{const wl=b.laser?.wavelengthNm;return`<option value="${esc(k)}">${Number.isFinite(wl)?`${fmt(wl,0)} nm`:`Beam ${esc(k)}`}</option>`}).join('')}
-    function summaryRows(metrics){return visibleMetrics(metrics).map(m=>{const st=S.summary(m.values);return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
+    function summaryRows(metrics){
+      return visibleMetrics(metrics).map(m=>{
+        const st=S.summary(m.values);return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
-    function renderShell(){const {it,beam,metrics,metric}=current(),pointOk=it&&it.pointCount===d.expectedPointCount&&d.coords.length===it.pointCount,laser=beam?.laser||{};host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
+    function renderShell(){const {it,beam,metrics,metric}=current(),
+      pointOk=it&&it.pointCount===d.expectedPointCount&&d.coords.length===it.pointCount,
+      laser=beam?.laser||{};
+      host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
       <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses Region and Dimension.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Pattern',`${d.patternDisplayName||d.patternType} · ${fmt(d.nx,0)} × ${fmt(d.ny,0)}`)}${metaRow('Region',`${fmt(d.width)} × ${fmt(d.height)} mm @ (${fmt(d.regionX)}, ${fmt(d.regionY)})`)}${metaRow('Step',`${d.nx>1?fmt(d.width/(d.nx-1),4):'—'} × ${d.ny>1?fmt(d.height/(d.ny-1),4):'—'} mm`)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?'Point count matches Dimension.':'A mismatch disables coordinate-based maps.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',beam?.referenceProfile?'validated LBIC algorithm family':'unvalidated combination','Validated status applies to the single-beam SquareRegionPattern family with Current + DirectReflection + ScatteredReflection and a valid photon FluxCache. Numeric wavelength, power, flux and raster dimensions may vary. Categorical input/output changes still require paired vendor regression.')}</dl></section>
       <section class="panel"><h3>View ${help('Default quantities mirror the validated PV-2000 exports: Current, Reflectivity and IQE. Advanced adds raw Direct/Scattered reflectance, intermediate EQE and unknown numeric XML channels. Raw XML values always take priority. Numeric wavelength/power/flux/geometry changes stay within the validated family when the same measurement/result path is used. New beam/channel/pattern/result combinations require paired XML + PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
       <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows(metrics)}</tbody></table></div></section>
       <details class="panel"><summary>Geometry / validation ${help('All point X/Y coordinates match the four supplied PV-2000 CSV exports exactly. The on-screen map follows acquisition row order; vendor screen-orientation parity is not separately claimed.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Acquisition mapping','X-fast row-major (validated)')}${metaRow('Y coordinate','Region.Y + row × dy (validated)')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
-      </aside><section class="plots"><div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction. Double-click restores auto scale.')}<span class="grow"></span><button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div><div class="panel chart"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale.')}<span class="grow"></span><button id="lExportProfile">Export</button></header><div class="profile-grid"><div><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b>${help('Mouse wheel zooms both axes inside the plot; hover an axis and wheel to zoom only that axis. Double-click restores auto scale. Swap axes exchanges quantity and count axes.') }<span class="grow"></span><button id="lSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution quantity and count axes.">Swap axes</button><button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div><div class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></div><div class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></div></section></div>`;
+      </aside><section class="plots"><div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction. Double-click restores auto scale.')}<span class="grow"></span><button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div><div class="panel chart"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Each profile also has manual numeric X/Y limits for outlier-heavy data.')}<span class="grow"></span><button id="lExportProfile">Export</button></header><div class="profile-grid"><div><div class="mini-title">X profile through selected row</div>${PV.plot.axisControls('lXProfileAxes')}<div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div><div class="mini-title">Y profile through selected column</div>${PV.plot.axisControls('lYProfileAxes')}<div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b>${help('Mouse wheel zooms both axes inside the plot; hover an axis and wheel to zoom only that axis. Double-click restores auto scale. Axes opens manual numeric X/Y limits. Swap axes exchanges quantity and count axes.') }<span class="grow"></span><button id="lSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution quantity and count axes.">Swap axes</button><button id="lExportHist">Export</button></header>${PV.plot.axisControls('lHistAxes')}<div class="canvas-wrap"><canvas id="lHist"></canvas></div></div><div class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></div><div class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></div></section></div>`;
       host.querySelector('#lIter').value=String(iterationIndex);host.querySelector('#lBeam').value=beamKey;host.querySelector('#lMetric').value=metricKey;host.querySelector('#lScale').value=scaleMode;
       host.querySelector('#lIter').onchange=e=>{iterationIndex=Number(e.target.value)||0;
         beamKey='';
@@ -373,6 +403,9 @@
         metricKey='';
         renderShell()};
         host.querySelector('#lMetric').onchange=e=>{metricKey=e.target.value;
+        zoom.hist={x:null,y:null};
+        zoom.xProfile={x:null,y:null};
+        zoom.yProfile={x:null,y:null};
         redraw()};
         host.querySelector('#lScale').onchange=e=>{scaleMode=e.target.value;
         redraw()};
@@ -394,8 +427,11 @@
       const rg=drawMap(host.querySelector('#lMap'),d,metric,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
       const bins=drawHist(host.querySelector('#lHist'),metric,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
       xp=drawProfile(host.querySelector('#lXProfile'),d,metric,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
-      yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()}),
-      pt=d.coords[selected.index]||{},
+      yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
+      PV.plot.bindAxisControls(host,'lHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()});
+      PV.plot.bindAxisControls(host,'lXProfileAxes',zoom.xProfile,n=>{zoom.xProfile=n;redraw()});
+      PV.plot.bindAxisControls(host,'lYProfileAxes',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
+      const pt=d.coords[selected.index]||{},
       row=Number.isFinite(pt.row)?pt.row:Math.floor(selected.index/(d.nx||1)),
       col=Number.isFinite(pt.col)?pt.col:selected.index%(d.nx||1);
       host.querySelector('#lPixel').innerHTML=`<dl class="meta"><dt>Index</dt><dd>${selected.index+1}</dd><dt>Row / column</dt><dd>${row+1} / ${col+1}</dd><dt>X / Y</dt><dd>${fmt(pt.x,4)} / ${fmt(pt.y,4)} mm</dd>${visibleMetrics(metrics).map(m=>`<dt>${esc(m.short)}${m.status==='inferred'?' *':''}</dt><dd>${fmt(m.values[selected.index],5)} ${esc(m.unit)}</dd>`).join('')}</dl>`;
@@ -403,6 +439,7 @@
       host.querySelector('#lExportMap').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}.csv`,['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`, 'Source'],metric.values.map((v,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',v,metric.source]));
         
       host.querySelector('#lExportHist').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count'],bins.map(b=>[b.lo,b.hi,b.count]));
+        
       host.querySelector('#lExportProfile').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_profiles.csv`,['Axis','Index','Position [mm]',`${metric.label} [${metric.unit}]`],[...xp.map(p=>['X',p.i+1,p.pos,p.v]),...yp.map(p=>['Y',p.i+1,p.pos,p.v])]);
         
       host.querySelector('#lExportAll').onclick=()=>{
@@ -419,5 +456,8 @@
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
-  PV.modules=PV.modules||{};PV.modules.lbic={types:['LBICMeasurement'],parse,analyze,render,conceptFor,totalReflectance,eqePercent,iqePercent,deriveBeam,isReferenceProfile,range,Q_PV2000};PV.registry.register(PV.modules.lbic);
+  PV.modules=PV.modules||{};
+    PV.modules.lbic={types:['LBICMeasurement'],parse,analyze,render,conceptFor,totalReflectance,eqePercent,iqePercent,deriveBeam,isReferenceProfile,range,Q_PV2000};
+    PV.registry.register(PV.modules.lbic);
+    
 })(typeof window!=='undefined'?window:globalThis);
