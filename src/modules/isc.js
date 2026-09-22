@@ -679,7 +679,7 @@
       </dl></details>
     </aside><section class="plots">
       <div class="panel chart"><header><b>ISC map</b>${help('Select Vcpd Dark, Vcpd Light or VSB. The solid outline follows the nominal XML target geometry (RoundWafer or SquareCell); when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.')}<span class="grow"></span><select id="iMetric"><option value="dark">Vcpd Dark</option><option value="light">Vcpd Light</option><option value="vsb">VSB</option></select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
-      <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped,bins:histBins})}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
+      <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
     </section><section class="plots">
       <div class="panel chart"><header><b>Raw readings</b>${help('Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.')}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
     </section></div>`;
@@ -729,10 +729,9 @@
         redraw();
       },{
         swapped:histSwapped,
-        bins:histBins,
-        onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()},
-        onBins:n=>{histBins=n;zoom.hist={x:null,y:null};redraw()}
+        onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
       });
+      PV.plot.bindBinControls(host,'iHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
       PV.plot.bindAxisControls(host,'iRawAxes',zoom.raw,n=>{
         zoom.raw=n;
         redraw();
