@@ -684,8 +684,8 @@
       PV.plot.bindAxisControls(host,'lXProfileAxes',zoom.xProfile,n=>{zoom.xProfile=n;redraw()});
       PV.plot.bindAxisControls(host,'lYProfileAxes',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
       const pt=d.coords[selected.index]||{},
-      row=Number.isFinite(pt.row)?pt.row:Math.floor(selected.index/(d.nx||1)),
-      col=Number.isFinite(pt.col)?pt.col:selected.index%(d.nx||1);
+      row=Number.isFinite(pt.row)?pt.row:NaN,
+      col=Number.isFinite(pt.col)?pt.col:NaN;
       host.querySelector('#lPixel').innerHTML=`<dl class="meta"><dt>Index</dt><dd>${selected.index+1}</dd><dt>Row / column</dt><dd>${Number.isFinite(row)&&Number.isFinite(col)?`${row+1} / ${col+1}`:'—'}</dd><dt>X / Y</dt><dd>${fmt(pt.x,4)} / ${fmt(pt.y,4)} mm</dd>${visibleMetrics(metrics).map(m=>`<dt>${esc(m.short)}${m.status==='inferred'?' *':''}</dt><dd>${fmt(m.values[selected.index],5)} ${esc(m.unit)}</dd>`).join('')}</dl>`;
       
       host.querySelector('#lExportMap').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}.csv`,['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`, 'Source'],metric.values.map((v,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',v,metric.source]));
