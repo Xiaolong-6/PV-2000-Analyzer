@@ -87,11 +87,16 @@ test('all scientific plots expose shared zoom interactions and reset semantics',
   assert.match(lbic,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
 });
 
-test('LBIC Distribution supports axis swapping',()=>{
+test('LBIC Distribution defaults to Count on X and keeps Swap/Bins in header controls',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
-  assert.match(src,/id="lSwapHistAxes"/);
-  assert.match(src,/histSwapped=!histSwapped/);
-  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histSwapped/);
+  assert.match(src,/histSwapped=true/);
+  assert.match(src,/histBins=30/);
+  assert.match(src,/axisControls\('lHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
+  assert.match(src,/binControls\('lHistBins',histBins\)/);
+  assert.match(src,/onSwap:\(\)=>\{histSwapped=!histSwapped/);
+  assert.match(src,/bindBinControls\(host,'lHistBins',histBins/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histBins,histSwapped/);
+  assert.doesNotMatch(src,/id="lSwapHistAxes"/);
 });
 
 test('persistent scientific explanatory paragraphs are moved into hover help',()=>{
@@ -206,9 +211,11 @@ test('all spatial maps preserve equal physical X/Y scale by default',()=>{
   const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   assert.match(dit,/equalAspectRanges\(rawX,rawY,W-m\.l-m\.r,H-m\.t-m\.b\)/);
   assert.match(lbic,/equalAspectRanges\(rawX,rawY,availW,availH\)/);
   assert.match(qss,/plot=Math\.min\(W-p\.l-p\.r,H-p\.t-p\.b\)/);
+  assert.match(isc,/equalAspectRanges\(autoX,autoY,W-p\.l-p\.r,H-p\.t-p\.b\)/);
 });
 
 test('landing page removes the redundant deployed-site Live shortcut and its dead runtime handling',()=>{
@@ -269,23 +276,61 @@ test('QSS Distribution draws numeric tick labels on both axes in normal and swap
   assert.match(src,/ctx\.fillText\(axisFmt\(t\),p\.l-8,y\+4\)/);
 });
 
+test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shared controls',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/histSwapped=true/);
+  assert.match(src,/histBins=30/);
+  assert.match(src,/axisControls\('qHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
+  assert.match(src,/binControls\('qHistBins',histBins\)/);
+  assert.match(src,/bindBinControls\(host,'qHistBins',histBins/);
+  assert.match(src,/drawHist\(host\.querySelector\('#qHist'\),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
+  assert.doesNotMatch(src,/id="qSwapHistAxes"/);
+});
 
-test('ISC module keeps the three manual-defined quantities, raw-reading view, Distribution swap and manual axes',()=>{
+
+test('ISC keeps validated quantities, geometry-aware map and standardized Distribution controls',()=>{
   const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   assert.match(isc,/types:\['ISCMeasurement'\]/);
   assert.match(isc,/Vcpd Dark/);
   assert.match(isc,/Vcpd Light/);
   assert.match(isc,/VSB/);
   assert.match(isc,/Raw readings/);
-  assert.match(isc,/id="iSwapHistAxes"/);
-  assert.match(isc,/histSwapped=!histSwapped/);
-  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histSwapped/);
+  assert.match(isc,/histSwapped=true/);
+  assert.match(isc,/histBins=30/);
+  assert.match(isc,/axisControls\('iHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
+  assert.match(isc,/binControls\('iHistBins',histBins\)/);
+  assert.match(isc,/bindBinControls\(host,'iHistBins',histBins/);
+  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histBins,histSwapped/);
+  assert.doesNotMatch(isc,/id="iSwapHistAxes"/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
-  assert.match(isc,/axisControls\('iHistAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
   assert.match(isc,/equalAspectRanges\(autoX,autoY/);
   assert.match(isc,/targetGeometry\(d\)/);
   assert.match(isc,/setLineDash\(\[6,4\]\)/);
   assert.match(isc,/geometry\.nominal/);
   assert.match(isc,/geometry\.scheduled/);
+});
+
+
+test('all plot Axes controls are rendered in chart headers immediately before export controls',()=>{
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  for(const src of [dit,qss,lbic,isc]){
+    assert.doesNotMatch(src,/class="(?:canvas-wrap|chart-stage)[^"]*"[^>]*>\$\{PV\.plot\.axisControls/);
+  }
+  assert.match(dit,/axisControls\('ditVcpdAxes'\)<button id="e1"/);
+  assert.match(dit,/axisControls\('ditDitAxes'\)<button id="e2"/);
+  assert.match(dit,/axisControls\('ditVsbAxes'\)<button id="e3"/);
+  assert.match(dit,/axisControls\('ditMapAxes'\)<button id="e4"/);
+  assert.match(qss,/axisControls\('qMapAxes'\)<button id="qExportMap"/);
+  assert.match(qss,/binControls\('qHistBins',histBins\)<button id="qExportHist"/);
+  assert.match(qss,/axisControls\('qProfileAxes'\)<button id="qExportProfile"/);
+  assert.match(lbic,/axisControls\('lMapAxes'\)<button id="lExportMap"/);
+  assert.match(lbic,/binControls\('lHistBins',histBins\)<button id="lExportHist"/);
+  assert.match(lbic,/axisControls\('lYProfileAxes',\{label:'Y axes'\}\)<button id="lExportProfile"/);
+  assert.match(isc,/axisControls\('iMapAxes'\)<button id="iExportMap"/);
+  assert.match(isc,/binControls\('iHistBins',histBins\)<button id="iExportHist"/);
+  assert.match(isc,/axisControls\('iRawAxes'\)<button id="iExportRaw"/);
 });
