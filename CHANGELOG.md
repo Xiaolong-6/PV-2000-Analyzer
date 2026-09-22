@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260922.5 — 2026-09-22
+
+- Reworked manual plot limits into floating bottom-left Axes popovers. Apply/Auto close the popover, so controls no longer consume chart height.
+- Audited Dit, QSS-µPCD and LBIC numeric plots: manual X/Y limits now cover applicable maps as well as line/distribution/profile plots; LBIC raster maps now show regular numeric X/Y ticks instead of endpoint-only labels.
+- Reorganized LBIC so Selected pixel and Channel provenance live in the left sidebar; the right workspace is Map + Distribution on the top row and X/Y profiles side-by-side below on wide screens.
+- Moved QSS-µPCD Current dataset into the left sidebar.
+- Dit Analysis controls now start expanded; Results summary is collapsible, starts expanded, and preserves its open/closed state during in-module rerenders.
+
 ## v20260922.4 — 2026-09-22
 
 - Removed the empty QSS `Algorithm notes` runtime panel. Algorithm/reference explanations remain in the project documentation and hover help, where they provide actual content.

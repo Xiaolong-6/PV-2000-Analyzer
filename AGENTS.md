@@ -33,7 +33,7 @@ The canonical project version is the single line in root `VERSION`. Do not use s
 2. Detect measurement type from `Measurement/@xsi:type`; never infer it from filenames.
 3. Add each new result type as an isolated module registered through `PV2000.registry`.
 4. Shared XML/statistics/geometry/theme/export/UI logic belongs in `src/core/`; do not duplicate common HTML escaping, help markup or tooltip helpers in measurement modules.
-5. Preserve the responsive scientific-workspace layout: wide screens use sidebar + two analysis columns; at medium widths (<=1200 CSS px) keep the sidebar and stack the two analysis columns into one scrollable column; narrow/mobile layouts collapse to one column. Do not imitate the legacy PV-2000 application.
+5. Preserve the responsive scientific-workspace layout: wide screens use sidebar + two analysis columns; at medium widths (<=1200 CSS px) keep the sidebar and stack the two analysis columns into one scrollable column; narrow/mobile layouts collapse to one column. Do not imitate the legacy PV-2000 application. Plot axis-range controls must remain floating overlays inside the chart area rather than taking permanent vertical layout space. LBIC uses a two-column right workspace (Map/Distribution above, X/Y profiles below), with Selected pixel and Channel provenance in the sidebar; QSS Current dataset also belongs in the sidebar.
 6. Every chart must expose a data export and shared zoom behavior: wheel in the plot zooms both axes, wheel over one axis zooms only that axis, and double-click restores auto scale.
 7. Explain scientific quantities/controls with hover text (`title`/`.help`) rather than permanent instructional clutter.
 8. Unknown XML types must fall back to Generic Inspector.

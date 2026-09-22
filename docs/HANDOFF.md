@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.4
+# Agent handoff — 2026-09-22 — v20260922.5
 
 ## Goal
 
@@ -17,9 +17,9 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
-- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots also expose manual X/Y lower/upper limits;
+- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a floating bottom-left Axes popover that closes after Apply/Auto;
 - spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
-- LBIC Distribution axis swap, numeric Distribution/profile ticks, and compact canvas sizing, matching the existing QSS interaction model;
+- LBIC right workspace uses Map + Distribution side-by-side with equal top-row chart sizing and X/Y profiles side-by-side below; Selected pixel and Channel provenance are in the left sidebar. Distribution retains axis swap and numeric ticks;
 - long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
@@ -203,3 +203,5 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
 ## Next scientific module
 
 After validating the remaining LBIC vendor-parity items, add QSS-µPCD Scan/J0 as a separate module (intensity/laser-power scans, QDC, steady-state lifetime/injection, Basore-Hansen J0, Kane-Swanson J0). Do not cram scan/J0 logic into `qss-upcd.js`.
+
+UI placement: QSS Current dataset belongs in the left sidebar. Dit Analysis controls and Results summary both start expanded; Results summary remains user-collapsible.

@@ -202,8 +202,10 @@ test('landing page removes the redundant deployed-site Live shortcut and its dea
 test('QSS runtime omits fixed reference-validation card and exposes manual axes on data plots',()=>{
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(qss,/Algorithm validation — reference dataset/);
+  assert.match(qss,/axisControls\('qMapAxes'\)/);
   assert.match(qss,/axisControls\('qHistAxes'\)/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
+  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots">'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
 });
 
@@ -212,10 +214,16 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(lbic,/function niceTicks\(/);
   assert.match(lbic,/fillText\(axisFmt\(v\)/);
+  assert.match(lbic,/axisControls\('lMapAxes'\)/);
   assert.match(lbic,/axisControls\('lHistAxes'\)/);
   assert.match(lbic,/axisControls\('lXProfileAxes'\)/);
   assert.match(lbic,/axisControls\('lYProfileAxes'\)/);
+  assert.match(lbic,/class="lbic-workspace"/);
+  assert.ok(lbic.indexOf('Selected pixel')<lbic.indexOf('</aside><section class="lbic-workspace">'));
+  assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="lbic-workspace">'));
+  assert.match(lbic,/H=canvas\.height=430,p=\{l:64,r:18,t:24,b:52\}/);
   assert.match(css,/\.lbic-module \.canvas-wrap\{min-height:0\}/);
+  assert.match(css,/\.lbic-module \.lbic-workspace\{grid-column:2 \/ 4/);
 });
 
 test('Dit numeric line plots expose manual X and Y limits',()=>{
@@ -223,5 +231,8 @@ test('Dit numeric line plots expose manual X and Y limits',()=>{
   assert.match(dit,/axisControls\('ditVcpdAxes'\)/);
   assert.match(dit,/axisControls\('ditVsbAxes'\)/);
   assert.match(dit,/axisControls\('ditDitAxes'\)/);
+  assert.match(dit,/axisControls\('ditMapAxes'\)/);
+  assert.match(dit,/analysisOpen=true,resultsOpen=true/);
+  assert.match(dit,/id="ditResultsSummary" class="panel results-summary-panel" \$\{resultsOpen\?'open':''\}/);
   assert.match(dit,/bindAxisControls\(host,'ditDitAxes'[^]*\{yLog:true\}/);
 });

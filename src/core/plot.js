@@ -25,7 +25,8 @@
     return[a-(a-lo)*factor,a+(hi-a)*factor];
   }
   function axisControls(id){
-    return `<details class="axis-limits" data-axis-controls="${id}"><summary title="Set manual numeric X/Y limits. Leave an axis blank to keep it automatic.">Axes</summary><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label><button type="button" data-axis-apply>Apply</button><button type="button" data-axis-auto>Auto</button></div></details>`}
+    return `<details class="axis-popover" data-axis-controls="${id}"><summary title="Set manual numeric X/Y limits.">Axes</summary><div class="axis-popover-card"><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label></div><div class="axis-limit-actions"><button type="button" data-axis-auto>Auto</button><button type="button" data-axis-apply>Apply</button></div></div></details>`;
+  }
   function bindAxisControls(root,id,state,onChange,{xLog=false,yLog=false}={}){
     const box=root?.querySelector(`[data-axis-controls="${id}"]`);if(!box)return;
     const input=k=>box.querySelector(`[data-axis="${k}"]`),
@@ -46,8 +47,14 @@
       if(log&&!(lo>0))throw new Error(`${label}: logarithmic limits must be positive.`);
       return[lo,hi]};
       
-    box.querySelector('[data-axis-apply]').onclick=()=>{try{onChange?.({x:read('xmin','xmax',xLog,'X axis'),y:read('ymin','ymax',yLog,'Y axis')})}catch(err){alert(err.message)}};
-    box.querySelector('[data-axis-auto]').onclick=()=>onChange?.({x:null,y:null});
+    const apply=()=>{try{
+      const next={x:read('xmin','xmax',xLog,'X axis'),y:read('ymin','ymax',yLog,'Y axis')};
+      box.open=false;
+      onChange?.(next);
+    }catch(err){alert(err.message)}};
+    box.querySelector('[data-axis-apply]').onclick=apply;
+    box.querySelector('[data-axis-auto]').onclick=()=>{box.open=false;onChange?.({x:null,y:null})};
+    box.querySelectorAll('input').forEach(el=>el.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply()}});
   }
   function point(el,W,H,e){const r=el.getBoundingClientRect();return{x:(e.clientX-r.left)*W/(r.width||1),y:(e.clientY-r.top)*H/(r.height||1)}}
   function bind(el,{W,H,plotRect,ranges,xLog=false,yLog=false,yDown=false,onChange,onReset}){
