@@ -137,6 +137,14 @@ Different Region origin/width/height or Dimension values stay inside QSS-MAP-002
 
 Examples include another pattern/coordinate encoding, reversed or serpentine acquisition semantics, a different point-count interpretation, or another vendor result path that changes how sites map to output rows.
 
+### QSS HighDensityPattern — runtime support, inferred
+
+Older QSS XMLs observed in the supplied development set use `HighDensityPattern` with a scalar `Dimension` and explicit normalized `Coefficients` covering a full square grid. Current observed instances include 15 × 15 and 20 × 20 on a 100 mm `RoundWafer` with 7 mm edge exclusion, plus 35 × 35 on a 156 × 156 mm `SquareCell` with 7 mm edge exclusion.
+
+Runtime support preserves coefficient order and requires coefficient count = measured-value count. `SquareCell` coefficients are scaled to the EdgeExclusion-adjusted rectangle. `RoundWafer` coefficients are restricted to the strict normalized unit-circle subset (`x²+y² < 1`) and then scaled by the EdgeExclusion-adjusted radius.
+
+This path is **inferred**, not a new validated profile, because no matching PV-2000 X/Y export has yet been supplied. A paired export should be used before promoting this coordinate mapping to validated status.
+
 ---
 
 ### QSS-INJ-001 — Dual QSS injection sweep / stored transient family
@@ -250,6 +258,68 @@ Ordinary numeric changes in pitch, target size, edge exclusion, reading count, o
 
 ---
 
+### VCPD-MAP-001 — direct dark-contact-potential wafer map
+
+**Measurement type**
+
+`VcpdMeasurement`
+
+**Reference material**
+
+One matching PV-2000 XML + CSV export plus a PV-2000 result screenshot. The XML contains one `Readings/double` value for every `VcpdDataItem`; the CSV contains X/Y coordinates, vendor `Vcpd Dark [V]` and summary statistics.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- `VcpdDataItem/Readings` with exactly one reading/site;
+- `MapPattern + RoundWafer`;
+- `LightOn=false`;
+- iteration-level `VcpdOffset=0 V`;
+- vendor output `Vcpd Dark [V]`.
+
+For this paired reference:
+
+```text
+Vcpd Dark = XML Reading
+```
+
+The runtime stores VCPD site results through the shared ISC/Kelvin-probe data model and uses the mean of the `Readings` container. This does **not** expand the validated claim to multiple readings/site or non-zero offsets.
+
+The reference instance has 1649 sites, one reading/site, a 200 mm RoundWafer, 8 mm EdgeExclusion and 4 × 4 mm pitch. Those numeric settings are evidence, not a runtime whitelist.
+
+**Validated / established**
+
+- 1649 XML sites = 1649 vendor rows;
+- scheduled radius = 200/2 − 8 = **92 mm**;
+- strict circular `x²+y²<r²` X-fast row-major lattice reproduces every vendor coordinate exactly;
+- first coordinate = **(-24, -88) mm** and last coordinate = **(24, 88) mm**;
+- Vcpd Dark pointwise maximum absolute error = **0 V**;
+- Average = **0.40415552129527 V**;
+- Median = **0.431620389 V**;
+- sample Stdev = **0.292987392588935 V**;
+- Min = **-3.43040323 V**;
+- Max = **2.16074562 V**;
+- analyzer finite-site summary reproduces the vendor summary to floating-point precision.
+
+**Shared analyzer behavior**
+
+`VcpdMeasurement` reuses the ISC/Kelvin-probe map, distribution, selected-site reading inspection, geometry, zoom/manual-axis and CSV-export infrastructure. Its result selector contains only Vcpd Dark; ISC-only Vcpd Light and VSB are not synthesized.
+
+**NEW PROFILE triggers**
+
+Examples include:
+
+- non-zero iteration-level VcpdOffset;
+- `LightOn=true`;
+- multiple readings/site;
+- another pattern/coordinate encoding or target geometry;
+- multiple iterations;
+- another unit convention or additional vendor result quantity.
+
+---
+
 ### LBIC-SINGLE-001 — single-beam Current/Reflectivity/IQE family
 
 **Measurement type**
@@ -345,7 +415,7 @@ Advanced diagnostic/intermediate channels contain:
 **Still not validated**
 
 - standalone EQE as a vendor-exported result, because these CSVs do not expose an EQE column;
-- multi-beam semantics / wavelength-combination logic;
+- multi-beam semantics outside the independently validated `LBIC-MULTI-002` per-beam result path;
 - diffusion length;
 - alternate raw/output channel paths.
 
@@ -362,6 +432,95 @@ Categorical changes such as:
 The following **do not by themselves** create a new profile: a different wavelength, laser power, finite FluxCache value, Region origin/size, pitch, or grid dimensions such as 4×4 versus 5×5, provided the same single-beam input/output path is used.
 
 For a NEW PROFILE, runtime may still calculate candidates, but derived values remain **inferred** until the real XML + matching PV-2000 output are regressed.
+
+
+### LBIC-MULTI-002 — multi-beam MapPattern + PseudoSquareCell family
+
+**Measurement type**
+
+`LBICMeasurement`
+
+**Reference material**
+
+One matching PV-2000 XML + CSV pair with **54,449** spatial sites and four beams (984, 952, 855 and 656 nm). The XML uses `MapPattern + PseudoSquareCell`; the vendor export contains X/Y plus Current / Reflectivity / IQE for each beam.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- two or more independent beam keys, each joined to `LaserSettings` and `FluxCache` by beam index;
+- `MapPattern + PseudoSquareCell`;
+- current unit µA;
+- raw per-beam `Current`, `DirectReflection` and `ScatteredReflection`;
+- finite positive per-beam photon flux;
+- vendor per-beam Current / Reflectivity / IQE outputs.
+
+The number of beams, wavelengths, power values and photon-flux values are numeric parameters inside this family when every beam follows the same independent per-beam result path.
+
+**Pseudo-square coordinate reconstruction**
+
+The reference XML contains:
+
+- target Size = 125 × 125 mm;
+- Diameter = 150 mm;
+- EdgeExclusion = 3 mm;
+- Pitch = 0.5 × 0.5 mm.
+
+The scheduled pseudo-square is the intersection of the edge-exclusion-adjusted rectangle and circle:
+
+```
+halfWidth  = Width / 2  - EdgeExclusion
+halfHeight = Height / 2 - EdgeExclusion
+radius     = Diameter / 2 - EdgeExclusion
+```
+
+A centered X-fast, ascending-Y lattice is generated at the XML pitch, retaining sites satisfying the adjusted rectangular limits and circular limit. For the supplied instance this gives halfWidth = halfHeight = 59.5 mm, radius = 72 mm and exactly **54,449** sites.
+
+**Validated / established**
+
+- reconstructed coordinate count: **54,449**;
+- first site: **(-40.5, -59.5) mm**;
+- last site: **(40.5, 59.5) mm**;
+- all X/Y coordinates match the vendor CSV point-by-point with maximum absolute error **0 mm**;
+- raw Current matches point-by-point for all four beams;
+- displayed Reflectivity is the raw optical sum clamped to the vendor display range:
+
+```
+Rraw = DirectReflection + ScatteredReflection
+Reflectivity_display = clamp(Rraw, 0%, 100%)
+```
+
+- the reference contains four 656 nm sites with negative `Rraw`; PV-2000 displays Reflectivity = 0% at those sites;
+- IQE uses the **unclamped raw optical sum** in the denominator, while `Rraw >= 100%` remains non-computable:
+
+```
+EQE[%] = Current[µA] * 1e-6 / (1.602e-19 C) / photonFlux * 100
+IQE_raw[%] = EQE[%] / (1 - Rraw/100)
+```
+
+- finite IQE values reproduce the vendor export to approximately **1e-13 percentage-point** scale;
+- vendor `Ud.` IQE cells correspond to non-computable or calculated-above-100% results and are represented as unavailable values in the analyzer;
+- summary statistics use the finite retained vendor-compatible values.
+
+**Analyzer geometry behavior**
+
+The map uses equal physical X/Y scale, shows the nominal `PseudoSquareCell` outline, shows the EdgeExclusion-adjusted scheduled boundary as a dashed outline, and clips raster cells to that scheduled shape. X/Y line profiles are selected by physical coordinate equality rather than dense rectangular array indexing, so masked pseudo-square rows/columns remain correct.
+
+**Still not validated**
+
+- diffusion-length (`DL`) calculation. The paired CSV contains DL, but the XML does not expose a raw DL channel and this profile does not establish the proprietary DL algorithm;
+- multi-iteration LBIC semantics;
+- other target/pattern encodings;
+- different raw channel/result combinations.
+
+**NEW PROFILE triggers**
+
+Examples include another coordinate encoding, another target-shape scheduling rule, coupled cross-beam calculations, a different unit convention, a different raw BeamData channel set, or a different vendor output/validity path.
+
+Ordinary changes in pseudo-square Width/Height/Diameter/EdgeExclusion, pitch, beam count, wavelength, power and finite FluxCache values stay inside this family when the same independent per-beam path applies.
+
+---
 
 ## Procedure for adding a new profile
 

@@ -83,6 +83,7 @@ Before opening an implementation PR, run:
 npm run check
 npm run validate:qss
 npm run validate:isc
+npm run validate:vcpd
 npm run validate:lbic
 npm run build
 ```

@@ -132,6 +132,10 @@ QSS Distribution defaults to Count on X and keeps Swap axes inside the Axes acti
 
 The QSS runtime shows only facts for the currently imported dataset. Fixed reference-validation evidence for the 305-point paired dataset remains in project documentation rather than being presented as if it belonged to a newly imported XML. The empty `Algorithm notes` disclosure has also been removed from the runtime; detailed algorithm notes stay in `docs/ALGORITHMS_QSS_UPCD.md`.
 
+Older QSS XMLs using `HighDensityPattern` are now supported as an **inferred coordinate path**. These XMLs carry a scalar `Dimension` and a count-matched normalized `Coefficients` grid. Current observed examples cover 15×15 and 20×20 RoundWafer maps and a 35×35 SquareCell map. SquareCell coefficients scale to the EdgeExclusion-adjusted rectangle; RoundWafer keeps only the strict normalized unit-circle coefficient subset (`x²+y² < 1`) and scales it by the effective radius. Keep this labelled inferred until a matching PV-2000 X/Y export is regressed.
+
+The main toolbar also exposes `← Open XML →` navigation. After one folder authorization, the arrows traverse XML files in natural filename order without reopening the picker for each file. The ordinary Open XML and drag/drop paths remain unchanged; a `webkitdirectory` fallback covers browsers without the File System Access API.
+
 ## ISC status
 
 ISC support is now a separate `ISCMeasurement` module rather than a Generic Inspector fallback. The PV-2000A manual defines ISC as dark/illuminated Kelvin-probe VCPD with VSB determined from their difference, and lists Vcpd Dark / Vcpd Light / VSB as the three data-view quantities.
@@ -146,40 +150,54 @@ One matching XML + vendor CSV establishes exact numerical behavior for the curre
 
 Alternate ISC pattern/target/raw-reading/result paths remain **NEW PROFILE** unless paired PV-2000 output confirms them. The runtime never reads the vendor CSV.
 
-See `docs/ALGORITHMS_ISC.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+The same module now also dispatches the separately validated `VcpdMeasurement` family. The current VCPD reference is `MapPattern + RoundWafer`: 1649 sites, 200 mm diameter, 8 mm edge exclusion, 4 mm pitch, one direct `Readings` value/site, `LightOn=false` and iteration-level `VcpdOffset=0`. All 1649 reconstructed X/Y coordinates and Vcpd Dark values match the vendor CSV exactly; summary statistics use sample Stdev and match to floating-point precision. VCPD exposes only Vcpd Dark and does not synthesize ISC-only Vcpd Light/VSB. Non-zero VcpdOffset, illumination, multiple readings/site or another result path remain **NEW PROFILE**.
+
+See `docs/ALGORITHMS_ISC.md`, `docs/ALGORITHMS_VCPD.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
 ## LBIC status
 
-LBIC now has a paired vendor-regression baseline rather than structural-only validation.
+LBIC now has two paired vendor-regression families.
 
-Validated algorithm family, established by four matching PV-2000 XML + CSV reference instances:
+**LBIC-SINGLE-001**
 
-- single iteration / single beam;
-- SquareRegionPattern;
-- µA current;
+- one iteration / one beam;
+- `SquareRegionPattern`;
+- µA Current + DirectReflection + ScatteredReflection;
 - finite positive photon FluxCache;
-- raw Current + DirectReflection + ScatteredReflection;
-- vendor Current / Reflectivity / IQE result path.
+- vendor Current / Reflectivity / IQE result path;
+- four paired 51×51 / 101×101 references with exact X/Y reconstruction.
 
-The current four instances all use beam key 0, 984 nm, power 0.6 and FluxCache 1708439235302983. Those concrete values are evidence, not runtime validation gates.
+**LBIC-MULTI-002**
 
-Established behavior:
+- one iteration / multiple independent beams;
+- `MapPattern + PseudoSquareCell`;
+- the same per-beam raw/result path;
+- one paired **54,449-point**, four-beam reference (984 / 952 / 855 / 656 nm);
+- target Size 125 × 125 mm, Diameter 150 mm, EdgeExclusion 3 mm, Pitch 0.5 × 0.5 mm in the supplied instance;
+- scheduled geometry is the intersection of the adjusted rectangle (±59.5 mm) and adjusted circle (radius 72 mm);
+- reconstructed X/Y match all 54,449 vendor rows exactly, from (-40.5, -59.5) mm to (40.5, 59.5) mm.
 
-- SquareRegionPattern coordinates are X-fast row-major with `y = Region.Y + row*dy`; all reference X/Y values match exactly;
-- PV-2000 Reflectivity is `min(100%, DirectReflection + ScatteredReflection)`; one 51×51 reference contains a 100.0179668% raw sum that the vendor export caps at 100%;
-- PV-2000-compatible IQE requires `q = 1.602e-19 C`, not the exact modern SI value;
-- IQE uses `EQE/(1-Reflectivity)`;
-- calculated IQE >100% and non-computable cases are blank in the vendor export and excluded from summaries;
-- sample standard deviation is used;
-- default LBIC result selection mirrors vendor exports: Current / Reflectivity / IQE;
-- Direct/Scattered reflection, EQE and unknown numeric channels live under Advanced raw/intermediate channels;
-- raw XML Total R/EQE/IQE still override calculated candidates.
+Established result behavior:
 
-Validation is scoped to the **input/output algorithm family**, not exact numeric settings. Different wavelength, power, finite photon FluxCache, Region origin/size, pitch, or grid dimensions (including a 4×4 versus 5×5 raster) remain in the family if the same single-beam channel/result path is used.
+- displayed Reflectivity is `clamp(DirectReflection + ScatteredReflection, 0, 100)`;
+- the new reference establishes the lower clamp through four negative 656 nm raw-reflectivity sites that PV-2000 displays as 0%;
+- IQE uses the **unclamped raw optical sum** in `EQE/(1-Rraw)`; this is required to reproduce those same negative-reflectivity sites;
+- `Rraw >= 100%`, calculated IQE >100%, and other non-computable cases are unavailable; vendor `Ud.` is represented as unavailable;
+- `q = 1.602e-19 C` remains required for vendor parity;
+- finite multi-beam IQE values reproduce the supplied CSV to approximately 1e-13 percentage-point scale;
+- sample standard deviation and finite-only summary behavior remain unchanged.
 
-The private validator requires same-basename XML/CSV pairs and reports NEW PROFILE only for categorical path changes such as another pattern/coordinate encoding, multiple-beam or iteration semantics, another unit convention, a different raw channel set, or a different vendor output/blanking path. Such cases must be redesigned from the actual XML + matching PV-2000 export where needed.
+UI/geometry changes in this branch:
 
-Real multi-wavelength regression and diffusion-length calculation remain pending. Diffusion length stays unsupported until a matching multi-wavelength vendor result is available.
+- pseudo-square LBIC maps reconstruct instead of showing a blank geometry error;
+- nominal PseudoSquareCell outline and dashed EdgeExclusion boundary are drawn at equal physical X/Y scale;
+- raster cells are clipped to the scheduled pseudo-square;
+- X/Y profiles select sites by physical coordinate equality, so masked rows/columns do not depend on dense rectangular indexing;
+- Measurement metadata shows target geometry, pitch, reconstructed point count and the active validated profile ID.
+
+Validation remains scoped to semantic input/output families rather than exact numeric values. Within `LBIC-MULTI-002`, beam count, wavelength, power, finite FluxCache and pseudo-square numeric geometry may vary when the independent per-beam channel/result path is unchanged.
+
+Diffusion length (DL) remains unsupported as a calculated quantity. The supplied multi-beam CSV contains DL, but the XML does not expose a raw DL channel and the vendor DL algorithm has not been established.
 
 See `docs/REFERENCE_PROFILES.md`, `docs/ALGORITHMS_LBIC.md` and `docs/VALIDATION.md`.
 
@@ -192,11 +210,12 @@ npm run build
 npm run validate:qss
 npm run validate:dual-qss
 npm run validate:isc
+npm run validate:vcpd
 npm run validate:lbic
 git status --short --ignored
 ```
 
-Automated/local regression status before the final browser smoke: unit tests, build, the 305-point QSS private regression, the paired 169-point ISC XML/CSV regression, and all four paired LBIC XML/CSV regressions have passed; private references were confirmed absent from tracked/build outputs. The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
+Baseline automated/local regression status before this branch: unit tests, build, the 305-point QSS private regression, the paired 169-point ISC XML/CSV regression, and all four LBIC-SINGLE-001 pairs had passed. This branch adds unit coverage and validator support for LBIC-MULTI-002; the supplied 54,449-point XML/CSV pair was independently compared point-by-point during implementation (X/Y and Current exact; Reflectivity exact with 0–100 display clamp; finite IQE ~1e-13 %-point). The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
 
 ## Browser self-test completed
 
@@ -234,9 +253,9 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
 
 3. **LBIC paired-reference regression**
    - Run `npm run validate:lbic` with all same-basename private XML+CSV pairs present.
-   - Open at least one 51×51 and one 101×101 reference XML in the browser and visually compare map orientation, Current / Reflectivity / IQE defaults, blank IQE pixels and Advanced raw/intermediate channels.
-   - Confirm ordinary numeric wavelength/power/FluxCache/raster-size changes remain in the validated profile family; categorical path changes must report **NEW PROFILE**.
-   - A real multi-beam/multi-wavelength paired file is still required before multi-beam semantics can be marked validated.
+   - Open at least one 51×51 / 101×101 LBIC-SINGLE-001 reference and the 54,449-point LBIC-MULTI-002 reference in the browser.
+   - For LBIC-MULTI-002, verify the pseudo-square outline/exclusion boundary, 984/952/855/656 nm beam switching, Current / Reflectivity / IQE defaults, coordinate-based X/Y profiles and export.
+   - Confirm ordinary numeric wavelength/power/FluxCache/raster-size changes stay inside the appropriate validated family; categorical path changes must report **NEW PROFILE**.
 
 4. **QSS regression smoke**
    - Run `npm run validate:qss` with private references present.

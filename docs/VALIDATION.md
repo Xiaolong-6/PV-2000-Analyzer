@@ -37,6 +37,14 @@ npm run validate:qss
 
 The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
+### HighDensityPattern compatibility
+
+Status: **inferred coordinate reconstruction**, not vendor-validated.
+
+Older QSS XMLs in the current development set use `HighDensityPattern` with explicit normalized `Coefficients` and a scalar `Dimension`. Observed examples include 15 × 15 and 20 × 20 grids on a 100 mm RoundWafer with 7 mm edge exclusion, and a 35 × 35 grid on a 156 × 156 mm SquareCell with 7 mm edge exclusion. Runtime now requires coefficient count to equal measured-value count and preserves coefficient order.
+
+For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle. For RoundWafer, the full normalized coefficient template is filtered with `x²+y² < 1` before scaling by `Diameter/2 - EdgeExclusion`. This exactly reproduces the observed XML point counts: 145 from a 15×15 template and 276 from a 20×20 template. A matching PV-2000 X/Y export is still required before this path can be marked validated.
+
 ### Valid-data filtering
 
 The new valid-range UI is an analyzer feature rather than a vendor-output replication. Tests verify range masking; users must choose limits appropriate to the sample geometry/data distribution. This is especially important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
@@ -153,25 +161,67 @@ npm run validate:isc
 Matching private references use the same basename under `private/reference/isc/`. Runtime remains XML-only; the CSV is never consulted during user analysis. Alternate ISC pattern/target/raw/result paths remain outside this validated envelope until paired vendor output is supplied.
 
 
+## VCPD — XML + PV-2000 export
+
+One paired VCPD XML + PV-2000 CSV export establishes the current `VcpdMeasurement + MapPattern + RoundWafer` reference family. It is implemented in the shared ISC/Kelvin-probe analyzer but retains a separate result path and validation boundary.
+
+For the paired reference, every `VcpdDataItem` contains one `Readings/double`, `LightOn=false`, and iteration-level `VcpdOffset=0 V`. The vendor result is reproduced by:
+
+```text
+Vcpd Dark = XML Reading
+```
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| `VcpdMeasurement` dispatch | unit tested | tested |
+| point count | 1649 XML = 1649 export | validated |
+| readings | 1 reading/site | validated for reference |
+| target / schedule | 200 mm RoundWafer, 8 mm exclusion, 4 × 4 mm pitch | validated for reference |
+| X/Y coordinates | all 1649 pairs exact | validated |
+| Vcpd Dark | max abs error 0 V | validated |
+| Average / Median / sample Stdev / Min / Max | floating-point parity with vendor summary | validated |
+| non-zero VcpdOffset | no paired reference | NEW PROFILE |
+| LightOn=true | no paired reference | NEW PROFILE |
+| multiple readings/site | no paired reference | NEW PROFILE |
+
+The strict circular schedule uses `r = Diameter/2 - EdgeExclusion` and keeps lattice points satisfying `x²+y²<r²` in X-fast row-major order. For the reference, `r=92 mm`, the first coordinate is `(-24,-88) mm`, and the last is `(24,88) mm`.
+
+Run:
+
+```bash
+npm run validate:vcpd
+```
+
+Matching private references use the same basename under `private/reference/vcpd/`. Runtime remains XML-only; the CSV is never consulted during user analysis.
+
 ## LBIC raster — paired XML + PV-2000 export regression
 
-Four supplied private XML/CSV pairs establish a validated **single-beam algorithm family**: SquareRegionPattern, µA Current + DirectReflection + ScatteredReflection, finite positive photon FluxCache, and vendor Current / Reflectivity / IQE outputs. The four concrete reference instances all happen to use 984 nm, power 0.6 and the same FluxCache, but those numeric values are not validation whitelist keys.
+Five paired XML/CSV references now establish two validated LBIC families:
+
+- `LBIC-SINGLE-001`: one beam, `SquareRegionPattern`, Current + DirectReflection + ScatteredReflection → Current / Reflectivity / IQE;
+- `LBIC-MULTI-002`: multiple independent beams, `MapPattern + PseudoSquareCell`, the same per-beam raw/result path.
+
+The four single-beam references use 51×51 or 101×101 rectangular rasters. The multi-beam reference contains **54,449** points and four beams (984, 952, 855 and 656 nm).
 
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
 | `LBICMeasurement` dispatch | unit tested | tested |
-| 51×51 / 101×101 point counts | XML = CSV | validated |
-| X-fast / row-major coordinate order | pointwise CSV match | validated |
-| Y coordinate | `Region.Y + row × dy`; max error 0 mm | validated |
-| Current | raw XML vs CSV pointwise | validated |
-| Reflectivity | min(100%, DirectReflection + ScatteredReflection); one 51×51 reference exercises the cap | validated |
-| compatibility charge constant | `q = 1.602e-19 C` required for vendor IQE parity | validated for algorithm family |
-| IQE | `EQE/(1-R)`; calculated >100% or non-computable becomes blank | validated |
-| IQE finite values | reproduced to ~1e-12 %-point scale | validated |
+| SquareRegionPattern coordinates | pointwise max error 0 mm | validated |
+| PseudoSquareCell schedule | 54,449 reconstructed = 54,449 export rows | validated |
+| PseudoSquare X/Y | pointwise max error 0 mm | validated |
+| Current | raw XML vs CSV pointwise, all validated beams | validated |
+| displayed Reflectivity | `clamp(DirectReflection + ScatteredReflection, 0, 100)` | validated |
+| negative reflectivity display edge | four 656 nm sites clamp to 0% | validated |
+| compatibility charge constant | `q = 1.602e-19 C` | validated |
+| IQE denominator | uses the **unclamped raw optical sum**; `Rraw >= 100%` is unavailable | validated |
+| IQE finite values | ~1e-12 %-point for single-beam refs; ~1e-13 %-point for multi-beam ref | validated |
+| vendor unavailable IQE | blank / `Ud.` represented as unavailable and excluded from summaries | validated |
 | summary Stdev | sample standard deviation, finite values only | validated |
-| EQE as standalone output | vendor CSV does not expose it | inferred intermediate |
-| multiple beam/wavelength data model | implemented, no real paired reference yet | unvalidated |
-| calculated diffusion length | no paired vendor reference | unsupported |
+| independent multi-beam switching | four-beam paired reference | validated |
+| EQE as standalone vendor output | vendor CSV does not expose it | inferred intermediate |
+| calculated diffusion length (DL) | CSV contains DL but XML does not expose a raw DL channel and the vendor algorithm is not established | unsupported |
+
+For the multi-beam reference, the XML geometry is Target Size 125 × 125 mm, Diameter 150 mm, EdgeExclusion 3 mm and Pitch 0.5 × 0.5 mm. The scheduled lattice uses halfWidth = halfHeight = 59.5 mm and radius = 72 mm; it is X-fast with ascending Y. First/last sites are (-40.5, -59.5) and (40.5, 59.5) mm.
 
 Run:
 
@@ -179,14 +229,7 @@ Run:
 npm run validate:lbic
 ```
 
-Matching private references must use the same basename under `private/reference/lbic/`:
-
-```
-sample.xml
-sample.csv
-```
-
-The validator is intentionally **semantic-profile gated**. Numeric changes in wavelength, laser power, finite FluxCache, Region origin/size, pitch or grid dimensions remain inside the validated family when the same input/output path is used. A categorical change — such as another pattern type/coordinate encoding, multiple-beam semantics, another unit convention, a different raw channel set, or a different vendor result/blanking path — reports **NEW PROFILE** and requires inspection of the actual XML plus matching PV-2000 output.
+Matching private references use same-basename XML/CSV pairs under `private/reference/lbic/`. The validator recognizes both documented semantic families. Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch and, within `LBIC-MULTI-002`, the number of independent beam keys do not by themselves create a new profile. A different coordinate encoding, target scheduling rule, raw channel set, unit convention, coupled cross-beam calculation, iteration path, or vendor result/validity behavior remains **NEW PROFILE**.
 
 Runtime remains XML-only. The CSV is never consulted when a user imports an XML.
 
