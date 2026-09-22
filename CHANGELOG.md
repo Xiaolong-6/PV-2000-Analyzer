@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.8.1 — 2026-09-22
+## v20260922.9 — 2026-09-22
 
 - Added a dedicated `ISCMeasurement` analyzer for Initial Surface Charge with selectable Vcpd Dark / Vcpd Light / VSB maps, statistics, distributions, selected-site repeated-reading inspection and CSV exports.
 - Reconstructed the ISC result path from one matching XML + PV-2000 CSV: `Vcpd Dark = mean(Dark)-offset`, `VSB = factor×(mean(Dark)-mean(Light))`, and `Vcpd Light = Vcpd Dark-VSB`; all 169 reference sites and vendor summary statistics match to floating-point precision.
