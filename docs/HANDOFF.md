@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.7.1
+# Agent handoff — 2026-09-22 — v20260922.7.1.1
 
 ## Goal
 
@@ -61,7 +61,7 @@ The QSS UI has also been upgraded: proper axes/ticks/units, map colorbar, distri
 
 ### Important QSS validity behavior
 
-The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `MapPattern + SquareCell` is also supported at runtime: the analyzer infers a centered rectangular raster from `Size/2 - EdgeExclusion` and `Pitch`, and requires the generated coordinate count to match the XML data count. This SquareCell geometry path is explicitly **inferred**, not vendor-validated, until a matching PV-2000 export/display is supplied. The QSS module exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
+The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `MapPattern + SquareCell` is also supported at runtime: the analyzer infers a centered rectangular raster from `Size/2 - EdgeExclusion` and `Pitch`, and requires the generated coordinate count to match the XML data count. This SquareCell geometry path is explicitly **inferred**, not vendor-validated, until a matching PV-2000 export/display is supplied. QSS wafer maps draw the XML nominal target as a solid geometry-aware outline (circle for RoundWafer, rectangle for SquareCell), the EdgeExclusion-adjusted scheduled region as a dashed inner outline, and the generic plot frame separately; default autoscaling includes the full target at equal X/Y physical scale. The QSS module exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
 
 Do not remove this behavior during refactors.
 
