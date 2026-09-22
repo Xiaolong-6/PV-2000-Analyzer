@@ -143,3 +143,41 @@ test('PseudoSquare multi-beam Reflectivity display clamps negative raw optical s
   assert.equal(refl.status,'validated');
   assert.equal(iqe.status,'validated');
 });
+
+
+test('reflectance-only LBIC honors XML measurement flags and validates the optical-only family',()=>{
+  const raw={key:0,channels:{Current:[0,0],DirectReflection:[0.4,1.2],ScatteredReflection:[10.1,20.3]}},
+    laser={index:0,wavelengthNm:984,power:0.6},
+    d={measureCurrent:'false',measureDirect:'true',measureDiffuse:'true',currentUnit:'μA',patternType:'SquareRegionPattern',nx:61,ny:61,regionX:-10,regionY:-50,width:60,height:60,beamCount:1,iterationCount:1};
+  assert.equal(L.referenceFamily(raw,laser,d),'LBIC-REFLECTANCE-003');
+  assert.equal(L.isReferenceProfile(raw,laser,d),true);
+});
+
+test('reflectance-only LBIC suppresses placeholder Current and does not synthesize EQE or IQE',()=>{
+  const raw={key:0,channels:{Current:[0,0],DirectReflection:[0.4,1.2],ScatteredReflection:[10.1,20.3]}},
+    laser={index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},
+    d={measureCurrent:'false',measureDirect:'true',measureDiffuse:'true',currentUnit:'μA',patternType:'SquareRegionPattern',nx:61,ny:61,regionX:-10,regionY:-50,width:60,height:60,beamCount:1,iterationCount:1},
+    b=L.deriveBeam(raw,laser,d),
+    metrics=Object.values(b.metrics);
+  assert.equal(b.referenceFamily,'LBIC-REFLECTANCE-003');
+  assert.equal(metrics.some(m=>m.concept==='current'),false);
+  assert.equal(metrics.some(m=>m.concept==='eqe'),false);
+  assert.equal(metrics.some(m=>m.concept==='iqe'),false);
+  const reflectivity=metrics.find(m=>m.concept==='total');
+  assert.ok(reflectivity);
+  assert.deepEqual(reflectivity.values,[10.5,21.5]);
+  assert.equal(reflectivity.status,'validated');
+  assert.equal(reflectivity.tier,'primary');
+  assert.deepEqual(metrics.filter(m=>m.tier==='primary').map(m=>m.concept),['total']);
+});
+
+test('active-channel filtering follows disabled optical measurement flags too',()=>{
+  const raw={key:0,channels:{Current:[2],DirectReflection:[7],ScatteredReflection:[9]}},
+    b=L.deriveBeam(raw,{index:0,photonFlux:FLUX},{measureCurrent:'true',measureDirect:'false',measureDiffuse:'true',currentUnit:'μA',patternType:'SquareRegionPattern',nx:2,ny:2,regionX:0,regionY:0,width:1,height:1}),
+    concepts=Object.values(b.metrics).map(m=>m.concept);
+  assert.equal(concepts.includes('direct'),false);
+  assert.equal(concepts.includes('total'),false);
+  assert.equal(concepts.includes('current'),true);
+  assert.equal(concepts.includes('eqe'),true);
+  assert.equal(concepts.includes('iqe'),false);
+});
