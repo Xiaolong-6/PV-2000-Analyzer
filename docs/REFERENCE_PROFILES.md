@@ -294,7 +294,7 @@ Advanced diagnostic/intermediate channels contain:
 **Still not validated**
 
 - standalone EQE as a vendor-exported result, because these CSVs do not expose an EQE column;
-- multi-beam semantics / wavelength-combination logic;
+- multi-beam semantics outside the independently validated `LBIC-MULTI-002` per-beam result path;
 - diffusion length;
 - alternate raw/output channel paths.
 
@@ -311,6 +311,95 @@ Categorical changes such as:
 The following **do not by themselves** create a new profile: a different wavelength, laser power, finite FluxCache value, Region origin/size, pitch, or grid dimensions such as 4×4 versus 5×5, provided the same single-beam input/output path is used.
 
 For a NEW PROFILE, runtime may still calculate candidates, but derived values remain **inferred** until the real XML + matching PV-2000 output are regressed.
+
+
+### LBIC-MULTI-002 — multi-beam MapPattern + PseudoSquareCell family
+
+**Measurement type**
+
+`LBICMeasurement`
+
+**Reference material**
+
+One matching PV-2000 XML + CSV pair with **54,449** spatial sites and four beams (984, 952, 855 and 656 nm). The XML uses `MapPattern + PseudoSquareCell`; the vendor export contains X/Y plus Current / Reflectivity / IQE for each beam.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- two or more independent beam keys, each joined to `LaserSettings` and `FluxCache` by beam index;
+- `MapPattern + PseudoSquareCell`;
+- current unit µA;
+- raw per-beam `Current`, `DirectReflection` and `ScatteredReflection`;
+- finite positive per-beam photon flux;
+- vendor per-beam Current / Reflectivity / IQE outputs.
+
+The number of beams, wavelengths, power values and photon-flux values are numeric parameters inside this family when every beam follows the same independent per-beam result path.
+
+**Pseudo-square coordinate reconstruction**
+
+The reference XML contains:
+
+- target Size = 125 × 125 mm;
+- Diameter = 150 mm;
+- EdgeExclusion = 3 mm;
+- Pitch = 0.5 × 0.5 mm.
+
+The scheduled pseudo-square is the intersection of the edge-exclusion-adjusted rectangle and circle:
+
+```
+halfWidth  = Width / 2  - EdgeExclusion
+halfHeight = Height / 2 - EdgeExclusion
+radius     = Diameter / 2 - EdgeExclusion
+```
+
+A centered X-fast, ascending-Y lattice is generated at the XML pitch, retaining sites satisfying the adjusted rectangular limits and circular limit. For the supplied instance this gives halfWidth = halfHeight = 59.5 mm, radius = 72 mm and exactly **54,449** sites.
+
+**Validated / established**
+
+- reconstructed coordinate count: **54,449**;
+- first site: **(-40.5, -59.5) mm**;
+- last site: **(40.5, 59.5) mm**;
+- all X/Y coordinates match the vendor CSV point-by-point with maximum absolute error **0 mm**;
+- raw Current matches point-by-point for all four beams;
+- displayed Reflectivity is the raw optical sum clamped to the vendor display range:
+
+```
+Rraw = DirectReflection + ScatteredReflection
+Reflectivity_display = clamp(Rraw, 0%, 100%)
+```
+
+- the reference contains four 656 nm sites with negative `Rraw`; PV-2000 displays Reflectivity = 0% at those sites;
+- IQE uses the **unclamped raw optical sum** in the denominator, while `Rraw >= 100%` remains non-computable:
+
+```
+EQE[%] = Current[µA] * 1e-6 / (1.602e-19 C) / photonFlux * 100
+IQE_raw[%] = EQE[%] / (1 - Rraw/100)
+```
+
+- finite IQE values reproduce the vendor export to approximately **1e-13 percentage-point** scale;
+- vendor `Ud.` IQE cells correspond to non-computable or calculated-above-100% results and are represented as unavailable values in the analyzer;
+- summary statistics use the finite retained vendor-compatible values.
+
+**Analyzer geometry behavior**
+
+The map uses equal physical X/Y scale, shows the nominal `PseudoSquareCell` outline, shows the EdgeExclusion-adjusted scheduled boundary as a dashed outline, and clips raster cells to that scheduled shape. X/Y line profiles are selected by physical coordinate equality rather than dense rectangular array indexing, so masked pseudo-square rows/columns remain correct.
+
+**Still not validated**
+
+- diffusion-length (`DL`) calculation. The paired CSV contains DL, but the XML does not expose a raw DL channel and this profile does not establish the proprietary DL algorithm;
+- multi-iteration LBIC semantics;
+- other target/pattern encodings;
+- different raw channel/result combinations.
+
+**NEW PROFILE triggers**
+
+Examples include another coordinate encoding, another target-shape scheduling rule, coupled cross-beam calculations, a different unit convention, a different raw BeamData channel set, or a different vendor output/validity path.
+
+Ordinary changes in pseudo-square Width/Height/Diameter/EdgeExclusion, pitch, beam count, wavelength, power and finite FluxCache values stay inside this family when the same independent per-beam path applies.
+
+---
 
 ## Procedure for adding a new profile
 
