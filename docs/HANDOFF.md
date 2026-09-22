@@ -20,6 +20,13 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
+- GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
+
+## GitHub Pages deployment
+
+`.github/workflows/pages.yml` runs on every push to `main` (and manual dispatch), executes `npm test`, rebuilds `dist/index.html`, uploads `dist/` as the Pages artifact, then deploys it to the `github-pages` environment. This keeps the hosted analyzer aligned with the latest successful `main` build without committing generated deployment branches.
+
+GitHub repository settings must have Pages enabled with **Source: GitHub Actions**. On GitHub Free this also requires a public repository; paid plans can host Pages from private repositories.
 
 ## Community reference contribution workflow
 
