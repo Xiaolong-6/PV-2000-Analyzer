@@ -283,8 +283,8 @@
       return rg;
       
   }
-  function drawHist(canvas,metric,swapped=false,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,30),W=canvas.width=760,H=canvas.height=430,p={l:64,r:18,t:24,b:52};
+  function drawHist(canvas,metric,binCount=30,swapped=true,zoom,onZoom){
+    const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,binCount),W=canvas.width=760,H=canvas.height=430,p={l:64,r:18,t:24,b:52};
     ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!bins.length)return bins;
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
       autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
@@ -381,7 +381,8 @@
       metricKey='',
       scaleMode='full',
       showAdvanced=false,
-      histSwapped=false,
+      histSwapped=true,
+      histBins=30,
       selected={index:Math.floor((d.coords.length||1)/2)},
       zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
       
@@ -412,9 +413,9 @@
       <section class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></section>
       <details class="panel"><summary>Geometry / validation ${help('All point X/Y coordinates match the four supplied PV-2000 CSV exports exactly. The on-screen map follows acquisition row order; vendor screen-orientation parity is not separately claimed.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Acquisition mapping','X-fast row-major (validated)')}${metaRow('Y coordinate','Region.Y + row × dy (validated)')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
       </aside><section class="lbic-workspace">
-        <div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span><button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap">${PV.plot.axisControls('lMapAxes')}<canvas id="lMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Mouse wheel zooms both axes inside the plot; hover an axis and wheel to zoom only that axis. Double-click restores auto scale. Axes opens manual numeric X/Y limits. Swap axes exchanges quantity and count axes.') }<span class="grow"></span><button id="lSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution quantity and count axes.">Swap axes</button><button id="lExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('lHistAxes')}<canvas id="lHist"></canvas></div></div>
-        <div class="panel chart lbic-profiles-panel"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens a floating manual X/Y range editor.') }<span class="grow"></span><button id="lExportProfile">Export</button></header><div class="lbic-profile-columns"><div class="profile-pane"><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact">${PV.plot.axisControls('lXProfileAxes')}<canvas id="lXProfile"></canvas></div></div><div class="profile-pane"><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact">${PV.plot.axisControls('lYProfileAxes')}<canvas id="lYProfile"></canvas></div></div></div></div>
+        <div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Mouse wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped,bins:histBins})}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
+        <div class="panel chart lbic-profiles-panel"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens a floating manual X/Y range editor.') }<span class="grow"></span>${PV.plot.axisControls('lXProfileAxes',{label:'X axes'})}${PV.plot.axisControls('lYProfileAxes',{label:'Y axes'})}<button id="lExportProfile">Export</button></header><div class="lbic-profile-columns"><div class="profile-pane"><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div class="profile-pane"><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div>
       </section></div>`;
       host.querySelector('#lIter').value=String(iterationIndex);host.querySelector('#lBeam').value=beamKey;host.querySelector('#lMetric').value=metricKey;host.querySelector('#lScale').value=scaleMode;
       host.querySelector('#lIter').onchange=e=>{iterationIndex=Number(e.target.value)||0;
@@ -435,10 +436,6 @@
         metricKey='';
         zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
         renderShell()};
-        host.querySelector('#lSwapHistAxes').onclick=()=>{histSwapped=!histSwapped;
-        zoom.hist={x:null,y:null};
-        host.querySelector('#lSwapHistAxes').setAttribute('aria-pressed',String(histSwapped));
-        redraw()};
         redraw();
         
     }
@@ -447,11 +444,16 @@
       if(!metric)return;
       selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));
       const rg=drawMap(host.querySelector('#lMap'),d,metric,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
-      const bins=drawHist(host.querySelector('#lHist'),metric,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
+      const bins=drawHist(host.querySelector('#lHist'),metric,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
       xp=drawProfile(host.querySelector('#lXProfile'),d,metric,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
       yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
       PV.plot.bindAxisControls(host,'lMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
-      PV.plot.bindAxisControls(host,'lHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()});
+      PV.plot.bindAxisControls(host,'lHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
+        swapped:histSwapped,
+        bins:histBins,
+        onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()},
+        onBins:n=>{histBins=n;zoom.hist={x:null,y:null};redraw()}
+      });
       PV.plot.bindAxisControls(host,'lXProfileAxes',zoom.xProfile,n=>{zoom.xProfile=n;redraw()});
       PV.plot.bindAxisControls(host,'lYProfileAxes',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
       const pt=d.coords[selected.index]||{},
