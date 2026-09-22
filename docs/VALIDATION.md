@@ -43,7 +43,9 @@ The new valid-range UI is an analyzer feature rather than a vendor-output replic
 
 ## DIT reference
 
-Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The Dit model now uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that is an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.
+Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The default Si model uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc with `εr = 11.68`, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that was an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.
+
+The Analysis controls now also expose **Material: Silicon (Si) / Germanium (Ge)**. Ge restores the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`. The material selection feeds Qsc, variation/Minimum Dit, the flatband semiconductor-capacitance criterion/Qtot, and Midgap Dit targeting. The Ge path is **implemented but unvalidated against PV-2000 Ge output**; a real Ge XML + matching vendor export/display is required before expanding the validated envelope.
 
 ### Standard COCOS
 
@@ -70,6 +72,7 @@ Follow XML setting now resolves `UseCocosII=true` to this inferred path. That ro
 
 The Analysis controls panel must remain open after Apply/recalculation. Method-specific parameters are shown contextually and compactly, with the label/help icon and its input on one row:
 
+- Material selector is present in Analysis controls, defaults to Si, and offers Ge without inferring material from sample/substrate names;
 - Standard COCOS: no COCOS-II EOT or Min/Max inputs;
 - PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
 - no legacy/guide-based COCOS-II user path remains;
