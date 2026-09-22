@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.5.1 — 2026-09-22
+## v20260922.6 — 2026-09-22
 
 - Unified the Dit model's 300 K silicon intrinsic-carrier concentration at `9.65e9 cm^-3`, the legacy MATLAB midgap value, so semiconductor Qsc and the midgap target no longer use different ni constants.
 - Added a regression test that locks Qsc to the unified value and documented that the historical ~2.6% W1 figures predate this numerical cleanup and require re-checking before being quoted for the updated model.
