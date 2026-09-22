@@ -520,6 +520,77 @@ Examples include another coordinate encoding, another target-shape scheduling ru
 
 Ordinary changes in pseudo-square Width/Height/Diameter/EdgeExclusion, pitch, beam count, wavelength, power and finite FluxCache values stay inside this family when the same independent per-beam path applies.
 
+
+### LBIC-REFLECTANCE-003 — reflectance-only SquareRegionPattern family
+
+**Measurement type**
+
+`LBICMeasurement`
+
+**Reference material**
+
+A private corpus of **62 XML files** plus **60 PV-2000 XPS result printouts** covering **44 matching XML measurements**. Some measurements have more than one XPS printout because the display color scale was changed; the result summary is unchanged.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- one beam;
+- `SquareRegionPattern`;
+- XML measurement flags:
+  - `MeasureCurrent=false`
+  - `MeasureDirectReflectance=true`
+  - `MeasureScatteredReflectance=true`;
+- raw numeric BeamData attributes still contain `Current`, `DirectReflection` and `ScatteredReflection`;
+- every supplied reflectance-only XML has `Current=0` at every site, so this field is an inactive placeholder rather than a measured current result;
+- vendor result shown in the paired XPS printouts is **Reflectivity [%]**.
+
+The supplied corpus spans 656, 855 and 984 nm lasers plus ordinary numeric Region/grid changes. Those numeric settings are evidence values, not runtime whitelist keys.
+
+**Validated / established**
+
+For all 60 paired XPS printouts, the PV-2000 Reflectivity summary is reproduced from the XML as:
+
+```
+Rraw[%] = DirectReflection[%] + ScatteredReflection[%]
+Reflectivity_display[%] = clamp(Rraw, 0, 100)
+```
+
+Across the 60 XPS comparisons, Average / Median / sample Stdev / Minimum / Maximum agree with the vendor's two-decimal displayed values with maximum absolute discrepancy below **0.005 percentage point**, i.e. within display rounding. One representative pair gives:
+
+- Average: XML **30.8180159%** vs XPS **30.82%**;
+- Median: XML **8.5744989%** vs XPS **8.57%**;
+- Stdev: XML **32.2960455%** vs XPS **32.30%**;
+- Minimum: XML **0.2193933%** vs XPS **0.22%**;
+- Maximum: XML **83.0026011%** vs XPS **83.00%**.
+
+Runtime semantics for this family therefore are:
+
+- do **not** expose the disabled `Current` placeholder as a measured result;
+- do **not** synthesize EQE or IQE from that placeholder, even when FluxCache is present;
+- default the quantity selector to **Reflectivity**;
+- keep active raw Direct/Scattered reflectance available under Advanced;
+- label the complete SquareRegionPattern path as `LBIC-REFLECTANCE-003`.
+
+**Partial acquisitions**
+
+One supplied 61 × 61 recipe contains only **2814 of 3721** scheduled DataItems. The analyzer maps those available points to the leading X-fast / ascending-Y SquareRegionPattern schedule so the partial map remains usable, but this incomplete-prefix coordinate interpretation is labelled **partial / inferred** and is not claimed as `LBIC-REFLECTANCE-003` vendor parity until a matching vendor coordinate export confirms the incomplete-scan behavior.
+
+**NEW PROFILE triggers**
+
+Examples include:
+
+- `MeasureCurrent=false` with another active optical-channel combination;
+- raw total Reflectivity instead of Direct + Scattered;
+- another pattern/coordinate encoding;
+- multiple beams or multiple iterations;
+- another output quantity or validity rule;
+- an incomplete-acquisition ordering that is not the leading X-fast / ascending-Y schedule.
+
+Ordinary wavelength, laser power, Region origin/size and complete SquareRegionPattern grid-dimension changes stay inside this family when the same reflectance-only semantic path applies.
+
+
 ---
 
 ## Procedure for adding a new profile
