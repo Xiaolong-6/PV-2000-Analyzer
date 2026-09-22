@@ -24,7 +24,7 @@
     const nx=Math.floor(halfWidth/pitchX+1e-9),ny=Math.floor(halfHeight/pitchY+1e-9),pts=[];
     for(let iy=-ny;iy<=ny;iy++){
       const y=iy*pitchY;
-      for(let ix=-nx;ix<=nx;ix++)pts.push({x:ix*pitchX,y,row:iy+ny,col:ix+nx});
+      for(let ix=-nx;ix<=nx;ix++)pts.push({x:ix*pitchX,y});
     }
     return count==null||pts.length===count?pts:[];
   }
