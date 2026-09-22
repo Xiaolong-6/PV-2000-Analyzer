@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.7.1.1 — 2026-09-22
+## v20260922.7.2 — 2026-09-22
 
 - Made the QSS-µPCD wafer-map geometry visually follow the XML target: RoundWafer uses a circular nominal outline; SquareCell uses its nominal Width × Height outline.
 - Added a dashed inner outline for the EdgeExclusion-adjusted scheduled measurement region and kept the rectangular plot frame visually separate.
