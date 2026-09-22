@@ -227,6 +227,18 @@ test('landing page removes the redundant deployed-site Live shortcut and its dea
 });
 
 
+test('toolbar Open XML is flanked by previous/next folder navigation controls',()=>{
+  const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
+  const app=fs.readFileSync(require.resolve('../src/app.js'),'utf8');
+  const prev=html.indexOf('id="prevXml"'),open=html.indexOf('id="openTop"'),next=html.indexOf('id="nextXml"');
+  assert.ok(prev>=0&&prev<open&&open<next);
+  assert.match(html,/id="folderXmlFallback"[^>]*webkitdirectory/);
+  assert.match(app,/showDirectoryPicker/);
+  assert.match(app,/Previous XML in selected folder/);
+  assert.match(app,/Next XML in selected folder/);
+  assert.match(app,/\.filter\(file=>\/\\\.xml\$\/i\.test\(file\.name\)\)/);
+});
+
 test('QSS runtime omits fixed reference-validation card and exposes manual axes on data plots',()=>{
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(qss,/Algorithm validation — reference dataset/);
