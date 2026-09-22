@@ -364,7 +364,7 @@
     });
   }
 
-  function drawHist(canvas,a,key,zoom,onZoom){
+  function drawHist(canvas,a,key,swapped=false,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       metric=a.metrics[key],
       bins=S.histogram(metric.values,30),
@@ -376,11 +376,22 @@
     ctx.fillRect(0,0,W,H);
     if(!bins.length)return[];
 
-    const autoX=[bins[0].lo,bins.at(-1).hi],
-      autoY=[0,Math.max(...bins.map(b=>b.count),1)],
-      xr=PV.plot.resolve(autoX,zoom?.x),
-      yr=PV.plot.resolve(autoY,zoom?.y),
-      {X,Y}=drawAxes(ctx,W,H,p,xr,yr,`${metric.short} [${metric.unit}]`,'Count'),
+    const autoMetric=[bins[0].lo,bins.at(-1).hi],
+      autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
+      mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
+      cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),
+      xr=swapped?cr:mr,
+      yr=swapped?mr:cr,
+      {X,Y}=drawAxes(
+        ctx,
+        W,
+        H,
+        p,
+        xr,
+        yr,
+        swapped?'Count':`${metric.short} [${metric.unit}]`,
+        swapped?`${metric.short} [${metric.unit}]`:'Count'
+      ),
       vr=finiteRange(metric.values,0),
       lo=vr[0],
       hi=vr[1];
@@ -390,12 +401,31 @@
     ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
     ctx.clip();
     for(const bin of bins){
-      const x0=X(bin.lo),
-        x1=X(bin.hi),
-        y=Y(bin.count),
-        t=((bin.lo+bin.hi)/2-lo)/(hi-lo||1);
+      const t=((bin.lo+bin.hi)/2-lo)/(hi-lo||1);
       ctx.fillStyle=color(t);
-      ctx.fillRect(Math.min(x0,x1),y,Math.max(1,Math.abs(x1-x0)-1),H-p.b-y);
+      if(swapped){
+        const x0=X(0),
+          x1=X(bin.count),
+          y0=Y(bin.lo),
+          y1=Y(bin.hi);
+        ctx.fillRect(
+          Math.min(x0,x1),
+          Math.min(y0,y1),
+          Math.abs(x1-x0),
+          Math.max(1,Math.abs(y1-y0)-1)
+        );
+      }else{
+        const x0=X(bin.lo),
+          x1=X(bin.hi),
+          y0=Y(0),
+          y1=Y(bin.count);
+        ctx.fillRect(
+          Math.min(x0,x1),
+          Math.min(y0,y1),
+          Math.max(1,Math.abs(x1-x0)-1),
+          Math.abs(y1-y0)
+        );
+      }
     }
     ctx.restore();
 
@@ -512,6 +542,7 @@
 
   function render(host,d,a){
     let metricKey='dark',
+      histSwapped=false,
       selected=0,
       zoom={
         map:{x:null,y:null},
@@ -571,7 +602,7 @@
       </dl></details>
     </aside><section class="plots">
       <div class="panel chart"><header><b>ISC map</b>${help('Select Vcpd Dark, Vcpd Light or VSB. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.')}<span class="grow"></span><select id="iMetric"><option value="dark">Vcpd Dark</option><option value="light">Vcpd Light</option><option value="vsb">VSB</option></select><button id="iExportMap">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iMapAxes')}<canvas id="iMap"></canvas></div></div>
-      <div class="panel chart"><header><b>Distribution</b>${help('Distribution of the currently selected ISC result across all finite sites. Wheel/double-click and Axes use the shared plot controls.')}<span class="grow"></span><button id="iExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iHistAxes')}<canvas id="iHist"></canvas></div></div>
+      <div class="panel chart"><header><b>Distribution</b>${help('Distribution of the currently selected ISC result across all finite sites. Wheel/double-click and Axes use the shared plot controls. Swap axes exchanges the result and count axes.')}<span class="grow"></span><button id="iSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution result and count axes.">Swap axes</button><button id="iExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iHistAxes')}<canvas id="iHist"></canvas></div></div>
     </section><section class="plots">
       <div class="panel chart"><header><b>Raw readings</b>${help('Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.')}<span class="grow"></span><button id="iExportRaw">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iRawAxes')}<canvas id="iRaw"></canvas></div></div>
     </section></div>`;
@@ -584,9 +615,15 @@
       zoom.hist={x:null,y:null};
       redraw();
     };
+    host.querySelector('#iSwapHistAxes').onclick=()=>{
+      histSwapped=!histSwapped;
+      zoom.hist={x:null,y:null};
+      host.querySelector('#iSwapHistAxes').setAttribute('aria-pressed',String(histSwapped));
+      redraw();
+    };
 
     function redraw(){
-      const bins=drawHist(host.querySelector('#iHist'),a,metricKey,zoom.hist,n=>{
+      const bins=drawHist(host.querySelector('#iHist'),a,metricKey,histSwapped,zoom.hist,n=>{
         zoom.hist=n;
         redraw();
       });
