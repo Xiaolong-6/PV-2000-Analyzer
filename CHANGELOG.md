@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.7.1 — 2026-09-22
+
+- Made the QSS-µPCD wafer-map geometry visually follow the XML target: RoundWafer uses a circular nominal outline; SquareCell uses its nominal Width × Height outline.
+- Added a dashed inner outline for the EdgeExclusion-adjusted scheduled measurement region and kept the rectangular plot frame visually separate.
+- Default map autoscaling now includes the full nominal target with equal X/Y physical scale and a small margin; smooth interpolation is explicitly clipped to the scheduled region.
+
 ## v20260922.7 — 2026-09-22
 
 - Added inferred QSS-µPCD `MapPattern + SquareCell` coordinate reconstruction from target `Size`, `EdgeExclusion` and `Pitch`, fixing blank maps when the XML contains valid raster data but no `RoundWafer` target.

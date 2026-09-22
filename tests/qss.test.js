@@ -8,6 +8,12 @@ test('sample stdev convention',()=>{const s=PV2000.stats.summary(values);assert.
 test('round map grid reproduces 305 sites in PV-2000 order',()=>{const p=PV2000.geometry.roundGrid(50,5,5,305);assert.equal(p.length,305);assert.deepEqual(p.slice(0,9),[-20,-15,-10,-5,0,5,10,15,20].map(x=>({x,y:-45})));assert.deepEqual(p.slice(-9),[-20,-15,-10,-5,0,5,10,15,20].map(x=>({x,y:45})))});
 test('round map edge exclusion reconstructs the 1741-point 100 mm / 2 mm schedule',()=>{const r=PV2000.modules.qss.effectiveMapRadius(100,3);assert.equal(r,47);const p=PV2000.geometry.roundGrid(r,2,2,1741);assert.equal(p.length,1741);assert.ok(p.every(({x,y})=>x*x+y*y<47*47))});
 test('SquareCell map uses centered effective bounds after edge exclusion',()=>{const half=PV2000.modules.qss.effectiveMapHalfExtent(100,35);assert.equal(half,15);const p=PV2000.geometry.centeredRectGrid(half,half,1,1,961);assert.equal(p.length,961);assert.deepEqual(p[0],{x:-15,y:-15});assert.deepEqual(p[480],{x:0,y:0});assert.deepEqual(p.at(-1),{x:15,y:15})});
+test('wafer-map target geometry separates nominal target and scheduled region',()=>{
+  const round=PV2000.modules.qss.targetGeometry({targetType:'RoundWafer',diameter:100,mapRadius:47});
+  assert.deepEqual(round,{shape:'circle',nominal:{radius:50},scheduled:{radius:47},extent:50});
+  const square=PV2000.modules.qss.targetGeometry({targetType:'SquareCell',targetWidth:100,targetHeight:100,mapHalfWidth:15,mapHalfHeight:15});
+  assert.deepEqual(square,{shape:'rect',nominal:{halfWidth:50,halfHeight:50},scheduled:{halfWidth:15,halfHeight:15},extent:50});
+});
 test('Smax formula',()=>{const v=PV2000.modules.qss.smax(11.658483155829508,300);assert.ok(Math.abs(v-1286.617)<0.01)});
 test('PV2000-compatible implied Voc is in reference range',()=>{const d={qssMilli:30,waferThickness:300,opticalFactor:.708,doping:1e14,temperatureC:24.494949494949495};const v=PV2000.modules.qss.impliedVoc(11.658483155829508,d);assert.ok(v>0.35&&v<0.38)});
 test('valid-data mask honors lower and upper range',()=>{const a={metrics:{lifetime:{values:[1,2,3,10]}}};assert.deepEqual(PV2000.modules.qss.validMask(a,'lifetime',1.5,3.5),[false,true,true,false])});
