@@ -14,9 +14,9 @@ Normal user choices are:
 - **Standard COCOS** — force the measured dark/light path regardless of the XML flag.
 - **PV2000 COCOS-II (inferred)** — force the current same-raw-data reverse-engineered model.
 
-The older guide-only implementation is retained under **Advanced / legacy methods** as **Legacy COCOS-II (guide-based)**. It is a development comparison path and is not presented as a normal analysis choice.
+The obsolete guide-only COCOS-II implementation has been removed from the runtime and user interface.
 
-Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. PCHIP controls live under a separate **Optional Midgap Dit (PCHIP)** disclosure because they do not participate in the PV2000-style minimum Dit result. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
+Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. **Optional Midgap Dit (PCHIP)** is always visible in Analysis controls with a checkbox; it is enabled by default. When unchecked, Midgap Dit and the PCHIP curve are disabled while the discrete Minimum Dit calculation is unchanged. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
 
 ## Minimum Dit versus optional PCHIP Midgap Dit
 
@@ -64,19 +64,6 @@ The suggestion is advisory. If XML contains a positive COCOS-II EOT, the XML val
 The UI reports, for the current site, the number of accepted Dit intervals and the Vsb location of the discrete minimum to make Min/Max-window behavior auditable.
 
 `Back Surface Shift` is recorded for traceability but deliberately **not applied**. Its mathematical effect has not been identified.
-
-## Legacy COCOS-II (guide-based)
-
-The earlier implementation is retained only under **Advanced / legacy methods**. It follows the supplied guide description:
-
-1. keep the measured dark V-Q curve;
-2. use the extracted flatband anchor;
-3. replace measured light with a straight synthetic light curve;
-4. take the slope from XML `CocosIIEOT` when positive, otherwise from the dark accumulation slope;
-5. use `|Vdark - Vlight,synthetic|`;
-6. run the same variation/PCHIP Dit extraction.
-
-This path predates the parameter-sweep reverse engineering and is not the default for `UseCocosII=true`.
 
 ## Known boundaries
 
