@@ -329,10 +329,10 @@
     all.forEach(x=>{
       let j=Math.floor((x.v-lo)/(hi-lo||1)*bins);j=Math.max(0,Math.min(bins-1,j));out[j][mask[x.i]?'valid':'invalid']++});
     return out}
-  function drawHist(canvas,a,key,mask,filterKey,filterLo,filterHi,swapped=false,zoom,onZoom){
+  function drawHist(canvas,a,key,mask,filterKey,filterLo,filterHi,binCount=30,swapped=true,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       m=a.metrics[key],
-      bins=histogram(m.values,mask,30),
+      bins=histogram(m.values,mask,binCount),
       W=canvas.width=760,
       H=canvas.height=300,
       p={l:58,r:18,t:24,b:48};
@@ -525,7 +525,8 @@
     PV.exporter.csv(`${safe(d.resultName)}_${key}.csv`,['Index','X [mm]','Y [mm]',`${m.label} [${m.unit}]`,'Valid'],m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',v,mask[i]?'YES':'NO']))}
   function render(host,d,a){
     let metricKey='lifetime',
-      histSwapped=false,
+      histSwapped=true,
+      histBins=30,
       mapMode='smooth',
       filterKey='lifetime',
       zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
@@ -556,19 +557,15 @@
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
       </aside><section class="plots">
-        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select><button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qMapAxes')}<canvas id="qMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Wheel inside the histogram zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits for outlier-heavy data. Valid counts use the wafer-map color scale; gray counts are excluded. Swap axes exchanges metric and count axes. Yellow lines show active validity limits.')}<span class="grow"></span><button id="qSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution metric and count axes.">Swap axes</button><button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qHistAxes')}<canvas id="qHist"></canvas></div></div>
+        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Valid counts use the wafer-map color scale; gray counts are excluded. Yellow lines show active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped,bins:histBins})}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
       </section><section class="plots">
-        <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span><button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qProfileAxes')}<canvas id="qProfile"></canvas></div></div>
+        <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
 
       </section></div>`;
       host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;host.querySelector('#qFilterMetric').value=filterKey;
       host.querySelector('#qMetric').onchange=e=>{metricKey=e.target.value;
         zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
-        redraw()};
-        host.querySelector('#qSwapHistAxes').onclick=()=>{histSwapped=!histSwapped;
-        zoom.hist={x:null,y:null};
-        host.querySelector('#qSwapHistAxes').setAttribute('aria-pressed',String(histSwapped));
         redraw()};
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
         redraw()};
@@ -589,11 +586,16 @@
       redraw();
     }
     function redraw(){
-      const bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()});
+      const bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()});
         drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,zoom.map,n=>{zoom.map=n;redraw()});
         drawProfile(host.querySelector('#qProfile'),d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()});
         PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
-        PV.plot.bindAxisControls(host,'qHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()});
+        PV.plot.bindAxisControls(host,'qHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
+          swapped:histSwapped,
+          bins:histBins,
+          onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()},
+          onBins:n=>{histBins=n;zoom.hist={x:null,y:null};redraw()}
+        });
         PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
         
       host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask);
