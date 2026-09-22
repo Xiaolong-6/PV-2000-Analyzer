@@ -126,6 +126,39 @@ npm run validate:isc
 Matching private references use the same basename under `private/reference/isc/`. Runtime remains XML-only; the CSV is never consulted during user analysis. Alternate ISC pattern/target/raw/result paths remain outside this validated envelope until paired vendor output is supplied.
 
 
+## VCPD — XML + PV-2000 export
+
+One paired VCPD XML + PV-2000 CSV export establishes the current `VcpdMeasurement + MapPattern + RoundWafer` reference family. It is implemented in the shared ISC/Kelvin-probe analyzer but retains a separate result path and validation boundary.
+
+For the paired reference, every `VcpdDataItem` contains one `Readings/double`, `LightOn=false`, and iteration-level `VcpdOffset=0 V`. The vendor result is reproduced by:
+
+```text
+Vcpd Dark = XML Reading
+```
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| `VcpdMeasurement` dispatch | unit tested | tested |
+| point count | 1649 XML = 1649 export | validated |
+| readings | 1 reading/site | validated for reference |
+| target / schedule | 200 mm RoundWafer, 8 mm exclusion, 4 × 4 mm pitch | validated for reference |
+| X/Y coordinates | all 1649 pairs exact | validated |
+| Vcpd Dark | max abs error 0 V | validated |
+| Average / Median / sample Stdev / Min / Max | floating-point parity with vendor summary | validated |
+| non-zero VcpdOffset | no paired reference | NEW PROFILE |
+| LightOn=true | no paired reference | NEW PROFILE |
+| multiple readings/site | no paired reference | NEW PROFILE |
+
+The strict circular schedule uses `r = Diameter/2 - EdgeExclusion` and keeps lattice points satisfying `x²+y²<r²` in X-fast row-major order. For the reference, `r=92 mm`, the first coordinate is `(-24,-88) mm`, and the last is `(24,88) mm`.
+
+Run:
+
+```bash
+npm run validate:vcpd
+```
+
+Matching private references use the same basename under `private/reference/vcpd/`. Runtime remains XML-only; the CSV is never consulted during user analysis.
+
 ## LBIC raster — paired XML + PV-2000 export regression
 
 Four supplied private XML/CSV pairs establish a validated **single-beam algorithm family**: SquareRegionPattern, µA Current + DirectReflection + ScatteredReflection, finite positive photon FluxCache, and vendor Current / Reflectivity / IQE outputs. The four concrete reference instances all happen to use 984 nm, power 0.6 and the same FluxCache, but those numeric values are not validation whitelist keys.
