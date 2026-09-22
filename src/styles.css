@@ -189,3 +189,18 @@
 @media(max-width:700px){.project-shortcuts{justify-content:flex-start;padding-left:0;padding-right:0}}
 @media(max-width:430px){.project-shortcuts{gap:4px}.readme-badge{height:22px;font-size:8.5px;line-height:22px}.badge-icon{width:22px}.badge-part{padding:0 5px}.app-footer{gap:8px}}
 @media(prefers-reduced-motion:reduce){.readme-badge,.drop,.drop::before,.drop-icon,.drop-open{transition:none}.readme-badge:hover,.drop-open:hover{transform:none}}
+
+/* Dual QSS comparison overlay */
+.comparison-list{display:grid;gap:5px;margin:8px 0}
+.comparison-row{display:grid;grid-template-columns:10px minmax(0,1fr) 28px;gap:6px;align-items:center;font-size:10px}
+.comparison-row>span:nth-child(2){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.comparison-swatch{width:9px;height:9px;border-radius:50%}
+.comparison-row button{width:26px;height:24px;padding:0}
+.comparison-open{display:inline-block;margin-top:8px}
+.comparison-open input{display:none}
+
+.dual-qss-inline-legend{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:45%;overflow:hidden}
+.dual-qss-legend-item{display:inline-flex;align-items:center;gap:3px;min-width:0;color:var(--muted);font-size:9px;white-space:nowrap}
+.dual-qss-legend-item i{display:inline-block;width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.dual-qss-legend-more{color:var(--muted);font-size:9px;white-space:nowrap}
+@media(max-width:1200px){.dual-qss-inline-legend{max-width:34%}}

@@ -27,6 +27,7 @@ jobs:
       - name: Validator launcher smoke
         run: |
           npm run validate:qss
+          npm run validate:dual-qss
           npm run validate:lbic
       - name: Build
         run: npm run build

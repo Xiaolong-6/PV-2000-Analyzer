@@ -5,6 +5,7 @@
     "build": "node scripts/build.js",
     "test": "node --test tests/*.test.js",
     "validate:qss": "node scripts/run_python.js scripts/validate_qss_reference.py",
+    "validate:dual-qss": "node scripts/run_python.js scripts/validate_dual_qss_reference.py",
     "validate:isc": "node scripts/run_python.js scripts/validate_isc_reference.py",
     "validate:vcpd": "node scripts/run_python.js scripts/validate_vcpd_reference.py",
     "validate:lbic": "node scripts/run_python.js scripts/validate_lbic_reference.py",

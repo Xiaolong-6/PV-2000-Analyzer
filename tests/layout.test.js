@@ -19,6 +19,27 @@ test('single-file build includes ISC and LBIC before generic fallback',()=>{
 });
 
 
+test('single-file build includes Dual QSS before generic fallback',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  const dual=build.indexOf("'src/modules/dual-qss.js'");
+  const generic=build.indexOf("'src/modules/generic.js'");
+  assert.ok(dual>=0);
+  assert.ok(generic>dual);
+});
+
+test('Dual QSS exposes raw-lifetime semantics, transient voltage units and inline overlay legend',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
+  assert.match(src,/types:\['DualQssMeasurement'\]/);
+  assert.match(src,/XML transient lifetime vs QSS intensity/);
+  assert.match(src,/Transient lifetime \[µs\]/);
+  assert.match(src,/Voltage \[mV\]/);
+  assert.match(src,/id="dqCurveLegend"/);
+  assert.match(src,/axisControls\('dqCurveAxes'\)/);
+  assert.match(src,/axisControls\('dqTransientAxes'\)/);
+  assert.doesNotMatch(src,/Raw signal \[XML units\]/);
+  assert.match(src,/q\.lifetime<=0\)\{[^}]*started=false/);
+});
+
 test('Dit results summary is card-based and does not depend on a wide three-column table',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
@@ -40,6 +61,7 @@ test('landing page advertises supported analyzers without overclaiming generic i
   assert.match(html,/feature-tags/);
   assert.match(html,/Dit \/ COCOS/);
   assert.match(html,/QSS-µPCD/);
+  assert.match(html,/QSS Injection/);
   assert.match(html,/ISC/);
   assert.match(html,/LBIC/);
   assert.match(html,/Generic XML inspector/);
