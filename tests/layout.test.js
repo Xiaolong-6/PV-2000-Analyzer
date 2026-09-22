@@ -65,3 +65,42 @@ test('Dit explanatory prose lives in hover help instead of persistent note parag
   assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('COCOS-II and PCHIP can be used together/);
   assert.match(src,/COCOS-II .*help\('Inferred, not vendor-exact/);
 });
+
+
+test('all scientific plots expose shared zoom interactions and reset semantics',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(build,/'src\/core\/plot\.js'/);
+  assert.equal((dit.match(/PV\.plot\.bind/g)||[]).length,4);
+  assert.equal((qss.match(/PV\.plot\.bind/g)||[]).length,3);
+  assert.equal((lbic.match(/PV\.plot\.bind/g)||[]).length,3);
+  assert.match(dit,/onReset:\(\)=>\{zoom\.vcpd=\{x:null,y:null\}/);
+  assert.match(qss,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
+  assert.match(lbic,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
+});
+
+test('LBIC Distribution supports axis swapping',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(src,/id="lSwapHistAxes"/);
+  assert.match(src,/histSwapped=!histSwapped/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histSwapped/);
+});
+
+test('persistent scientific explanatory paragraphs are moved into hover help',()=>{
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.doesNotMatch(lbic,/<p class="note">Default quantities mirror/);
+  assert.doesNotMatch(lbic,/<p class="note">All point X\/Y coordinates/);
+  assert.match(lbic,/View \$\{help\('Default quantities mirror/);
+  assert.doesNotMatch(qss,/<p class="note">These results describe the 305-point reference only/);
+  assert.doesNotMatch(qss,/<details class="panel"><summary>Algorithm notes<\/summary><p class="note">/);
+});
+
+test('Vcpd-Qc is point-line and data markers stay smaller than the initial marker',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/pointsXY\(qc,vd,X,Y,'var\(--red\)',2\.5\)/);
+  assert.match(src,/pointsXY\(qc,vl,X,Y,'var\(--blue\)',2\.5\)/);
+  assert.match(src,/r="4" fill="var\(--yellow\)"/);
+});
