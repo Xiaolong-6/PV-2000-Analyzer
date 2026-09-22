@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260922.11.12 — 2026-09-22
+
+- Added QSS-µPCD `SquareRegionPattern + SquareCell` coordinate reconstruction from Region + Dimension, including effective pitch and explicit rectangular raster support. The supplied 35 × 30 / 1050-point XML+CSV pair validates all reconstructed X/Y coordinates point-by-point.
+- Corrected QSS Distribution filtering semantics: plotted Count now contains valid points only; excluded points no longer inflate/stack into the histogram count. Filter bounds remain inclusive and are shown only as yellow reference lines.
+- Fixed shared Axes popovers being clipped by chart panels and placed Distribution `Swap axes` in the same action row/style as Auto/Apply.
+- Removed the global 300 px canvas-wrapper minimum that caused large blank regions beneath plots in narrow columns.
+- Streamlined README usage/licensing/UI material and moved maintained developer/UI details into architecture/contribution documentation.
+
 ## v20260922.11 — 2026-09-22
 
 - Refreshed the welcome page with compact Guide / Source / Contribute / Share / Report shortcuts, same-row build provenance and a stable `PV-2000-Analyzer.html` offline download artifact.
