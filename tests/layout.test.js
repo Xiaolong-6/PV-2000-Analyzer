@@ -202,8 +202,10 @@ test('landing page removes the redundant deployed-site Live shortcut and its dea
 test('QSS runtime omits fixed reference-validation card and exposes manual axes on data plots',()=>{
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(qss,/Algorithm validation — reference dataset/);
+  assert.match(qss,/axisControls\('qMapAxes'\)/);
   assert.match(qss,/axisControls\('qHistAxes'\)/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
+  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots">'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
 });
 
@@ -223,5 +225,8 @@ test('Dit numeric line plots expose manual X and Y limits',()=>{
   assert.match(dit,/axisControls\('ditVcpdAxes'\)/);
   assert.match(dit,/axisControls\('ditVsbAxes'\)/);
   assert.match(dit,/axisControls\('ditDitAxes'\)/);
+  assert.match(dit,/axisControls\('ditMapAxes'\)/);
+  assert.match(dit,/analysisOpen=true,resultsOpen=true/);
+  assert.match(dit,/id="ditResultsSummary" class="panel results-summary-panel" \$\{resultsOpen\?'open':''\}/);
   assert.match(dit,/bindAxisControls\(host,'ditDitAxes'[^]*\{yLog:true\}/);
 });
