@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
 require('../src/core/stats.js');
 require('../src/core/registry.js');
-PV2000.xml={};
+PV2000.xml={direct(){return null},children(){return[]}};
 PV2000.ui={};
 PV2000.plot={};
 PV2000.exporter={csv(){}};
