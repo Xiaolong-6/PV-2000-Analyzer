@@ -230,6 +230,7 @@ def parse_xml(path: Path):
     coords = []
     profile = ""
 
+    partial = False
     if pattern_type == "SquareRegionPattern":
         if len(beam_keys) != 1:
             raise AssertionError(f"NEW PROFILE: SquareRegionPattern reference expects one beam, got {len(beam_keys)}")
@@ -237,12 +238,18 @@ def parse_xml(path: Path):
         nx, ny = int(num(dim, "X", 0)), int(num(dim, "Y", 0))
         x0, y0 = num(reg, "X"), num(reg, "Y")
         width, height = num(reg, "Width"), num(reg, "Height")
-        if len(items) != nx * ny:
-            raise AssertionError(f"Dimension={nx}x{ny}={nx * ny}, DataItem count={len(items)}")
+        scheduled = nx * ny
+        if len(items) <= 0 or len(items) > scheduled:
+            raise AssertionError(f"Dimension={nx}x{ny}={scheduled}, DataItem count={len(items)}")
         dx = width / (nx - 1) if nx > 1 else 0.0
         dy = height / (ny - 1) if ny > 1 else 0.0
-        coords = [(x0 + col * dx, y0 + row * dy) for row in range(ny) for col in range(nx)]
-        profile = "LBIC-REFLECTANCE-003" if reflectance_only else "LBIC-SINGLE-001"
+        full_coords = [(x0 + col * dx, y0 + row * dy) for row in range(ny) for col in range(nx)]
+        partial = len(items) < scheduled
+        coords = full_coords[:len(items)]
+        if partial:
+            profile = "LBIC-PARTIAL-INFERRED"
+        else:
+            profile = "LBIC-REFLECTANCE-003" if reflectance_only else "LBIC-SINGLE-001"
     elif pattern_type == "MapPattern" and target_type == "PseudoSquareCell":
         if len(beam_keys) < 2:
             raise AssertionError(f"NEW PROFILE: PseudoSquareCell multi-beam reference expects >=2 beams, got {len(beam_keys)}")
@@ -288,6 +295,7 @@ def parse_xml(path: Path):
         "coords": coords,
         "beams": beams,
         "reflectance_only": reflectance_only,
+        "partial": partial,
     }
 
 
@@ -480,6 +488,12 @@ def main():
     for xml_path in raw:
         try:
             parsed = parse_xml(xml_path)
+            if parsed["profile"] == "LBIC-PARTIAL-INFERRED":
+                print(
+                    f"INFERRED {xml_path.name}: partial SquareRegion acquisition; "
+                    f"points={len(parsed['coords'])}; vendor coordinate parity not claimed"
+                )
+                continue
             if parsed["profile"] == "LBIC-REFLECTANCE-003":
                 xps_paths = matching_xps_files(xml_path)
                 if not xps_paths:
