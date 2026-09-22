@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.15 — 2026-09-22
+
+- Added `VcpdMeasurement` support to the shared ISC/Kelvin-probe analyzer while keeping VCPD and ISC as separate XML/result profiles. VCPD exposes only Vcpd Dark and does not synthesize ISC-only Vcpd Light or VSB.
+- Validated the supplied VCPD reference point-by-point: 1649 direct XML readings equal the vendor Vcpd Dark export exactly; `MapPattern + RoundWafer` reconstruction with 200 mm diameter, 8 mm edge exclusion and 4 mm pitch reproduces all X/Y coordinates exactly.
+- Matched vendor Average / Median / sample Stdev / Min / Max and added a private paired-reference validator. Non-zero VcpdOffset, LightOn=true, multiple readings/site and alternate result paths remain explicit NEW PROFILE cases.
+
 ## v20260922.14 — 2026-09-22
 
 - Added **Material: Silicon (Si) / Germanium (Ge)** to Dit Analysis controls, defaulting to Si without inferring material from filenames or substrate names.
