@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.9 — 2026-09-22
+
+- Added a dedicated `ISCMeasurement` analyzer for Initial Surface Charge with selectable Vcpd Dark / Vcpd Light / VSB maps, statistics, distributions, selected-site repeated-reading inspection and CSV exports.
+- Reconstructed the ISC result path from one matching XML + PV-2000 CSV: `Vcpd Dark = mean(Dark)-offset`, `VSB = factor×(mean(Dark)-mean(Light))`, and `Vcpd Light = Vcpd Dark-VSB`; all 169 reference sites and vendor summary statistics match to floating-point precision.
+- Validated the reference `MapPattern + SquareCell` coordinate schedule exactly (13×13, X-fast row-major) and added a private paired-reference validator plus algorithm/reference-profile documentation.
+
 ## v20260922.8 — 2026-09-22
 
 - Made the QSS-µPCD wafer-map geometry visually follow the XML target: RoundWafer uses a circular nominal outline; SquareCell uses its nominal Width × Height outline.
