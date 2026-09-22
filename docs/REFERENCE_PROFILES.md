@@ -86,13 +86,53 @@ Those are analyzer features and should not be described as PV-2000 replication.
 
 Examples include:
 
-- a different QSS map pattern type or coordinate encoding (ordinary numeric radius/pitch/size changes within the same validated coordinate rule are not automatically a new profile);
+- a QSS map pattern or coordinate encoding outside the validated QSS-MAP-001 and QSS-MAP-002 families (ordinary numeric geometry changes inside either established coordinate rule are not automatically a new profile);
 - a new XML path for lifetime/injection data;
 - a configuration whose Smax or Implied Voc calculation fields differ;
 - different temperature/ni handling;
 - QSS-µPCD Scan/J0 or emitter-J0 data, which are separate scientific result paths rather than automatic extensions of QSS-MAP-001.
 
 A new QSS profile must use the actual XML + matching PV-2000 export to determine whether existing coordinate and derived-quantity logic still applies.
+
+---
+
+### QSS-MAP-002 — QSS-µPCD SquareRegionPattern rectangular raster
+
+**Measurement type**
+
+`QssUpcdMeasurement`
+
+**Reference material**
+
+One matching XML + PV-2000 CSV export with **1050** points. This pair exercises `SquareRegionPattern + SquareCell`, a different coordinate encoding from QSS-MAP-001.
+
+**Validated family**
+
+- `SquareRegionPattern` stores raster origin/extent in `Region` and site counts in `Dimension`;
+- coordinates are X-fast row-major, with X increasing within each row and Y increasing between rows;
+- when no explicit `Pitch` exists, spacing is `Width/(Nx-1)` and `Height/(Ny-1)`;
+- the `SquareCell` target is the nominal sample outline, while the explicit `Region` is the measured/smoothed raster support.
+
+The current reference instance uses Region X = -40 mm, Y = -30 mm, Width = 70 mm, Height = 60 mm and Dimension = 35 × 30. These numbers are evidence, not runtime whitelist values.
+
+**Validated / established**
+
+- XML point count: **1050** = 35 × 30;
+- reconstructed coordinate count: **1050**;
+- first site: **(-40, -30) mm**;
+- last site: **(30, 30) mm**;
+- effective pitch: **70/34 ≈ 2.058823529 mm** in X and **60/29 ≈ 2.068965517 mm** in Y;
+- all reconstructed X/Y coordinates match the paired PV-2000 CSV point-by-point to floating-point precision.
+
+This reference expands the validated **coordinate reconstruction** envelope. It does not create a separate lifetime/Smax/Implied-Voc formula family: lifetime remains raw XML data, while derived-quantity validation claims remain those explicitly documented for QSS-MAP-001 unless separately regressed.
+
+**Same-family numeric changes**
+
+Different Region origin/width/height or Dimension values stay inside QSS-MAP-002 when the same Region + Dimension encoding and X-fast/ascending-Y order apply.
+
+**NEW PROFILE triggers**
+
+Examples include another pattern/coordinate encoding, reversed or serpentine acquisition semantics, a different point-count interpretation, or another vendor result path that changes how sites map to output rows.
 
 ---
 

@@ -43,7 +43,9 @@ No npm runtime dependencies are required.
 
 In every multi-column layout the left functional sidebar stays sticky beneath the toolbar and uses an explicit viewport-height vertical scroll container. This prevents long control/metadata stacks from scrolling the plot columns and remains usable when browser zoom changes the CSS viewport width. Fine-pointer desktop layouts keep a dedicated sidebar column at intermediate widths; portrait/tablet fallback requires coarse-pointer input. The sidebar returns to normal document flow at <=700 px or on coarse-pointer portrait/tablet layouts. Dit sidebar summaries use responsive cards rather than fixed-width nowrap tables.
 
-Analyzer controls should expose only parameters relevant to the selected method. Derived/optional analysis controls such as Dit PCHIP midgap fitting belong in nested disclosures rather than the primary method controls. Persistent instructional paragraphs should be avoided; put scientific/context explanations in hover help. Plot interaction is shared: wheel in the plotting area zooms X+Y, wheel over an axis zooms only that axis, and double-click restores automatic ranges.
+Analyzer controls should expose only parameters relevant to the selected method. Derived/optional analysis controls such as Dit PCHIP midgap fitting belong in nested disclosures rather than the primary method controls. Persistent instructional paragraphs should be avoided; put scientific/context explanations in hover help.
+
+Plot interaction is shared: wheel in the plotting area zooms X+Y, wheel over an axis zooms only that axis, and double-click restores automatic ranges. Manual Axes controls live in each chart header immediately before export. Distribution plots default to Count on X; Swap axes belongs in the Axes action row beside Auto/Apply, while Bins remains a separate compact header control. Header popovers must be allowed to overflow chart panels so adjacent plots cannot clip them. Chart wrappers should follow the rendered canvas height rather than enforcing a fixed minimum that creates empty space in narrow columns.
 
 ## Extension contract
 

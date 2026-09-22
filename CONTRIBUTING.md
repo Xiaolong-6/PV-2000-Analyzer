@@ -77,11 +77,12 @@ Before opening an implementation PR, run:
 ```bash
 npm run check
 npm run validate:qss
+npm run validate:isc
 npm run validate:lbic
 npm run build
 ```
 
-`npm run check` runs ESLint, the source-density guard, and the unit tests. Keep executable JavaScript split into reviewable statements instead of hand-minified one-line functions. Reuse shared helpers from `src/core/` rather than copying module-local variants.
+`npm run check` runs ESLint, the source-density guard, and the unit tests. The `validate:*` commands use matching local/private reference pairs when those files are available; they are regression evidence, not runtime requirements. Keep executable JavaScript split into reviewable statements instead of hand-minified one-line functions. Reuse shared helpers from `src/core/` rather than copying module-local variants.
 
 `dist/` is generated output. Do not commit `dist/index.html`; CI and GitHub Pages rebuild it from `src/`.
 

@@ -25,10 +25,8 @@
     return[a-(a-lo)*factor,a+(hi-a)*factor];
   }
   function axisControls(id,{label='Axes',distribution=false,swapped=false}={}){
-    const extra=distribution
-      ?`<div class="axis-extra-row"><button type="button" data-axis-swap aria-pressed="${!!swapped}" title="Swap the Distribution count and quantity axes.">Swap axes</button></div>`
-      :'';
-    return `<details class="axis-popover" data-axis-controls="${id}"><summary title="Set manual numeric X/Y limits.">${label}</summary><div class="axis-popover-card"><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label></div>${extra}<div class="axis-limit-actions"><button type="button" data-axis-auto>Auto</button><button type="button" data-axis-apply>Apply</button></div></div></details>`;
+    const swap=distribution?`<button type="button" data-axis-swap aria-pressed="${!!swapped}" title="Swap the Distribution count and quantity axes.">Swap axes</button>`:'';
+    return `<details class="axis-popover" data-axis-controls="${id}"><summary title="Set manual numeric X/Y limits.">${label}</summary><div class="axis-popover-card"><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label></div><div class="axis-limit-actions">${swap}<button type="button" data-axis-auto>Auto</button><button type="button" data-axis-apply>Apply</button></div></div></details>`;
   }
   function binControls(id,bins=30){
     const n=Math.max(5,Math.min(200,Math.round(Number(bins)||30)));

@@ -31,20 +31,54 @@
     }
     if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)&&d.targetWidth>0&&d.targetHeight>0){
       const halfWidth=d.targetWidth/2,
-        halfHeight=d.targetHeight/2;
+        halfHeight=d.targetHeight/2,
+        regionScheduled=d.patternType==='SquareRegionPattern'&&
+          [d.regionX,d.regionY,d.regionWidth,d.regionHeight].every(Number.isFinite)&&
+          d.regionWidth>=0&&d.regionHeight>=0
+          ?{xMin:d.regionX,xMax:d.regionX+d.regionWidth,yMin:d.regionY,yMax:d.regionY+d.regionHeight}
+          :null,
+        centeredScheduled=Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight)
+          ?{halfWidth:d.mapHalfWidth,halfHeight:d.mapHalfHeight}
+          :null;
       return{
         shape:'rect',
         nominal:{halfWidth,halfHeight},
-        scheduled:Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight)?{halfWidth:d.mapHalfWidth,halfHeight:d.mapHalfHeight}:null,
+        scheduled:regionScheduled||centeredScheduled,
         extent:Math.max(halfWidth,halfHeight)
       };
     }
     return null;
   }
+  function insideScheduled(geometry,x,y){
+    const scheduled=geometry?.scheduled;
+    if(!geometry||!scheduled)return true;
+    if(geometry.shape==='circle')return x*x+y*y<scheduled.radius*scheduled.radius;
+    if(geometry.shape==='rect'){
+      if([scheduled.xMin,scheduled.xMax,scheduled.yMin,scheduled.yMax].every(Number.isFinite)){
+        return x>=scheduled.xMin&&x<=scheduled.xMax&&y>=scheduled.yMin&&y<=scheduled.yMax;
+      }
+      return Math.abs(x)<=scheduled.halfWidth&&Math.abs(y)<=scheduled.halfHeight;
+    }
+    return true;
+  }
+  function gridPitch(size,count){
+    return Number.isFinite(size)&&Number.isFinite(count)&&count>1?size/(count-1):NaN;
+  }
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),iter=X.direct(itd,'Iteration'),data=X.direct(iter,'Data');
     const values=X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value')).filter(Number.isFinite);
     const pattern=X.direct(m,'Pattern'),
+      patternType=X.attrType(pattern),
+      region=X.direct(pattern,'Region'),
+      location=X.direct(region,'Location'),
+      regionSize=X.direct(region,'Size'),
+      dimension=X.direct(pattern,'Dimension'),
+      regionX=X.num(region,'X',X.num(location,'X',NaN)),
+      regionY=X.num(region,'Y',X.num(location,'Y',NaN)),
+      regionWidth=X.num(region,'Width',X.num(regionSize,'Width',NaN)),
+      regionHeight=X.num(region,'Height',X.num(regionSize,'Height',NaN)),
+      nx=X.num(dimension,'X',NaN),
+      ny=X.num(dimension,'Y',NaN),
       target=X.direct(m,'Target'),
       targetType=X.attrType(target),
       targetSize=X.direct(target,'Size'),
@@ -56,16 +90,20 @@
       mapRadius=effectiveMapRadius(diameter,edgeExclusion),
       mapHalfWidth=effectiveMapHalfExtent(targetWidth,edgeExclusion),
       mapHalfHeight=effectiveMapHalfExtent(targetHeight,edgeExclusion),
-      pitchX=X.num(pitch,'X'),
-      pitchY=X.num(pitch,'Y');
+      rawPitchX=X.num(pitch,'X'),
+      rawPitchY=X.num(pitch,'Y'),
+      pitchX=Number.isFinite(rawPitchX)?rawPitchX:gridPitch(regionWidth,nx),
+      pitchY=Number.isFinite(rawPitchY)?rawPitchY:gridPitch(regionHeight,ny);
       
     let coords=[];
-    if(X.attrType(pattern)==='MapPattern'){
+    if(patternType==='MapPattern'){
       if(targetType==='RoundWafer'&&Number.isFinite(mapRadius)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
         coords=GEO.roundGrid(mapRadius,pitchX,pitchY,values.length);
       }else if(targetType==='SquareCell'&&Number.isFinite(mapHalfWidth)&&Number.isFinite(mapHalfHeight)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
         coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,values.length);
       }
+    }else if(patternType==='SquareRegionPattern'){
+      coords=GEO.rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,values.length,1);
     }
       
     const preArray=X.direct(X.direct(m,'PreProcessings'),'ArrayOfPreProcessSettings'),pre0=preArray?X.children(preArray)[0]:null;
@@ -80,7 +118,7 @@
       evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'';
       
     const qssRange=X.direct(m,'QSSRange');
-    return{...c,values,coords,patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
+    return{...c,values,coords,patternType,patternName:X.text(pattern,'Name',''),regionX,regionY,regionWidth,regionHeight,nx,ny,targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
       waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor',1),doping:X.num(m,'Doping',NaN),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower',NaN),
       avgMode,averagingIndex:avgIndex,evaluationMode,autoset:X.text(m,'DoAutoSetting',''),qssMilli:X.num(pre0,'QssLampIntensity',Number(c.header['QSS Intensity'])),temperatureC:X.num(iter,'ChuckTemperature',NaN),measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),tauSteadyStateFactor:X.num(iter,'TauSteadyStateFactor',NaN),qdcValue:X.num(iter,'QDCValue',NaN),
       probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),doRastering:X.text(m,'DoRastering',''),saveTransient:X.text(m,'SaveTransient',''),transient:c.header['Transient']||'',pointAverage:X.text(m,'DoPointAveraging',''),pointAverageCount:X.num(m,'PointAverageCount',NaN),
@@ -190,9 +228,7 @@
         for(let px=Math.floor(cx-R);px<=Math.ceil(cx+R);px+=step){
           const x=xr[0]+(px-(cx-R))/(2*R)*(xr[1]-xr[0]),
           y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
-          const scheduled=geometry?.scheduled;
-          if(geometry?.shape==='rect'&&scheduled&&(Math.abs(x)>scheduled.halfWidth||Math.abs(y)>scheduled.halfHeight))continue;
-          if(geometry?.shape==='circle'&&scheduled&&x*x+y*y>=scheduled.radius*scheduled.radius)continue;
+          if(!insideScheduled(geometry,x,y))continue;
           const v=smoothValueAt(x,y,d.coords,vals,mask,maxDist);
           if(!Number.isFinite(v))continue;
           const t=(v-lo)/(hi-lo||1),
@@ -234,10 +270,9 @@
             ry=Math.abs(Y(boundary.radius)-Y(0));
           ctx.ellipse(X(0),Y(0),rx,ry,0,0,2*Math.PI);
         }else{
-          const x0=X(-boundary.halfWidth),
-            x1=X(boundary.halfWidth),
-            y0=Y(boundary.halfHeight),
-            y1=Y(-boundary.halfHeight);
+          const useRegion=[boundary.xMin,boundary.xMax,boundary.yMin,boundary.yMax].every(Number.isFinite),
+            x0=X(useRegion?boundary.xMin:-boundary.halfWidth),x1=X(useRegion?boundary.xMax:boundary.halfWidth),
+            y0=Y(useRegion?boundary.yMax:boundary.halfHeight),y1=Y(useRegion?boundary.yMin:-boundary.halfHeight);
           ctx.rect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0));
         }
         ctx.stroke();
@@ -342,7 +377,7 @@
       if(!bins.length)return bins;
       
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
-      autoCount=[0,Math.max(...bins.map(b=>b.valid+b.invalid),1)],
+      autoCount=[0,Math.max(...bins.map(b=>b.valid),1)],
       mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
       cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),
       plotW=W-p.l-p.r,
@@ -384,29 +419,22 @@
       ctx.clip();
       
     bins.forEach(b=>{
-      const mid=(b.lo+b.hi)/2;if(swapped){
+      if(swapped){
         const y1=H-p.b-metricPos(b.lo)*plotH,
         y2=H-p.b-metricPos(b.hi)*plotH,
         xBase=p.l+countPos(0)*plotW,
-        xInv=p.l+countPos(b.invalid)*plotW,
-        xTot=p.l+countPos(b.invalid+b.valid)*plotW;
-          ctx.fillStyle=css('--soft');
-          ctx.globalAlpha=.42;
-          ctx.fillRect(Math.min(xBase,xInv),Math.min(y1,y2),Math.abs(xInv-xBase),Math.max(1,Math.abs(y2-y1)-1));
-          ctx.globalAlpha=1;
-          ctx.fillStyle=barColor(b);
-          ctx.fillRect(Math.min(xInv,xTot),Math.min(y1,y2),Math.abs(xTot-xInv),Math.max(1,Math.abs(y2-y1)-1))}else{
+        xValid=p.l+countPos(b.valid)*plotW;
+        ctx.fillStyle=barColor(b);
+        ctx.fillRect(Math.min(xBase,xValid),Math.min(y1,y2),Math.abs(xValid-xBase),Math.max(1,Math.abs(y2-y1)-1));
+      }else{
         const x1=p.l+metricPos(b.lo)*plotW,
         x2=p.l+metricPos(b.hi)*plotW,
         yBase=H-p.b-countPos(0)*plotH,
-        yInv=H-p.b-countPos(b.invalid)*plotH,
-        yTot=H-p.b-countPos(b.invalid+b.valid)*plotH;
-          ctx.fillStyle=css('--soft');
-          ctx.globalAlpha=.42;
-          ctx.fillRect(Math.min(x1,x2),Math.min(yBase,yInv),Math.max(1,Math.abs(x2-x1)-1),Math.abs(yInv-yBase));
-          ctx.globalAlpha=1;
-          ctx.fillStyle=barColor(b);
-          ctx.fillRect(Math.min(x1,x2),Math.min(yInv,yTot),Math.max(1,Math.abs(x2-x1)-1),Math.abs(yTot-yInv))}});
+        yValid=H-p.b-countPos(b.valid)*plotH;
+        ctx.fillStyle=barColor(b);
+        ctx.fillRect(Math.min(x1,x2),Math.min(yBase,yValid),Math.max(1,Math.abs(x2-x1)-1),Math.abs(yValid-yBase));
+      }
+    });
           
       
     if(key===filterKey){ctx.strokeStyle=css('--yellow');
@@ -536,9 +564,13 @@
       mask=validMask(a,filterKey,filterLo,filterHi);
       
     const statsFor=k=>summaryMasked(a.metrics[k].values,mask);
-    const targetSummary=()=>d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)
-      ?`${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm square · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm · inferred geometry`
-      :`${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`;
+    const targetSummary=()=>{
+      if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)){
+        const geometryLabel=d.patternType==='SquareRegionPattern'?'explicit SquareRegion raster':'inferred centered MapPattern';
+        return `${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm square · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm · ${geometryLabel}`;
+      }
+      return `${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`;
+    };
     function summaryRows(){
       return Object.values(a.metrics).map(m=>{
         const st=statsFor(m.key);return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
@@ -547,7 +579,7 @@
       const validN=mask.filter(Boolean).length;
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
-          ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and X/Y site pitch. For MapPattern XMLs the analyzer reconstructs site coordinates from this geometry and acquisition order.')}${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer reconstruction is vendor-regression validated for the current reference family. SquareCell MapPattern reconstruction is inferred from Size, EdgeExclusion and Pitch until a matching PV-2000 export is supplied.')}${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
+          ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and effective X/Y site pitch. MapPattern uses target/pitch geometry; SquareRegionPattern uses Region + Dimension in X-fast, ascending-Y acquisition order.')}${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer MapPattern and SquareCell SquareRegionPattern coordinate paths have paired vendor regression references. Centered SquareCell MapPattern remains inferred until a matching export is supplied.')}${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
         </dl></section>
         <section class="panel"><h3>Valid-data filter ${help('Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.')}</h3>
           <div class="filter-grid"><label>Filter metric<select id="qFilterMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select></label><label>Lower<input id="qFilterLo" type="number" step="any" value="${filterLo}"></label><label>Upper<input id="qFilterHi" type="number" step="any" value="${filterHi}"></label></div>
@@ -558,7 +590,7 @@
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
       </aside><section class="plots">
         <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Valid counts use the wafer-map color scale; gray counts are excluded. Yellow lines show active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
       </section><section class="plots">
         <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
 
@@ -607,7 +639,7 @@
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,niCompat,validMask,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,targetGeometry,constants:{NI300_MANUAL,NI300_PV2000_COMPAT}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,niCompat,validMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);

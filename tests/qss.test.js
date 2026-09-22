@@ -18,3 +18,16 @@ test('Smax formula',()=>{const v=PV2000.modules.qss.smax(11.658483155829508,300)
 test('PV2000-compatible implied Voc is in reference range',()=>{const d={qssMilli:30,waferThickness:300,opticalFactor:.708,doping:1e14,temperatureC:24.494949494949495};const v=PV2000.modules.qss.impliedVoc(11.658483155829508,d);assert.ok(v>0.35&&v<0.38)});
 test('valid-data mask honors lower and upper range',()=>{const a={metrics:{lifetime:{values:[1,2,3,10]}}};assert.deepEqual(PV2000.modules.qss.validMask(a,'lifetime',1.5,3.5),[false,true,true,false])});
 test('smooth map leaves filtered site regions uncolored',()=>{const coords=[{x:-5,y:0},{x:0,y:0},{x:5,y:0},{x:0,y:5}],values=[10,100,20,15],mask=[true,false,true,true],sample=PV2000.modules.qss.smoothValueAt;assert.ok(Number.isNaN(sample(0,0,coords,values,mask,11)));assert.ok(Number.isNaN(sample(0,1,coords,values,mask,11)));assert.ok(Number.isFinite(sample(-5,0,coords,values,mask,11)));assert.ok(Number.isFinite(sample(0,5,coords,values,mask,11)));assert.ok(Number.isNaN(sample(30,0,coords,values,mask,11)))});
+
+test('SquareRegionPattern reference raster reproduces the 35 x 30 vendor coordinate order',()=>{const p=PV2000.geometry.rectGrid(-40,-30,70,60,35,30,1050,1);assert.equal(p.length,1050);assert.deepEqual(p[0],{x:-40,y:-30,row:0,col:0});assert.ok(Math.abs(p[34].x-30)<1e-12&&Math.abs(p[34].y+30)<1e-12);assert.ok(Math.abs(p[35].x+40)<1e-12&&Math.abs(p[35].y-(-30+60/29))<1e-12);assert.ok(Math.abs(p.at(-1).x-30)<1e-12&&Math.abs(p.at(-1).y-30)<1e-12)});
+test('SquareRegion target geometry uses the explicit measured rectangle',()=>{const g=PV2000.modules.qss.targetGeometry({patternType:'SquareRegionPattern',targetType:'SquareCell',targetWidth:100,targetHeight:100,regionX:-40,regionY:-30,regionWidth:70,regionHeight:60,mapHalfWidth:47,mapHalfHeight:47});assert.deepEqual(g.scheduled,{xMin:-40,xMax:30,yMin:-30,yMax:30});assert.equal(PV2000.modules.qss.insideScheduled(g,-40,-30),true);assert.equal(PV2000.modules.qss.insideScheduled(g,31,0),false)});
+test('valid-data histogram counts are determined only by the validity mask',()=>{const a={metrics:{lifetime:{values:[1,2,3,4,100]}}},mask=PV2000.modules.qss.validMask(a,'lifetime',2,4),bins=PV2000.modules.qss.histogram(a.metrics.lifetime.values,mask,5);assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2)});
+
+test('valid filter bounds are inclusive while excluded counts remain separate diagnostics',()=>{
+  const a={metrics:{lifetime:{values:[1,2,3,4,5]}}};
+  const mask=PV2000.modules.qss.validMask(a,'lifetime',2,4);
+  assert.deepEqual(mask,[false,true,true,true,false]);
+  const bins=PV2000.modules.qss.histogram(a.metrics.lifetime.values,mask,5);
+  assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);
+  assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2);
+});

@@ -334,3 +334,21 @@ test('all plot Axes controls are rendered in chart headers immediately before ex
   assert.match(isc,/binControls\('iHistBins',histBins\)\}<button id="iExportHist"/);
   assert.match(isc,/axisControls\('iRawAxes'\)\}<button id="iExportRaw"/);
 });
+
+test('chart popovers are not clipped and plot wrappers do not force blank vertical space',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.panel\.chart\{[^}]*overflow:visible[^}]*position:relative/);
+  assert.match(css,/\.axis-popover-card\{[^}]*z-index:60/);
+  assert.doesNotMatch(css,/\.canvas-wrap\{[^}]*min-height:300px/);
+});
+
+test('QSS Distribution uses valid counts only and axis swap cannot change filter state',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/autoCount=\[0,Math\.max\(\.\.\.bins\.map\(b=>b\.valid\),1\)\]/);
+  assert.doesNotMatch(src,/autoCount=\[0,Math\.max\(\.\.\.bins\.map\(b=>b\.valid\+b\.invalid\)/);
+  const start=src.indexOf("onSwap:()=>{histSwapped=!histSwapped");
+  const end=src.indexOf("PV.plot.bindBinControls",start);
+  assert.ok(start>=0&&end>start);
+  const swapBlock=src.slice(start,end);
+  assert.doesNotMatch(swapBlock,/mask\s*=|filterKey\s*=|filterLo\s*=|filterHi\s*=/);
+});

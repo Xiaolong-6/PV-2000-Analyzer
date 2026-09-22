@@ -29,29 +29,21 @@ Current modules:
 - `LBICMeasurement` — rectangular LBIC raster analysis with dynamic beam/wavelength channels. Four paired 984 nm reference instances validate the single-beam SquareRegionPattern Current/Direct/Scattered → Current/Reflectivity/IQE algorithm family; numeric wavelength/power/flux/raster-size changes do not by themselves create a new profile. The default view mirrors Current / Reflectivity / IQE, while raw Direct/Scattered reflection, EQE and unknown channels are under Advanced.
 - Unknown types — Generic XML Inspector rather than a hard failure.
 
-## Run
+## Use
 
-Open `dist/index.html` or `dist/PV-2000-Analyzer.html` directly. Both are the same self-contained build; the latter is the stable filename used by the landing-page **Download Offline** shortcut. No server or installation is required.
+The normal entry point is the [live analyzer](https://xiaolong-6.github.io/PV-2000-Analyzer/). For offline use, choose **Download Offline** on the landing page and open the downloaded self-contained HTML locally. Processing stays in the browser.
 
-Development:
+For local development:
 
 ```bash
-npm test
+npm install --ignore-scripts --no-audit --no-fund
+npm run check
 npm run build
-npm run validate:qss
-npm run validate:isc
-npm run validate:lbic
 ```
 
-`npm run validate:qss` uses ignored local XML/CSV reference files under `private/reference/` when present. `npm run validate:isc` uses same-basename ignored ISC XML/CSV pairs under `private/reference/isc/` for pointwise Vcpd Dark / Vcpd Light / VSB regression. `npm run validate:lbic` uses same-basename ignored XML/CSV pairs under `private/reference/lbic/` for pointwise vendor regression. The LBIC validator allows ordinary numeric wavelength/power/flux/geometry changes within the validated algorithm family and reserves NEW PROFILE for categorical input/output-path changes.
+The build writes `dist/index.html` and `dist/PV-2000-Analyzer.html`; `dist/` is generated and is not committed. Reference validators and implementation workflow live in [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/VALIDATION.md](docs/VALIDATION.md).
 
-## Licensing
-
-The community edition is licensed under **AGPL-3.0-only**. Commercial use under the AGPL is allowed when its terms are followed. Separate commercial licensing is available for organizations that need negotiated terms for proprietary integration, closed-source/OEM distribution, or other uses that are incompatible with their desired AGPL compliance model.
-
-External contributions require agreement to the project [CLA](CLA.md), which lets contributors keep their copyright while granting the Project Owner the rights needed to continue dual licensing. See [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) for the commercial-licensing route.
-
-Copyright © 2026 Xiaolong Liu. The full community license is in [LICENSE](LICENSE).
+Licensing details are kept in [LICENSE](LICENSE), [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) and [CLA.md](CLA.md).
 
 ## Runtime/data rule
 
@@ -67,10 +59,6 @@ Developers may instead branch from current `main`, implement support, include th
 
 Use the **Share PV-2000 data** shortcut above for a guided issue, or see `CONTRIBUTING.md`, `reference_data/README.md` and `docs/REFERENCE_PROFILES.md` before submitting data or code.
 
-## UI principles
-
-The shared shell follows the operating-system light/dark theme and provides a manual theme toggle. The landing page advertises the currently supported analyzers (Dit / COCOS, QSS-µPCD, ISC, LBIC, Generic XML inspector). Measurement-specific controls live inside the corresponding analyzer; there is no global legacy Settings button. Controls should be contextual: selecting an analysis method should reveal only parameters relevant to that method plus genuinely shared extraction settings. Re-rendering an analysis must preserve the user's open/closed control-panel state. In multi-column layouts, the left functional sidebar has its own viewport-height scroll container so long metadata/control stacks can always be reached without moving the plot columns. Fine-pointer desktop browser zoom must not be mistaken for a portrait/mobile layout: the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit result summaries use responsive cards rather than a fixed nowrap table so valid-site mean/current-site values stay readable at narrow sidebar widths. Every scientific plot supports mouse-wheel zoom: wheel inside the plot zooms both axes, wheel over an axis zooms only that direction, and double-click restores auto scale. Manual `Axes` controls live in each chart header immediately before its export control. Distribution plots default to **Count on X**, keep `Swap axes` inside the Axes popover, and expose a separate `Bins` control for changing histogram bar width/spacing. Long scientific explanations belong in hover help rather than persistent prose.
-
-See `docs/REFERENCE_PROFILES.md` for the central validation envelope, plus `docs/VALIDATION.md`, `docs/HANDOFF.md` and the algorithm notes for detailed evidence.
+See `docs/ARCHITECTURE.md` for the maintained UI/runtime contract and `docs/REFERENCE_PROFILES.md` for the central validation envelope, plus `docs/VALIDATION.md`, `docs/HANDOFF.md` and the algorithm notes for detailed evidence.
 
 This is an independent analysis utility and is not affiliated with or endorsed by Semilab.
