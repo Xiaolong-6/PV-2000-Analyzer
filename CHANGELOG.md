@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.17 — 2026-09-22
+
+- Added validated `LBIC-REFLECTANCE-003` handling for reflectance-only `LBICMeasurement` XMLs where `MeasureCurrent=false` but BeamData still carry zero-valued Current placeholders. Disabled Current is no longer exposed or used to synthesize EQE/IQE; Reflectivity becomes the default result.
+- Regressed DirectReflection + ScatteredReflection against 60 PV-2000 XPS Reflectivity printouts covering 44 measurements from a 62-XML corpus; Average / Median / sample Stdev / Min / Max agree within the vendor's two-decimal display rounding (<0.005 %-point maximum discrepancy).
+- Added partial SquareRegionPattern display support for incomplete acquisitions by mapping available DataItems onto the leading X-fast / ascending-Y schedule. Partial geometry is explicitly labelled inferred and is excluded from validated-profile parity.
+
 ## v20260922.16 — 2026-09-22
 
 - Added a dedicated `JZeroMeasurement` Emitter J0 analyzer instead of aliasing the result to QSS-µPCD. It pairs the two `UpcdIterationData` lifetime maps, exposes Basore J0 plus both τeff.d/Smax/Implied-Voc channels, and provides map, Distribution, filtering, axes/bins controls and CSV export.

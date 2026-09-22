@@ -126,7 +126,7 @@ test('persistent scientific explanatory paragraphs are moved into hover help',()
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(lbic,/<p class="note">Default quantities mirror/);
   assert.doesNotMatch(lbic,/<p class="note">All point X\/Y coordinates/);
-  assert.match(lbic,/View \$\{help\('Default quantities mirror/);
+  assert.match(lbic,/View \$\{help\('Primary quantities follow the active XML measurement flags/);
   assert.doesNotMatch(qss,/<p class="note">These results describe the 305-point reference only/);
   assert.doesNotMatch(qss,/Algorithm notes/);
 });
