@@ -28,6 +28,31 @@ test('missing VcpdOffset does not silently become zero',()=>{
   assert.ok(Number.isNaN(r.vsb));
 });
 
+test('ISC target geometry exposes nominal and EdgeExclusion boundaries',()=>{
+  const square=ISC.targetGeometry({
+    targetType:'SquareCell',
+    targetWidth:100,
+    targetHeight:80,
+    edgeExclusion:10
+  });
+  assert.deepEqual(square,{
+    shape:'rect',
+    nominal:{halfWidth:50,halfHeight:40},
+    scheduled:{halfWidth:40,halfHeight:30}
+  });
+
+  const round=ISC.targetGeometry({
+    targetType:'RoundWafer',
+    diameter:200,
+    edgeExclusion:5
+  });
+  assert.deepEqual(round,{
+    shape:'circle',
+    nominal:{radius:100},
+    scheduled:{radius:95}
+  });
+});
+
 test('ISC SquareCell example geometry gives a centered 13x13 schedule',()=>{
   const half=ISC.effectiveHalf(100,30);
   assert.equal(half,20);
