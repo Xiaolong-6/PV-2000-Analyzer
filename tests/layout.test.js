@@ -140,19 +140,29 @@ test('Optional Midgap Dit exposes original and median-binned PCHIP methods with 
 });
 
 
-test('landing page and app footer expose project links and build provenance',()=>{
+test('landing page has a structured product shell, local-processing message and concise project provenance',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(html,/class="landing-shell"/);
+  assert.match(html,/PV-2000 XML analysis and visualization/);
+  assert.match(html,/class="drop-icon"/);
+  assert.match(html,/class="btn drop-open"/);
+  assert.match(html,/Local processing/);
   assert.match(html,/class="project-strip"/);
-  assert.match(html,/github\.com\/Xiaolong-6\/PV-2000-Analyzer/);
+  assert.match(html,/github\\.com\\/Xiaolong-6\\/PV-2000-Analyzer/);
   assert.match(html,/Contribute/);
   assert.match(html,/Share data/);
-  assert.match(html,/Report/);
+  assert.match(html,/Report issue/);
+  assert.doesNotMatch(html,/project-live/);
+  assert.doesNotMatch(html,/>Live<\\/a>/);
   assert.match(html,/__BUILD_COMMIT_SHORT__/);
   assert.match(html,/__BUILD_COMMIT_URL__/);
   assert.match(html,/class="app-footer"/);
-  assert.match(css,/\.project-link\{/);
-  assert.match(css,/\.status-dot\{/);
+  assert.match(css,/\\.landing-shell\\{/);
+  assert.match(css,/\\.drop::before\\{/);
+  assert.match(css,/\\.drop-open\\{/);
+  assert.match(css,/\\.landing-privacy\\{/);
+  assert.match(css,/\\.project-link\\{/);
 });
 
 test('build injects exact CI commit provenance and has an explicit local fallback',()=>{
@@ -180,9 +190,10 @@ test('all spatial maps preserve equal physical X/Y scale by default',()=>{
   assert.match(qss,/plot=Math\.min\(W-p\.l-p\.r,H-p\.t-p\.b\)/);
 });
 
-test('the Live shortcut hides itself on the deployed GitHub Pages site',()=>{
+test('landing page removes the redundant deployed-site Live shortcut and its dead runtime handling',()=>{
+  const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const app=fs.readFileSync(require.resolve('../src/app.js'),'utf8');
-  assert.match(app,/location\.hostname==='xiaolong-6\.github\.io'/);
-  assert.match(app,/location\.pathname\.startsWith\('\/PV-2000-Analyzer'\)/);
-  assert.match(app,/project-live/);
+  assert.doesNotMatch(html,/project-live/);
+  assert.doesNotMatch(app,/project-live/);
+  assert.doesNotMatch(app,/xiaolong-6\\.github\\.io/);
 });
