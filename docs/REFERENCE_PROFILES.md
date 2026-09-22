@@ -139,6 +139,57 @@ Examples include another pattern/coordinate encoding, reversed or serpentine acq
 
 ---
 
+### QSS-INJ-001 — Dual QSS injection sweep / stored transient family
+
+**Measurement type**
+
+`DualQssMeasurement`
+
+**Reference material**
+
+A private corpus of **72 XML files**, of which **57** have matching same-basename PV-2000 raw CSV exports. The 57 paired files contain **1003 injection points**.
+
+**Validated / established raw path**
+
+- current XML family: `OnePointPattern + RoundWafer`, one `QssDataItem` per measurement;
+- XML `Intensity` and `Power` vectors match the vendor CSV top-table QSS intensity and laser-power columns exactly;
+- XML `Values` / `TransientInfo@LifeTime` match the CSV raw-data `LifeTime [μs]` values to export rounding, maximum absolute difference about **0.0050414 µs**;
+- each current XML `TransientInfo` stores **2000** `SmallPoint` samples;
+- the CSV raw export contains the first **1999** samples of each current transient and omits the final XML sample;
+- **2,004,997** paired raw Time/Voltage samples compare exactly at exported precision;
+- ordinary numeric changes in intensity schedule, wafer thickness, doping, optical factor or laser-power setting remain inside this raw schema family when the same structure is retained.
+
+**Vendor result-table path observed but not yet reproduced**
+
+The same CSVs expose `Lifetime[us]`, `dn[cm-3]`, `Implied Voc[V]` and `QDC` in the result table. Vendor `Lifetime[us]` is not the raw XML lifetime. Across the current 1003 paired rows, 775 have positive result-table Lifetime and 228 are zero.
+
+For positive result-table Lifetime rows, `dn` is consistent with:
+
+```text
+G = 2.38e17 * I[suns] / W[cm] * OpticalFactor
+dn = G * Lifetime
+```
+
+to the precision of the rounded CSV values (maximum relative difference below about 0.5% in the current corpus). This establishes the Lifetime→dn step, not the raw→vendor-Lifetime transformation.
+
+The result-table Lifetime transformation, zero/blank acceptance rule, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any LP/HP stitching remain **inferred/unsupported** until reproduced point-by-point.
+
+**Analyzer features not claimed as PV-2000 algorithms**
+
+- log/linear presentation;
+- positive-raw-lifetime summary filtering;
+- selected transient inspection;
+- local multi-XML LP/HP/repeat overlay;
+- CSV export of parsed XML quantities.
+
+**NEW PROFILE triggers**
+
+Treat multiple iterations, another DataItem/transient layout, another pattern semantic or another unit convention as a new structural profile. A future implementation of the vendor result-table post-processing extends this profile only after the existing 57 paired exports are regressed point-by-point.
+
+See `docs/ALGORITHMS_DUAL_QSS.md`.
+
+---
+
 ### ISC-MAP-001 — repeated-reading Initial Surface Charge map
 
 **Measurement type**

@@ -10,6 +10,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
 - `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
+- `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
 - `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
 - `LBICMeasurement` analyzer with dynamic beam/channel raster maps, line profiles, pixel inspection and CSV export;
 - system light/dark theme + explicit theme toggle;
@@ -67,6 +68,27 @@ The QSS UI has also been upgraded: proper axes/ticks/units, map colorbar, distri
 The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `SquareRegionPattern + SquareCell` is now a second vendor-regressed QSS coordinate family: Region + Dimension reconstruct the explicit rectangular raster in X-fast, ascending-Y order, and the supplied 35 × 30 / 1050-point XML+CSV pair matches all vendor X/Y coordinates to floating-point precision. `MapPattern + SquareCell` remains supported as a centered raster inferred from `Size/2 - EdgeExclusion` and `Pitch`; that centered MapPattern path remains **inferred** until a matching export/display is supplied. QSS wafer maps draw the XML nominal target as a solid geometry-aware outline (circle for RoundWafer, rectangle for SquareCell), the EdgeExclusion-adjusted scheduled region as a dashed inner outline, and the generic plot frame separately; default autoscaling includes the full target at equal X/Y physical scale. The QSS module exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Distribution bars now count valid points only; excluded points remain available in histogram CSV diagnostics but no longer stack into the displayed Count. Swap axes is presentation-only and cannot change the filter mask. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
 
 Do not remove this behavior during refactors.
+
+## Dual QSS injection status
+
+A dedicated `DualQssMeasurement` module now handles the raw injection-sweep path separately from the spatial `qss-upcd.js` map analyzer.
+
+Current private evidence:
+
+- **72 XML files** total;
+- **57 matching raw CSV exports** with **1003 paired injection rows**;
+- all current files use `OnePointPattern + RoundWafer` and one `QssDataItem`;
+- XML `Intensity` / `Power` match the CSV result-table intensity / laser-power columns exactly;
+- XML `Values` / `TransientInfo@LifeTime` match the CSV raw-data `LifeTime [μs]` row to export rounding (max abs error ≈ **0.0050414 µs**);
+- each current XML transient stores **2000** samples; the CSV raw export contains the first **1999** samples, and **2,004,997** paired Time/Voltage samples match XML exactly at exported precision;
+- the CSV top-table `Lifetime[us]` is a **different post-processed quantity** from the XML/raw lifetime. Across the current paired corpus, 775 result rows have positive vendor Lifetime and 228 are zero;
+- once vendor result-table Lifetime is known, exported `dn` follows `G = 2.38e17 * I / W * OpticalFactor` and `dn = G * Lifetime` to rounded CSV precision (<0.5% maximum relative difference in the current corpus).
+
+The runtime therefore labels the displayed curve as **XML transient lifetime**, not generic/vendor Lifetime. It supports click-through stored transients, TimeCursor, raw metadata, manual axes, CSV export and local LP/HP/repeat overlays.
+
+Still unresolved: raw-transient → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
+
+See `docs/ALGORITHMS_DUAL_QSS.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
 ## Dit status
 
@@ -168,6 +190,7 @@ npm install --ignore-scripts --no-audit --no-fund
 npm run check
 npm run build
 npm run validate:qss
+npm run validate:dual-qss
 npm run validate:isc
 npm run validate:lbic
 git status --short --ignored
@@ -225,8 +248,8 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - Open an unsupported XML type and confirm Generic XML Inspector fallback still works.
    - Confirm no tracked/private reference data has leaked into the build or repository.
 
-## Next scientific module
+## Next scientific validation step
 
-After validating the remaining LBIC vendor-parity items, add QSS-µPCD Scan/J0 as a separate module (intensity/laser-power scans, QDC, steady-state lifetime/injection, Basore-Hansen J0, Kane-Swanson J0). Do not cram scan/J0 logic into `qss-upcd.js`.
+Obtain at least one matching PV-2000 export for a current `DualQssMeasurement` XML and regress the final injection-result rows point-by-point. Use that evidence to establish Δn/QDC/implied-Voc/J0 equations, validity windows and any LP/HP stitching or blanking behavior. Keep this work in the dedicated `dual-qss.js` family rather than `qss-upcd.js`.
 
 UI placement: QSS Current dataset belongs in the left sidebar. Dit Analysis controls and Results summary both start expanded; Results summary remains user-collapsible.

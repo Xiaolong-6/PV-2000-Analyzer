@@ -8,7 +8,9 @@ Open XML
   -> read Measurement/@xsi:type
   -> measurement registry
       -> DITMeasurement      -> Dit module
-      -> QssUpcdMeasurement  -> QSS-µPCD module
+      -> QssUpcdMeasurement  -> QSS-µPCD map module
+      -> DualQssMeasurement  -> QSS injection module
+      -> ISCMeasurement      -> Initial Surface Charge module
       -> LBICMeasurement      -> LBIC raster module
       -> unknown              -> Generic Inspector
   -> module.parse()
@@ -29,6 +31,7 @@ The user imports one XML file. A PV-2000 export is never required at runtime.
 - `src/core/registry.js` — measurement-module registry.
 - `src/modules/dit.js` — COCOS/DIT parser, calculations, UI.
 - `src/modules/qss-upcd.js` — QSS-µPCD map parser, calculations, UI.
+- `src/modules/dual-qss.js` — Dual QSS injection-sweep parser, stored-transient viewer, comparison overlay and raw-value exports.
 - `src/modules/lbic.js` — LBIC raster parser, beam/channel normalization, inferred optical/electrical fallbacks and UI.
 - `src/modules/generic.js` — fallback inspection for unimplemented types.
 - `src/app.js` — file opening, dispatch, shared shell.

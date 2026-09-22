@@ -41,6 +41,33 @@ The validator also verifies coordinate acquisition order. The current QSS refere
 
 The new valid-range UI is an analyzer feature rather than a vendor-output replication. Tests verify range masking; users must choose limits appropriate to the sample geometry/data distribution. This is especially important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
 
+## Dual QSS injection sweep — paired raw XML/CSV regression
+
+The supplied private corpus contains **72 `DualQssMeasurement` XML files**. **57** have matching PV-2000 raw CSV exports, yielding **1003 paired injection points**.
+
+Regression results:
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| XML/CSV paired files | 57 | validated evidence set |
+| paired injection rows | 1003 | exact count match |
+| QSS intensity | max abs error 0 mSun | validated raw path |
+| laser power vector | max abs error 0 | validated raw path |
+| XML `Values` vs CSV raw `LifeTime [μs]` | max abs error ≈ 0.0050414 µs | validated to export rounding |
+| XML transient samples | 2000 per current transient | established XML structure |
+| CSV raw transient samples | first 1999 samples | vendor export behavior |
+| paired raw Time/Voltage samples | 2,004,997 compared; max abs error 0 at export precision | validated raw path |
+| vendor result-table Lifetime | 775 positive / 228 zero | observed, transformation unresolved |
+| vendor `dn` given positive vendor Lifetime | generation formula matches within <0.5% relative at rounded CSV precision | validated downstream step |
+| Implied Voc / J0 | output path not yet reproduced | inferred / unsupported |
+
+A critical semantic distinction is now locked in: **XML `Values` / `TransientInfo@LifeTime` are the raw transient-lifetime path, while CSV top-table `Lifetime[us]` is a different post-processed result.** The runtime therefore labels its curve as XML/transient lifetime and does not claim to reproduce the vendor result-table Lifetime.
+
+The analyzer remains XML-only at runtime. Paired CSVs are regression evidence and are not loaded by users.
+
+See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
+
+
 ## DIT reference
 
 Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The default Si model uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc with `εr = 11.68`, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that was an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.
