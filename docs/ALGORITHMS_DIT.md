@@ -22,12 +22,20 @@ Controls are contextual. COCOS-II EOT and Min/Max Vsb appear only when the infer
 
 The primary reported Dit is labelled **Minimum Dit (PV2000-style)**. It is the minimum accepted **discrete** variation-method Dit point. PCHIP interpolation never changes this value.
 
-The optional PCHIP branch is used for **Midgap Dit (PCHIP)** and the green fitted curve only. It offers:
+The optional PCHIP branch is used for **Midgap Dit (PCHIP)** and the green fitted curve only. It offers two preprocessing methods:
 
-- **PCHIP outlier limit** — rejects high Dit points inside the 0.1–0.5 V fit window;
-- **Interpolation scale** — `LOG10` (default) fits `log10(Dit)`; `Linear` fits Dit directly.
+- **Median-binned PCHIP** — default. After the existing accepted-point/outlier filtering, nearby points are grouped into fixed Vsb bins. The default bin width is **10 mV**. Each bin is represented by median Vsb and the median Dit value in the selected interpolation space, then PCHIP is applied to those representatives.
+- **PCHIP (original)** — preserves the previous raw-point preprocessing for compatibility/regression. Only essentially identical Vsb values (<1e-12 V apart) are collapsed before PCHIP.
 
-For COCOS-II, PCHIP is applied after COCOS-II reconstructs signed Vsb and after the Min/Max Vsb acceptance mask is formed. Therefore COCOS-II and PCHIP can be used together without PCHIP redefining the PV2000-style minimum Dit.
+Shared controls:
+
+- **Median Vsb window** — adjustable in mV and used only by Median-binned PCHIP; default 10 mV.
+- **PCHIP outlier limit** — rejects high Dit points inside the 0.1–0.5 V fit window.
+- **Interpolation scale** — `LOG10` (default) fits `log10(Dit)`; `Linear` fits Dit directly. Median-binned PCHIP also computes its per-bin median in the selected interpolation space.
+
+The 10 mV default was selected after comparing the supplied real Dit–Vsb data against 5 mV, 10 mV, 20 mV, original PCHIP, LOWESS, MAKIMA and smoothing-spline candidates. It suppresses dense end-region zig-zagging while leaving the sparse midgap trend essentially unchanged on that dataset. This is an analyzer smoothing choice, not a vendor PV-2000 algorithm claim.
+
+For COCOS-II, PCHIP preprocessing is applied after COCOS-II reconstructs signed Vsb and after the Min/Max Vsb acceptance mask is formed. Therefore COCOS-II and either PCHIP method can be used together without redefining the PV2000-style minimum Dit.
 
 ## Standard COCOS
 
