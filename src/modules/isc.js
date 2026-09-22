@@ -1,43 +1,41 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},
-    X=PV.xml,
-    S=PV.stats,
-    GEO=PV.geometry;
-  const esc=v=>PV.ui.escapeHtml(v);
-  const help=t=>PV.ui.help(t);
-  const css=n=>PV.ui.cssVar(n);
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
+  const esc=value=>PV.ui.escapeHtml(value);
+  const help=text=>PV.ui.help(text);
+  const css=name=>PV.ui.cssVar(name);
   const fmt=(v,n=4)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||(Math.abs(v)>0&&Math.abs(v)<1e-3)?v.toExponential(n):v.toFixed(n);
+
+  function firstNum(parent,names,d=NaN){
+    for(const name of names){
+      const v=X.num(parent,name,NaN);
+      if(Number.isFinite(v))return v;
+    }
+    return d;
+  }
 
   function scalarValues(node){
     return node?X.children(node).map(e=>Number(e.textContent)).filter(Number.isFinite):[];
   }
 
-  function mean(values){
-    return S.mean(values);
-  }
-
   function reconstructSite(darkRaw,lightRaw,offset,factor){
-    const D=mean(darkRaw),
-      L=mean(lightRaw);
-    if(!Number.isFinite(D)||!Number.isFinite(offset)){
-      return{dark:NaN,light:NaN,vsb:NaN,darkMean:D,lightMean:L};
+    const darkMean=S.mean(darkRaw),
+      lightMean=S.mean(lightRaw);
+    if(![darkMean,lightMean,offset].every(Number.isFinite)){
+      return{dark:NaN,light:NaN,vsb:NaN,darkMean,lightMean};
     }
-    const dark=D-offset;
-    if(!Number.isFinite(L)||!Number.isFinite(factor)){
-      return{dark,light:NaN,vsb:NaN,darkMean:D,lightMean:L};
-    }
-    const vsb=factor*(D-L),
+    const dark=darkMean-offset;
+    if(!Number.isFinite(factor))return{dark,light:NaN,vsb:NaN,darkMean,lightMean};
+    const vsb=factor*(darkMean-lightMean),
       light=dark-vsb;
-    return{dark,light,vsb,darkMean:D,lightMean:L};
+    return{dark,light,vsb,darkMean,lightMean};
   }
 
-  function effectiveHalf(size,edgeExclusion=0){
+  function effectiveHalf(size,edge){
     const half=size/2;
     if(!Number.isFinite(half)||!(half>0))return NaN;
-    const edge=Number.isFinite(edgeExclusion)?edgeExclusion:0;
-    if(edge<0||edge>=half)return NaN;
-    return half-edge;
+    edge=Number.isFinite(edge)?edge:0;
+    return edge>=0&&edge<half?half-edge:NaN;
   }
 
   function parse(parsed){
@@ -48,12 +46,12 @@
       iter=X.direct(itd,'Iteration'),
       data=X.direct(iter,'Data'),
       items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
-      offset=X.num(md,'VcpdOffset',X.num(md,'VcpdOffsett',NaN)),
+      offset=firstNum(md,['VcpdOffset','VcpdOffsett'],0),
       factor=X.num(md,'VsbCorrectionFactor',NaN),
       pattern=X.direct(m,'Pattern'),
-      patternType=X.attrType(pattern),
       target=X.direct(m,'Target'),
       targetType=X.attrType(target),
+      patternType=X.attrType(pattern),
       pitch=X.direct(pattern,'Pitch'),
       pitchX=X.num(pitch,'X',NaN),
       pitchY=X.num(pitch,'Y',NaN),
@@ -61,13 +59,14 @@
       targetWidth=X.num(size,'Width',NaN),
       targetHeight=X.num(size,'Height',NaN),
       diameter=X.num(target,'Diameter',NaN),
-      edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0)),
-      sites=items.map((item,index)=>{
-        const darkRaw=scalarValues(X.direct(item,'VcpdDark')),
-          lightRaw=scalarValues(X.direct(item,'VcpdLight')),
-          result=reconstructSite(darkRaw,lightRaw,offset,factor);
-        return{index,darkRaw,lightRaw,...result,coord:null};
-      });
+      edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0));
+
+    const sites=items.map((item,index)=>{
+      const darkRaw=scalarValues(X.direct(item,'VcpdDark')),
+        lightRaw=scalarValues(X.direct(item,'VcpdLight')),
+        result=reconstructSite(darkRaw,lightRaw,offset,factor);
+      return{index,darkRaw,lightRaw,...result,coord:null};
+    });
 
     let coords=[],
       coordinateSource='unavailable';
@@ -82,30 +81,30 @@
       }
     }
 
-    if(!coords.length&&patternType==='MapPattern'&&targetType==='SquareCell'){
-      const hx=effectiveHalf(targetWidth,edgeExclusion),
-        hy=effectiveHalf(targetHeight,edgeExclusion);
-      if([hx,hy,pitchX,pitchY].every(Number.isFinite)){
-        coords=GEO.centeredRectGrid(hx,hy,pitchX,pitchY,sites.length);
-        if(coords.length)coordinateSource='MapPattern + SquareCell';
+    if(!coords.length&&patternType==='MapPattern'){
+      if(targetType==='SquareCell'){
+        const hx=effectiveHalf(targetWidth,edgeExclusion),
+          hy=effectiveHalf(targetHeight,edgeExclusion);
+        if([hx,hy,pitchX,pitchY].every(Number.isFinite)){
+          coords=GEO.centeredRectGrid(hx,hy,pitchX,pitchY,sites.length);
+          if(coords.length)coordinateSource='MapPattern + SquareCell';
+        }
+      }else if(targetType==='RoundWafer'){
+        const radius=effectiveHalf(diameter,edgeExclusion);
+        if([radius,pitchX,pitchY].every(Number.isFinite)){
+          coords=GEO.roundGrid(radius,pitchX,pitchY,sites.length);
+          if(coords.length)coordinateSource='MapPattern + RoundWafer (inferred)';
+        }
       }
     }
 
-    if(!coords.length&&patternType==='MapPattern'&&targetType==='RoundWafer'){
-      const radius=effectiveHalf(diameter,edgeExclusion);
-      if([radius,pitchX,pitchY].every(Number.isFinite)){
-        coords=GEO.roundGrid(radius,pitchX,pitchY,sites.length);
-        if(coords.length)coordinateSource='MapPattern + RoundWafer (inferred)';
-      }
-    }
-
-    sites.forEach((site,i)=>{site.coord=coords[i]||null;});
+    sites.forEach((site,i)=>{site.coord=coords[i]||null});
     return{
       ...c,
-      offset,
-      factor,
       sites,
       coords,
+      offset,
+      factor,
       coordinateSource,
       patternType,
       patternName:X.text(pattern,'Name',''),
@@ -133,7 +132,7 @@
         short:'Vcpd Dark',
         unit:'V',
         values:d.sites.map(s=>s.dark),
-        help:'Mean dark VCPD reading minus the XML VcpdOffset.'
+        help:'PV-2000 dark contact-potential result: mean dark reading minus the XML Vcpd offset.'
       },
       light:{
         key:'light',
@@ -141,7 +140,7 @@
         short:'Vcpd Light',
         unit:'V',
         values:d.sites.map(s=>s.light),
-        help:'PV-2000 corrected illuminated result reconstructed as Vcpd Dark minus VSB.'
+        help:'PV-2000 illuminated contact-potential result reconstructed as Vcpd Dark − VSB, including the XML VsbCorrectionFactor.'
       },
       vsb:{
         key:'vsb',
@@ -149,14 +148,29 @@
         short:'VSB',
         unit:'V',
         values:d.sites.map(s=>s.vsb),
-        help:'Surface barrier reconstructed as VsbCorrectionFactor × (mean dark raw VCPD − mean light raw VCPD).'
+        help:'Surface barrier reconstructed as VsbCorrectionFactor × (mean dark raw Vcpd − mean illuminated raw Vcpd).'
       }
     };
     const summaries={};
-    Object.values(metrics).forEach(metric=>{
-      summaries[metric.key]=S.summary(metric.values);
-    });
+    for(const [key,metric] of Object.entries(metrics))summaries[key]=S.summary(metric.values);
     return{metrics,summaries};
+  }
+
+  function color(t){
+    t=Math.max(0,Math.min(1,t));
+    const stops=[
+      [0,[49,54,149]],
+      [.25,[39,127,142]],
+      [.5,[63,175,109]],
+      [.75,[218,200,50]],
+      [1,[220,55,55]]
+    ];
+    let i=0;
+    while(i<stops.length-2&&t>stops[i+1][0])i++;
+    const[a,c1]=stops[i],
+      [b,c2]=stops[i+1],
+      u=(t-a)/(b-a);
+    return`rgb(${c1.map((v,j)=>Math.round(v+(c2[j]-v)*u)).join(',')})`;
   }
 
   function finiteRange(values,pad=.04){
@@ -166,10 +180,14 @@
       hi=Math.max(...z);
     if(lo===hi){
       const d=Math.max(1e-6,Math.abs(lo)*.05||.05);
-      return[lo-d,hi+d];
+      lo-=d;
+      hi+=d;
+    }else{
+      const d=(hi-lo)*pad;
+      lo-=d;
+      hi+=d;
     }
-    const d=(hi-lo)*pad;
-    return[lo-d,hi+d];
+    return[lo,hi];
   }
 
   function niceTicks(lo,hi,n=5){
@@ -191,19 +209,19 @@
   }
 
   function drawAxes(ctx,W,H,p,xr,yr,xLabel,yLabel){
-    const Xp=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),
-      Yp=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b);
+    const X=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),
+      Y=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b);
     ctx.strokeStyle=css('--grid2');
     ctx.lineWidth=1;
     for(const t of niceTicks(xr[0],xr[1],5)){
-      const x=Xp(t);
+      const x=X(t);
       ctx.beginPath();
       ctx.moveTo(x,p.t);
       ctx.lineTo(x,H-p.b);
       ctx.stroke();
     }
     for(const t of niceTicks(yr[0],yr[1],5)){
-      const y=Yp(t);
+      const y=Y(t);
       ctx.beginPath();
       ctx.moveTo(p.l,y);
       ctx.lineTo(W-p.r,y);
@@ -214,34 +232,17 @@
     ctx.fillStyle=css('--muted');
     ctx.font='10px system-ui';
     ctx.textAlign='center';
-    for(const t of niceTicks(xr[0],xr[1],5))ctx.fillText(axisFmt(t),Xp(t),H-17);
+    for(const t of niceTicks(xr[0],xr[1],5))ctx.fillText(axisFmt(t),X(t),H-18);
     ctx.fillText(xLabel,(p.l+W-p.r)/2,H-3);
     ctx.textAlign='right';
-    for(const t of niceTicks(yr[0],yr[1],5))ctx.fillText(axisFmt(t),p.l-7,Yp(t)+3);
+    for(const t of niceTicks(yr[0],yr[1],5))ctx.fillText(axisFmt(t),p.l-7,Y(t)+3);
     ctx.save();
     ctx.translate(13,(p.t+H-p.b)/2);
     ctx.rotate(-Math.PI/2);
     ctx.textAlign='center';
     ctx.fillText(yLabel,0,0);
     ctx.restore();
-    return{X:Xp,Y:Yp};
-  }
-
-  function color(t){
-    t=Math.max(0,Math.min(1,t));
-    const stops=[
-      [0,[49,54,149]],
-      [.25,[39,127,142]],
-      [.5,[63,175,109]],
-      [.75,[218,200,50]],
-      [1,[220,55,55]]
-    ];
-    let i=0;
-    while(i<stops.length-2&&t>stops[i+1][0])i++;
-    const[a,c1]=stops[i],
-      [b,c2]=stops[i+1],
-      u=(t-a)/(b-a);
-    return `rgb(${c1.map((v,j)=>Math.round(v+(c2[j]-v)*u)).join(',')})`;
+    return{X,Y};
   }
 
   function drawMap(canvas,d,a,key,selected,zoom,onZoom,onSelect){
@@ -264,17 +265,19 @@
     }
 
     const b=GEO.bounds(d.coords),
-      dx=Number.isFinite(d.pitchX)&&d.pitchX>0?d.pitchX:1,
-      dy=Number.isFinite(d.pitchY)&&d.pitchY>0?d.pitchY:1,
-      autoX=[b.xmin-dx/2,b.xmax+dx/2],
-      autoY=[b.ymin-dy/2,b.ymax+dy/2],
+      dx=Number.isFinite(d.pitchX)&&d.pitchX>0?d.pitchX:0,
+      dy=Number.isFinite(d.pitchY)&&d.pitchY>0?d.pitchY:0,
+      autoX=[b.xmin-(dx||1)/2,b.xmax+(dx||1)/2],
+      autoY=[b.ymin-(dy||1)/2,b.ymax+(dy||1)/2],
       aspect=PV.plot.equalAspectRanges(autoX,autoY,W-p.l-p.r,H-p.t-p.b),
       xr=PV.plot.resolve(aspect.x,zoom?.x),
       yr=PV.plot.resolve(aspect.y,zoom?.y),
-      {X:Xp,Y:Yp}=drawAxes(ctx,W,H,p,xr,yr,'X [mm]','Y [mm]'),
-      range=finiteRange(values,0),
-      lo=range[0],
-      hi=range[1];
+      axes=drawAxes(ctx,W,H,p,xr,yr,'X [mm]','Y [mm]'),
+      X=axes.X,
+      Y=axes.Y,
+      vr=finiteRange(values,0),
+      lo=vr[0],
+      hi=vr[1];
 
     ctx.save();
     ctx.beginPath();
@@ -283,10 +286,10 @@
     d.coords.forEach((pt,i)=>{
       const v=values[i];
       if(!Number.isFinite(v))return;
-      const cx=Xp(pt.x),
-        cy=Yp(pt.y),
-        halfW=dx>0?Math.abs(Xp(pt.x+dx/2)-cx):5,
-        halfH=dy>0?Math.abs(Yp(pt.y+dy/2)-cy):5;
+      const cx=X(pt.x),
+        cy=Y(pt.y),
+        halfW=dx>0?Math.abs(X(pt.x+dx/2)-cx):5,
+        halfH=dy>0?Math.abs(Y(pt.y+dy/2)-cy):5;
       ctx.fillStyle=color((v-lo)/(hi-lo||1));
       ctx.fillRect(cx-halfW,cy-halfH,Math.max(1,2*halfW),Math.max(1,2*halfH));
       if(i===selected){
@@ -304,6 +307,8 @@
     for(let j=0;j<=10;j++)grad.addColorStop(j/10,color(j/10));
     ctx.fillStyle=grad;
     ctx.fillRect(cbx,cby,12,cbh);
+    ctx.strokeStyle=css('--soft');
+    ctx.strokeRect(cbx,cby,12,cbh);
     ctx.fillStyle=css('--muted');
     ctx.textAlign='left';
     ctx.fillText(axisFmt(hi),cbx+16,cby+4);
@@ -324,16 +329,18 @@
       let best=-1,
         bestD=Infinity;
       d.coords.forEach((pt,i)=>{
-        const dd=(mx-Xp(pt.x))**2+(my-Yp(pt.y))**2;
-        if(dd<bestD){bestD=dd;best=i;}
+        const dd=(mx-X(pt.x))**2+(my-Y(pt.y))**2;
+        if(dd<bestD){bestD=dd;best=i}
       });
       if(best>=0&&bestD<180){
         const pt=d.coords[best],
           v=values[best];
-        PV.ui.showTooltip(tip,e,`<b>Point ${best+1}</b><br>X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm<br>${esc(metric.short)} = ${fmt(v,5)} V`);
-      }else{
-        PV.ui.hideTooltip(tip);
-      }
+        PV.ui.showTooltip(
+          tip,
+          e,
+          `<b>Point ${best+1}</b><br>X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm<br>${esc(metric.short)} = ${fmt(v,5)} V`
+        );
+      }else PV.ui.hideTooltip(tip);
     };
     canvas.onclick=e=>{
       const rect=canvas.getBoundingClientRect(),
@@ -342,12 +349,11 @@
       let best=-1,
         bestD=Infinity;
       d.coords.forEach((pt,i)=>{
-        const dd=(mx-Xp(pt.x))**2+(my-Yp(pt.y))**2;
-        if(dd<bestD){bestD=dd;best=i;}
+        const dd=(mx-X(pt.x))**2+(my-Y(pt.y))**2;
+        if(dd<bestD){bestD=dd;best=i}
       });
       if(best>=0&&bestD<300)onSelect?.(best);
     };
-
     PV.plot.bind(canvas,{
       W,
       H,
@@ -374,7 +380,7 @@
       autoY=[0,Math.max(...bins.map(b=>b.count),1)],
       xr=PV.plot.resolve(autoX,zoom?.x),
       yr=PV.plot.resolve(autoY,zoom?.y),
-      {X:Xp,Y:Yp}=drawAxes(ctx,W,H,p,xr,yr,`${metric.short} [${metric.unit}]`,'Count'),
+      {X,Y}=drawAxes(ctx,W,H,p,xr,yr,`${metric.short} [${metric.unit}]`,'Count'),
       vr=finiteRange(metric.values,0),
       lo=vr[0],
       hi=vr[1];
@@ -384,9 +390,9 @@
     ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
     ctx.clip();
     for(const bin of bins){
-      const x0=Xp(bin.lo),
-        x1=Xp(bin.hi),
-        y=Yp(bin.count),
+      const x0=X(bin.lo),
+        x1=X(bin.hi),
+        y=Y(bin.count),
         t=((bin.lo+bin.hi)/2-lo)/(hi-lo||1);
       ctx.fillStyle=color(t);
       ctx.fillRect(Math.min(x0,x1),y,Math.max(1,Math.abs(x1-x0)-1),H-p.b-y);
@@ -407,8 +413,8 @@
   function drawRaw(canvas,d,selected,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       site=d.sites[selected],
-      dark=site?.darkRaw||[],
-      light=site?.lightRaw||[],
+      dark=site?site.darkRaw.map(v=>v-d.offset):[],
+      light=site?site.lightRaw.map(v=>v-d.offset):[],
       n=Math.max(dark.length,light.length),
       W=canvas.width=760,
       H=canvas.height=300,
@@ -418,11 +424,12 @@
     ctx.fillRect(0,0,W,H);
     if(!site||!n)return;
 
-    const autoX=[1,Math.max(2,n)],
+    const x=Array.from({length:n},(_,i)=>i+1),
+      autoX=[1,Math.max(2,n)],
       autoY=finiteRange([...dark,...light]),
       xr=PV.plot.resolve(autoX,zoom?.x),
       yr=PV.plot.resolve(autoY,zoom?.y),
-      {X:Xp,Y:Yp}=drawAxes(ctx,W,H,p,xr,yr,'Reading index','Raw Vcpd [V]');
+      {X,Y}=drawAxes(ctx,W,H,p,xr,yr,'Reading index','Vcpd [V]');
 
     function series(values,stroke){
       ctx.strokeStyle=stroke;
@@ -431,20 +438,19 @@
       let started=false;
       values.forEach((v,i)=>{
         if(!Number.isFinite(v))return;
-        const px=Xp(i+1),
-          py=Yp(v);
-        if(!started){ctx.moveTo(px,py);started=true;}else ctx.lineTo(px,py);
+        const px=X(i+1),
+          py=Y(v);
+        if(!started){ctx.moveTo(px,py);started=true}else ctx.lineTo(px,py);
       });
       ctx.stroke();
       ctx.fillStyle=stroke;
       values.forEach((v,i)=>{
         if(!Number.isFinite(v))return;
         ctx.beginPath();
-        ctx.arc(Xp(i+1),Yp(v),2.4,0,2*Math.PI);
+        ctx.arc(X(i+1),Y(v),2.4,0,2*Math.PI);
         ctx.fill();
       });
     }
-
     ctx.save();
     ctx.beginPath();
     ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
@@ -457,11 +463,11 @@
     ctx.fillRect(p.l+8,p.t+8,10,3);
     ctx.fillStyle=css('--muted');
     ctx.textAlign='left';
-    ctx.fillText('Dark raw',p.l+23,p.t+12);
+    ctx.fillText('Dark raw (offset corrected)',p.l+23,p.t+12);
     ctx.fillStyle=css('--blue');
-    ctx.fillRect(p.l+92,p.t+8,10,3);
+    ctx.fillRect(p.l+162,p.t+8,10,3);
     ctx.fillStyle=css('--muted');
-    ctx.fillText('Light raw',p.l+107,p.t+12);
+    ctx.fillText('Light raw (offset corrected)',p.l+177,p.t+12);
 
     PV.plot.bind(canvas,{
       W,
@@ -474,32 +480,32 @@
   }
 
   function downloadMap(d,a,key){
-    const metric=a.metrics[key];
+    const m=a.metrics[key];
     PV.exporter.csv(
       `${safe(d.resultName)}_${key}.csv`,
-      ['Point','X [mm]','Y [mm]',`${metric.short} [${metric.unit}]`],
+      ['Point','X [mm]','Y [mm]',`${m.short} [${m.unit}]`],
       d.sites.map((site,i)=>[
         i+1,
         site.coord?.x??'',
         site.coord?.y??'',
-        metric.values[i]
+        m.values[i]
       ])
     );
   }
 
   function downloadRaw(d,selected){
-    const site=d.sites[selected];
-    if(!site)return;
-    const n=Math.max(site.darkRaw.length,site.lightRaw.length);
+    const s=d.sites[selected];
+    if(!s)return;
+    const n=Math.max(s.darkRaw.length,s.lightRaw.length);
     PV.exporter.csv(
       `${safe(d.resultName)}_site_${selected+1}_raw.csv`,
-      ['Reading','Dark raw [V]','Light raw [V]','Dark minus offset [V]','Light raw minus offset [V]'],
+      ['Reading','Dark raw [V]','Light raw [V]','Dark offset-corrected [V]','Light offset-corrected [V]'],
       Array.from({length:n},(_,i)=>[
         i+1,
-        site.darkRaw[i]??'',
-        site.lightRaw[i]??'',
-        Number.isFinite(site.darkRaw[i])?site.darkRaw[i]-d.offset:'',
-        Number.isFinite(site.lightRaw[i])?site.lightRaw[i]-d.offset:''
+        s.darkRaw[i]??'',
+        s.lightRaw[i]??'',
+        Number.isFinite(s.darkRaw[i])?s.darkRaw[i]-d.offset:'',
+        Number.isFinite(s.lightRaw[i])?s.lightRaw[i]-d.offset:''
       ])
     );
   }
@@ -514,31 +520,31 @@
       };
 
     function metaRow(k,v,h=''){
-      return `<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
+      return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
     }
 
-    function statsRows(){
-      return Object.values(a.metrics).map(metric=>{
-        const s=a.summaries[metric.key];
-        return `<tr title="${esc(metric.help)}"><td>${esc(metric.short)} ${help(metric.help)}</td><td>${fmt(s.mean)}</td><td>${fmt(s.median)}</td><td>${fmt(s.stdev)}</td><td>${fmt(s.min)}</td><td>${fmt(s.max)}</td></tr>`;
+    function statRows(){
+      return Object.values(a.metrics).map(m=>{
+        const s=a.summaries[m.key];
+        return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(s.mean)}</td><td>${fmt(s.median)}</td><td>${fmt(s.stdev)}</td><td>${fmt(s.min)}</td><td>${fmt(s.max)}</td></tr>`;
       }).join('');
     }
 
     function selectedHtml(){
       const s=d.sites[selected]||{},
         p=s.coord;
-      return `<dl class="meta">
+      return`<dl class="meta">
         ${metaRow('Point',String(selected+1))}
         ${metaRow('Coordinate',p?`X ${fmt(p.x,2)} mm · Y ${fmt(p.y,2)} mm`:'—')}
         ${metaRow('Vcpd Dark',`${fmt(s.dark,6)} V`)}
         ${metaRow('Vcpd Light',`${fmt(s.light,6)} V`)}
         ${metaRow('VSB',`${fmt(s.vsb,6)} V`)}
-        ${metaRow('Raw readings',String(Math.min(s.darkRaw?.length||0,s.lightRaw?.length||0)))}
+        ${metaRow('Raw readings',`${Math.min(s.darkRaw?.length||0,s.lightRaw?.length||0)}`)}
       </dl>`;
     }
 
     host.innerHTML=`<div class="module-grid isc-module"><aside class="side">
-      <section class="panel"><h3>Measurement ${help('ISC measures VCPD in dark and illuminated states. The browser runtime reads only the PV-2000 XML; vendor exports are development/regression references only.')}</h3><dl class="meta">
+      <section class="panel"><h3>Measurement ${help('ISC measures VCPD in dark and illuminated states. The browser runtime reads only the PV-2000 XML; vendor exports are used only for development regression.')}</h3><dl class="meta">
         ${metaRow('Result',d.resultName)}
         ${metaRow('Recipe',d.name)}
         ${metaRow('Substrate',d.substrateId||'—')}
@@ -549,15 +555,12 @@
         ${metaRow('Sites',String(d.sites.length))}
         ${metaRow('Readings/site',fmt(d.numberOfDataPoints,0),'PV-2000 recipe setting for repeated VCPD readings averaged at each site.')}
         ${metaRow('Interval',`${fmt(d.measurementInterval,4)} s`)}
-        ${metaRow('Vcpd offset',`${fmt(d.offset,7)} V`,'Subtracted from the site mean dark reading before reporting Vcpd Dark.')}
-        ${metaRow('VSB factor',fmt(d.factor,5),'Applied to the mean dark-minus-light raw VCPD difference.')}
+        ${metaRow('Vcpd offset',`${fmt(d.offset,7)} V`,'Subtracted from the dark raw mean before reporting Vcpd Dark.')}
+        ${metaRow('VSB factor',fmt(d.factor,5),'Applied to the dark-minus-light raw mean difference before VSB and reported Vcpd Light are formed.')}
         ${metaRow('Coordinates',d.coordinateSource)}
       </dl></section>
-
-      <section class="panel"><h3>Results summary ${help('Average, Median, sample Stdev, Min and Max over finite ISC sites. The paired reference reproduces the PV-2000 summary at floating-point precision.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
-
-      <section class="panel"><h3>Selected site ${help('Click a map cell to inspect that site and its repeated raw dark/light VCPD readings.')}</h3><div id="iSelected">${selectedHtml()}</div></section>
-
+      <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max are calculated over finite sites. Stdev is the sample standard deviation, matching the current paired PV-2000 reference export.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statRows()}</tbody></table></div></section>
+      <section class="panel"><h3>Selected site ${help('Click a map cell to inspect that site. Raw-reading plots show the underlying dark/light readings after subtraction of the Vcpd offset; the reported scalar Vcpd Light additionally includes the VSB correction factor.')}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <details class="panel"><summary>Acquisition metadata</summary><dl class="meta">
         ${metaRow('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}
         ${metaRow('Measurement velocity',fmt(d.measurementVelocity,4))}
@@ -568,9 +571,9 @@
       </dl></details>
     </aside><section class="plots">
       <div class="panel chart"><header><b>ISC map</b>${help('Select Vcpd Dark, Vcpd Light or VSB. Click a cell to inspect its raw readings. Wheel zooms both spatial axes; hover an axis to zoom only that direction; double-click restores Auto.')}<span class="grow"></span><select id="iMetric"><option value="dark">Vcpd Dark</option><option value="light">Vcpd Light</option><option value="vsb">VSB</option></select><button id="iExportMap">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iMapAxes')}<canvas id="iMap"></canvas></div></div>
-      <div class="panel chart"><header><b>Distribution</b>${help('Distribution of the currently selected ISC result across all finite sites.')}<span class="grow"></span><button id="iExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iHistAxes')}<canvas id="iHist"></canvas></div></div>
+      <div class="panel chart"><header><b>Distribution</b>${help('Distribution of the currently selected ISC result across all finite sites. Wheel/double-click and Axes use the shared plot controls.')}<span class="grow"></span><button id="iExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iHistAxes')}<canvas id="iHist"></canvas></div></div>
     </section><section class="plots">
-      <div class="panel chart"><header><b>Raw readings</b>${help('Repeated dark and illuminated VCPD readings stored in the selected ISC XML DataItem. These are plotted before VcpdOffset and VsbCorrectionFactor are applied.')}<span class="grow"></span><button id="iExportRaw">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iRawAxes')}<canvas id="iRaw"></canvas></div></div>
+      <div class="panel chart"><header><b>Raw readings</b>${help('Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.')}<span class="grow"></span><button id="iExportRaw">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('iRawAxes')}<canvas id="iRaw"></canvas></div></div>
     </section></div>`;
 
     const metricSelect=host.querySelector('#iMetric');
