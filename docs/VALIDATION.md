@@ -37,6 +37,14 @@ npm run validate:qss
 
 The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
+### HighDensityPattern compatibility
+
+Status: **inferred coordinate reconstruction**, not vendor-validated.
+
+Older QSS XMLs in the current development set use `HighDensityPattern` with explicit normalized `Coefficients` and a scalar `Dimension`. Observed examples include 15 × 15 and 20 × 20 grids on a 100 mm RoundWafer with 7 mm edge exclusion, and a 35 × 35 grid on a 156 × 156 mm SquareCell with 7 mm edge exclusion. Runtime now requires coefficient count to equal measured-value count and preserves coefficient order.
+
+For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle. For RoundWafer, the full normalized coefficient template is filtered with `x²+y² < 1` before scaling by `Diameter/2 - EdgeExclusion`. This exactly reproduces the observed XML point counts: 145 from a 15×15 template and 276 from a 20×20 template. A matching PV-2000 X/Y export is still required before this path can be marked validated.
+
 ### Valid-data filtering
 
 The new valid-range UI is an analyzer feature rather than a vendor-output replication. Tests verify range masking; users must choose limits appropriate to the sample geometry/data distribution. This is especially important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
@@ -125,6 +133,39 @@ npm run validate:isc
 
 Matching private references use the same basename under `private/reference/isc/`. Runtime remains XML-only; the CSV is never consulted during user analysis. Alternate ISC pattern/target/raw/result paths remain outside this validated envelope until paired vendor output is supplied.
 
+
+## VCPD — XML + PV-2000 export
+
+One paired VCPD XML + PV-2000 CSV export establishes the current `VcpdMeasurement + MapPattern + RoundWafer` reference family. It is implemented in the shared ISC/Kelvin-probe analyzer but retains a separate result path and validation boundary.
+
+For the paired reference, every `VcpdDataItem` contains one `Readings/double`, `LightOn=false`, and iteration-level `VcpdOffset=0 V`. The vendor result is reproduced by:
+
+```text
+Vcpd Dark = XML Reading
+```
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| `VcpdMeasurement` dispatch | unit tested | tested |
+| point count | 1649 XML = 1649 export | validated |
+| readings | 1 reading/site | validated for reference |
+| target / schedule | 200 mm RoundWafer, 8 mm exclusion, 4 × 4 mm pitch | validated for reference |
+| X/Y coordinates | all 1649 pairs exact | validated |
+| Vcpd Dark | max abs error 0 V | validated |
+| Average / Median / sample Stdev / Min / Max | floating-point parity with vendor summary | validated |
+| non-zero VcpdOffset | no paired reference | NEW PROFILE |
+| LightOn=true | no paired reference | NEW PROFILE |
+| multiple readings/site | no paired reference | NEW PROFILE |
+
+The strict circular schedule uses `r = Diameter/2 - EdgeExclusion` and keeps lattice points satisfying `x²+y²<r²` in X-fast row-major order. For the reference, `r=92 mm`, the first coordinate is `(-24,-88) mm`, and the last is `(24,88) mm`.
+
+Run:
+
+```bash
+npm run validate:vcpd
+```
+
+Matching private references use the same basename under `private/reference/vcpd/`. Runtime remains XML-only; the CSV is never consulted during user analysis.
 
 ## LBIC raster — paired XML + PV-2000 export regression
 

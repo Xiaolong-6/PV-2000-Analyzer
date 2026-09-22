@@ -110,6 +110,10 @@ QSS Distribution defaults to Count on X and keeps Swap axes inside the Axes acti
 
 The QSS runtime shows only facts for the currently imported dataset. Fixed reference-validation evidence for the 305-point paired dataset remains in project documentation rather than being presented as if it belonged to a newly imported XML. The empty `Algorithm notes` disclosure has also been removed from the runtime; detailed algorithm notes stay in `docs/ALGORITHMS_QSS_UPCD.md`.
 
+Older QSS XMLs using `HighDensityPattern` are now supported as an **inferred coordinate path**. These XMLs carry a scalar `Dimension` and a count-matched normalized `Coefficients` grid. Current observed examples cover 15×15 and 20×20 RoundWafer maps and a 35×35 SquareCell map. SquareCell coefficients scale to the EdgeExclusion-adjusted rectangle; RoundWafer keeps only the strict normalized unit-circle coefficient subset (`x²+y² < 1`) and scales it by the effective radius. Keep this labelled inferred until a matching PV-2000 X/Y export is regressed.
+
+The main toolbar also exposes `← Open XML →` navigation. After one folder authorization, the arrows traverse XML files in natural filename order without reopening the picker for each file. The ordinary Open XML and drag/drop paths remain unchanged; a `webkitdirectory` fallback covers browsers without the File System Access API.
+
 ## ISC status
 
 ISC support is now a separate `ISCMeasurement` module rather than a Generic Inspector fallback. The PV-2000A manual defines ISC as dark/illuminated Kelvin-probe VCPD with VSB determined from their difference, and lists Vcpd Dark / Vcpd Light / VSB as the three data-view quantities.
@@ -124,7 +128,9 @@ One matching XML + vendor CSV establishes exact numerical behavior for the curre
 
 Alternate ISC pattern/target/raw-reading/result paths remain **NEW PROFILE** unless paired PV-2000 output confirms them. The runtime never reads the vendor CSV.
 
-See `docs/ALGORITHMS_ISC.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+The same module now also dispatches the separately validated `VcpdMeasurement` family. The current VCPD reference is `MapPattern + RoundWafer`: 1649 sites, 200 mm diameter, 8 mm edge exclusion, 4 mm pitch, one direct `Readings` value/site, `LightOn=false` and iteration-level `VcpdOffset=0`. All 1649 reconstructed X/Y coordinates and Vcpd Dark values match the vendor CSV exactly; summary statistics use sample Stdev and match to floating-point precision. VCPD exposes only Vcpd Dark and does not synthesize ISC-only Vcpd Light/VSB. Non-zero VcpdOffset, illumination, multiple readings/site or another result path remain **NEW PROFILE**.
+
+See `docs/ALGORITHMS_ISC.md`, `docs/ALGORITHMS_VCPD.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
 ## LBIC status
 
@@ -181,6 +187,7 @@ npm run check
 npm run build
 npm run validate:qss
 npm run validate:isc
+npm run validate:vcpd
 npm run validate:lbic
 git status --short --ignored
 ```

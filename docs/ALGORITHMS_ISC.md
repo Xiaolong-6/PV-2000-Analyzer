@@ -2,7 +2,7 @@
 
 ## Scope
 
-This module handles PV-2000 `ISCMeasurement` XML results (Initial Surface Charge). The shipped browser remains XML-only; matching PV-2000 CSV exports are used only for regression.
+This shared Kelvin-probe module handles PV-2000 `ISCMeasurement` XML results (Initial Surface Charge) and also dispatches the separately validated `VcpdMeasurement` result family. ISC reconstruction remains documented here; VCPD-specific semantics are documented in [ALGORITHMS_VCPD.md](ALGORITHMS_VCPD.md). The shipped browser remains XML-only; matching PV-2000 CSV exports are used only for regression.
 
 The PV-2000A manual describes ISC as a non-contact Kelvin-probe measurement of VCPD in the dark and under illumination, with VSB determined from the dark/light difference. The ISC data-viewing section lists exactly three result quantities: **Vcpd Dark [V]**, **Vcpd Light [V]** and **VSB [V]**. It also states that ISC Raw Data Export contains the voltage transients/readings for each measurement point.
 

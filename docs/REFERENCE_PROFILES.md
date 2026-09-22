@@ -137,6 +137,14 @@ Different Region origin/width/height or Dimension values stay inside QSS-MAP-002
 
 Examples include another pattern/coordinate encoding, reversed or serpentine acquisition semantics, a different point-count interpretation, or another vendor result path that changes how sites map to output rows.
 
+### QSS HighDensityPattern — runtime support, inferred
+
+Older QSS XMLs observed in the supplied development set use `HighDensityPattern` with a scalar `Dimension` and explicit normalized `Coefficients` covering a full square grid. Current observed instances include 15 × 15 and 20 × 20 on a 100 mm `RoundWafer` with 7 mm edge exclusion, plus 35 × 35 on a 156 × 156 mm `SquareCell` with 7 mm edge exclusion.
+
+Runtime support preserves coefficient order and requires coefficient count = measured-value count. `SquareCell` coefficients are scaled to the EdgeExclusion-adjusted rectangle. `RoundWafer` coefficients are restricted to the strict normalized unit-circle subset (`x²+y² < 1`) and then scaled by the EdgeExclusion-adjusted radius.
+
+This path is **inferred**, not a new validated profile, because no matching PV-2000 X/Y export has yet been supplied. A paired export should be used before promoting this coordinate mapping to validated status.
+
 ---
 
 ### ISC-MAP-001 — repeated-reading Initial Surface Charge map
@@ -196,6 +204,68 @@ Examples include:
 - another unit convention or vendor result set.
 
 Ordinary numeric changes in pitch, target size, edge exclusion, reading count, offset or correction factor stay inside this family when the same semantic path applies.
+
+---
+
+### VCPD-MAP-001 — direct dark-contact-potential wafer map
+
+**Measurement type**
+
+`VcpdMeasurement`
+
+**Reference material**
+
+One matching PV-2000 XML + CSV export plus a PV-2000 result screenshot. The XML contains one `Readings/double` value for every `VcpdDataItem`; the CSV contains X/Y coordinates, vendor `Vcpd Dark [V]` and summary statistics.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- `VcpdDataItem/Readings` with exactly one reading/site;
+- `MapPattern + RoundWafer`;
+- `LightOn=false`;
+- iteration-level `VcpdOffset=0 V`;
+- vendor output `Vcpd Dark [V]`.
+
+For this paired reference:
+
+```text
+Vcpd Dark = XML Reading
+```
+
+The runtime stores VCPD site results through the shared ISC/Kelvin-probe data model and uses the mean of the `Readings` container. This does **not** expand the validated claim to multiple readings/site or non-zero offsets.
+
+The reference instance has 1649 sites, one reading/site, a 200 mm RoundWafer, 8 mm EdgeExclusion and 4 × 4 mm pitch. Those numeric settings are evidence, not a runtime whitelist.
+
+**Validated / established**
+
+- 1649 XML sites = 1649 vendor rows;
+- scheduled radius = 200/2 − 8 = **92 mm**;
+- strict circular `x²+y²<r²` X-fast row-major lattice reproduces every vendor coordinate exactly;
+- first coordinate = **(-24, -88) mm** and last coordinate = **(24, 88) mm**;
+- Vcpd Dark pointwise maximum absolute error = **0 V**;
+- Average = **0.40415552129527 V**;
+- Median = **0.431620389 V**;
+- sample Stdev = **0.292987392588935 V**;
+- Min = **-3.43040323 V**;
+- Max = **2.16074562 V**;
+- analyzer finite-site summary reproduces the vendor summary to floating-point precision.
+
+**Shared analyzer behavior**
+
+`VcpdMeasurement` reuses the ISC/Kelvin-probe map, distribution, selected-site reading inspection, geometry, zoom/manual-axis and CSV-export infrastructure. Its result selector contains only Vcpd Dark; ISC-only Vcpd Light and VSB are not synthesized.
+
+**NEW PROFILE triggers**
+
+Examples include:
+
+- non-zero iteration-level VcpdOffset;
+- `LightOn=true`;
+- multiple readings/site;
+- another pattern/coordinate encoding or target geometry;
+- multiple iterations;
+- another unit convention or additional vendor result quantity.
 
 ---
 
