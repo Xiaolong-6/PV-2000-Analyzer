@@ -217,6 +217,13 @@ Validation remains scoped to semantic input/output families rather than exact nu
 
 The LBIC private validator now supports both same-basename XML+CSV current-enabled references and matching Reflectivity XPS printouts for reflectance-only cases. Runtime still reads XML only.
 
+Visual smoke against the supplied real corpus was completed before PR handoff:
+
+- a complete 61 × 61 reflectance-only XML was reconstructed and visually compared with its embedded PV-2000 XPS Reflectivity preview; the measured/sample geometry and orientation are consistent while palette/color-scale choices remain presentation-only;
+- the 2814 / 3721 partial XML was rendered with the leading acquisition-prefix schedule and produces a nonblank partial map instead of the previous geometry-unavailable state;
+- the complete example's calculated Reflectivity summary reproduces the XPS values (30.82 / 8.57 / 32.30 / 0.22 / 83.00%) at the displayed precision;
+- the quantity semantics were also exercised directly against the branch module: reflectance-only exposes Direct / Scattered / Reflectivity with Reflectivity as the sole primary result, while current-enabled LBIC retains Current / Reflectivity / IQE.
+
 Diffusion length (DL) remains unsupported as a calculated quantity. The supplied multi-beam CSV contains DL, but the XML does not expose a raw DL channel and the vendor DL algorithm has not been established.
 
 See `docs/REFERENCE_PROFILES.md`, `docs/ALGORITHMS_LBIC.md` and `docs/VALIDATION.md`.
