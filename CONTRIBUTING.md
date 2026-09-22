@@ -1,6 +1,8 @@
-# Contributing to Semilab PV-2000 Analyzer
+# Contributing to PV-2000 Analyzer
 
 Contributions are welcome from anyone who uses a PV-2000, including users who do not write code.
+
+[**Share PV-2000 data →**](https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml) · [**Open an issue →**](https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new) · [**Live analyzer →**](https://xiaolong-6.github.io/PV-2000-Analyzer/)
 
 The project grows by comparing real PV-2000 XML inputs with the matching results exported or displayed by PV-2000. The goal is reproducible support for additional measurement/result combinations without guessing vendor behavior from unrelated files.
 
