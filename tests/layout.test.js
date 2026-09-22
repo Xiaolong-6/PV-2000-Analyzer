@@ -169,3 +169,20 @@ test('Median Vsb window stays user-editable for Median-binned PCHIP',()=>{
   assert.match(src,/ditPchipMedianMv.*oninput=markDirty|\['#ditCocosEotA'[^\]]*'#ditPchipMedianMv'/);
   assert.match(src,/pchipMedianWindowV=medianMv\*1e-3/);
 });
+
+
+test('all spatial maps preserve equal physical X/Y scale by default',()=>{
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(dit,/equalAspectRanges\(rawX,rawY,W-m\.l-m\.r,H-m\.t-m\.b\)/);
+  assert.match(lbic,/equalAspectRanges\(rawX,rawY,availW,availH\)/);
+  assert.match(qss,/plot=Math\.min\(W-p\.l-p\.r,H-p\.t-p\.b\)/);
+});
+
+test('the Live shortcut hides itself on the deployed GitHub Pages site',()=>{
+  const app=fs.readFileSync(require.resolve('../src/app.js'),'utf8');
+  assert.match(app,/location\.hostname==='xiaolong-6\.github\.io'/);
+  assert.match(app,/location\.pathname\.startsWith\('\/PV-2000-Analyzer'\)/);
+  assert.match(app,/project-live/);
+});
