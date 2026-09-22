@@ -29,6 +29,10 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 
 GitHub repository settings must have Pages enabled with **Source: GitHub Actions**. On GitHub Free this also requires a public repository; paid plans can host Pages from private repositories.
 
+## Licensing model
+
+PV-2000 Analyzer uses **AGPL-3.0-only** as the community license. A separate commercial license may be negotiated for proprietary/closed-source use cases. External copyrightable contributions require acceptance of `CLA.md`, which keeps contributor ownership while granting the Project Owner the broad sublicensing/relicensing rights needed to preserve dual licensing. The commercial notice is informational only; an actual commercial license requires a separate written agreement.
+
 ## Community reference contribution workflow
 
 The repository now supports two deliberately separate reference-data paths:

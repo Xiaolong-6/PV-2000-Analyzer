@@ -1,3 +1,7 @@
+## Contributor license agreement
+
+- [ ] I have read and agree to [CLA.md](../CLA.md) for the copyrightable material in this PR, and I have authority to grant those rights.
+
 ## What does this PR add?
 
 Describe the PV-2000 measurement/result combination, bug fix or feature.

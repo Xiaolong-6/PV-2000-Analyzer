@@ -48,3 +48,8 @@ body:
           required: true
         - label: Any anonymization is limited to identifiers/names and does not silently alter scientific values.
           required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        If you later submit copyrightable material through a pull request, the repository CLA applies. Reference-data publication rights remain a separate requirement.

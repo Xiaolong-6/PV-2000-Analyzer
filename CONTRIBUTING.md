@@ -6,6 +6,21 @@ Contributions are welcome from anyone who uses a PV-2000, including users who do
 
 The project grows by comparing real PV-2000 XML inputs with the matching results exported or displayed by PV-2000. The goal is reproducible support for additional measurement/result combinations without guessing vendor behavior from unrelated files.
 
+## Contributor licensing / CLA
+
+Code, documentation, tests, UI assets and other copyrightable material submitted through a pull request are accepted under the project [Contributor License Agreement](CLA.md).
+
+The CLA does **not** transfer your copyright. It grants Xiaolong Liu broad rights, including sublicensing/relicensing rights, so the Project can remain available under AGPL-3.0 while also being offered under separate commercial/proprietary licenses.
+
+Before submitting a PR:
+
+- read [CLA.md](CLA.md);
+- make sure you have authority to grant its rights, including employer approval when applicable;
+- check the CLA acknowledgement in the pull-request template;
+- continue to follow the separate publication-rights rules for XML/CSV/XPS/screenshots and other reference data.
+
+For substantial corporate contributions, a separately signed CLA may be requested before merge.
+
 ## Two useful contribution paths
 
 ### 1. Data-only reference pull request

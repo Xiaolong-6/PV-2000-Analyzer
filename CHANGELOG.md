@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added **AGPL-3.0-only** community licensing, a separate commercial-licensing notice, copyright notice, and contributor CLA designed to preserve future dual-licensing/proprietary relicensing options while contributors retain their copyrights.
+- Added AGPL / Commercial License / CLA badges, package metadata, contribution guidance, and a PR CLA acknowledgement.
 - Added a compact landing-page project/status strip and in-app footer with inline icons for local-processing status, live site, repository, contribution guide, reference-data submission, issue reporting and exact deployed commit provenance.
 - Added build-time commit injection (`GITHUB_SHA` / `PV2000_BUILD_SHA`, otherwise `local`), README quick-link/status badges, and a guided **Share PV-2000 data** GitHub issue form.
 - Added GitHub Pages deployment from `main`: every successful test/build publishes the generated `dist/` site through GitHub Actions.
