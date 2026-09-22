@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a community contribution workflow for extending PV-2000 support: data-only PRs with raw XML + matching vendor export are explicitly welcome, with PV-2000 screenshots strongly recommended.
+- Added an opt-in tracked `reference_data/` area for publishable regression cases while keeping `private/` strictly local/confidential.
+- Added contributor/reference-data documentation and a PR checklist covering same-measurement pairing, publication rights, validation scope and regression expectations.
+
 - Removed the obsolete Advanced / legacy COCOS-II method and its guide-based runtime path.
 - Made Optional Midgap Dit (PCHIP) always visible with a default-on checkbox; disabling it suppresses the PCHIP curve/Midgap Dit only, while Minimum Dit stays unchanged.
 - Rendered the PCHIP outlier-limit input in uppercase-E scientific notation.
