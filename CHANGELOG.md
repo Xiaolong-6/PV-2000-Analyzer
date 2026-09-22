@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Renamed the project-facing product name to **PV-2000 Analyzer** across README, HTML title, landing page, toolbar brand and documentation; package name remains `pv2000-analyzer`.
 - Added selectable Optional Midgap Dit fitting methods: default **Median-binned PCHIP** with an adjustable 10 mV Vsb window, plus **PCHIP (original)** for backward-compatible raw-point fitting; LOG10/Linear remain shared scale options and Minimum Dit stays discrete/invariant.
 - Added a community contribution workflow for extending PV-2000 support: data-only PRs with raw XML + matching vendor export are explicitly welcome, with PV-2000 screenshots strongly recommended.
 - Added an opt-in tracked `reference_data/` area for publishable regression cases while keeping `private/` strictly local/confidential.
@@ -51,7 +52,7 @@
 
 ## 0.2.0 — 2026-09-21
 
-- Re-architected the Dit-only prototype into the generic Semilab PV-2000 Analyzer.
+- Re-architected the Dit-only prototype into the generic PV-2000 Analyzer.
 - Added XML measurement-type auto-detection and module registry.
 - Added Generic Inspector fallback for unsupported XML types.
 - Migrated DIT/COCOS analysis into a module.

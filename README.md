@@ -1,4 +1,4 @@
-# Semilab PV-2000 Analyzer
+# PV-2000 Analyzer
 
 Local, browser-based analysis of Semilab PV-2000 XML result files. The user imports one XML; the app detects `Measurement/@xsi:type` and dispatches it to a measurement-specific analyzer.
 
