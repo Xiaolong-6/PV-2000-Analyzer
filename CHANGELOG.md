@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.11.12 — 2026-09-22
+## v20260922.12 — 2026-09-22
 
 - Added QSS-µPCD `SquareRegionPattern + SquareCell` coordinate reconstruction from Region + Dimension, including effective pitch and explicit rectangular raster support. The supplied 35 × 30 / 1050-point XML+CSV pair validates all reconstructed X/Y coordinates point-by-point.
 - Corrected QSS Distribution filtering semantics: plotted Count now contains valid points only; excluded points no longer inflate/stack into the histogram count. Filter bounds remain inclusive and are shown only as yellow reference lines.
