@@ -302,7 +302,7 @@ test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shar
 
 test('ISC keeps validated quantities, geometry-aware map and standardized Distribution controls',()=>{
   const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
-  assert.match(isc,/types:\['ISCMeasurement'\]/);
+  assert.match(isc,/types:\['ISCMeasurement','VcpdMeasurement'\]/);
   assert.match(isc,/Vcpd Dark/);
   assert.match(isc,/Vcpd Light/);
   assert.match(isc,/VSB/);

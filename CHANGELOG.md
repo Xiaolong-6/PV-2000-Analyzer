@@ -2,6 +2,12 @@
 
 ## v20260922.15 — 2026-09-22
 
+- Added `VcpdMeasurement` support to the shared ISC/Kelvin-probe analyzer while keeping VCPD and ISC as separate XML/result profiles. VCPD exposes only Vcpd Dark and does not synthesize ISC-only Vcpd Light or VSB.
+- Validated the supplied VCPD reference point-by-point: 1649 direct XML readings equal the vendor Vcpd Dark export exactly; `MapPattern + RoundWafer` reconstruction with 200 mm diameter, 8 mm edge exclusion and 4 mm pitch reproduces all X/Y coordinates exactly.
+- Matched vendor Average / Median / sample Stdev / Min / Max and added a private paired-reference validator. Non-zero VcpdOffset, LightOn=true, multiple readings/site and alternate result paths remain explicit NEW PROFILE cases.
+
+## v20260922.15 — 2026-09-22
+
 - Added inferred QSS-µPCD `HighDensityPattern` coordinate support using explicit normalized XML `Coefficients`, covering observed 15×15 and 20×20 RoundWafer maps plus 35×35 SquareCell maps without changing the existing validated MapPattern/SquareRegionPattern paths.
 - Map `HighDensityPattern + SquareCell` coefficients to the EdgeExclusion-adjusted rectangle; for `HighDensityPattern + RoundWafer`, select the strict normalized unit-circle coefficient subset (`x²+y² < 1`) and scale it by the EdgeExclusion-adjusted radius; the supplied 15×15 and 20×20 XMLs then reproduce their 145/276 measured-point counts exactly. This coordinate path remains inferred pending a matching PV-2000 X/Y export.
 - Added previous/next XML controls around the toolbar `Open XML` button. After one folder authorization, adjacent XML files can be opened rapidly in natural filename order; browsers without the File System Access API use a folder-input fallback.
