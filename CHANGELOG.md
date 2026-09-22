@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a compact landing-page project/status strip and in-app footer with inline icons for local-processing status, live site, repository, contribution guide, reference-data submission, issue reporting and exact deployed commit provenance.
+- Added build-time commit injection (`GITHUB_SHA` / `PV2000_BUILD_SHA`, otherwise `local`), README quick-link/status badges, and a guided **Share PV-2000 data** GitHub issue form.
 - Added GitHub Pages deployment from `main`: every successful test/build publishes the generated `dist/` site through GitHub Actions.
 - Renamed the project-facing product name to **PV-2000 Analyzer** across README, HTML title, landing page, toolbar brand and documentation; package name remains `pv2000-analyzer`.
 - Added selectable Optional Midgap Dit fitting methods: default **Median-binned PCHIP** with an adjustable 10 mV Vsb window, plus **PCHIP (original)** for backward-compatible raw-point fitting; LOG10/Linear remain shared scale options and Minimum Dit stays discrete/invariant.
