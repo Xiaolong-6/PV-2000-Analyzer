@@ -68,4 +68,4 @@ test('equal-aspect auto ranges expand only the constrained axis and preserve cen
 });
 
 
-test('manual axis control markup exposes independent X/Y limits and Auto reset',()=>{const html=P.axisControls('demoAxes');assert.match(html,/data-axis-controls="demoAxes"/);for(const k of ['xmin','xmax','ymin','ymax'])assert.match(html,new RegExp(`data-axis="${k}"`));assert.match(html,/data-axis-apply/);assert.match(html,/data-axis-auto/)});
+test('manual axis control markup is a floating popover with independent X/Y limits',()=>{const html=P.axisControls('demoAxes');assert.match(html,/class="axis-popover"/);assert.match(html,/class="axis-popover-card"/);assert.match(html,/data-axis-controls="demoAxes"/);for(const k of ['xmin','xmax','ymin','ymax'])assert.match(html,new RegExp(`data-axis="${k}"`));assert.match(html,/data-axis-apply/);assert.match(html,/data-axis-auto/)});
