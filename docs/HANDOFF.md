@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.12
+# Agent handoff — 2026-09-22 — v20260922.13
 
 ## Goal
 
@@ -36,7 +36,9 @@ GitHub repository settings must have Pages enabled with **Source: GitHub Actions
 
 ## Licensing model
 
-PV-2000 Analyzer uses **AGPL-3.0-only** as the community license. A separate commercial license may be negotiated for proprietary/closed-source use cases. External copyrightable contributions require acceptance of `CLA.md`, which keeps contributor ownership while granting the Project Owner the broad sublicensing/relicensing rights needed to preserve dual licensing. The commercial notice is informational only; an actual commercial license requires a separate written agreement.
+PV-2000 Analyzer uses **AGPL-3.0-only** as the community license. A separate commercial license may be negotiated for proprietary/closed-source use cases. External copyrightable contributions require the PR author's exact acceptance of `CLA.md`, which keeps contributor ownership while granting the Project Owner the broad sublicensing/relicensing rights needed to preserve dual licensing. A `Legal / contributor grants` workflow records that acceptance as a commit status; repository branch rules should require that status before merge. The commercial notice is informational only; an actual commercial license requires a separate written agreement.
+
+Public reference material has a separate chain of rights under `REFERENCE_DATA_LICENSE.md`. PRs touching `reference_data/` require a second exact acceptance from the PR author; the public Share Data issue form records the same license through a required checkbox.
 
 ## Community reference contribution workflow
 
@@ -45,7 +47,7 @@ The repository now supports two deliberately separate reference-data paths:
 - `private/reference/` remains local-only for confidential or not-yet-cleared XML/CSV/XPS/screenshots;
 - `reference_data/` is the opt-in public area for contributors who explicitly intend to publish a paired PV-2000 reference case and have the right to do so.
 
-A contributor does not need to write code. A data-only PR containing raw XML + matching PV-2000 export and preferably a screenshot is useful evidence for a new measurement/result combination. The landing page and README also link to a guided **Share PV-2000 data** issue form for contributors who prefer not to prepare a PR. Developers may branch from current `main`, add implementation + regression coverage + the public case, and request merge. See `CONTRIBUTING.md` and `reference_data/README.md`.
+A contributor does not need to write code. A data-only PR containing raw XML + matching numeric PV-2000 export is useful evidence for a new measurement/result combination. Minimal screenshots are optional when needed and when publication rights are clear; full XPS/vendor reports and full-interface screenshots stay private by default. The landing page and README also link to a guided **Share PV-2000 data** issue form for contributors who prefer not to prepare a PR. Developers may branch from current `main`, add implementation + regression coverage + the public case, and request merge. See `CONTRIBUTING.md` and `reference_data/README.md`.
 
 This does not weaken the reference-profile rule: numeric parameter changes inside an established semantic path are not automatically NEW PROFILE, while genuinely new schema/algorithm/channel/result/unit/validity paths require matching vendor evidence before the validation envelope expands.
 

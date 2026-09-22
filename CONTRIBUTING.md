@@ -16,8 +16,11 @@ Before submitting a PR:
 
 - read [CLA.md](CLA.md);
 - make sure you have authority to grant its rights, including employer approval when applicable;
-- check the CLA acknowledgement in the pull-request template;
-- continue to follow the separate publication-rights rules for XML/CSV/XPS/screenshots and other reference data.
+- after opening the PR, post the exact CLA acceptance comment specified in `CLA.md`;
+- wait for the **Legal / contributor grants** status to pass;
+- continue to follow the separate licensing rules for public reference material.
+
+The legal gate verifies acceptance from the PR author, not a checkbox edited by a maintainer. Editing or deleting the acceptance comment causes the status to be reevaluated. Repository branch rules should require **Legal / contributor grants** before merge.
 
 For substantial corporate contributions, a separately signed CLA may be requested before merge.
 
@@ -33,11 +36,13 @@ Please add one case under:
 reference_data/<measurement>/<case-id>/
     raw.xml
     pv2000_export.csv
-    screenshot.png        # strongly recommended when available
     README.md
+    screenshot.png        # optional, minimal, and only when publication rights are clear
 ```
 
-The XML and export must come from the same measurement/result context. The screenshot should show enough PV-2000 context to identify the selected result and relevant settings when practical.
+The XML and export must come from the same measurement/result context. Prefer machine-generated XML plus numeric CSV. Full XPS/vendor reports and full-interface screenshots should remain private unless redistribution rights are specifically clear.
+
+Files under `reference_data/` are accepted only under [REFERENCE_DATA_LICENSE.md](REFERENCE_DATA_LICENSE.md). In addition to the CLA acceptance, a PR author changing `reference_data/` must post the exact Reference Data License acceptance comment stated in that file.
 
 The case `README.md` should state:
 
@@ -47,7 +52,7 @@ The case `README.md` should state:
 - what the PV-2000 export/display contains;
 - relevant settings that affect interpretation;
 - whether any names/identifiers were anonymized;
-- confirmation that you have the right to publish the submitted files.
+- confirmation that you have the right and organizational authority to publish and license the submitted files under `REFERENCE_DATA_LICENSE.md`.
 
 A data-only PR is still valuable. A maintainer or another contributor can use it to design the parser/calculation and regression test.
 
@@ -119,12 +124,13 @@ Matching one reference case does not prove the undisclosed internal PV-2000 algo
 
 `private/` is never a contribution source. Do not move files from `private/` into a tracked location merely to open a PR.
 
-Only submit real XML/CSV/XPS/screenshots under `reference_data/` when you intentionally want them to become part of the repository and you have the right to publish them.
+Only submit real reference material under `reference_data/` when you intentionally want it to become public and you can grant the rights in [REFERENCE_DATA_LICENSE.md](REFERENCE_DATA_LICENSE.md). Prefer XML + numeric CSV. Keep full XPS/vendor reports and full-interface screenshots private unless redistribution rights are specifically clear.
 
 Do not publish:
 
 - customer-confidential measurements;
 - vendor manuals or other copyrighted documentation you do not have redistribution rights for;
+- proprietary binaries, PDB/debug-symbol files or decompiled source;
 - group/internal code;
 - credentials, personal data or instrument/network identifiers that should remain private.
 

@@ -2,9 +2,9 @@
 
 This directory is the opt-in public regression-data area for the project.
 
-It exists so PV-2000 users can contribute new measurement/result combinations even when they do not write code. A useful contribution is usually a raw XML plus the matching PV-2000 export, with a screenshot strongly recommended.
+Public reference material is governed by [REFERENCE_DATA_LICENSE.md](../REFERENCE_DATA_LICENSE.md). A contributor must have the right and any employer/university/customer authorization needed to make the grants in that license.
 
-## Directory layout
+## Preferred directory layout
 
 Use one self-contained directory per measurement case:
 
@@ -14,26 +14,34 @@ reference_data/
         <case-id>/
             raw.xml
             pv2000_export.csv
-            screenshot.png
             README.md
+            screenshot.png        # optional/minimal
 ```
 
 The filenames may differ, but the case must be unambiguous.
 
 ## Minimum useful case
 
-Required:
+Preferred:
 
 - raw PV-2000 XML;
-- matching PV-2000 exported CSV (or XPS when that is the only relevant vendor export);
+- matching numeric PV-2000 CSV/export;
 - case README describing what should be validated/supported.
 
-Strongly recommended:
+Optional:
 
-- screenshot from PV-2000 showing the selected result and relevant settings;
-- notes about units, pattern type, beam/channel selection or validity behavior when visible in the software.
+- a **minimal** screenshot showing a result/setting that cannot be established from the numeric files alone, only when publication rights are clear;
+- notes about units, pattern type, beam/channel selection or validity behavior.
+
+Do not treat full XPS/vendor reports or full-interface screenshots as normal reference artifacts. Keep them private unless redistribution rights are specifically clear.
 
 The XML and vendor export must represent the same measurement/result context. Do not pair files merely because they look similar.
+
+## Required PR acceptance
+
+A pull request that adds or changes files under `reference_data/` must be authored by someone who has read [REFERENCE_DATA_LICENSE.md](../REFERENCE_DATA_LICENSE.md) and posts the exact acceptance comment specified there.
+
+The normal project CLA also applies to copyrightable material submitted through the pull request.
 
 ## Case README template
 
@@ -45,13 +53,13 @@ Copy this into each case README:
 - Measurement type / xsi:type:
 - Requested result or feature:
 - XML file:
-- Matching PV-2000 export:
-- Screenshot:
+- Matching PV-2000 numeric export:
+- Minimal screenshot, if any:
 - Relevant PV-2000 settings:
 - Expected point count / map shape, if known:
 - Existing profile family or possible NEW PROFILE:
 - Anonymization performed:
-- Publication-rights confirmation: I have the right to publish these files in this repository.
+- Rights/authority confirmation: I am authorized to publish and license these files under REFERENCE_DATA_LICENSE.md.
 
 ## Notes
 
@@ -60,15 +68,14 @@ Describe what is currently unsupported or different from PV-2000.
 
 ## What belongs here
 
-This directory may contain intentionally published:
+This directory may contain intentionally published and properly licensed:
 
 - `.xml`;
-- `.csv`;
-- `.xps`;
-- `.png`, `.jpg`, `.jpeg` screenshots;
+- numeric `.csv` or equivalent machine-readable exports;
+- minimal `.png`, `.jpg`, `.jpeg` screenshots when necessary and permitted;
 - Markdown metadata/notes.
 
-Do not put vendor manuals, confidential customer data, group code, credentials or unrelated documents here.
+Do **not** put vendor manuals, full vendor reports/XPS by default, proprietary binaries, PDB/debug symbols, decompiled source, confidential customer data, group code, credentials or unrelated documents here.
 
 ## Validation meaning
 

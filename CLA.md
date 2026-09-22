@@ -41,18 +41,22 @@ You represent that:
 
 This Agreement grants only rights that you actually own or control. It does not expand your rights in third-party material.
 
-If a Contribution contains PV-2000 XML, CSV/XPS exports, screenshots, images, or other reference material, you must separately confirm that you have the right to publish that material. Anonymization must not silently alter scientific values.
+Reference material submitted under `reference_data/` or through the public data-sharing workflow is governed separately by [REFERENCE_DATA_LICENSE.md](REFERENCE_DATA_LICENSE.md). A pull request containing reference material must satisfy both this CLA for copyrightable PR contributions and the separate Reference Data License for files under `reference_data/`.
 
 ## 6. No obligation; no warranty
 
 The Project Owner is not required to accept or use any Contribution. Unless separately agreed in writing, Contributions are provided without warranties or support obligations.
 
-## 7. Acceptance
+## 7. Acceptance and recorded evidence
 
-By submitting a pull request or other Contribution to this repository and affirmatively indicating agreement to this CLA in the contribution workflow, you agree to this Agreement for that Contribution.
+For an external pull request, the PR author must affirmatively accept this CLA by posting the following exact comment on that pull request:
 
-If you contribute on behalf of an organization, you represent that you have authority to bind that organization to the grants and representations applicable to the Contribution.
+`I have read and agree to CLA.md for this pull request, and I have authority to grant the rights described there.`
+
+Acceptance is per pull request. Editing or deleting the acceptance comment causes the automated legal status to be reevaluated.
+
+The repository owner is not required to license the owner's own work back to the owner. For substantial corporate contributions or commercial transactions, the parties may use a separately signed agreement reviewed by legal counsel.
 
 ---
 
-This CLA is intended to preserve the Project Owner's ability to maintain the AGPL community edition while also offering separate commercial/proprietary licenses. For significant corporate contributions or commercial transactions, the parties may use a separately signed agreement reviewed by legal counsel.
+This CLA is intended to preserve the Project Owner's ability to maintain the AGPL community edition while also offering separate commercial/proprietary licenses.

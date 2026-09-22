@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.13 — 2026-09-22
+
+- Added `REFERENCE_DATA_LICENSE.md` with explicit public-use, redistribution and Project Owner sublicensing/relicensing grants for intentionally contributed reference material, while preserving third-party-rights limits.
+- Added the `Legal / contributor grants` GitHub Actions status: external PR authors must personally post the exact CLA acceptance; PRs touching `reference_data/` must also post the exact Reference Data License acceptance. Editing/deleting those comments triggers reevaluation.
+- Tightened public data-submission guidance and the Share PV-2000 data issue form: XML + numeric CSV are preferred, uploads are explicitly public, and full XPS/vendor reports, binaries/debug symbols/decompiled material and full-interface screenshots are excluded by default.
+
 ## v20260922.12 — 2026-09-22
 
 - Added QSS-µPCD `SquareRegionPattern + SquareCell` coordinate reconstruction from Region + Dimension, including effective pitch and explicit rectangular raster support. The supplied 35 × 30 / 1050-point XML+CSV pair validates all reconstructed X/Y coordinates point-by-point.
