@@ -15,6 +15,9 @@ Build a general **Semilab PV-2000 Analyzer**: the user drops any PV-2000 result 
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
+- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale;
+- LBIC Distribution axis swap, matching the existing QSS Distribution interaction;
+- long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - real user/vendor files protected under ignored `private/reference/`.
 
 ## QSS-µPCD: reference export now available
@@ -150,6 +153,7 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - Confirm invalid `Max Vsb <= Min Vsb` shows an error with no silent Standard-Cocos fallback.
    - Confirm Analysis controls stays open after Apply/re-render.
    - Change PCHIP scale/outlier limit and verify **Minimum Dit (PV2000-style)** stays unchanged while Midgap Dit / fitted curve may change.
+   - Exercise all four Dit plots: wheel zoom, X-only/Y-only axis zoom and double-click auto-scale. Confirm Vcpd–Qc is point-line and ordinary data markers are smaller than the initial-condition marker.
 
 3. **LBIC paired-reference regression**
    - Run `npm run validate:lbic` with all same-basename private XML+CSV pairs present.
@@ -160,6 +164,7 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
 4. **QSS regression smoke**
    - Run `npm run validate:qss` with private references present.
    - Import the reference XML and verify valid-range filtering, smooth-map masking, Distribution axis swap and CSV export still behave correctly after layout changes.
+   - Exercise map / Distribution / acquisition-profile wheel zoom, axis-only zoom and double-click auto-scale.
 
 5. **Landing / fallback / theme**
    - Verify the welcome tags render correctly in light and dark mode.
