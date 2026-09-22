@@ -261,7 +261,7 @@ npm run validate:lbic
 git status --short --ignored
 ```
 
-Current regression inventory includes the QSS map references, Dual QSS raw-path corpus, ISC and VCPD paired references, LBIC-SINGLE-001/LBIC-MULTI-002, and JZERO-MAP-001. The JZero ES560 XML/CSV pair was independently compared point-by-point during this branch: X/Y exact, both lifetime and Smax channels at floating-point precision, Basore J0 at floating-point precision, and both Implied Voc channels within 0.07 mV. Validator launch commands use the cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback retains an explicit unknown-type dispatch test.
+Current regression inventory includes the QSS map references, Dual QSS raw-path corpus, ISC and VCPD paired references, LBIC-SINGLE-001/LBIC-MULTI-002/LBIC-REFLECTANCE-003, and JZERO-MAP-001. The JZero ES560 XML/CSV pair was independently compared point-by-point during this branch: X/Y exact, both lifetime and Smax channels at floating-point precision, Basore J0 at floating-point precision, and both Implied Voc channels within 0.07 mV. Validator launch commands use the cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback retains an explicit unknown-type dispatch test.
 
 ## Browser self-test completed
 
