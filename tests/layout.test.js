@@ -62,7 +62,7 @@ test('Dit explanatory prose lives in hover help instead of persistent note parag
   assert.doesNotMatch(src,/<p class="note min-dit-note">/);
   assert.doesNotMatch(src,/COCOS-II and PCHIP can be used together:[^']*<\/p>/);
   assert.doesNotMatch(src,/<p class="note analysis-note">/);
-  assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('COCOS-II and PCHIP can be used together/);
+  assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('Optional analysis\./);
   assert.match(src,/COCOS-II .*help\('Inferred, not vendor-exact/);
 });
 
@@ -109,4 +109,22 @@ test('Vcpd-Qc is point-line and data markers stay smaller than the initial marke
 test('PCHIP outlier input is rendered in E scientific notation',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   assert.match(src,/ditReject[^>]*value="\$\{Number\.isFinite\(o\.ditReject\)\?o\.ditReject\.toExponential\(3\)\.replace\('e','E'\)/);
+});
+
+
+test('Optional Midgap Dit is always visible with a default-on checkbox, not collapsible',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/id="ditUsePchip" type="checkbox"/);
+  assert.match(src,/o\.pchipEnabled\?'checked':''/);
+  assert.doesNotMatch(src,/id="ditMidgapControls"/);
+  assert.doesNotMatch(src,/midgapOpen/);
+  assert.match(src,/pchipEnabled=opts\.pchipEnabled!==false/);
+});
+
+test('legacy COCOS-II controls are removed completely',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(src,/Advanced \/ legacy methods/);
+  assert.doesNotMatch(src,/Use Legacy COCOS-II/);
+  assert.doesNotMatch(src,/value="guide"/);
+  assert.doesNotMatch(src,/function cocosII\(/);
 });
