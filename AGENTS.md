@@ -2,7 +2,9 @@
 
 ## Non-negotiable data rule
 
-Never commit, rename into a tracked path, or paste contents of `private/` into tracked files. Real PV-2000 XML/CSV/XPS, vendor manuals, screenshots, group MATLAB code, and user-provided documents are local validation material only.
+`private/` is strictly local-only. Never commit, rename into a tracked path, or paste contents of `private/` into tracked files. Vendor manuals, group MATLAB code, customer-confidential material, and any reference files that have not been explicitly cleared for publication remain local validation material only.
+
+The sole exception for real PV-2000 measurement material is the explicit public contribution area `reference_data/`. XML, matching PV-2000 exported CSV/XPS, and screenshots may be tracked there only when the contributor intentionally submits them as public regression evidence and confirms they have the right to publish them. A public reference case must document provenance, pairing, measurement/result intent, and any anonymization in its case README. Never move existing `private/` material into `reference_data/` merely to make a test portable.
 
 Before every commit run:
 
@@ -10,7 +12,7 @@ Before every commit run:
 git status --short --ignored
 ```
 
-If anything under `private/` is staged, unstage it immediately. Never use `git add -f` on ignored reference data.
+If anything under `private/` is staged, unstage it immediately. Never use `git add -f` on ignored reference data. Public reference files must be added only under `reference_data/` through the normal contribution workflow described in `CONTRIBUTING.md`.
 
 ## Development workflow
 

@@ -2,6 +2,13 @@
 
 The central registry of validated reference envelopes is `docs/REFERENCE_PROFILES.md`. This file contains detailed regression evidence. Any materially new data/configuration outside a recorded envelope is a **NEW PROFILE** until its actual XML + matching PV-2000 output are regressed.
 
+## Reference data locations
+
+- `private/reference/` — ignored local/confidential validation material. It must never be committed.
+- `reference_data/` — intentionally public contributor-supplied regression cases. Each case must pair the raw PV-2000 XML with its matching vendor export and should include a PV-2000 screenshot plus a short case README.
+
+Public reference data do not change the runtime contract: the analyzer still consumes XML only. CSV/XPS/screenshots are test and reverse-engineering evidence. A public dataset also does not by itself prove the PV-2000 internal algorithm; the validation label applies only to the observed input→output envelope.
+
 ## QSS-µPCD map — XML + raw PV-2000 export
 
 Private references:
@@ -28,7 +35,7 @@ Run:
 npm run validate:qss
 ```
 
-The validator also verifies coordinate acquisition order. Real references remain ignored and are not required for the shipped browser application.
+The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
 ### Valid-data filtering
 

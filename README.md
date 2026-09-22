@@ -26,7 +26,17 @@ npm run validate:lbic
 
 ## Runtime/data rule
 
-PV-2000 XML is the runtime input. Vendor/user CSV/XPS exports are regression references only. Real result files, manuals, screenshots and group code are excluded from Git by `.gitignore`; keep them under `private/` and never force-add them.
+PV-2000 XML is the runtime input. Vendor/user CSV/XPS exports are regression references only and are never runtime dependencies.
+
+Existing local or confidential reference material belongs under ignored `private/`. Publicly contributed regression cases may instead live under `reference_data/` when the contributor intentionally publishes the XML, matching PV-2000 export and, preferably, a PV-2000 screenshot and confirms they have the right to share them. Vendor manuals, group code and confidential customer/sample material must not be published.
+
+## Contributing new PV-2000 support
+
+Anyone using PV-2000 can help expand the supported measurement/result combinations. A **data-only pull request is welcome**: submit the raw XML plus the matching PV-2000 exported CSV/XPS and preferably a screenshot showing the selected PV-2000 result/settings. No code is required.
+
+Developers may instead branch from current `main`, implement support, include the matching reference case and regression coverage, and request merge. Validation follows semantic input→output profile families rather than exact numeric settings such as raster size, wavelength, power or FluxCache values.
+
+See `CONTRIBUTING.md`, `reference_data/README.md` and `docs/REFERENCE_PROFILES.md` before submitting data or code.
 
 ## UI principles
 

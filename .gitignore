@@ -1,4 +1,4 @@
-# User / instrument data: never commit
+# Private / local instrument data: never commit
 private/**
 !private/README.md
 *.xps
@@ -13,6 +13,15 @@ private/**
 *.jpg
 *.jpeg
 *.zip
+
+# Explicitly published community reference datasets.
+# These paths are opt-in exceptions to the broad data-file ignores above.
+!reference_data/**/*.xml
+!reference_data/**/*.csv
+!reference_data/**/*.xps
+!reference_data/**/*.png
+!reference_data/**/*.jpg
+!reference_data/**/*.jpeg
 
 # Explicitly allow repository-owned synthetic fixtures/assets when added later
 !tests/fixtures/**/*.xml
