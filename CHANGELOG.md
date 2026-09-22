@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — feat/jzero-measurement
+## v20260922.16 — 2026-09-22
 
 - Added a dedicated `JZeroMeasurement` Emitter J0 analyzer instead of aliasing the result to QSS-µPCD. It pairs the two `UpcdIterationData` lifetime maps, exposes Basore J0 plus both τeff.d/Smax/Implied-Voc channels, and provides map, Distribution, filtering, axes/bins controls and CSV export.
 - Added `MapPattern + PseudoSquareCell` JZero geometry using the EdgeExclusion-adjusted rectangle∩circle schedule. The supplied 156 × 156 mm / Ø205 mm / 7 mm exclusion / 2 mm pitch reference reconstructs all 5017 coordinates exactly.
