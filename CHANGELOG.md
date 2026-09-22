@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added selectable Optional Midgap Dit fitting methods: default **Median-binned PCHIP** with an adjustable 10 mV Vsb window, plus **PCHIP (original)** for backward-compatible raw-point fitting; LOG10/Linear remain shared scale options and Minimum Dit stays discrete/invariant.
 - Added a community contribution workflow for extending PV-2000 support: data-only PRs with raw XML + matching vendor export are explicitly welcome, with PV-2000 screenshots strongly recommended.
 - Added an opt-in tracked `reference_data/` area for publishable regression cases while keeping `private/` strictly local/confidential.
 - Added contributor/reference-data documentation and a PR checklist covering same-measurement pairing, publication rights, validation scope and regression expectations.

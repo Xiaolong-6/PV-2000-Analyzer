@@ -76,9 +76,12 @@ The Analysis controls panel must remain open after Apply/recalculation. Method-s
 - Flatband accumulation points remain shared;
 - **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox;
 - disabling that checkbox must remove the PCHIP curve/Midgap Dit result without changing Minimum Dit (PV2000-style);
+- the method selector exposes **Median-binned PCHIP** and **PCHIP (original)**;
+- Median-binned PCHIP is the default with a 10 mV Vsb bin width, and that width is user-adjustable;
+- LOG10 / Linear remain shared interpolation-scale choices for both methods;
 - PCHIP outlier limit is displayed in uppercase-E scientific notation.
 
-The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP settings change. PCHIP settings may change Midgap Dit and the fitted curve only.
+The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP method, median width, interpolation scale, outlier threshold, or enabled state changes. Those settings may change Midgap Dit and the fitted curve only. The 10 mV default is an analyzer behavior selected from the supplied raw Dit–Vsb comparison, not a claim about PV-2000's proprietary fitting algorithm.
 
 COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
 
