@@ -123,7 +123,7 @@ test('raw Reflectivity EQE IQE channels take precedence over calculated candidat
 
 test('multi-beam MapPattern + PseudoSquareCell is a validated LBIC family',()=>{
   const raw={key:3,channels:{Current:[346.805782580645],DirectReflection:[0],ScatteredReflection:[-21.0514365493424]}},
-    laser={index:3,wavelengthNm:656,power:1,photonFlux:2209056601073362.2},
+    laser={index:3,wavelengthNm:656,power:1,photonFlux:Number('2209056601073362.2')},
     d={currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1};
   assert.equal(L.referenceFamily(raw,laser,d),'LBIC-MULTI-002');
   assert.equal(L.isReferenceProfile(raw,laser,d),true);
@@ -132,7 +132,7 @@ test('multi-beam MapPattern + PseudoSquareCell is a validated LBIC family',()=>{
 
 test('PseudoSquare multi-beam Reflectivity display clamps negative raw optical sum but IQE uses the raw sum',()=>{
   const raw={key:3,channels:{Current:[346.805782580645],DirectReflection:[0],ScatteredReflection:[-21.0514365493424]}},
-    laser={index:3,wavelengthNm:656,power:1,photonFlux:2209056601073362.2},
+    laser={index:3,wavelengthNm:656,power:1,photonFlux:Number('2209056601073362.2')},
     d={currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1},
     b=L.deriveBeam(raw,laser,d),
     metrics=Object.values(b.metrics),
