@@ -117,12 +117,18 @@
 .lbic-module .canvas-wrap{min-height:0}
 .lbic-module .side .setting-row label,.lbic-module .side .setting-row select,.lbic-module .side table,.lbic-module .side th,.lbic-module .side .note{font-size:inherit}
 .lbic-module .side .setting-row select{font-family:inherit}
-.lbic-module .profile-grid{display:grid;grid-template-columns:1fr;gap:5px}
-.lbic-module .mini-title{padding:5px 8px 0;font-size:9px;color:var(--muted)}
-.lbic-module .profile-grid .axis-limits{margin:3px 8px 0;border:1px solid var(--border);border-radius:6px}
+.lbic-module .lbic-workspace{grid-column:2 / 4;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.lbic-module .lbic-profiles-panel{grid-column:1 / -1}
+.lbic-module .lbic-profile-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lbic-module .profile-pane{min-width:0;position:relative}
+.lbic-module .profile-pane+.profile-pane{border-left:1px solid var(--border)}
+.lbic-module .mini-title{padding:6px 8px 2px;font-size:9px;color:var(--muted)}
 .lbic-module .canvas-wrap.compact{min-height:0}
-.lbic-module .canvas-wrap.compact canvas{max-height:230px}
+.lbic-module .canvas-wrap.compact canvas{max-height:none}
 .lbic-module .panel.chart header{flex-wrap:wrap;height:auto;min-height:35px}
+.dit-module .results-summary-panel>.result-list{margin:0 9px 9px}
+@media(max-width:1200px){.lbic-module .lbic-workspace{grid-column:2;grid-template-columns:1fr}.lbic-module .lbic-profile-columns{grid-template-columns:1fr}.lbic-module .profile-pane+.profile-pane{border-left:0;border-top:1px solid var(--border)}}
+@media(max-width:700px),(pointer:coarse) and (orientation:portrait) and (max-width:950px){.lbic-module .lbic-workspace{grid-column:1}}
 
 @media(max-width:430px){
   .dit-module .result-card-values{grid-template-columns:1fr}

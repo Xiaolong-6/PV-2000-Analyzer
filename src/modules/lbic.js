@@ -191,17 +191,33 @@
       ctx.lineWidth=1.5;
       ctx.strokeRect(Math.min(xa,xb)+.5,Math.min(ya,yb)+.5,Math.max(2,Math.abs(xb-xa)-1),Math.max(2,Math.abs(yb-ya)-1))}ctx.restore();
       
-    ctx.strokeStyle=css('--soft');
+    ctx.font='10px system-ui';
+      ctx.strokeStyle=css('--grid2');
+      ctx.fillStyle=css('--muted');
+      for(const v of niceTicks(xr[0],xr[1],5)){
+        const x=X(v);
+        ctx.beginPath();
+        ctx.moveTo(x,y0);
+        ctx.lineTo(x,y0+plotH);
+        ctx.stroke();
+        ctx.textAlign='center';
+        ctx.fillText(axisFmt(v),x,H-22);
+      }
+      ctx.strokeStyle=css('--grid');
+      for(const v of niceTicks(yr[0],yr[1],5)){
+        const y=Y(v);
+        ctx.beginPath();
+        ctx.moveTo(x0,y);
+        ctx.lineTo(x0+plotW,y);
+        ctx.stroke();
+        ctx.textAlign='right';
+        ctx.fillText(axisFmt(v),p.l-8,y+3);
+      }
+      ctx.strokeStyle=css('--soft');
       ctx.strokeRect(x0,y0,plotW,plotH);
       ctx.fillStyle=css('--muted');
-      ctx.font='10px system-ui';
       ctx.textAlign='center';
-      ctx.fillText(fmt(xr[0],2),x0,H-22);
-      ctx.fillText(fmt(xr[1],2),x0+plotW,H-22);
       ctx.fillText('X [mm]',x0+plotW/2,H-5);
-      ctx.textAlign='right';
-      ctx.fillText(fmt(yr[0],2),p.l-8,y0+4);
-      ctx.fillText(fmt(yr[1],2),p.l-8,y0+plotH);
       ctx.save();
       ctx.translate(14,y0+plotH/2);
       ctx.rotate(-Math.PI/2);
@@ -268,7 +284,7 @@
       
   }
   function drawHist(canvas,metric,swapped=false,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,30),W=canvas.width=760,H=canvas.height=260,p={l:64,r:18,t:20,b:48};
+    const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,30),W=canvas.width=760,H=canvas.height=430,p={l:64,r:18,t:24,b:52};
     ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!bins.length)return bins;
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
       autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
@@ -392,8 +408,14 @@
       <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses Region and Dimension.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Pattern',`${d.patternDisplayName||d.patternType} · ${fmt(d.nx,0)} × ${fmt(d.ny,0)}`)}${metaRow('Region',`${fmt(d.width)} × ${fmt(d.height)} mm @ (${fmt(d.regionX)}, ${fmt(d.regionY)})`)}${metaRow('Step',`${d.nx>1?fmt(d.width/(d.nx-1),4):'—'} × ${d.ny>1?fmt(d.height/(d.ny-1),4):'—'} mm`)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?'Point count matches Dimension.':'A mismatch disables coordinate-based maps.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',beam?.referenceProfile?'validated LBIC algorithm family':'unvalidated combination','Validated status applies to the single-beam SquareRegionPattern family with Current + DirectReflection + ScatteredReflection and a valid photon FluxCache. Numeric wavelength, power, flux and raster dimensions may vary. Categorical input/output changes still require paired vendor regression.')}</dl></section>
       <section class="panel"><h3>View ${help('Default quantities mirror the validated PV-2000 exports: Current, Reflectivity and IQE. Advanced adds raw Direct/Scattered reflectance, intermediate EQE and unknown numeric XML channels. Raw XML values always take priority. Numeric wavelength/power/flux/geometry changes stay within the validated family when the same measurement/result path is used. New beam/channel/pattern/result combinations require paired XML + PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
       <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows(metrics)}</tbody></table></div></section>
+      <section class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></section>
+      <section class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></section>
       <details class="panel"><summary>Geometry / validation ${help('All point X/Y coordinates match the four supplied PV-2000 CSV exports exactly. The on-screen map follows acquisition row order; vendor screen-orientation parity is not separately claimed.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Acquisition mapping','X-fast row-major (validated)')}${metaRow('Y coordinate','Region.Y + row × dy (validated)')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
-      </aside><section class="plots"><div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction. Double-click restores auto scale.')}<span class="grow"></span><button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div><div class="panel chart"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Each profile also has manual numeric X/Y limits for outlier-heavy data.')}<span class="grow"></span><button id="lExportProfile">Export</button></header><div class="profile-grid"><div><div class="mini-title">X profile through selected row</div>${PV.plot.axisControls('lXProfileAxes')}<div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div><div class="mini-title">Y profile through selected column</div>${PV.plot.axisControls('lYProfileAxes')}<div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b>${help('Mouse wheel zooms both axes inside the plot; hover an axis and wheel to zoom only that axis. Double-click restores auto scale. Axes opens manual numeric X/Y limits. Swap axes exchanges quantity and count axes.') }<span class="grow"></span><button id="lSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution quantity and count axes.">Swap axes</button><button id="lExportHist">Export</button></header>${PV.plot.axisControls('lHistAxes')}<div class="canvas-wrap"><canvas id="lHist"></canvas></div></div><div class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></div><div class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></div></section></div>`;
+      </aside><section class="lbic-workspace">
+        <div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span><button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap">${PV.plot.axisControls('lMapAxes')}<canvas id="lMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution</b>${help('Mouse wheel zooms both axes inside the plot; hover an axis and wheel to zoom only that axis. Double-click restores auto scale. Axes opens manual numeric X/Y limits. Swap axes exchanges quantity and count axes.') }<span class="grow"></span><button id="lSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution quantity and count axes.">Swap axes</button><button id="lExportHist">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('lHistAxes')}<canvas id="lHist"></canvas></div></div>
+        <div class="panel chart lbic-profiles-panel"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens a floating manual X/Y range editor.') }<span class="grow"></span><button id="lExportProfile">Export</button></header><div class="lbic-profile-columns"><div class="profile-pane"><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact">${PV.plot.axisControls('lXProfileAxes')}<canvas id="lXProfile"></canvas></div></div><div class="profile-pane"><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact">${PV.plot.axisControls('lYProfileAxes')}<canvas id="lYProfile"></canvas></div></div></div></div>
+      </section></div>`;
       host.querySelector('#lIter').value=String(iterationIndex);host.querySelector('#lBeam').value=beamKey;host.querySelector('#lMetric').value=metricKey;host.querySelector('#lScale').value=scaleMode;
       host.querySelector('#lIter').onchange=e=>{iterationIndex=Number(e.target.value)||0;
         beamKey='';
@@ -428,6 +450,7 @@
       const bins=drawHist(host.querySelector('#lHist'),metric,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
       xp=drawProfile(host.querySelector('#lXProfile'),d,metric,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
       yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
+      PV.plot.bindAxisControls(host,'lMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       PV.plot.bindAxisControls(host,'lHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()});
       PV.plot.bindAxisControls(host,'lXProfileAxes',zoom.xProfile,n=>{zoom.xProfile=n;redraw()});
       PV.plot.bindAxisControls(host,'lYProfileAxes',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});

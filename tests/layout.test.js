@@ -214,10 +214,16 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(lbic,/function niceTicks\(/);
   assert.match(lbic,/fillText\(axisFmt\(v\)/);
+  assert.match(lbic,/axisControls\('lMapAxes'\)/);
   assert.match(lbic,/axisControls\('lHistAxes'\)/);
   assert.match(lbic,/axisControls\('lXProfileAxes'\)/);
   assert.match(lbic,/axisControls\('lYProfileAxes'\)/);
+  assert.match(lbic,/class="lbic-workspace"/);
+  assert.ok(lbic.indexOf('Selected pixel')<lbic.indexOf('</aside><section class="lbic-workspace">'));
+  assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="lbic-workspace">'));
+  assert.match(lbic,/H=canvas\.height=430,p=\{l:64,r:18,t:24,b:52\}/);
   assert.match(css,/\.lbic-module \.canvas-wrap\{min-height:0\}/);
+  assert.match(css,/\.lbic-module \.lbic-workspace\{grid-column:2 \/ 4/);
 });
 
 test('Dit numeric line plots expose manual X and Y limits',()=>{
