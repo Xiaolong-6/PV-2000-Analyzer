@@ -83,6 +83,12 @@ Do not simplify Dit below the functionality of the restored modular analyzer / `
 A QSS map can represent a full wafer, quarter wafer, coupon, or partially invalid field. Never assume every geometrically scheduled point belongs to the sample. For `MapPattern + RoundWafer`, reconstruct the scheduled radius from `Diameter/2 - EdgeExclusion` when EdgeExclusion is present before the strict circular site test; do not use nominal wafer radius alone. Keep the user-controlled validity range and apply its mask consistently to summary statistics, derived metrics, maps and exports. Smooth maps must not extrapolate invalid/unsupported regions across the whole nominal wafer.
 
 
+## ISC validity rule
+
+The current validated ISC family is one iteration of repeated `VcpdDark` / `VcpdLight` readings using `MapPattern + SquareCell`, finite `VcpdOffset` and `VsbCorrectionFactor`, and vendor outputs Vcpd Dark / Vcpd Light / Vsb. For raw means `D` and `L`, offset `O`, and factor `F`, preserve the paired-reference equations `Vcpd Dark = D-O`, `Vsb = F(D-L)`, and `Vcpd Light = Vcpd Dark-Vsb`.
+
+Numeric pitch/target/edge/read-count/offset/factor changes remain within this family when the same semantic path applies. Another pattern/coordinate encoding, target scheduling rule, iteration/raw schema, correction semantics, unit convention or vendor result set is **NEW PROFILE** and requires the actual XML plus matching PV-2000 output before validation expands. The runtime remains XML-only.
+
 ## LBIC validity rule
 
 LBIC files may contain different combinations of beams/wavelengths and current/reflectance/QE channels. Do not hard-code the current single-beam examples as the parser schema. Preserve unknown numeric BeamData attributes, map BeamData Key to laser/FluxCache index, and prefer raw XML Total R/EQE/IQE over calculated candidates.

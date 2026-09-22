@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.8
+# Agent handoff — 2026-09-22 — v20260922.10
 
 ## Goal
 
@@ -10,13 +10,14 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
 - `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
+- `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
 - `LBICMeasurement` analyzer with dynamic beam/channel raster maps, line profiles, pixel inspection and CSV export;
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
 - shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
-- landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
+- landing-page support tags for Dit / COCOS, QSS-µPCD, ISC, LBIC and Generic XML inspector;
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a floating bottom-left Axes popover that closes after Apply/Auto;
 - spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
 - LBIC right workspace uses Map + Distribution side-by-side with equal top-row chart sizing and X/Y profiles side-by-side below; Selected pixel and Channel provenance are in the left sidebar. Distribution retains axis swap and numeric ticks;
@@ -106,6 +107,22 @@ QSS Distribution has a Swap axes button beside Export. The map-selected metric (
 
 The QSS runtime shows only facts for the currently imported dataset. Fixed reference-validation evidence for the 305-point paired dataset remains in project documentation rather than being presented as if it belonged to a newly imported XML. The empty `Algorithm notes` disclosure has also been removed from the runtime; detailed algorithm notes stay in `docs/ALGORITHMS_QSS_UPCD.md`.
 
+## ISC status
+
+ISC support is now a separate `ISCMeasurement` module rather than a Generic Inspector fallback. The PV-2000A manual defines ISC as dark/illuminated Kelvin-probe VCPD with VSB determined from their difference, and lists Vcpd Dark / Vcpd Light / VSB as the three data-view quantities.
+
+One matching XML + vendor CSV establishes exact numerical behavior for the current repeated-reading `MapPattern + SquareCell` family:
+
+- 169 sites, 24 dark + 24 light readings/site in the current reference;
+- centered 13 × 13, 3 mm-pitch coordinate schedule from -18 to +18 mm matches the vendor export exactly;
+- with raw means `D` / `L`, XML offset `O` and correction factor `F`, vendor values are `Vcpd Dark = D-O`, `Vsb = F(D-L)`, and `Vcpd Light = Vcpd Dark - Vsb`;
+- pointwise max absolute errors are ~3.55e-15 V for Vcpd Dark, ~3.55e-15 V for Vcpd Light and ~7.49e-16 V for Vsb; vendor summary statistics match to ~3.33e-15;
+- the UI exposes selectable maps, Distribution, selected-site repeated readings, CSV export and the shared zoom/manual-axis controls.
+
+Alternate ISC pattern/target/raw-reading/result paths remain **NEW PROFILE** unless paired PV-2000 output confirms them. The runtime never reads the vendor CSV.
+
+See `docs/ALGORITHMS_ISC.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+
 ## LBIC status
 
 LBIC now has a paired vendor-regression baseline rather than structural-only validation.
@@ -148,11 +165,12 @@ npm install --ignore-scripts --no-audit --no-fund
 npm run check
 npm run build
 npm run validate:qss
+npm run validate:isc
 npm run validate:lbic
 git status --short --ignored
 ```
 
-Automated/local regression status before the final browser smoke: unit tests, build, the 305-point QSS private regression, and all four paired LBIC XML/CSV regressions have passed; private references were confirmed absent from tracked/build outputs. The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
+Automated/local regression status before the final browser smoke: unit tests, build, the 305-point QSS private regression, the paired 169-point ISC XML/CSV regression, and all four paired LBIC XML/CSV regressions have passed; private references were confirmed absent from tracked/build outputs. The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
 
 ## Browser self-test completed
 

@@ -25,6 +25,7 @@ Current modules:
 
 - `DITMeasurement` — COCOS / Dit analysis with wafer map, PV2000-style discrete minimum Dit, optional Midgap Dit with default 10 mV median-binned PCHIP or original PCHIP, flatband/Qtot/Cox/EOT extraction, XML metadata and contextual analysis-method routing. `Follow XML setting` resolves standard XMLs to Standard COCOS and `UseCocosII=true` XMLs to the inferred PV2000 COCOS-II path. The obsolete guide-based COCOS-II path has been removed. COCOS-II exposes data-derived parameter suggestions without silently overriding the XML/user values.
 - `QssUpcdMeasurement` — QSS-µPCD map analysis with lifetime, Smax, implied Voc, valid-data filtering, map/distribution/acquisition views and CSV export.
+- `ISCMeasurement` — Initial Surface Charge analysis with Vcpd Dark / Vcpd Light / VSB maps, summary statistics, distributions, selected-site raw-reading plots and CSV export. One paired `MapPattern + SquareCell` XML/CSV reference validates the repeated-reading result reconstruction and coordinate order point-by-point to floating-point precision.
 - `LBICMeasurement` — rectangular LBIC raster analysis with dynamic beam/wavelength channels. Four paired 984 nm reference instances validate the single-beam SquareRegionPattern Current/Direct/Scattered → Current/Reflectivity/IQE algorithm family; numeric wavelength/power/flux/raster-size changes do not by themselves create a new profile. The default view mirrors Current / Reflectivity / IQE, while raw Direct/Scattered reflection, EQE and unknown channels are under Advanced.
 - Unknown types — Generic XML Inspector rather than a hard failure.
 
@@ -38,10 +39,11 @@ Development:
 npm test
 npm run build
 npm run validate:qss
+npm run validate:isc
 npm run validate:lbic
 ```
 
-`npm run validate:qss` uses ignored local XML/CSV reference files under `private/reference/` when present. `npm run validate:lbic` uses same-basename ignored XML/CSV pairs under `private/reference/lbic/` for pointwise vendor regression. The LBIC validator allows ordinary numeric wavelength/power/flux/geometry changes within the validated algorithm family and reserves NEW PROFILE for categorical input/output-path changes.
+`npm run validate:qss` uses ignored local XML/CSV reference files under `private/reference/` when present. `npm run validate:isc` uses same-basename ignored ISC XML/CSV pairs under `private/reference/isc/` for pointwise Vcpd Dark / Vcpd Light / VSB regression. `npm run validate:lbic` uses same-basename ignored XML/CSV pairs under `private/reference/lbic/` for pointwise vendor regression. The LBIC validator allows ordinary numeric wavelength/power/flux/geometry changes within the validated algorithm family and reserves NEW PROFILE for categorical input/output-path changes.
 
 ## Licensing
 
@@ -67,7 +69,7 @@ Use the **Share PV-2000 data** shortcut above for a guided issue, or see `CONTRI
 
 ## UI principles
 
-The shared shell follows the operating-system light/dark theme and provides a manual theme toggle. The landing page advertises the currently supported analyzers (Dit / COCOS, QSS-µPCD, LBIC, Generic XML inspector). Measurement-specific controls live inside the corresponding analyzer; there is no global legacy Settings button. Controls should be contextual: selecting an analysis method should reveal only parameters relevant to that method plus genuinely shared extraction settings. Re-rendering an analysis must preserve the user's open/closed control-panel state. In multi-column layouts, the left functional sidebar has its own viewport-height scroll container so long metadata/control stacks can always be reached without moving the plot columns. Fine-pointer desktop browser zoom must not be mistaken for a portrait/mobile layout: the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit result summaries use responsive cards rather than a fixed nowrap table so valid-site mean/current-site values stay readable at narrow sidebar widths. Every scientific plot supports mouse-wheel zoom: wheel inside the plot zooms both axes, wheel over an axis zooms only that direction, and double-click restores auto scale. Long scientific explanations belong in hover help rather than persistent prose.
+The shared shell follows the operating-system light/dark theme and provides a manual theme toggle. The landing page advertises the currently supported analyzers (Dit / COCOS, QSS-µPCD, ISC, LBIC, Generic XML inspector). Measurement-specific controls live inside the corresponding analyzer; there is no global legacy Settings button. Controls should be contextual: selecting an analysis method should reveal only parameters relevant to that method plus genuinely shared extraction settings. Re-rendering an analysis must preserve the user's open/closed control-panel state. In multi-column layouts, the left functional sidebar has its own viewport-height scroll container so long metadata/control stacks can always be reached without moving the plot columns. Fine-pointer desktop browser zoom must not be mistaken for a portrait/mobile layout: the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit result summaries use responsive cards rather than a fixed nowrap table so valid-site mean/current-site values stay readable at narrow sidebar widths. Every scientific plot supports mouse-wheel zoom: wheel inside the plot zooms both axes, wheel over an axis zooms only that direction, and double-click restores auto scale. Long scientific explanations belong in hover help rather than persistent prose.
 
 See `docs/REFERENCE_PROFILES.md` for the central validation envelope, plus `docs/VALIDATION.md`, `docs/HANDOFF.md` and the algorithm notes for detailed evidence.
 

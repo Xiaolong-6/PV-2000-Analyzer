@@ -96,6 +96,66 @@ A new QSS profile must use the actual XML + matching PV-2000 export to determine
 
 ---
 
+### ISC-MAP-001 — repeated-reading Initial Surface Charge map
+
+**Measurement type**
+
+`ISCMeasurement`
+
+**Reference material**
+
+One matching PV-2000 XML + CSV export. The XML contains repeated dark/light VCPD readings for every site; the CSV contains the vendor Vcpd Dark, Vcpd Light and Vsb result columns plus summary statistics.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- repeated `VcpdDark` and `VcpdLight` readings per `ISCDataItem`;
+- `MapPattern + SquareCell`;
+- finite XML `VcpdOffset` and `VsbCorrectionFactor`;
+- vendor outputs Vcpd Dark / Vcpd Light / Vsb in volts.
+
+Let `D` and `L` be the per-site means of the raw dark/light readings, `O` the XML Vcpd offset and `F` the XML VSB correction factor. The paired export establishes:
+
+```text
+Vcpd Dark  = D - O
+Vsb        = F * (D - L)
+Vcpd Light = Vcpd Dark - Vsb
+```
+
+The current reference instance has 169 sites, 24 readings/site, a 100 × 100 mm SquareCell, 30 mm EdgeExclusion and 3 × 3 mm pitch. Those numeric settings are evidence, not runtime whitelist values.
+
+**Validated / established**
+
+- 169 XML sites = 169 vendor rows;
+- centered X-fast row-major coordinates from -18 to +18 mm in both axes match the vendor export exactly;
+- Vcpd Dark pointwise maximum absolute error ≈ **3.55e-15 V**;
+- Vcpd Light pointwise maximum absolute error ≈ **3.55e-15 V**;
+- Vsb pointwise maximum absolute error ≈ **7.49e-16 V**;
+- Average / Median / sample Stdev / Min / Max reproduce the vendor summary to ≈ **3.33e-15** maximum absolute error.
+
+**Analyzer features not claimed as vendor algorithms**
+
+- browser raster color interpolation/palette;
+- distribution histogram presentation;
+- shared plot zoom/manual-axis controls.
+
+The selected-site raw-reading plot exposes the underlying repeated XML readings; the manual documents ISC Raw Data Export as the voltage transients/readings for each measurement point.
+
+**NEW PROFILE triggers**
+
+Examples include:
+
+- another pattern/coordinate encoding or target geometry requiring a different scheduling rule;
+- multiple iterations or another raw-reading structure;
+- a different offset/correction path or missing correction factor semantics;
+- another unit convention or vendor result set.
+
+Ordinary numeric changes in pitch, target size, edge exclusion, reading count, offset or correction factor stay inside this family when the same semantic path applies.
+
+---
+
 ### LBIC-SINGLE-001 — single-beam Current/Reflectivity/IQE family
 
 **Measurement type**

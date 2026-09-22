@@ -8,11 +8,13 @@ test('desktop/multicolumn sidebar has its own viewport scroll container',()=>{
   assert.match(css,/@media\(max-width:700px\),\(pointer:coarse\) and \(orientation:portrait\) and \(max-width:950px\)\{\.module-grid>\.side\{position:static/);
 });
 
-test('single-file build includes LBIC before generic fallback',()=>{
+test('single-file build includes ISC and LBIC before generic fallback',()=>{
   const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  const isc=build.indexOf("'src/modules/isc.js'");
   const lbic=build.indexOf("'src/modules/lbic.js'");
   const generic=build.indexOf("'src/modules/generic.js'");
-  assert.ok(lbic>=0);
+  assert.ok(isc>=0);
+  assert.ok(lbic>isc);
   assert.ok(generic>lbic);
 });
 
@@ -38,6 +40,7 @@ test('landing page advertises supported analyzers without overclaiming generic i
   assert.match(html,/feature-tags/);
   assert.match(html,/Dit \/ COCOS/);
   assert.match(html,/QSS-µPCD/);
+  assert.match(html,/ISC/);
   assert.match(html,/LBIC/);
   assert.match(html,/Generic XML inspector/);
 });
@@ -71,13 +74,16 @@ test('all scientific plots expose shared zoom interactions and reset semantics',
   const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
   const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
   assert.match(build,/'src\/core\/plot\.js'/);
   assert.equal((dit.match(/PV\.plot\.bind\(/g)||[]).length,4);
   assert.equal((qss.match(/PV\.plot\.bind\(/g)||[]).length,3);
+  assert.equal((isc.match(/PV\.plot\.bind\(/g)||[]).length,3);
   assert.equal((lbic.match(/PV\.plot\.bind\(/g)||[]).length,3);
   assert.match(dit,/onReset:\(\)=>\{zoom\.vcpd=\{x:null,y:null\}/);
   assert.match(qss,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
+  assert.match(isc,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
   assert.match(lbic,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
 });
 
@@ -261,4 +267,25 @@ test('QSS Distribution draws numeric tick labels on both axes in normal and swap
   assert.match(src,/niceTicks\(histYRange\[0\],histYRange\[1\],5\)/);
   assert.match(src,/ctx\.fillText\(axisFmt\(t\),x,H-17\)/);
   assert.match(src,/ctx\.fillText\(axisFmt\(t\),p\.l-8,y\+4\)/);
+});
+
+
+test('ISC module keeps the three manual-defined quantities, raw-reading view, Distribution swap and manual axes',()=>{
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  assert.match(isc,/types:\['ISCMeasurement'\]/);
+  assert.match(isc,/Vcpd Dark/);
+  assert.match(isc,/Vcpd Light/);
+  assert.match(isc,/VSB/);
+  assert.match(isc,/Raw readings/);
+  assert.match(isc,/id="iSwapHistAxes"/);
+  assert.match(isc,/histSwapped=!histSwapped/);
+  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histSwapped/);
+  assert.match(isc,/axisControls\('iMapAxes'\)/);
+  assert.match(isc,/axisControls\('iHistAxes'\)/);
+  assert.match(isc,/axisControls\('iRawAxes'\)/);
+  assert.match(isc,/equalAspectRanges\(autoX,autoY/);
+  assert.match(isc,/targetGeometry\(d\)/);
+  assert.match(isc,/setLineDash\(\[6,4\]\)/);
+  assert.match(isc,/geometry\.nominal/);
+  assert.match(isc,/geometry\.scheduled/);
 });
