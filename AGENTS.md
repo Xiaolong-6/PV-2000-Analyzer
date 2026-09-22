@@ -4,7 +4,7 @@
 
 `private/` is strictly local-only. Never commit, rename into a tracked path, or paste contents of `private/` into tracked files. Vendor manuals, group MATLAB code, customer-confidential material, and any reference files that have not been explicitly cleared for publication remain local validation material only.
 
-The sole exception for real PV-2000 measurement material is the explicit public contribution area `reference_data/`. XML, matching PV-2000 exported CSV/XPS, and screenshots may be tracked there only when the contributor intentionally submits them as public regression evidence and confirms they have the right to publish them. A public reference case must document provenance, pairing, measurement/result intent, and any anonymization in its case README. Never move existing `private/` material into `reference_data/` merely to make a test portable.
+The sole exception for real PV-2000 measurement material is the explicit public contribution area `reference_data/`. Public reference files may be tracked there only when the contributor intentionally submits them as public regression evidence, has the authority to make the grants in `REFERENCE_DATA_LICENSE.md`, and records the required acceptance. Prefer XML + numeric CSV. Full XPS/vendor reports and full-interface screenshots remain private by default; vendor manuals, proprietary binaries, PDB/debug symbols and decompiled source must not be published. A public reference case must document provenance, pairing, measurement/result intent and any anonymization in its case README. Never move existing `private/` material into `reference_data/` merely to make a test portable.
 
 Before every commit run:
 
@@ -44,7 +44,9 @@ The canonical project version is the single line in root `VERSION`. Do not use s
 
 The repository community license is **AGPL-3.0-only**. Separate commercial licensing is intentionally preserved. Do not replace or weaken the repository license, CLA, commercial-licensing notice, or copyright notice without an explicit project-owner decision.
 
-External pull requests containing copyrightable code, documentation, tests, UI assets or other material must affirm the current `CLA.md` before merge. Contributors retain copyright, while the CLA grants Xiaolong Liu the sublicensing/relicensing rights needed for dual licensing. Reference-data publication rights remain a separate requirement.
+External pull requests containing copyrightable code, documentation, tests, UI assets or other material must affirm the current `CLA.md` through the exact PR-author acceptance comment defined there. The `Legal / contributor grants` status verifies that record and should be configured as a required merge check. Contributors retain copyright, while the CLA grants Xiaolong Liu the sublicensing/relicensing rights needed for dual licensing.
+
+Public files under `reference_data/` additionally require the exact PR-author acceptance defined in `REFERENCE_DATA_LICENSE.md`; the same legal gate checks it whenever a PR changes that directory. Issue-form uploads require the separate Reference Data License checkbox.
 
 ## Reference-profile rule
 

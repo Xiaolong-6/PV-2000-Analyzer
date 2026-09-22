@@ -49,7 +49,7 @@ Licensing details are kept in [LICENSE](LICENSE), [COMMERCIAL_LICENSE.md](COMMER
 
 PV-2000 XML is the runtime input. Vendor/user CSV/XPS exports are regression references only and are never runtime dependencies.
 
-Existing local or confidential reference material belongs under ignored `private/`. Publicly contributed regression cases may instead live under `reference_data/` when the contributor intentionally publishes the XML, matching PV-2000 export and, preferably, a PV-2000 screenshot and confirms they have the right to share them. Vendor manuals, group code and confidential customer/sample material must not be published.
+Existing local or confidential reference material belongs under ignored `private/`. Publicly contributed regression cases may instead live under `reference_data/` only under [REFERENCE_DATA_LICENSE.md](REFERENCE_DATA_LICENSE.md). Prefer XML + numeric CSV; full XPS/vendor reports and full-interface screenshots remain private by default. Vendor manuals, proprietary binaries/debug symbols/decompiled source, group code and confidential customer/sample material must not be published.
 
 ## Contributing new PV-2000 support
 
