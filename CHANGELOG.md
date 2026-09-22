@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.6.1 — 2026-09-22
+## v20260922.7 — 2026-09-22
 
 - Added inferred QSS-µPCD `MapPattern + SquareCell` coordinate reconstruction from target `Size`, `EdgeExclusion` and `Pitch`, fixing blank maps when the XML contains valid raster data but no `RoundWafer` target.
 - SquareCell maps now use their effective rectangular bounds for default display and smoothing instead of the circular RoundWafer mask; the existing RoundWafer path remains unchanged and separately validated.
