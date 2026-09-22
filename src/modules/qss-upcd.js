@@ -22,40 +22,89 @@
   function targetGeometry(d){
     if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
       const radius=d.diameter/2;
-      return{shape:'circle',nominal:{radius},scheduled:Number.isFinite(d.mapRadius)?{radius:d.mapRadius}:null,extent:radius};
+      return{
+        shape:'circle',
+        nominal:{radius},
+        scheduled:Number.isFinite(d.mapRadius)?{radius:d.mapRadius}:null,
+        extent:radius
+      };
     }
     if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)&&d.targetWidth>0&&d.targetHeight>0){
-      const halfWidth=d.targetWidth/2,halfHeight=d.targetHeight/2,
-        regionScheduled=d.patternType==='SquareRegionPattern'&&[d.regionX,d.regionY,d.regionWidth,d.regionHeight].every(Number.isFinite)&&d.regionWidth>=0&&d.regionHeight>=0
-          ?{xMin:d.regionX,xMax:d.regionX+d.regionWidth,yMin:d.regionY,yMax:d.regionY+d.regionHeight}:null;
-      return{shape:'rect',nominal:{halfWidth,halfHeight},scheduled:regionScheduled||(Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight)?{halfWidth:d.mapHalfWidth,halfHeight:d.mapHalfHeight}:null),extent:Math.max(halfWidth,halfHeight)};
+      const halfWidth=d.targetWidth/2,
+        halfHeight=d.targetHeight/2,
+        regionScheduled=d.patternType==='SquareRegionPattern'&&
+          [d.regionX,d.regionY,d.regionWidth,d.regionHeight].every(Number.isFinite)&&
+          d.regionWidth>=0&&d.regionHeight>=0
+          ?{xMin:d.regionX,xMax:d.regionX+d.regionWidth,yMin:d.regionY,yMax:d.regionY+d.regionHeight}
+          :null,
+        centeredScheduled=Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight)
+          ?{halfWidth:d.mapHalfWidth,halfHeight:d.mapHalfHeight}
+          :null;
+      return{
+        shape:'rect',
+        nominal:{halfWidth,halfHeight},
+        scheduled:regionScheduled||centeredScheduled,
+        extent:Math.max(halfWidth,halfHeight)
+      };
     }
     return null;
   }
   function insideScheduled(geometry,x,y){
-    const scheduled=geometry?.scheduled;if(!geometry||!scheduled)return true;
+    const scheduled=geometry?.scheduled;
+    if(!geometry||!scheduled)return true;
     if(geometry.shape==='circle')return x*x+y*y<scheduled.radius*scheduled.radius;
     if(geometry.shape==='rect'){
-      if([scheduled.xMin,scheduled.xMax,scheduled.yMin,scheduled.yMax].every(Number.isFinite))return x>=scheduled.xMin&&x<=scheduled.xMax&&y>=scheduled.yMin&&y<=scheduled.yMax;
+      if([scheduled.xMin,scheduled.xMax,scheduled.yMin,scheduled.yMax].every(Number.isFinite)){
+        return x>=scheduled.xMin&&x<=scheduled.xMax&&y>=scheduled.yMin&&y<=scheduled.yMax;
+      }
       return Math.abs(x)<=scheduled.halfWidth&&Math.abs(y)<=scheduled.halfHeight;
     }
     return true;
   }
-  function gridPitch(size,count){return Number.isFinite(size)&&Number.isFinite(count)&&count>1?size/(count-1):NaN}
+  function gridPitch(size,count){
+    return Number.isFinite(size)&&Number.isFinite(count)&&count>1?size/(count-1):NaN;
+  }
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),iter=X.direct(itd,'Iteration'),data=X.direct(iter,'Data');
     const values=X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value')).filter(Number.isFinite);
-    const pattern=X.direct(m,'Pattern'),patternType=X.attrType(pattern),region=X.direct(pattern,'Region'),location=X.direct(region,'Location'),regionSize=X.direct(region,'Size'),dimension=X.direct(pattern,'Dimension'),
-      regionX=X.num(region,'X',X.num(location,'X',NaN)),regionY=X.num(region,'Y',X.num(location,'Y',NaN)),regionWidth=X.num(region,'Width',X.num(regionSize,'Width',NaN)),regionHeight=X.num(region,'Height',X.num(regionSize,'Height',NaN)),nx=X.num(dimension,'X',NaN),ny=X.num(dimension,'Y',NaN),
-      target=X.direct(m,'Target'),targetType=X.attrType(target),targetSize=X.direct(target,'Size'),targetWidth=X.num(targetSize,'Width',NaN),targetHeight=X.num(targetSize,'Height',NaN),pitch=X.direct(pattern,'Pitch'),
-      diameter=X.num(target,'Diameter',Number.isFinite(c.radius)?2*c.radius:NaN),edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0)),mapRadius=effectiveMapRadius(diameter,edgeExclusion),mapHalfWidth=effectiveMapHalfExtent(targetWidth,edgeExclusion),mapHalfHeight=effectiveMapHalfExtent(targetHeight,edgeExclusion),
-      rawPitchX=X.num(pitch,'X'),rawPitchY=X.num(pitch,'Y'),pitchX=Number.isFinite(rawPitchX)?rawPitchX:gridPitch(regionWidth,nx),pitchY=Number.isFinite(rawPitchY)?rawPitchY:gridPitch(regionHeight,ny);
+    const pattern=X.direct(m,'Pattern'),
+      patternType=X.attrType(pattern),
+      region=X.direct(pattern,'Region'),
+      location=X.direct(region,'Location'),
+      regionSize=X.direct(region,'Size'),
+      dimension=X.direct(pattern,'Dimension'),
+      regionX=X.num(region,'X',X.num(location,'X',NaN)),
+      regionY=X.num(region,'Y',X.num(location,'Y',NaN)),
+      regionWidth=X.num(region,'Width',X.num(regionSize,'Width',NaN)),
+      regionHeight=X.num(region,'Height',X.num(regionSize,'Height',NaN)),
+      nx=X.num(dimension,'X',NaN),
+      ny=X.num(dimension,'Y',NaN),
+      target=X.direct(m,'Target'),
+      targetType=X.attrType(target),
+      targetSize=X.direct(target,'Size'),
+      targetWidth=X.num(targetSize,'Width',NaN),
+      targetHeight=X.num(targetSize,'Height',NaN),
+      pitch=X.direct(pattern,'Pitch'),
+      diameter=X.num(target,'Diameter',Number.isFinite(c.radius)?2*c.radius:NaN),
+      edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0)),
+      mapRadius=effectiveMapRadius(diameter,edgeExclusion),
+      mapHalfWidth=effectiveMapHalfExtent(targetWidth,edgeExclusion),
+      mapHalfHeight=effectiveMapHalfExtent(targetHeight,edgeExclusion),
+      rawPitchX=X.num(pitch,'X'),
+      rawPitchY=X.num(pitch,'Y'),
+      pitchX=Number.isFinite(rawPitchX)?rawPitchX:gridPitch(regionWidth,nx),
+      pitchY=Number.isFinite(rawPitchY)?rawPitchY:gridPitch(regionHeight,ny);
       
     let coords=[];
     if(patternType==='MapPattern'){
-      if(targetType==='RoundWafer'&&Number.isFinite(mapRadius)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY))coords=GEO.roundGrid(mapRadius,pitchX,pitchY,values.length);
-      else if(targetType==='SquareCell'&&Number.isFinite(mapHalfWidth)&&Number.isFinite(mapHalfHeight)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY))coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,values.length);
-    }else if(patternType==='SquareRegionPattern')coords=GEO.rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,values.length,1);
+      if(targetType==='RoundWafer'&&Number.isFinite(mapRadius)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+        coords=GEO.roundGrid(mapRadius,pitchX,pitchY,values.length);
+      }else if(targetType==='SquareCell'&&Number.isFinite(mapHalfWidth)&&Number.isFinite(mapHalfHeight)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+        coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,values.length);
+      }
+    }else if(patternType==='SquareRegionPattern'){
+      coords=GEO.rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,values.length,1);
+    }
       
     const preArray=X.direct(X.direct(m,'PreProcessings'),'ArrayOfPreProcessSettings'),pre0=preArray?X.children(preArray)[0]:null;
     const avgIndex=X.num(m,'Averaging',NaN),
@@ -515,9 +564,13 @@
       mask=validMask(a,filterKey,filterLo,filterHi);
       
     const statsFor=k=>summaryMasked(a.metrics[k].values,mask);
-    const targetSummary=()=>d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)
-      ?`${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm square · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm · inferred geometry`
-      :`${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`;
+    const targetSummary=()=>{
+      if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)){
+        const geometryLabel=d.patternType==='SquareRegionPattern'?'explicit SquareRegion raster':'inferred centered MapPattern';
+        return `${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm square · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm · ${geometryLabel}`;
+      }
+      return `${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`;
+    };
     function summaryRows(){
       return Object.values(a.metrics).map(m=>{
         const st=statsFor(m.key);return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
