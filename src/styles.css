@@ -152,7 +152,6 @@
 }
 @media(max-width:430px){
   .landing{padding:26px 13px}
-  .landing-header{align-items:center}
   .landing h1{font-size:28px}
   .feature-tag{font-size:9.5px;padding:4px 7px}
   .drop{min-height:248px;padding:30px 17px}
@@ -183,4 +182,4 @@
 .app-footer .project-icon{width:11px;height:11px}
 @media(max-width:700px){.project-shortcuts{justify-content:flex-start;padding-left:0;padding-right:0}}
 @media(max-width:430px){.project-shortcuts{gap:4px}.readme-badge{height:22px;font-size:8.5px;line-height:22px}.badge-icon{width:22px}.badge-part{padding:0 5px}.app-footer{gap:8px}}
-@media(prefers-reduced-motion:reduce){.readme-badge,.drop,.drop::before,.drop-icon,.drop-open{transition:none}.readme-badge:hover,.drop-open:hover{transform:none}}.landing-repo:hover,.drop-open:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){.readme-badge,.drop,.drop::before,.drop-icon,.drop-open{transition:none}.readme-badge:hover,.drop-open:hover{transform:none}}
