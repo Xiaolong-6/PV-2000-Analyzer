@@ -32,13 +32,13 @@ The canonical project version is the single line in root `VERSION`. Do not use s
 1. Preserve XML-only runtime operation. PV-2000 exports are regression references, never runtime dependencies.
 2. Detect measurement type from `Measurement/@xsi:type`; never infer it from filenames.
 3. Add each new result type as an isolated module registered through `PV2000.registry`.
-4. Shared XML/statistics/geometry/theme/export logic belongs in `src/core/`.
+4. Shared XML/statistics/geometry/theme/export/UI logic belongs in `src/core/`; do not duplicate common HTML escaping, help markup or tooltip helpers in measurement modules.
 5. Preserve the current responsive three-column UI; do not imitate the legacy PV-2000 application.
 6. Every chart must expose a data export and shared zoom behavior: wheel in the plot zooms both axes, wheel over one axis zooms only that axis, and double-click restores auto scale.
 7. Explain scientific quantities/controls with hover text (`title`/`.help`) rather than permanent instructional clutter.
 8. Unknown XML types must fall back to Generic Inspector.
 9. Reverse-engineered calculations require regression against a PV-2000 export/display before being labelled validated.
-10. Run `npm test`, `npm run build`, and relevant private validators before handoff; update CHANGELOG/HANDOFF.
+10. Run `npm run check`, `npm run build`, and relevant private validators before handoff; update CHANGELOG/HANDOFF. Keep executable source readable and do not commit generated `dist/` output.
 
 ## Licensing / CLA rule
 
