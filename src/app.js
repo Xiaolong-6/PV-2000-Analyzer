@@ -14,11 +14,16 @@
   function syncFolderNav(){
     const prev=$('#prevXml'),next=$('#nextXml');
     if(!prev||!next)return;
-    const hasCurrent=!!current,hasFolder=folderFiles.length>0;
-    prev.disabled=!hasCurrent||(hasFolder&&folderIndex===0);
-    next.disabled=!hasCurrent||(hasFolder&&folderIndex===folderFiles.length-1);
-    prev.title=hasFolder?'Previous XML in selected folder':'Previous XML in folder — first use asks for folder access';
-    next.title=hasFolder?'Next XML in selected folder':'Next XML in folder — first use asks for folder access';
+    const hasCurrent=!!current,hasFolder=folderFiles.length>0,hasMatchedFolder=hasFolder&&folderIndex>=0;
+    prev.disabled=!hasCurrent||!hasMatchedFolder||folderIndex===0;
+    next.disabled=!hasCurrent||!hasMatchedFolder||folderIndex===folderFiles.length-1;
+    prev.title=hasMatchedFolder?'Load previous XML in the authorized folder':'Authorize this folder once to enable adjacent-file navigation';
+    next.title=hasMatchedFolder?'Load next XML in the authorized folder':'Authorize this folder once to enable adjacent-file navigation';
+    const access=$('#folderXmlAccess');
+    if(access){
+      access.disabled=!hasCurrent;
+      access.title=hasMatchedFolder?'Change the authorized XML folder':'Authorize the current XML folder for ← / → navigation';
+    }
   }
   async function openFile(file,{keepFolder=false}={}){
     if(!file)return;
@@ -91,16 +96,23 @@
       syncFolderNav();
     }catch(e){console.error(e);setStatus('Could not open the adjacent XML file.')}
   }
+  async function authorizeFolder(){
+    if(!current)return;
+    if(typeof root.showDirectoryPicker==='function'){
+      const ok=await chooseFolder();
+      if(ok&&folderIndex<0)setStatus('The current XML is not in the authorized folder.');
+      else if(ok)setStatus('Folder authorized. Use ← / → to load adjacent XML files.');
+      return;
+    }
+    pendingFallbackDirection=0;
+    $('#folderXmlFallback').click();
+  }
   async function navigateFolder(step){
     if(!current)return;
-    if(!folderFiles.length){
-      if(typeof root.showDirectoryPicker==='function'){
-        if(!(await chooseFolder()))return;
-      }else{
-        pendingFallbackDirection=step;
-        $('#folderXmlFallback').click();
-        return;
-      }
+    if(!folderFiles.length||folderIndex<0){
+      setStatus('Authorize the current XML folder once; ← / → never open a picker.');
+      syncFolderNav();
+      return;
     }
     await navigateReady(step);
   }
@@ -108,14 +120,15 @@
   bindInput('#openLanding');bindInput('#openTop');
   $('#prevXml').onclick=()=>navigateFolder(-1);
   $('#nextXml').onclick=()=>navigateFolder(1);
+  $('#folderXmlAccess').onclick=()=>authorizeFolder();
   $('#folderXmlFallback').addEventListener('change',async e=>{
     folderFiles=fallbackFolderEntries(e.target.files);
     folderIndex=current?folderFiles.findIndex(entry=>entry.name===current.file.name):-1;
     syncFolderNav();
-    const step=pendingFallbackDirection;
     pendingFallbackDirection=0;
-    if(folderFiles.length&&step)await navigateReady(step);
-    else if(!folderFiles.length)setStatus('No XML files found in the selected folder.');
+    if(!folderFiles.length)setStatus('No XML files found in the selected folder.');
+    else if(folderIndex<0)setStatus('The current XML is not in the selected folder.');
+    else setStatus('Folder authorized. Use ← / → to load adjacent XML files.');
     e.target.value='';
   });
 

@@ -76,6 +76,33 @@ The analyzer remains XML-only at runtime. Paired CSVs are regression evidence an
 See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
 
 
+## Emitter J0 map — paired XML/CSV regression
+
+One private `JZeroMeasurement` XML + matching PV-2000 CSV export establishes the current two-intensity Emitter J0 reference path. The XML stores two 5017-point `UpcdIterationData` lifetime arrays at 1000 and 3000 mSun; the vendor export contains Basore J0, both τeff.d channels, both Smax channels, both Implied Voc channels, X/Y coordinates and summary statistics.
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| point count | 5017 paired sites | validated |
+| `MapPattern + PseudoSquareCell` X/Y | max abs error 0 mm | validated |
+| τeff.d, first/second QSS | max abs error ≈ 5.2e-13 µs | validated |
+| Smax, first/second QSS | max abs error ≈ 5e-13 cm/s | validated |
+| Basore J0 | max abs error ≈ 9.1e-13 fA/cm² | validated |
+| Implied Voc, first QSS | max abs error ≈ 0.061 mV | compatibility-regressed |
+| Implied Voc, second QSS | max abs error ≈ 0.066 mV | compatibility-regressed |
+| Average / Median / sample Stdev / Min / Max | regressed for all seven quantities | validated within the quantity tolerances above |
+
+The reference geometry is a 156 × 156 mm pseudo-square with 205 mm diameter mask, 7 mm EdgeExclusion and 2 mm pitch. The scheduled region is the intersection of the adjusted 71 × 71 mm half-extents and 95.5 mm radius, yielding exactly 5017 X-fast, ascending-Y sites from (-64, -70) to (64, 70) mm.
+
+Basore J0 is derived from the two-intensity slope of inverse small-perturbation lifetime squared versus generation rate. The compatibility constant reproduces this reference to floating-point precision. JZero Implied Voc intentionally uses a separate compatibility calibration from the general QSS-map analyzer because the general QSS `ni(T)` model produces a systematic offset on this result family. These compatibility constants are regression models for the observed vendor output, not claims about undisclosed internal PV-2000 constants.
+
+Run:
+
+```bash
+npm run validate:jzero
+```
+
+The validator looks for matching private pairs under `private/reference/jzero/` and skips cleanly when they are absent. Runtime remains XML-only.
+
 ## DIT reference
 
 Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The default Si model uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc with `εr = 11.68`, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that was an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.

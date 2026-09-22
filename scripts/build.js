@@ -14,6 +14,7 @@ const files=[
   'src/modules/dit.js',
   'src/modules/qss-upcd.js',
   'src/modules/dual-qss.js',
+  'src/modules/jzero.js',
   'src/modules/isc.js',
   'src/modules/lbic.js',
   'src/modules/generic.js',

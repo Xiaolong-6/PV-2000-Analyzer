@@ -198,6 +198,55 @@ See `docs/ALGORITHMS_DUAL_QSS.md`.
 
 ---
 
+### JZERO-MAP-001 — two-intensity Emitter J0 pseudo-square map
+
+**Measurement type**
+
+`JZeroMeasurement`
+
+**Reference material**
+
+One matching private XML + PV-2000 CSV export with **5017 sites**. The XML contains two `UpcdIterationData` arrays measured at **1000 mSun** and **3000 mSun**.
+
+**Validated family**
+
+- `MapPattern + PseudoSquareCell`;
+- two lifetime iterations paired by site index;
+- X-fast, ascending-Y centered lattice;
+- scheduled target = intersection of the EdgeExclusion-adjusted rectangle and circle;
+- seven vendor quantities: Basore J0, τeff.d ×2, Smax ×2 and Implied Voc ×2.
+
+The current reference instance uses target Size = 156 × 156 mm, Diameter = 205 mm, EdgeExclusion = 7 mm, Pitch = 2 × 2 mm, WaferThickness = 200 µm, Doping = 1.5e16 cm⁻³ PType and OpticalFactor = 1. Those numeric values are evidence rather than runtime whitelist keys.
+
+**Validated / established**
+
+- XML lifetime point count: **5017 + 5017**;
+- reconstructed coordinate count: **5017**;
+- first site: **(-64, -70) mm**;
+- last site: **(64, 70) mm**;
+- all X/Y coordinates match the vendor CSV exactly;
+- both τeff.d arrays match the export to floating-point precision (max abs error approximately **5.2e-13 µs**);
+- both Smax arrays, using `Smax = W/(2τ)`, match to floating-point precision (max abs error approximately **5e-13 cm/s**);
+- Basore-Hansen J0 uses the two-intensity slope of inverse lifetime squared versus generation rate and matches point-by-point with maximum absolute error approximately **9.1e-13 fA/cm²** under the documented JZero compatibility calibration;
+- both Implied Voc channels are reproduced with maximum absolute errors of approximately **0.061 mV** and **0.066 mV**, respectively, using the separate JZero compatibility path documented in `docs/ALGORITHMS_JZERO.md`;
+- Average / Median / sample Stdev / Min / Max are regressed for all seven quantities.
+
+**Compatibility caveat**
+
+The Basore and Implied-Voc compatibility constants are reverse-engineered from this paired result path. They reproduce the observed vendor output but are not claims about undisclosed PV-2000 internal constants. In particular, JZero Implied Voc must remain separate from the general QSS-map compatibility model because directly reusing that model produces a systematic offset on this reference.
+
+**Same-family numeric changes**
+
+Different two-QSS intensity values, pitch, pseudo-square dimensions, EdgeExclusion, wafer thickness, doping or optical factor stay inside this family when the same two-iteration schema, coordinate rule and result formulas apply. Numeric changes should still be sanity-checked, but they do not automatically create a new profile.
+
+**NEW PROFILE triggers**
+
+Examples include another pattern/target encoding, more or fewer than two lifetime iterations, a different iteration/result ordering, a different raw data item schema, additional vendor outputs, or evidence that the derived-result formulas/validity behavior change.
+
+See `docs/ALGORITHMS_JZERO.md` and run `npm run validate:jzero`.
+
+---
+
 ### ISC-MAP-001 — repeated-reading Initial Surface Charge map
 
 **Measurement type**
@@ -520,7 +569,6 @@ Examples include another coordinate encoding, another target-shape scheduling ru
 
 Ordinary changes in pseudo-square Width/Height/Diameter/EdgeExclusion, pitch, beam count, wavelength, power and finite FluxCache values stay inside this family when the same independent per-beam path applies.
 
-
 ### LBIC-REFLECTANCE-003 — reflectance-only SquareRegionPattern family
 
 **Measurement type**
@@ -589,7 +637,6 @@ Examples include:
 - an incomplete-acquisition ordering that is not the leading X-fast / ascending-Y schedule.
 
 Ordinary wavelength, laser power, Region origin/size and complete SquareRegionPattern grid-dimension changes stay inside this family when the same reflectance-only semantic path applies.
-
 
 ---
 

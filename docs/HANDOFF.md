@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.14
+# Agent handoff — 2026-09-22 — main v20260922.17
 
 ## Goal
 
@@ -11,18 +11,19 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
 - `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
 - `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
+- `JZeroMeasurement` analyzer with two-intensity Emitter J0 maps, PseudoSquareCell geometry, Basore J0, both τeff.d/Smax/Implied-Voc channels, filtering, distributions and CSV export;
 - `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
 - `LBICMeasurement` analyzer with dynamic beam/channel raster maps, line profiles, pixel inspection and CSV export;
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
 - per-chart CSV exports and extensive hover explanations;
-- shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
+- shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; measurement modules reuse the shared helpers instead of carrying duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
-- landing-page support tags for Dit / COCOS, QSS-µPCD, ISC, LBIC and Generic XML inspector;
+- landing-page support tags for Dit / COCOS, QSS-µPCD, QSS Injection, Emitter J0, ISC, LBIC and Generic XML inspector;
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a header Axes popover placed immediately before Export. Distribution plots default to Count on X, keep Swap axes beside Auto/Apply inside that Axes action row, and expose a separate Bins header control (5–200 bins) for histogram spacing; Axes popovers are allowed to overflow chart panels so adjacent plots do not clip them, and canvas wrappers no longer force a 300 px minimum height;
-- spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
+- spatial maps use equal physical X/Y scale at auto/default view and follow the applicable XML target geometry: circular, rectangular or pseudo-square outlines are kept distinct from the plot frame and EdgeExclusion-adjusted scheduled boundary;
 - LBIC right workspace uses Map + Distribution side-by-side with equal top-row chart sizing and X/Y profiles side-by-side below; Selected pixel and Channel provenance are in the left sidebar. Distribution retains axis swap and numeric ticks;
-- long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
+- long measurement-specific scientific explanations stay in hover help/documentation instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
@@ -90,6 +91,23 @@ Still unresolved: raw-transient → vendor result-table Lifetime transformation,
 
 See `docs/ALGORITHMS_DUAL_QSS.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
+## Emitter J0 map status
+
+`JZeroMeasurement` is implemented as a dedicated analyzer rather than being aliased to QSS-µPCD. The supplied paired ES560 reference contains two 5017-point `UpcdIterationData` arrays at 1000/3000 mSun and a `MapPattern + PseudoSquareCell` target.
+
+Private pointwise regression against the matching vendor CSV establishes:
+
+- 5017 reconstructed X/Y sites, exact vendor coordinate match;
+- both τeff.d arrays to floating-point precision;
+- both Smax arrays to floating-point precision;
+- Basore J0 to approximately 9.1e-13 fA/cm² maximum absolute error;
+- Implied Voc compatibility to approximately 0.061 mV / 0.066 mV maximum absolute error for the first/second QSS channels;
+- Average / Median / sample Stdev / Min / Max for all seven result quantities.
+
+The pseudo-square schedule uses the intersection of the EdgeExclusion-adjusted rectangle and circle. The current reference is 156 × 156 mm, 205 mm diameter, 7 mm exclusion and 2 mm pitch, giving sites from (-64,-70) to (64,70) mm.
+
+The Basore and JZero Implied-Voc compatibility constants are reverse-engineered regression values, not claims about undisclosed PV-2000 internals. Keep JZero Implied Voc separate from the general QSS-map `ni(T)` path. See `docs/ALGORITHMS_JZERO.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+
 ## Dit status
 
 The restored Dit analyzer retains the required 2x2 plots, numeric selectable wafer map, log Dit/PCHIP/midgap, flatband markers/details, site navigation, valid-site/current-site summary, full XML metadata and per-chart export.
@@ -134,7 +152,7 @@ The QSS runtime shows only facts for the currently imported dataset. Fixed refer
 
 Older QSS XMLs using `HighDensityPattern` are now supported as an **inferred coordinate path**. These XMLs carry a scalar `Dimension` and a count-matched normalized `Coefficients` grid. Current observed examples cover 15×15 and 20×20 RoundWafer maps and a 35×35 SquareCell map. SquareCell coefficients scale to the EdgeExclusion-adjusted rectangle; RoundWafer keeps only the strict normalized unit-circle coefficient subset (`x²+y² < 1`) and scales it by the effective radius. Keep this labelled inferred until a matching PV-2000 X/Y export is regressed.
 
-The main toolbar also exposes `← Open XML →` navigation. After one folder authorization, the arrows traverse XML files in natural filename order without reopening the picker for each file. The ordinary Open XML and drag/drop paths remain unchanged; a `webkitdirectory` fallback covers browsers without the File System Access API.
+The main toolbar exposes `← Open XML →` navigation plus a separate compact **Folder** authorization control. Browser security does not expose arbitrary sibling files after a normal single-file selection, so folder access must be granted explicitly once. The arrows themselves never open a picker: once the current XML is matched inside the authorized folder, they directly load the previous/next XML in natural filename order. A `webkitdirectory` fallback covers browsers without the File System Access API.
 
 ## ISC status
 
@@ -236,13 +254,14 @@ npm run check
 npm run build
 npm run validate:qss
 npm run validate:dual-qss
+npm run validate:jzero
 npm run validate:isc
 npm run validate:vcpd
 npm run validate:lbic
 git status --short --ignored
 ```
 
-Baseline automated/local regression status before this branch: unit tests, build, the 305-point QSS private regression, the paired 169-point ISC XML/CSV regression, and all four LBIC-SINGLE-001 pairs had passed. This branch adds unit coverage and validator support for LBIC-MULTI-002; the supplied 54,449-point XML/CSV pair was independently compared point-by-point during implementation (X/Y and Current exact; Reflectivity exact with 0–100 display clamp; finite IQE ~1e-13 %-point). The validator launch commands now go through a cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback also has an explicit unknown-type dispatch test.
+Current regression inventory includes the QSS map references, Dual QSS raw-path corpus, ISC and VCPD paired references, LBIC-SINGLE-001/LBIC-MULTI-002, and JZERO-MAP-001. The JZero ES560 XML/CSV pair was independently compared point-by-point during this branch: X/Y exact, both lifetime and Smax channels at floating-point precision, Basore J0 at floating-point precision, and both Implied Voc channels within 0.07 mV. Validator launch commands use the cross-platform Node wrapper so Windows Store `python` aliases do not break `npm run validate:*`. Generic Inspector fallback retains an explicit unknown-type dispatch test.
 
 ## Browser self-test completed
 
