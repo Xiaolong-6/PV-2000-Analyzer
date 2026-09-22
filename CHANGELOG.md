@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260922.9.1 — 2026-09-22
+
+- Hardened ISC validation semantics so a missing `VcpdOffset` remains missing instead of silently becoming zero; the private validator now requires both offset and VSB correction factor for the validated result path.
+- Added regression coverage for missing-offset behavior.
+
 ## v20260922.9 — 2026-09-22
 
 - Added a dedicated `ISCMeasurement` analyzer for Initial Surface Charge with selectable Vcpd Dark / Vcpd Light / VSB maps, statistics, distributions, selected-site repeated-reading inspection and CSV exports.

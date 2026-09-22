@@ -21,6 +21,13 @@ test('ISC result reconstruction applies offset and VSB correction in vendor-obse
   assert.ok(Math.abs(r.light-0.3)<1e-12);
 });
 
+test('missing VcpdOffset does not silently become zero',()=>{
+  const r=ISC.reconstructSite([0.2,0.4],[0.1,0.2],NaN,1.2);
+  assert.ok(Number.isNaN(r.dark));
+  assert.ok(Number.isNaN(r.light));
+  assert.ok(Number.isNaN(r.vsb));
+});
+
 test('ISC SquareCell example geometry gives a centered 13x13 schedule',()=>{
   const half=ISC.effectiveHalf(100,30);
   assert.equal(half,20);

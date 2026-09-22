@@ -157,8 +157,10 @@ def parse_xml(path: Path):
             f"NEW PROFILE: generated coordinates={len(xs)}, DataItem count={len(items)}"
         )
 
-    offset = first_num(md, ["VcpdOffset", "VcpdOffsett"], 0.0)
+    offset = first_num(md, ["VcpdOffset", "VcpdOffsett"], math.nan)
     factor = num(md, "VsbCorrectionFactor", math.nan)
+    if not math.isfinite(offset):
+        raise AssertionError("NEW PROFILE: missing VcpdOffset")
     if not math.isfinite(factor):
         raise AssertionError("NEW PROFILE: missing VsbCorrectionFactor")
 

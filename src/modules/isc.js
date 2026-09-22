@@ -46,7 +46,7 @@
       iter=X.direct(itd,'Iteration'),
       data=X.direct(iter,'Data'),
       items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
-      offset=firstNum(md,['VcpdOffset','VcpdOffsett'],0),
+      offset=firstNum(md,['VcpdOffset','VcpdOffsett'],NaN),
       factor=X.num(md,'VsbCorrectionFactor',NaN),
       pattern=X.direct(m,'Pattern'),
       target=X.direct(m,'Target'),
