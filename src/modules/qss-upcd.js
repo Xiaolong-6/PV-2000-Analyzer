@@ -19,6 +19,28 @@
     if(!Number.isFinite(edgeExclusion))edgeExclusion=0;
     if(edgeExclusion<0||edgeExclusion>=half)return NaN;
     return half-edgeExclusion}
+  function targetGeometry(d){
+    if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
+      const radius=d.diameter/2;
+      return{
+        shape:'circle',
+        nominal:{radius},
+        scheduled:Number.isFinite(d.mapRadius)?{radius:d.mapRadius}:null,
+        extent:radius
+      };
+    }
+    if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)&&d.targetWidth>0&&d.targetHeight>0){
+      const halfWidth=d.targetWidth/2,
+        halfHeight=d.targetHeight/2;
+      return{
+        shape:'rect',
+        nominal:{halfWidth,halfHeight},
+        scheduled:Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight)?{halfWidth:d.mapHalfWidth,halfHeight:d.mapHalfHeight}:null,
+        extent:Math.max(halfWidth,halfHeight)
+      };
+    }
+    return null;
+  }
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),iter=X.direct(itd,'Iteration'),data=X.direct(iter,'Data');
     const values=X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value')).filter(Number.isFinite);
@@ -134,14 +156,14 @@
       W=canvas.width=760,
       H=canvas.height=420,
       p={l:54,r:76,t:28,b:46},
-      squareTarget=d.targetType==='SquareCell'&&Number.isFinite(d.mapHalfWidth)&&Number.isFinite(d.mapHalfHeight),
-      rad=squareTarget?Math.max(d.mapHalfWidth,d.mapHalfHeight):(d.diameter/2||50),
+      geometry=targetGeometry(d),
+      extent=(geometry?.extent||d.diameter/2||50)*1.06,
       plot=Math.min(W-p.l-p.r,H-p.t-p.b),
       cx=p.l+(W-p.l-p.r)/2,
       cy=p.t+(H-p.t-p.b)/2,
       R=plot/2,
-      autoX=squareTarget?[-d.mapHalfWidth,d.mapHalfWidth]:[-rad,rad],
-      autoY=squareTarget?[-d.mapHalfHeight,d.mapHalfHeight]:[-rad,rad],
+      autoX=[-extent,extent],
+      autoY=[-extent,extent],
       xr=PV.plot.resolve(autoX,zoom?.x),
       yr=PV.plot.resolve(autoY,zoom?.y),
       X=x=>cx-R+(x-xr[0])/(xr[1]-xr[0]||1)*2*R,
@@ -168,7 +190,9 @@
         for(let px=Math.floor(cx-R);px<=Math.ceil(cx+R);px+=step){
           const x=xr[0]+(px-(cx-R))/(2*R)*(xr[1]-xr[0]),
           y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
-          if(squareTarget?(Math.abs(x)>d.mapHalfWidth||Math.abs(y)>d.mapHalfHeight):x*x+y*y>=rad*rad)continue;
+          const scheduled=geometry?.scheduled;
+          if(geometry?.shape==='rect'&&scheduled&&(Math.abs(x)>scheduled.halfWidth||Math.abs(y)>scheduled.halfHeight))continue;
+          if(geometry?.shape==='circle'&&scheduled&&x*x+y*y>=scheduled.radius*scheduled.radius)continue;
           const v=smoothValueAt(x,y,d.coords,vals,mask,maxDist);
           if(!Number.isFinite(v))continue;
           const t=(v-lo)/(hi-lo||1),
@@ -201,7 +225,42 @@
           ctx.moveTo(x+3,y-3);
           ctx.lineTo(x-3,y+3);
           ctx.stroke()}}}
-    ctx.restore();ctx.strokeStyle=css('--soft');ctx.lineWidth=1.5;ctx.strokeRect(cx-R,cy-R,2*R,2*R);
+    ctx.restore();
+    if(geometry){
+      const traceBoundary=boundary=>{
+        ctx.beginPath();
+        if(geometry.shape==='circle'){
+          const rx=Math.abs(X(boundary.radius)-X(0)),
+            ry=Math.abs(Y(boundary.radius)-Y(0));
+          ctx.ellipse(X(0),Y(0),rx,ry,0,0,2*Math.PI);
+        }else{
+          const x0=X(-boundary.halfWidth),
+            x1=X(boundary.halfWidth),
+            y0=Y(boundary.halfHeight),
+            y1=Y(-boundary.halfHeight);
+          ctx.rect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0));
+        }
+        ctx.stroke();
+      };
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx-R,cy-R,2*R,2*R);
+      ctx.clip();
+      ctx.strokeStyle=css('--soft');
+      ctx.lineWidth=1.7;
+      ctx.setLineDash([]);
+      traceBoundary(geometry.nominal);
+      if(d.edgeExclusion>0&&geometry.scheduled){
+        ctx.strokeStyle=css('--muted');
+        ctx.lineWidth=1.1;
+        ctx.setLineDash([6,4]);
+        traceBoundary(geometry.scheduled);
+      }
+      ctx.restore();
+    }
+    ctx.strokeStyle=css('--grid2');
+    ctx.lineWidth=.75;
+    ctx.strokeRect(cx-R,cy-R,2*R,2*R);
     ctx.fillStyle=css('--muted');
       ctx.font='11px system-ui';
       ctx.textAlign='center';
@@ -497,7 +556,7 @@
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
       </aside><section class="plots">
-        <div class="panel chart"><header><b>Wafer map</b>${help('Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode leaves the area nearest to excluded sites uncolored and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select><button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qMapAxes')}<canvas id="qMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select><button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qMapAxes')}<canvas id="qMap"></canvas></div></div>
         <div class="panel chart"><header><b>Distribution</b>${help('Wheel inside the histogram zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits for outlier-heavy data. Valid counts use the wafer-map color scale; gray counts are excluded. Swap axes exchanges metric and count axes. Yellow lines show active validity limits.')}<span class="grow"></span><button id="qSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution metric and count axes.">Swap axes</button><button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qHistAxes')}<canvas id="qHist"></canvas></div></div>
       </section><section class="plots">
         <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span><button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap">${PV.plot.axisControls('qProfileAxes')}<canvas id="qProfile"></canvas></div></div>
@@ -547,7 +606,7 @@
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,niCompat,validMask,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,constants:{NI300_MANUAL,NI300_PV2000_COMPAT}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,niCompat,validMask,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,targetGeometry,constants:{NI300_MANUAL,NI300_PV2000_COMPAT}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);
