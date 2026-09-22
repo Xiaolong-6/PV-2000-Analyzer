@@ -8,5 +8,4 @@
   bindInput('#openLanding');bindInput('#openTop');
   const drop=$('#dropZone');drop.addEventListener('dragover',e=>{e.preventDefault();drop.classList.add('drag')});drop.addEventListener('dragleave',()=>drop.classList.remove('drag'));drop.addEventListener('drop',e=>{e.preventDefault();drop.classList.remove('drag');openFile(e.dataTransfer.files?.[0])});
   $('#themeBtn').onclick=()=>PV.theme.toggle();document.addEventListener('pv-theme-change',()=>{$('#themeBtn').textContent=PV.theme.current()==='dark'?'Dark':'Light'});PV.theme.apply(PV.theme.system(),false);
-  const liveLink=document.querySelector('.project-live');if(liveLink&&location.hostname==='xiaolong-6.github.io'&&location.pathname.startsWith('/PV-2000-Analyzer'))liveLink.classList.add('hidden');
 })(typeof window!=='undefined'?window:globalThis);
