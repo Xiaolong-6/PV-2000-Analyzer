@@ -41,13 +41,9 @@
     if(iterations.length!==2)throw new Error(`JZeroMeasurement currently supports the validated two-iteration result path; found ${iterations.length} iterations.`);
     if(values.some(v=>!v.length)||values[0].length!==values[1].length)throw new Error('JZeroMeasurement lifetime iterations must contain the same number of sites.');
     if(qssMilli.length!==2||qssMilli.some(v=>!Number.isFinite(v)||v<=0))throw new Error('JZeroMeasurement requires two finite positive QSS intensities.');
-    let coords=[];
-    if(patternType==='MapPattern'&&count){
-      if(targetType==='PseudoSquareCell')coords=GEO.pseudoSquareGrid(mapHalfWidth,mapHalfHeight,mapRadius,pitchX,pitchY,count);
-      else if(targetType==='RoundWafer')coords=GEO.roundGrid(mapRadius,pitchX,pitchY,count);
-      else if(targetType==='SquareCell')coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,count);
-    }
-    if(coords.length!==count)throw new Error(`JZeroMeasurement geometry is not supported for ${patternType||'unknown pattern'} + ${targetType||'unknown target'} (${count} sites).`);
+    if(patternType!=='MapPattern'||targetType!=='PseudoSquareCell')throw new Error(`JZeroMeasurement currently supports the validated MapPattern + PseudoSquareCell profile; found ${patternType||'unknown pattern'} + ${targetType||'unknown target'}.`);
+    const coords=GEO.pseudoSquareGrid(mapHalfWidth,mapHalfHeight,mapRadius,pitchX,pitchY,count);
+    if(coords.length!==count)throw new Error(`JZeroMeasurement pseudo-square schedule produced ${coords.length} coordinates for ${count} lifetime sites.`);
     const avgIndex=X.num(m,'Averaging',NaN),avgValues=X.direct(m,'AveragingValues'),avgList=avgValues?X.children(avgValues).map(e=>Number(e.textContent)).filter(Number.isFinite):[],
       avgMode=Number.isInteger(avgIndex)&&avgIndex>=0&&avgIndex<avgList.length?avgList[avgIndex]:NaN,
       secondAvgIndex=X.num(m,'SecondAveraging',NaN),secondAvgMode=Number.isInteger(secondAvgIndex)&&secondAvgIndex>=0&&secondAvgIndex<avgList.length?avgList[secondAvgIndex]:NaN,
