@@ -129,7 +129,7 @@
         <div class="control-section-title">Flatband</div><div class="setting-row compact-settings">${field('Accumulation points','Number of deepest-accumulation dark V–Q points used to determine Cox/EOT and the flatband-capacitance criterion. Minimum Dit (PV2000-style) is taken directly from accepted discrete Dit–Vsb points; PCHIP does not change it.',`<input id="ditAccumN" type="number" min="3" max="20" value="${o.accumN}">`)}</div>
         <details id="ditMidgapControls" class="analysis-subdetails" ${midgapOpen?'open':''}><summary>Optional Midgap Dit (PCHIP) ${help('COCOS-II and PCHIP can be used together. COCOS-II first reconstructs Vsb and the accepted Dit points; PCHIP then interpolates those accepted points only for the optional Midgap Dit result. PCHIP does not change Minimum Dit (PV2000-style).')}</summary>
           <div class="setting-row compact-settings">
-            ${field('PCHIP outlier limit','Only affects the optional PCHIP fit used for Midgap Dit. Points above this limit inside 0.1–0.5 V are rejected from that fit.',`<input id="ditReject" type="number" step="any" value="${o.ditReject}">`)}
+            ${field('PCHIP outlier limit','Only affects the optional PCHIP fit used for Midgap Dit. Points above this limit inside 0.1–0.5 V are rejected from that fit.',`<input id="ditReject" type="number" step="any" value="${Number.isFinite(o.ditReject)?o.ditReject.toExponential(3).replace('e','E'):''}">`)}
             ${field('Interpolation scale','Only affects optional PCHIP Midgap Dit: LOG10 interpolates log10(Dit); Linear interpolates Dit directly.',`<select id="ditPchipScale"><option value="log10">LOG10</option><option value="linear">Linear</option></select>`)}
           </div>
         </details>
