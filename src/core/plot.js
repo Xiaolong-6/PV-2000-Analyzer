@@ -3,6 +3,16 @@
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function finiteRange(r){return Array.isArray(r)&&r.length===2&&r.every(Number.isFinite)&&r[1]>r[0]}
   function resolve(auto,state){return finiteRange(state)?state.slice():auto.slice()}
+  function equalAspectRanges(xRange,yRange,plotW,plotH){
+    if(!finiteRange(xRange)||!finiteRange(yRange)||!(plotW>0)||!(plotH>0))return{x:xRange.slice(),y:yRange.slice()};
+    const x=xRange.slice(),y=yRange.slice(),xs=x[1]-x[0],ys=y[1]-y[0],target=plotW/plotH,current=xs/ys;
+    if(current<target){
+      const span=ys*target,c=(x[0]+x[1])/2;x[0]=c-span/2;x[1]=c+span/2;
+    }else if(current>target){
+      const span=xs/target,c=(y[0]+y[1])/2;y[0]=c-span/2;y[1]=c+span/2;
+    }
+    return{x,y};
+  }
   function zoomRange(range,factor,fraction=0.5,log=false){
     if(!finiteRange(range)||!(factor>0))return range.slice();
     fraction=clamp(fraction,0,1);
@@ -33,5 +43,5 @@
     el.onpointerleave=()=>{el.style.cursor='default'};
   }
   function clear(state){state.x=null;state.y=null;return state}
-  PV.plot={resolve,zoomRange,bind,clear};
+  PV.plot={resolve,equalAspectRanges,zoomRange,bind,clear};
 })(typeof window!=='undefined'?window:globalThis);
