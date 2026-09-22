@@ -1,10 +1,10 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Q_PV2000=1.602e-19;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,UI=PV.ui,Q_PV2000=1.602e-19;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=UI.escapeHtml;
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2&&v!==0?v.toExponential(n):v.toFixed(n);
-  const help=t=>`<span class="help" title="${esc(t)}">i</span>`;
-  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const help=UI.help;
+  const css=UI.cssVar;
   const aliases={
     current:['current','isc','shortcircuitcurrent'],
     direct:['directreflection','directreflectance','specularreflection','specularreflectance'],
@@ -19,61 +19,341 @@
   function unitFor(name,d){const c=conceptFor(name);if(c==='current')return d.currentUnit||'µA';if(['direct','diffuse','total','eqe','iqe'].includes(c))return'%';return''}
   function numericAttrs(el){const out={};if(!el)return out;for(const a of [...el.attributes]){if(norm(a.name)==='key')continue;const v=Number(a.value);if(Number.isFinite(v))out[a.name]=v}return out}
   function parseLasers(m){const node=X.direct(m,'LaserSettings');if(!node)return[];return X.children(node).map(e=>({index:X.num(e,'Index',NaN),power:X.num(e,'Power',NaN),wavelengthNm:X.num(e,'Wavelength',NaN)})).filter(x=>Number.isFinite(x.index))}
-  function parseFlux(m){const out={},node=X.direct(m,'FluxCache');if(!node)return out;for(const item of X.children(node)){const kNode=X.direct(item,'Key'),vNode=X.direct(item,'Value'),key=X.num(kNode,'int',NaN),value=X.num(vNode,'double',NaN);if(Number.isFinite(key)&&Number.isFinite(value))out[key]=value}return out}
+  function parseFlux(m){const out={},
+    node=X.direct(m,'FluxCache');
+    if(!node)return out;
+    for(const item of X.children(node)){const kNode=X.direct(item,'Key'),
+      vNode=X.direct(item,'Value'),
+      key=X.num(kNode,'int',NaN),
+      value=X.num(vNode,'double',NaN);
+      if(Number.isFinite(key)&&Number.isFinite(value))out[key]=value}return out}
   function collectBeamSeries(records){
     const beamKeys=new Set();for(const rec of records)for(const k of Object.keys(rec))beamKeys.add(String(k));
-    const beams={};for(const key of [...beamKeys].sort((a,b)=>Number(a)-Number(b))){const names=new Set();for(const rec of records)for(const n of Object.keys(rec[key]||{}))names.add(n);const channels={};for(const name of names)channels[name]=records.map(rec=>Number.isFinite(rec[key]?.[name])?rec[key][name]:NaN);beams[key]={key:Number.isFinite(Number(key))?Number(key):key,channels}}
+    const beams={};
+      for(const key of [...beamKeys].sort((a,b)=>Number(a)-Number(b))){const names=new Set();
+      for(const rec of records)for(const n of Object.keys(rec[key]||{}))names.add(n);
+      const channels={};
+      for(const name of names)channels[name]=records.map(rec=>Number.isFinite(rec[key]?.[name])?rec[key][name]:NaN);
+      beams[key]={key:Number.isFinite(Number(key))?Number(key):key,channels}}
     return beams;
   }
-  function parseIteration(iter,index){const data=X.direct(iter,'Data'),items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],records=items.map(di=>{const rec={},bd=X.direct(di,'BeamData');for(const b of X.children(bd)){const key=b.getAttribute('Key')??String(Object.keys(rec).length);rec[key]=numericAttrs(b)}return rec});return{index,pointCount:records.length,beams:collectBeamSeries(records),temperatureC:X.num(iter,'ChuckTemperature',NaN),measurementVelocity:X.num(iter,'MeasurementVelocity',NaN)}}
+  function parseIteration(iter,index){
+    const data=X.direct(iter,'Data'),
+    items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
+    records=items.map(di=>{
+      const rec={},
+      bd=X.direct(di,'BeamData');for(const b of X.children(bd)){
+        const key=b.getAttribute('Key')??String(Object.keys(rec).length);rec[key]=numericAttrs(b)}return rec});
+    return{index,pointCount:records.length,beams:collectBeamSeries(records),temperatureC:X.num(iter,'ChuckTemperature',NaN),measurementVelocity:X.num(iter,'MeasurementVelocity',NaN)}}
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),pattern=X.direct(m,'Pattern'),region=X.direct(pattern,'Region'),location=X.direct(region,'Location'),size=X.direct(region,'Size'),dim=X.direct(pattern,'Dimension');
-    const regionX=X.num(region,'X',X.num(location,'X',NaN)),regionY=X.num(region,'Y',X.num(location,'Y',NaN)),width=X.num(region,'Width',X.num(size,'Width',NaN)),height=X.num(region,'Height',X.num(size,'Height',NaN)),nx=X.num(dim,'X',NaN),ny=X.num(dim,'Y',NaN);
+    const regionX=X.num(region,'X',X.num(location,'X',NaN)),
+      regionY=X.num(region,'Y',X.num(location,'Y',NaN)),
+      width=X.num(region,'Width',X.num(size,'Width',NaN)),
+      height=X.num(region,'Height',X.num(size,'Height',NaN)),
+      nx=X.num(dim,'X',NaN),
+      ny=X.num(dim,'Y',NaN);
+      
     const itd=X.direct(X.direct(m,'MeasurementData'),'IterationData'),iterations=itd?X.children(itd).filter(e=>X.lname(e)==='Iteration').map(parseIteration):[];
     const lasers=parseLasers(m),flux=parseFlux(m),laserByKey={};for(const l of lasers)laserByKey[String(l.index)]={...l,photonFlux:flux[l.index]};
     const expected=Number.isFinite(nx)&&Number.isFinite(ny)?nx*ny:NaN,actual=iterations[0]?.pointCount??0,coords=X.attrType(pattern)==='SquareRegionPattern'?GEO.rectGrid(regionX,regionY,width,height,nx,ny,actual,1):[];
     const target=X.direct(m,'Target'),targetSize=X.direct(target,'Size');
     return{...c,patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),patternDisplayName:X.text(pattern,'DisplayName',''),regionX,regionY,width,height,nx,ny,expectedPointCount:expected,coords,geometryStatus:'profile-dependent',targetType:X.attrType(target),targetWidth:X.num(targetSize,'Width',NaN),targetHeight:X.num(targetSize,'Height',NaN),doRastering:X.text(m,'DoRastering',''),currentUnit:X.text(m,'MicroAmps','µA'),lengthUnit:'mm',wavelengthUnit:X.text(m,'NanoMeter','nm'),lasers,laserByKey,flux,measureCurrent:X.text(m,'MeasureCurrent',''),measureDirect:X.text(m,'MeasureDirectReflectance',''),measureDiffuse:X.text(m,'MeasureScatteredReflectance',''),averaging:X.num(m,'Averaging',NaN),iterations,raw:parsed};
+      
   }
   const totalReflectance=(direct,diffuse)=>Number.isFinite(direct)&&Number.isFinite(diffuse)?Math.min(100,direct+diffuse):NaN;
   const eqePercent=(currentMicroA,photonFlux)=>Number.isFinite(currentMicroA)&&Number.isFinite(photonFlux)&&photonFlux>0?(currentMicroA*1e-6/Q_PV2000/photonFlux)*100:NaN;
   const iqePercent=(eqe,totalR)=>{if(!Number.isFinite(eqe)||!Number.isFinite(totalR)||totalR>=100)return NaN;const v=eqe/(1-totalR/100);return Number.isFinite(v)&&v<=100?v:NaN};
-  function isReferenceProfile(raw,laser,d){const names=Object.keys(raw?.channels||{}),expected=['Current','DirectReflection','ScatteredReflection'],exactChannels=names.length===expected.length&&expected.every(n=>names.includes(n)),unit=/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,'')),geometry=d.patternType==='SquareRegionPattern'&&[d.nx,d.ny,d.regionX,d.regionY,d.width,d.height].every(Number.isFinite)&&d.nx>=1&&d.ny>=1;return geometry&&exactChannels&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&(d.beamCount==null||d.beamCount===1)&&(d.iterationCount==null||d.iterationCount===1)}
+  function isReferenceProfile(raw,laser,d){
+    const names=Object.keys(raw?.channels||{}),
+    expected=['Current','DirectReflection','ScatteredReflection'],
+    exactChannels=names.length===expected.length&&expected.every(n=>names.includes(n)),
+    unit=/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,'')),
+    geometry=d.patternType==='SquareRegionPattern'&&[d.nx,d.ny,d.regionX,d.regionY,d.width,d.height].every(Number.isFinite)&&d.nx>=1&&d.ny>=1;
+    return geometry&&exactChannels&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&(d.beamCount==null||d.beamCount===1)&&(d.iterationCount==null||d.iterationCount===1)}
   const tierFor=concept=>['current','total','iqe'].includes(concept)?'primary':'advanced';
   function findMetric(metrics,concept){return Object.values(metrics).find(m=>m.concept===concept)||null}
   function deriveBeam(raw,laser,d){
-    const referenceProfile=isReferenceProfile(raw,laser,d),metrics={};for(const [name,values] of Object.entries(raw?.channels||{})){const concept=conceptFor(name);metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',concept,xmlName:name,tier:tierFor(concept)}}
+    const referenceProfile=isReferenceProfile(raw,laser,d),
+      metrics={};
+      for(const [name,values] of Object.entries(raw?.channels||{})){const concept=conceptFor(name);
+      metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',concept,xmlName:name,tier:tierFor(concept)}}
     let total=findMetric(metrics,'total'),direct=findMetric(metrics,'direct'),diffuse=findMetric(metrics,'diffuse');
-    if(!total&&direct&&diffuse){const key='__reflectivity';metrics[key]={key,label:'Reflectivity',short:'Reflectivity',unit:'%',values:direct.values.map((v,i)=>totalReflectance(v,diffuse.values[i])),source:referenceProfile?'PV-2000 reproduced: DirectReflection + ScatteredReflection':'candidate: direct + scattered',status:referenceProfile?'validated':'inferred',concept:'total',tier:'primary'}}
+    if(!total&&direct&&diffuse){const key='__reflectivity';
+      metrics[key]={key,label:'Reflectivity',short:'Reflectivity',unit:'%',values:direct.values.map((v,i)=>totalReflectance(v,diffuse.values[i])),source:referenceProfile?'PV-2000 reproduced: DirectReflection + ScatteredReflection':'candidate: direct + scattered',status:referenceProfile?'validated':'inferred',concept:'total',tier:'primary'}}
     total=findMetric(metrics,'total');let eqe=findMetric(metrics,'eqe'),current=findMetric(metrics,'current');
     const flux=laser?.photonFlux;
-    if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,''))){const key='__eqe';metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',concept:'eqe',tier:'advanced'}}
+    if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,''))){const key='__eqe';
+      metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',concept:'eqe',tier:'advanced'}}
     eqe=findMetric(metrics,'eqe');let iqe=findMetric(metrics,'iqe');
-    if(!iqe&&eqe&&total){const key='__iqe';metrics[key]={key,label:'IQE',short:'IQE',unit:'%',values:eqe.values.map((v,i)=>iqePercent(v,total.values[i])),source:referenceProfile?'PV-2000 reproduced: EQE / (1 - Reflectivity); calculated IQE > 100% is blank':'candidate: EQE / (1 - Reflectivity), >100% invalid',status:referenceProfile?'validated':'inferred',concept:'iqe',tier:'primary'}}
+    if(!iqe&&eqe&&total){const key='__iqe';
+      metrics[key]={key,label:'IQE',short:'IQE',unit:'%',values:eqe.values.map((v,i)=>iqePercent(v,total.values[i])),source:referenceProfile?'PV-2000 reproduced: EQE / (1 - Reflectivity); calculated IQE > 100% is blank':'candidate: EQE / (1 - Reflectivity), >100% invalid',status:referenceProfile?'validated':'inferred',concept:'iqe',tier:'primary'}}
     return{key:raw?.key??laser?.index??0,laser:laser||{},metrics,referenceProfile};
   }
-  function analyze(d){return{iterations:d.iterations.map(it=>{const keys=new Set([...Object.keys(it.beams),...Object.keys(d.laserByKey)]),beams={},profileContext={...d,beamCount:keys.size,iterationCount:d.iterations.length};for(const key of [...keys].sort((a,b)=>Number(a)-Number(b)))beams[key]=deriveBeam(it.beams[key]||{key:Number(key),channels:{}},d.laserByKey[key]||{index:Number(key),photonFlux:d.flux[key]},profileContext);return{...it,beams}})}}
+  function analyze(d){return{iterations:d.iterations.map(it=>{const keys=new Set([...Object.keys(it.beams),...Object.keys(d.laserByKey)]),
+        beams={},
+        profileContext={...d,beamCount:keys.size,iterationCount:d.iterations.length};for(const key of [...keys].sort((a,b)=>Number(a)-Number(b)))beams[key]=deriveBeam(it.beams[key]||{key:Number(key),channels:{}},
+        d.laserByKey[key]||{index:Number(key),photonFlux:d.flux[key]},
+        profileContext);return{...it,beams}})}}
   function qtile(a,p){const z=(a||[]).filter(Number.isFinite).slice().sort((x,y)=>x-y);if(!z.length)return NaN;const q=(z.length-1)*p,i=Math.floor(q),f=q-i;return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f}
   function range(values,mode='full'){const z=values.filter(Number.isFinite);if(!z.length)return{lo:NaN,hi:NaN};return mode==='p1p99'?{lo:qtile(z,.01),hi:qtile(z,.99)}:{lo:Math.min(...z),hi:Math.max(...z)}}
-  function color(t){t=Math.max(0,Math.min(1,t));const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];let i=0;while(i<stops.length-2&&t>stops[i+1][0])i++;const[a,c1]=stops[i],[b,c2]=stops[i+1],u=(t-a)/(b-a);return`rgb(${c1.map((v,j)=>Math.round(v+(c2[j]-v)*u)).join(',')})`}
-  function setupTooltip(canvas){let tip=canvas.parentElement.querySelector('.plot-tooltip');if(!tip){tip=document.createElement('div');tip.className='plot-tooltip hidden';canvas.parentElement.appendChild(tip)}return tip}
-  function showTip(tip,e,html){tip.innerHTML=html;tip.classList.remove('hidden');const r=tip.parentElement.getBoundingClientRect();tip.style.left=`${Math.min(r.width-tip.offsetWidth-8,Math.max(8,e.clientX-r.left+12))}px`;tip.style.top=`${Math.min(r.height-tip.offsetHeight-8,Math.max(8,e.clientY-r.top+12))}px`}
-  function hideTip(tip){tip.classList.add('hidden')}
+  function color(t){t=Math.max(0,Math.min(1,t));
+    const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];
+    let i=0;
+    while(i<stops.length-2&&t>stops[i+1][0])i++;
+    const[a,c1]=stops[i],
+    [b,c2]=stops[i+1],
+    u=(t-a)/(b-a);
+    return`rgb(${c1.map((v,j)=>Math.round(v+(c2[j]-v)*u)).join(',')})`}
+  const setupTooltip=UI.setupTooltip;
+  const showTip=UI.showTooltip;
+  const hideTip=UI.hideTooltip;
   function drawMap(canvas,d,metric,selected,scaleMode,onSelect,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),W=canvas.width=760,H=canvas.height=430,p={l:64,r:82,t:28,b:52},nx=d.nx,ny=d.ny,coords=d.coords,vals=metric.values,rg=range(vals,scaleMode);ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!coords.length||!Number.isFinite(nx)||!Number.isFinite(ny)||!Number.isFinite(rg.lo)){ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.fillText('Raster coordinates unavailable: point count must match Region × Dimension.',W/2,H/2);return rg}
-    const availW=W-p.l-p.r,availH=H-p.t-p.b,rawX=[d.regionX,d.regionX+d.width],rawY=[d.regionY,d.regionY+d.height],aspect=PV.plot.equalAspectRanges(rawX,rawY,availW,availH),autoX=aspect.x,autoY=aspect.y,xr=PV.plot.resolve(autoX,zoom?.x),yr=PV.plot.resolve(autoY,zoom?.y),plotW=availW,plotH=availH,x0=p.l,y0=p.t,X=x=>x0+(x-xr[0])/(xr[1]-xr[0]||1)*plotW,Y=y=>y0+(y-yr[0])/(yr[1]-yr[0]||1)*plotH;
-    ctx.save();ctx.beginPath();ctx.rect(x0,y0,plotW,plotH);ctx.clip();for(let i=0;i<vals.length&&i<coords.length;i++){const v=vals[i],pt=coords[i];if(!Number.isFinite(v)||!pt)continue;const dx=d.nx>1?d.width/(d.nx-1):d.width||1,dy=d.ny>1?d.height/(d.ny-1):d.height||1,xa=X(pt.x-dx/2),xb=X(pt.x+dx/2),ya=Y(pt.y-dy/2),yb=Y(pt.y+dy/2);ctx.fillStyle=color((v-rg.lo)/(rg.hi-rg.lo||1));ctx.fillRect(Math.min(xa,xb),Math.min(ya,yb),Math.abs(xb-xa)+.5,Math.abs(yb-ya)+.5)}
-    if(selected&&selected.index<coords.length){const pt=coords[selected.index],dx=d.nx>1?d.width/(d.nx-1):d.width||1,dy=d.ny>1?d.height/(d.ny-1):d.height||1,xa=X(pt.x-dx/2),xb=X(pt.x+dx/2),ya=Y(pt.y-dy/2),yb=Y(pt.y+dy/2);ctx.strokeStyle=css('--yellow');ctx.lineWidth=1.5;ctx.strokeRect(Math.min(xa,xb)+.5,Math.min(ya,yb)+.5,Math.max(2,Math.abs(xb-xa)-1),Math.max(2,Math.abs(yb-ya)-1))}ctx.restore();
-    ctx.strokeStyle=css('--soft');ctx.strokeRect(x0,y0,plotW,plotH);ctx.fillStyle=css('--muted');ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(fmt(xr[0],2),x0,H-22);ctx.fillText(fmt(xr[1],2),x0+plotW,H-22);ctx.fillText('X [mm]',x0+plotW/2,H-5);ctx.textAlign='right';ctx.fillText(fmt(yr[0],2),p.l-8,y0+4);ctx.fillText(fmt(yr[1],2),p.l-8,y0+plotH);ctx.save();ctx.translate(14,y0+plotH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText('Y [mm]',0,0);ctx.restore();
-    const cbx=W-48,cby=y0+8,cbh=Math.max(40,plotH-16),cbw=12,grad=ctx.createLinearGradient(0,cby+cbh,0,cby);for(let j=0;j<=10;j++)grad.addColorStop(j/10,color(j/10));ctx.fillStyle=grad;ctx.fillRect(cbx,cby,cbw,cbh);ctx.strokeStyle=css('--soft');ctx.strokeRect(cbx,cby,cbw,cbh);ctx.fillStyle=css('--muted');ctx.textAlign='left';ctx.fillText(fmt(rg.hi,3),cbx+17,cby+4);ctx.fillText(fmt(rg.lo,3),cbx+17,cby+cbh);ctx.save();ctx.translate(W-8,y0+plotH/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText(`${metric.short} [${metric.unit||'a.u.'}]`,0,0);ctx.restore();
-    const tip=setupTooltip(canvas);canvas.onmouseleave=()=>hideTip(tip);canvas.onmousemove=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;if(mx<x0||mx>x0+plotW||my<y0||my>y0+plotH){hideTip(tip);return}const x=xr[0]+(mx-x0)/plotW*(xr[1]-xr[0]),y=yr[0]+(my-y0)/plotH*(yr[1]-yr[0]);let best=-1,bd=Infinity;for(let i=0;i<coords.length;i++){const pt=coords[i];if(!pt)continue;const dd=(pt.x-x)**2+(pt.y-y)**2;if(dd<bd){bd=dd;best=i}}if(best<0){hideTip(tip);return}const pt=coords[best],v=vals[best];showTip(tip,e,`<b>Row ${pt.row+1}, Col ${pt.col+1}</b><br>X ${fmt(pt.x,3)} mm · Y ${fmt(pt.y,3)} mm<br>${esc(metric.short)} = ${fmt(v,4)} ${esc(metric.unit)}`)};canvas.onclick=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;if(mx<x0||mx>x0+plotW||my<y0||my>y0+plotH)return;const x=xr[0]+(mx-x0)/plotW*(xr[1]-xr[0]),y=yr[0]+(my-y0)/plotH*(yr[1]-yr[0]);let best=-1,bd=Infinity;coords.forEach((pt,i)=>{if(!pt)return;const dd=(pt.x-x)**2+(pt.y-y)**2;if(dd<bd){bd=dd;best=i}});if(best>=0)onSelect?.(best)};PV.plot.bind(canvas,{W,H,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH},ranges:{x:xr,y:yr},yDown:true,onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return rg;
+    const ctx=canvas.getContext('2d'),
+      W=canvas.width=760,
+      H=canvas.height=430,
+      p={l:64,r:82,t:28,b:52},
+      nx=d.nx,
+      ny=d.ny,
+      coords=d.coords,
+      vals=metric.values,
+      rg=range(vals,scaleMode);
+      ctx.clearRect(0,0,W,H);
+      ctx.fillStyle=css('--chart-bg');
+      ctx.fillRect(0,0,W,H);
+      if(!coords.length||!Number.isFinite(nx)||!Number.isFinite(ny)||!Number.isFinite(rg.lo)){ctx.fillStyle=css('--muted');
+      ctx.textAlign='center';
+      ctx.fillText('Raster coordinates unavailable: point count must match Region × Dimension.',W/2,H/2);
+      return rg}
+    const availW=W-p.l-p.r,
+      availH=H-p.t-p.b,
+      rawX=[d.regionX,d.regionX+d.width],
+      rawY=[d.regionY,d.regionY+d.height],
+      aspect=PV.plot.equalAspectRanges(rawX,rawY,availW,availH),
+      autoX=aspect.x,
+      autoY=aspect.y,
+      xr=PV.plot.resolve(autoX,zoom?.x),
+      yr=PV.plot.resolve(autoY,zoom?.y),
+      plotW=availW,
+      plotH=availH,
+      x0=p.l,
+      y0=p.t,
+      X=x=>x0+(x-xr[0])/(xr[1]-xr[0]||1)*plotW,
+      Y=y=>y0+(y-yr[0])/(yr[1]-yr[0]||1)*plotH;
+      
+    ctx.save();
+      ctx.beginPath();
+      ctx.rect(x0,y0,plotW,plotH);
+      ctx.clip();
+      for(let i=0;i<vals.length&&i<coords.length;i++){const v=vals[i],
+      pt=coords[i];
+      if(!Number.isFinite(v)||!pt)continue;
+      const dx=d.nx>1?d.width/(d.nx-1):d.width||1,
+      dy=d.ny>1?d.height/(d.ny-1):d.height||1,
+      xa=X(pt.x-dx/2),
+      xb=X(pt.x+dx/2),
+      ya=Y(pt.y-dy/2),
+      yb=Y(pt.y+dy/2);
+      ctx.fillStyle=color((v-rg.lo)/(rg.hi-rg.lo||1));
+      ctx.fillRect(Math.min(xa,xb),Math.min(ya,yb),Math.abs(xb-xa)+.5,Math.abs(yb-ya)+.5)}
+    if(selected&&selected.index<coords.length){const pt=coords[selected.index],
+      dx=d.nx>1?d.width/(d.nx-1):d.width||1,
+      dy=d.ny>1?d.height/(d.ny-1):d.height||1,
+      xa=X(pt.x-dx/2),
+      xb=X(pt.x+dx/2),
+      ya=Y(pt.y-dy/2),
+      yb=Y(pt.y+dy/2);
+      ctx.strokeStyle=css('--yellow');
+      ctx.lineWidth=1.5;
+      ctx.strokeRect(Math.min(xa,xb)+.5,Math.min(ya,yb)+.5,Math.max(2,Math.abs(xb-xa)-1),Math.max(2,Math.abs(yb-ya)-1))}ctx.restore();
+      
+    ctx.strokeStyle=css('--soft');
+      ctx.strokeRect(x0,y0,plotW,plotH);
+      ctx.fillStyle=css('--muted');
+      ctx.font='10px system-ui';
+      ctx.textAlign='center';
+      ctx.fillText(fmt(xr[0],2),x0,H-22);
+      ctx.fillText(fmt(xr[1],2),x0+plotW,H-22);
+      ctx.fillText('X [mm]',x0+plotW/2,H-5);
+      ctx.textAlign='right';
+      ctx.fillText(fmt(yr[0],2),p.l-8,y0+4);
+      ctx.fillText(fmt(yr[1],2),p.l-8,y0+plotH);
+      ctx.save();
+      ctx.translate(14,y0+plotH/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign='center';
+      ctx.fillText('Y [mm]',0,0);
+      ctx.restore();
+      
+    const cbx=W-48,
+      cby=y0+8,
+      cbh=Math.max(40,plotH-16),
+      cbw=12,
+      grad=ctx.createLinearGradient(0,cby+cbh,0,cby);
+      for(let j=0;j<=10;j++)grad.addColorStop(j/10,
+      color(j/10));
+      ctx.fillStyle=grad;
+      ctx.fillRect(cbx,cby,cbw,cbh);
+      ctx.strokeStyle=css('--soft');
+      ctx.strokeRect(cbx,cby,cbw,cbh);
+      ctx.fillStyle=css('--muted');
+      ctx.textAlign='left';
+      ctx.fillText(fmt(rg.hi,3),cbx+17,cby+4);
+      ctx.fillText(fmt(rg.lo,3),cbx+17,cby+cbh);
+      ctx.save();
+      ctx.translate(W-8,y0+plotH/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.textAlign='center';
+      ctx.fillText(`${metric.short} [${metric.unit||'a.u.'}]`,0,0);
+      ctx.restore();
+      
+    const tip=setupTooltip(canvas);
+      canvas.onmouseleave=()=>hideTip(tip);
+      canvas.onmousemove=e=>{
+      const r=canvas.getBoundingClientRect(),
+      mx=(e.clientX-r.left)*W/r.width,
+      my=(e.clientY-r.top)*H/r.height;
+      if(mx<x0||mx>x0+plotW||my<y0||my>y0+plotH){hideTip(tip);
+        return}const x=xr[0]+(mx-x0)/plotW*(xr[1]-xr[0]),
+      y=yr[0]+(my-y0)/plotH*(yr[1]-yr[0]);
+      let best=-1,
+      bd=Infinity;
+      for(let i=0;i<coords.length;i++){
+        const pt=coords[i];
+        if(!pt)continue;
+        const dd=(pt.x-x)**2+(pt.y-y)**2;
+        if(dd<bd){bd=dd;
+          best=i}}if(best<0){hideTip(tip);
+        return}const pt=coords[best],
+      v=vals[best];
+      showTip(tip,e,`<b>Row ${pt.row+1}, Col ${pt.col+1}</b><br>X ${fmt(pt.x,3)} mm · Y ${fmt(pt.y,3)} mm<br>${esc(metric.short)} = ${fmt(v,4)} ${esc(metric.unit)}`)};
+      canvas.onclick=e=>{
+      const r=canvas.getBoundingClientRect(),
+      mx=(e.clientX-r.left)*W/r.width,
+      my=(e.clientY-r.top)*H/r.height;
+      if(mx<x0||mx>x0+plotW||my<y0||my>y0+plotH)return;
+      const x=xr[0]+(mx-x0)/plotW*(xr[1]-xr[0]),
+      y=yr[0]+(my-y0)/plotH*(yr[1]-yr[0]);
+      let best=-1,
+      bd=Infinity;
+      coords.forEach((pt,i)=>{
+        if(!pt)return;const dd=(pt.x-x)**2+(pt.y-y)**2;if(dd<bd){bd=dd;best=i}});
+      if(best>=0)onSelect?.(best)};
+      PV.plot.bind(canvas,{W,H,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH},ranges:{x:xr,y:yr},yDown:true,onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+      return rg;
+      
   }
-  function drawHist(canvas,metric,swapped=false,zoom,onZoom){const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,30),W=canvas.width=760,H=canvas.height=300,p={l:58,r:18,t:24,b:48};ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!bins.length)return bins;const autoMetric=[bins[0].lo,bins[bins.length-1].hi],autoCount=[0,Math.max(...bins.map(b=>b.count),1)],mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),plotW=W-p.l-p.r,plotH=H-p.t-p.b,metricPos=v=>(v-mr[0])/(mr[1]-mr[0]||1),countPos=v=>(v-cr[0])/(cr[1]-cr[0]||1);ctx.font='10px system-ui';ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,plotW,plotH);ctx.clip();bins.forEach(b=>{const mid=(b.lo+b.hi)/2,t=(mid-autoMetric[0])/(autoMetric[1]-autoMetric[0]||1);ctx.fillStyle=color(t);if(swapped){const y1=H-p.b-metricPos(b.lo)*plotH,y2=H-p.b-metricPos(b.hi)*plotH,x0=p.l+countPos(0)*plotW,x1=p.l+countPos(b.count)*plotW;ctx.fillRect(Math.min(x0,x1),Math.min(y1,y2),Math.abs(x1-x0),Math.max(1,Math.abs(y2-y1)-1))}else{const x1=p.l+metricPos(b.lo)*plotW,x2=p.l+metricPos(b.hi)*plotW,y0=H-p.b-countPos(0)*plotH,y1=H-p.b-countPos(b.count)*plotH;ctx.fillRect(Math.min(x1,x2),Math.min(y0,y1),Math.max(1,Math.abs(x2-x1)-1),Math.abs(y1-y0))}});ctx.restore();ctx.strokeStyle=css('--soft');ctx.strokeRect(p.l,p.t,plotW,plotH);ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.fillText(swapped?'Count':`${metric.short} [${metric.unit||'a.u.'}]`,(p.l+W-p.r)/2,H-4);ctx.save();ctx.translate(13,(p.t+H-p.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText(swapped?`${metric.short} [${metric.unit||'a.u.'}]`:'Count',0,0);ctx.restore();PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:swapped?cr:mr,y:swapped?mr:cr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return bins}
-  function drawProfile(canvas,d,metric,selected,axis,zoom,onZoom){const ctx=canvas.getContext('2d'),W=canvas.width=760,H=canvas.height=220,p={l:58,r:18,t:22,b:42},nx=d.nx,ny=d.ny,row=Math.floor(selected.index/nx),col=selected.index%nx,pts=[];if(axis==='x'){for(let cc=0;cc<nx;cc++){const i=row*nx+cc;pts.push({i,pos:d.coords[i]?.x,v:metric.values[i]})}}else{for(let rr=0;rr<ny;rr++){const i=rr*nx+col;pts.push({i,pos:d.coords[i]?.y,v:metric.values[i]})}}const valid=pts.filter(p=>Number.isFinite(p.v)&&Number.isFinite(p.pos));ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!valid.length)return[];const autoX=[Math.min(...valid.map(p=>p.pos)),Math.max(...valid.map(p=>p.pos))],autoY=[Math.min(...valid.map(p=>p.v)),Math.max(...valid.map(p=>p.v))],xr=PV.plot.resolve(autoX,zoom?.x),yr=PV.plot.resolve(autoY,zoom?.y),X=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),Y=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b);ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);ctx.clip();ctx.strokeStyle=css('--blue');ctx.lineWidth=1.5;ctx.beginPath();let pen=false;valid.forEach(pt=>{const x=X(pt.pos),y=Y(pt.v);if(x<p.l||x>W-p.r||y<p.t||y>H-p.b){pen=false;return}pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true});ctx.stroke();ctx.restore();ctx.strokeStyle=css('--soft');ctx.strokeRect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);ctx.fillStyle=css('--muted');ctx.font='10px system-ui';ctx.textAlign='center';ctx.fillText(`${axis.toUpperCase()} [mm]`,(p.l+W-p.r)/2,H-4);ctx.save();ctx.translate(13,(p.t+H-p.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText(`${metric.short} [${metric.unit||'a.u.'}]`,0,0);ctx.restore();PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return valid}
+  function drawHist(canvas,metric,swapped=false,zoom,onZoom){
+    const ctx=canvas.getContext('2d'),
+    bins=S.histogram(metric.values,30),
+    W=canvas.width=760,
+    H=canvas.height=300,
+    p={l:58,r:18,t:24,b:48};
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=css('--chart-bg');
+    ctx.fillRect(0,0,W,H);
+    if(!bins.length)return bins;
+    const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
+    autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
+    mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
+    cr=PV.plot.resolve(autoCount,swapped?zoom?.x:zoom?.y),
+    plotW=W-p.l-p.r,
+    plotH=H-p.t-p.b,
+    metricPos=v=>(v-mr[0])/(mr[1]-mr[0]||1),
+    countPos=v=>(v-cr[0])/(cr[1]-cr[0]||1);
+    ctx.font='10px system-ui';
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(p.l,p.t,plotW,plotH);
+    ctx.clip();
+    bins.forEach(b=>{
+      const mid=(b.lo+b.hi)/2,
+      t=(mid-autoMetric[0])/(autoMetric[1]-autoMetric[0]||1);ctx.fillStyle=color(t);if(swapped){
+        const y1=H-p.b-metricPos(b.lo)*plotH,
+        y2=H-p.b-metricPos(b.hi)*plotH,
+        x0=p.l+countPos(0)*plotW,
+        x1=p.l+countPos(b.count)*plotW;ctx.fillRect(Math.min(x0,x1),Math.min(y1,y2),Math.abs(x1-x0),Math.max(1,Math.abs(y2-y1)-1))}else{
+        const x1=p.l+metricPos(b.lo)*plotW,
+        x2=p.l+metricPos(b.hi)*plotW,
+        y0=H-p.b-countPos(0)*plotH,
+        y1=H-p.b-countPos(b.count)*plotH;ctx.fillRect(Math.min(x1,x2),Math.min(y0,y1),Math.max(1,Math.abs(x2-x1)-1),Math.abs(y1-y0))}});
+    ctx.restore();
+    ctx.strokeStyle=css('--soft');
+    ctx.strokeRect(p.l,p.t,plotW,plotH);
+    ctx.fillStyle=css('--muted');
+    ctx.textAlign='center';
+    ctx.fillText(swapped?'Count':`${metric.short} [${metric.unit||'a.u.'}]`,(p.l+W-p.r)/2,H-4);
+    ctx.save();
+    ctx.translate(13,(p.t+H-p.b)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(swapped?`${metric.short} [${metric.unit||'a.u.'}]`:'Count',0,0);
+    ctx.restore();
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:swapped?cr:mr,y:swapped?mr:cr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+    return bins}
+  function drawProfile(canvas,d,metric,selected,axis,zoom,onZoom){
+    const ctx=canvas.getContext('2d'),
+    W=canvas.width=760,
+    H=canvas.height=220,
+    p={l:58,r:18,t:22,b:42},
+    nx=d.nx,
+    ny=d.ny,
+    row=Math.floor(selected.index/nx),
+    col=selected.index%nx,
+    pts=[];
+    if(axis==='x'){
+      for(let cc=0;cc<nx;cc++){
+        const i=row*nx+cc;
+        pts.push({i,pos:d.coords[i]?.x,v:metric.values[i]})}}else{
+      for(let rr=0;rr<ny;rr++){
+        const i=rr*nx+col;
+        pts.push({i,pos:d.coords[i]?.y,v:metric.values[i]})}}const valid=pts.filter(p=>Number.isFinite(p.v)&&Number.isFinite(p.pos));
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle=css('--chart-bg');
+    ctx.fillRect(0,0,W,H);
+    if(!valid.length)return[];
+    const autoX=[Math.min(...valid.map(p=>p.pos)),Math.max(...valid.map(p=>p.pos))],
+    autoY=[Math.min(...valid.map(p=>p.v)),Math.max(...valid.map(p=>p.v))],
+    xr=PV.plot.resolve(autoX,zoom?.x),
+    yr=PV.plot.resolve(autoY,zoom?.y),
+    X=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),
+    Y=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
+    ctx.clip();
+    ctx.strokeStyle=css('--blue');
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    let pen=false;
+    valid.forEach(pt=>{
+      const x=X(pt.pos),
+      y=Y(pt.v);if(x<p.l||x>W-p.r||y<p.t||y>H-p.b){pen=false;return}pen?ctx.lineTo(x,y):ctx.moveTo(x,y);pen=true});
+    ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle=css('--soft');
+    ctx.strokeRect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
+    ctx.fillStyle=css('--muted');
+    ctx.font='10px system-ui';
+    ctx.textAlign='center';
+    ctx.fillText(`${axis.toUpperCase()} [mm]`,(p.l+W-p.r)/2,H-4);
+    ctx.save();
+    ctx.translate(13,(p.t+H-p.b)/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.fillText(`${metric.short} [${metric.unit||'a.u.'}]`,0,0);
+    ctx.restore();
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+    return valid}
   function render(host,d,a){
     let iterationIndex=0,beamKey='',metricKey='',scaleMode='full',showAdvanced=false,histSwapped=false,selected={index:Math.floor((d.coords.length||1)/2)},zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
     const visibleMetrics=metrics=>Object.values(metrics).filter(m=>showAdvanced||m.tier==='primary');
-    function current(){const it=a.iterations[iterationIndex]||a.iterations[0],keys=Object.keys(it?.beams||{});if(!beamKey||!it?.beams?.[beamKey])beamKey=keys[0]||'';const beam=it?.beams?.[beamKey],metrics=beam?.metrics||{},mkeys=visibleMetrics(metrics).map(m=>m.key);if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=mkeys.find(k=>metrics[k].concept==='current')||mkeys[0]||'';return{it,beam,metrics,metric:metrics[metricKey]}}
+    function current(){const it=a.iterations[iterationIndex]||a.iterations[0],
+      keys=Object.keys(it?.beams||{});
+      if(!beamKey||!it?.beams?.[beamKey])beamKey=keys[0]||'';
+      const beam=it?.beams?.[beamKey],
+      metrics=beam?.metrics||{},
+      mkeys=visibleMetrics(metrics).map(m=>m.key);
+      if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=mkeys.find(k=>metrics[k].concept==='current')||mkeys[0]||'';
+      return{it,beam,metrics,metric:metrics[metricKey]}}
     function metricOptions(metrics){return visibleMetrics(metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.label)}${m.status==='inferred'?' · inferred':''}</option>`).join('')}
     function beamOptions(it){return Object.entries(it?.beams||{}).map(([k,b])=>{const wl=b.laser?.wavelengthNm;return`<option value="${esc(k)}">${Number.isFinite(wl)?`${fmt(wl,0)} nm`:`Beam ${esc(k)}`}</option>`}).join('')}
     function summaryRows(metrics){return visibleMetrics(metrics).map(m=>{const st=S.summary(m.values);return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
@@ -85,13 +365,57 @@
       <details class="panel"><summary>Geometry / validation ${help('All point X/Y coordinates match the four supplied PV-2000 CSV exports exactly. The on-screen map follows acquisition row order; vendor screen-orientation parity is not separately claimed.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Acquisition mapping','X-fast row-major (validated)')}${metaRow('Y coordinate','Region.Y + row × dy (validated)')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
       </aside><section class="plots"><div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction. Double-click restores auto scale.')}<span class="grow"></span><button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div><div class="panel chart"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale.')}<span class="grow"></span><button id="lExportProfile">Export</button></header><div class="profile-grid"><div><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b>${help('Mouse wheel zooms both axes inside the plot; hover an axis and wheel to zoom only that axis. Double-click restores auto scale. Swap axes exchanges quantity and count axes.') }<span class="grow"></span><button id="lSwapHistAxes" type="button" aria-pressed="${histSwapped}" title="Swap the Distribution quantity and count axes.">Swap axes</button><button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div><div class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></div><div class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></div></section></div>`;
       host.querySelector('#lIter').value=String(iterationIndex);host.querySelector('#lBeam').value=beamKey;host.querySelector('#lMetric').value=metricKey;host.querySelector('#lScale').value=scaleMode;
-      host.querySelector('#lIter').onchange=e=>{iterationIndex=Number(e.target.value)||0;beamKey='';metricKey='';renderShell()};host.querySelector('#lBeam').onchange=e=>{beamKey=e.target.value;metricKey='';renderShell()};host.querySelector('#lMetric').onchange=e=>{metricKey=e.target.value;redraw()};host.querySelector('#lScale').onchange=e=>{scaleMode=e.target.value;redraw()};host.querySelector('#lAdvanced').onchange=e=>{showAdvanced=e.target.checked;metricKey='';zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};renderShell()};host.querySelector('#lSwapHistAxes').onclick=()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};host.querySelector('#lSwapHistAxes').setAttribute('aria-pressed',String(histSwapped));redraw()};redraw();
+      host.querySelector('#lIter').onchange=e=>{iterationIndex=Number(e.target.value)||0;
+        beamKey='';
+        metricKey='';
+        renderShell()};
+        host.querySelector('#lBeam').onchange=e=>{beamKey=e.target.value;
+        metricKey='';
+        renderShell()};
+        host.querySelector('#lMetric').onchange=e=>{metricKey=e.target.value;
+        redraw()};
+        host.querySelector('#lScale').onchange=e=>{scaleMode=e.target.value;
+        redraw()};
+        host.querySelector('#lAdvanced').onchange=e=>{showAdvanced=e.target.checked;
+        metricKey='';
+        zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
+        renderShell()};
+        host.querySelector('#lSwapHistAxes').onclick=()=>{histSwapped=!histSwapped;
+        zoom.hist={x:null,y:null};
+        host.querySelector('#lSwapHistAxes').setAttribute('aria-pressed',String(histSwapped));
+        redraw()};
+        redraw();
+        
     }
-    function redraw(){const {it,beam,metrics,metric}=current();if(!metric)return;selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));const rg=drawMap(host.querySelector('#lMap'),d,metric,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});const bins=drawHist(host.querySelector('#lHist'),metric,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),xp=drawProfile(host.querySelector('#lXProfile'),d,metric,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()}),pt=d.coords[selected.index]||{},row=Number.isFinite(pt.row)?pt.row:Math.floor(selected.index/(d.nx||1)),col=Number.isFinite(pt.col)?pt.col:selected.index%(d.nx||1);host.querySelector('#lPixel').innerHTML=`<dl class="meta"><dt>Index</dt><dd>${selected.index+1}</dd><dt>Row / column</dt><dd>${row+1} / ${col+1}</dd><dt>X / Y</dt><dd>${fmt(pt.x,4)} / ${fmt(pt.y,4)} mm</dd>${visibleMetrics(metrics).map(m=>`<dt>${esc(m.short)}${m.status==='inferred'?' *':''}</dt><dd>${fmt(m.values[selected.index],5)} ${esc(m.unit)}</dd>`).join('')}</dl>`;
+    function redraw(){
+      const {it,beam,metrics,metric}=current();
+      if(!metric)return;
+      selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));
+      const rg=drawMap(host.querySelector('#lMap'),d,metric,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
+      const bins=drawHist(host.querySelector('#lHist'),metric,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
+      xp=drawProfile(host.querySelector('#lXProfile'),d,metric,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
+      yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()}),
+      pt=d.coords[selected.index]||{},
+      row=Number.isFinite(pt.row)?pt.row:Math.floor(selected.index/(d.nx||1)),
+      col=Number.isFinite(pt.col)?pt.col:selected.index%(d.nx||1);
+      host.querySelector('#lPixel').innerHTML=`<dl class="meta"><dt>Index</dt><dd>${selected.index+1}</dd><dt>Row / column</dt><dd>${row+1} / ${col+1}</dd><dt>X / Y</dt><dd>${fmt(pt.x,4)} / ${fmt(pt.y,4)} mm</dd>${visibleMetrics(metrics).map(m=>`<dt>${esc(m.short)}${m.status==='inferred'?' *':''}</dt><dd>${fmt(m.values[selected.index],5)} ${esc(m.unit)}</dd>`).join('')}</dl>`;
+      
       host.querySelector('#lExportMap').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}.csv`,['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`, 'Source'],metric.values.map((v,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',v,metric.source]));
+        
       host.querySelector('#lExportHist').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count'],bins.map(b=>[b.lo,b.hi,b.count]));
       host.querySelector('#lExportProfile').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_profiles.csv`,['Axis','Index','Position [mm]',`${metric.label} [${metric.unit}]`],[...xp.map(p=>['X',p.i+1,p.pos,p.v]),...yp.map(p=>['Y',p.i+1,p.pos,p.v])]);
-      host.querySelector('#lExportAll').onclick=()=>{const beamEntries=Object.entries(it.beams),headers=['Index','Row','Column','X [mm]','Y [mm]'],series=[];for(const [bk,b] of beamEntries)for(const m of Object.values(b.metrics)){const wl=Number.isFinite(b.laser?.wavelengthNm)?`${b.laser.wavelengthNm}nm`:`beam${bk}`;headers.push(`${wl} ${m.label}${m.unit?` [${m.unit}]`:''} (${m.status})`);series.push(m.values)}const n=it.pointCount,rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',...series.map(v=>v[i])]);PV.exporter.csv(`${safe(d.resultName)}_LBIC_all.csv`,headers,rows)};
+        
+      host.querySelector('#lExportAll').onclick=()=>{
+        const beamEntries=Object.entries(it.beams),
+        headers=['Index','Row','Column','X [mm]','Y [mm]'],
+        series=[];
+        for(const [bk,b] of beamEntries)for(const m of Object.values(b.metrics)){
+          const wl=Number.isFinite(b.laser?.wavelengthNm)?`${b.laser.wavelengthNm}nm`:`beam${bk}`;
+          headers.push(`${wl} ${m.label}${m.unit?` [${m.unit}]`:''} (${m.status})`);
+          series.push(m.values)}const n=it.pointCount,
+        rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',...series.map(v=>v[i])]);
+        PV.exporter.csv(`${safe(d.resultName)}_LBIC_all.csv`,headers,rows)};
+        
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }

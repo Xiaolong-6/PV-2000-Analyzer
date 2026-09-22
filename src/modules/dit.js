@@ -1,18 +1,36 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,q=1.60218e-19,k=1.38e-23,T=300;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,UI=PV.ui,q=1.60218e-19,k=1.38e-23,T=300;
   const finite=a=>(a||[]).filter(Number.isFinite),mean=S.mean;
-  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc=UI.escapeHtml;
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
   const sci=(v,n=3)=>!Number.isFinite(v)?'—':v.toExponential(n-1).replace('e+','e');
-  const help=t=>`<span class="help" title="${esc(t)}">i</span>`;
+  const help=UI.help;
   function scalarMean(e){return e?mean([...e.children].map(x=>Number(x.textContent))):NaN}
   function vectorMeans(e){return e?[...e.children].map(scalarMean):[]}
   function firstNum(parents,names,d=NaN){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.num(p,n,NaN);if(Number.isFinite(v))return v}return d}
   function firstBool(parents,names,d=false){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.text(p,n,'');if(v!=='')return v.toLowerCase()==='true'}return d}
-  function settings(m,name){const n=X.direct(m,name),s=X.direct(n,'Settings'),tr=X.direct(s,'TargetRange');return{charge:X.num(s,'CoronaCharge'),attempts:X.num(s,'MaxNumberOfAttemps'),extra:X.num(s,'ExtraScans'),delay:X.num(s,'ChargeDelay'),targetMin:X.text(tr,'Min',''),targetMax:X.text(tr,'Max','')}}
+  function settings(m,name){const n=X.direct(m,name),
+    s=X.direct(n,'Settings'),
+    tr=X.direct(s,'TargetRange');
+    return{charge:X.num(s,'CoronaCharge'),attempts:X.num(s,'MaxNumberOfAttemps'),extra:X.num(s,'ExtraScans'),delay:X.num(s,'ChargeDelay'),targetMin:X.text(tr,'Min',''),targetMax:X.text(tr,'Max','')}}
 
   function parse(parsed){
-    const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),off=X.num(md,'VcpdOffsett',0),factor=X.num(md,'VsbCorrectionFactor',1.2),proc=X.direct(m,'Process'),qstep=X.num(X.direct(proc,'Settings'),'CoronaCharge'),pre=X.direct(m,'PreProcess'),prestep=X.num(X.direct(pre,'Settings'),'CoronaCharge'),data=X.direct(X.direct(X.direct(md,'IterationData'),'Iteration'),'Data'),items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],pattern=X.direct(m,'Pattern'),coeff=X.direct(pattern,'Coefficients'),coords=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',0),y:X.num(p,'Y',0)})):[],sites=[];
+    const m=parsed.measurement,
+      c=X.common(parsed),
+      md=X.direct(m,'MeasurementData'),
+      off=X.num(md,'VcpdOffsett',0),
+      factor=X.num(md,'VsbCorrectionFactor',1.2),
+      proc=X.direct(m,'Process'),
+      qstep=X.num(X.direct(proc,'Settings'),'CoronaCharge'),
+      pre=X.direct(m,'PreProcess'),
+      prestep=X.num(X.direct(pre,'Settings'),'CoronaCharge'),
+      data=X.direct(X.direct(X.direct(md,'IterationData'),'Iteration'),'Data'),
+      items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
+      pattern=X.direct(m,'Pattern'),
+      coeff=X.direct(pattern,'Coefficients'),
+      coords=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',0),y:X.num(p,'Y',0)})):[],
+      sites=[];
+      
     items.forEach((it,si)=>{
       const pd=X.direct(it,'ProcessData'),pred=X.direct(it,'PreProcessData'),d=vectorMeans(X.direct(pd,'VcpdDark')),l=vectorMeans(X.direct(pd,'VcpdLight')),rows=[];
       for(let j=1;j<Math.min(d.length,l.length);j++){const vd=d[j]-off,vl=l[j]-off;rows.push({Qc:(j-1)*qstep,VDark:vd,VLight:vl,Vsb:Math.abs(factor*(vl-vd)),rawDiff:vl-vd})}
@@ -26,18 +44,57 @@
       cocosIIMaxVsb:firstNum([m,md],['CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
       backSurfaceShift:firstBool([m,md],['BackSurfaceShift'],false),
       qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
+        
   }
 
   function qsc(vsb,doping,type){
-    const ni=1e10*1e6,eps0=8.85e-12,eps=11.68,Nd=doping*1e6,p0=type==='p'?Nd:ni*ni/Nd,n0=type==='n'?Nd:ni*ni/Nd,beta=q/(k*T),sg=vsb<=0?1:-1,maj=type==='p'?p0:n0,minrat=type==='p'?n0/p0:p0/n0,term=(Math.exp(-beta*vsb)+beta*vsb-1)+minrat*(Math.exp(beta*vsb)-beta*vsb-1);
+    const ni=1e10*1e6,
+      eps0=8.85e-12,
+      eps=11.68,
+      Nd=doping*1e6,
+      p0=type==='p'?Nd:ni*ni/Nd,
+      n0=type==='n'?Nd:ni*ni/Nd,
+      beta=q/(k*T),
+      sg=vsb<=0?1:-1,
+      maj=type==='p'?p0:n0,
+      minrat=type==='p'?n0/p0:p0/n0,
+      term=(Math.exp(-beta*vsb)+beta*vsb-1)+minrat*(Math.exp(beta*vsb)-beta*vsb-1);
+      
     return sg*Math.sqrt(2*k*T*eps0*eps*maj)*Math.sqrt(Math.max(0,term))*1e-4/q;
   }
-  function linSlope(x,y){const n=Math.min(x.length,y.length);let sx=0,sy=0,sxx=0,sxy=0,kc=0;for(let i=0;i<n;i++)if(Number.isFinite(x[i])&&Number.isFinite(y[i])){sx+=x[i];sy+=y[i];sxx+=x[i]*x[i];sxy+=x[i]*y[i];kc++}return kc>1?(kc*sxy-sx*sy)/(kc*sxx-sx*sx):NaN}
+  function linSlope(x,y){const n=Math.min(x.length,y.length);
+    let sx=0,
+    sy=0,
+    sxx=0,
+    sxy=0,
+    kc=0;
+    for(let i=0;i<n;i++)if(Number.isFinite(x[i])&&Number.isFinite(y[i])){sx+=x[i];
+      sy+=y[i];
+      sxx+=x[i]*x[i];
+      sxy+=x[i]*y[i];
+      kc++}return kc>1?(kc*sxy-sx*sy)/(kc*sxx-sx*sx):NaN}
   function inv(qc,v,t){for(let i=0;i<v.length-1;i++)if((v[i]-t)*(v[i+1]-t)<=0&&v[i+1]!==v[i])return qc[i]+(t-v[i])/(v[i+1]-v[i])*(qc[i+1]-qc[i]);return NaN}
   function interp(qc,v,x){for(let i=0;i<qc.length-1;i++)if(x>=Math.min(qc[i],qc[i+1])&&x<=Math.max(qc[i],qc[i+1])&&qc[i+1]!==qc[i])return v[i]+(x-qc[i])/(qc[i+1]-qc[i])*(v[i+1]-v[i]);return NaN}
   function flat(site,d,accumN=5){
-    const r=site.rows;if(r.length<8)return{};const qc=r.map(x=>x.Qc),v=r.map(x=>x.VDark),n=Math.max(3,Math.min(20,accumN)),start=d.dopingType==='n'?Math.max(0,r.length-n):0,end=d.dopingType==='n'?r.length:Math.min(n,r.length),mox=linSlope(qc.slice(start,end),v.slice(start,end)),eps0=8.8541878128e-14,eps=11.68,Cs=Math.sqrt(eps*eps0*q*q*d.doping/(k*T)),mfb=mox+q/Cs,sl=[];
-    for(let i=0;i<r.length-1;i++)sl.push((v[i+1]-v[i])/(qc[i+1]-qc[i]));let peak=sl.indexOf(Math.max(...sl)),ix=-1;if(d.dopingType==='n'){for(let i=peak;i<sl.length-1;i++)if(sl[i]>=mfb&&sl[i+1]<=mfb){ix=i;break}}else{for(let i=0;i<peak;i++)if(sl[i]<=mfb&&sl[i+1]>=mfb)ix=i}
+    const r=site.rows;
+      if(r.length<8)return{};
+      const qc=r.map(x=>x.Qc),
+      v=r.map(x=>x.VDark),
+      n=Math.max(3,Math.min(20,accumN)),
+      start=d.dopingType==='n'?Math.max(0,r.length-n):0,
+      end=d.dopingType==='n'?r.length:Math.min(n,r.length),
+      mox=linSlope(qc.slice(start,end),v.slice(start,end)),
+      eps0=8.8541878128e-14,
+      eps=11.68,
+      Cs=Math.sqrt(eps*eps0*q*q*d.doping/(k*T)),
+      mfb=mox+q/Cs,
+      sl=[];
+      
+    for(let i=0;i<r.length-1;i++)sl.push((v[i+1]-v[i])/(qc[i+1]-qc[i]));
+      let peak=sl.indexOf(Math.max(...sl)),
+      ix=-1;
+      if(d.dopingType==='n'){for(let i=peak;i<sl.length-1;i++)if(sl[i]>=mfb&&sl[i+1]<=mfb){ix=i;
+        break}}else{for(let i=0;i<peak;i++)if(sl[i]<=mfb&&sl[i+1]>=mfb)ix=i}
     const qi=inv(qc,v,site.VDark);if(ix<0||!Number.isFinite(qi)||!Number.isFinite(mox))return{};const qfb=qc[ix]+(mfb-sl[ix])/(sl[ix+1]-sl[ix])*(qc[ix+1]-qc[ix]),Cox=q/mox,eot=3.9*eps0/Cox*1e7;
     return{qinit:qi,qfb,Qtot:qi-qfb,Cox,eot,mox,mfb,slopes:sl,flatIndex:ix,vfbDark:interp(qc,v,qfb)};
   }
@@ -63,9 +120,49 @@
     return{eotA,minVsb,maxVsb,eotSource:eotVals.length?`dark accumulation median (${eotVals.length} sites)`:'fallback',coverageCount:all.length};
   }
 
-  function pchipSlopes(x,y){const n=x.length,h=[],delta=[];for(let i=0;i<n-1;i++){h[i]=x[i+1]-x[i];delta[i]=(y[i+1]-y[i])/h[i]}if(n===2)return[delta[0],delta[0]];const d=new Array(n).fill(0);const edge=(h0,h1,d0,d1)=>{let z=((2*h0+h1)*d0-h0*d1)/(h0+h1);if(Math.sign(z)!==Math.sign(d0))z=0;else if(Math.sign(d0)!==Math.sign(d1)&&Math.abs(z)>3*Math.abs(d0))z=3*d0;return z};d[0]=edge(h[0],h[1],delta[0],delta[1]);d[n-1]=edge(h[n-2],h[n-3],delta[n-2],delta[n-3]);for(let i=1;i<n-1;i++){if(delta[i-1]===0||delta[i]===0||Math.sign(delta[i-1])!==Math.sign(delta[i]))d[i]=0;else{const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];d[i]=(w1+w2)/(w1/delta[i-1]+w2/delta[i])}}return d}
-  function pchipEval(x,y,xq){if(x.length<2||xq<x[0]||xq>x[x.length-1])return NaN;const d=pchipSlopes(x,y);let i=x.length-2;for(let k=0;k<x.length-1;k++)if(xq>=x[k]&&xq<=x[k+1]){i=k;break}const h=x[i+1]-x[i],t=(xq-x[i])/h,h00=2*t**3-3*t**2+1,h10=t**3-2*t**2+t,h01=-2*t**3+3*t**2,h11=t**3-t**2;return h00*y[i]+h10*h*d[i]+h01*y[i+1]+h11*h*d[i+1]}
-  function filteredXY(x,y,reject=2e13){const z=x.map((v,i)=>[v,y[i]]).filter(p=>p.every(Number.isFinite)).sort((a,b)=>a[0]-b[0]),ux=[],uy=[];for(let i=0;i<z.length;){let j=i+1,sum=z[i][1],n=1;while(j<z.length&&Math.abs(z[j][0]-z[i][0])<1e-12){sum+=z[j][1];n++;j++}const xx=z[i][0],yy=sum/n;if((xx<.1||xx>.5)||yy<reject){ux.push(xx);uy.push(yy)}i=j}return{ux,uy}}
+  function pchipSlopes(x,y){
+    const n=x.length,
+    h=[],
+    delta=[];
+    for(let i=0;i<n-1;i++){h[i]=x[i+1]-x[i];
+      delta[i]=(y[i+1]-y[i])/h[i]}if(n===2)return[delta[0],delta[0]];
+    const d=new Array(n).fill(0);
+    const edge=(h0,h1,d0,d1)=>{
+      let z=((2*h0+h1)*d0-h0*d1)/(h0+h1);
+      if(Math.sign(z)!==Math.sign(d0))z=0;
+      else if(Math.sign(d0)!==Math.sign(d1)&&Math.abs(z)>3*Math.abs(d0))z=3*d0;
+      return z};
+    d[0]=edge(h[0],h[1],delta[0],delta[1]);
+    d[n-1]=edge(h[n-2],h[n-3],delta[n-2],delta[n-3]);
+    for(let i=1;i<n-1;i++){
+      if(delta[i-1]===0||delta[i]===0||Math.sign(delta[i-1])!==Math.sign(delta[i]))d[i]=0;
+      else{
+        const w1=2*h[i]+h[i-1],
+        w2=h[i]+2*h[i-1];
+        d[i]=(w1+w2)/(w1/delta[i-1]+w2/delta[i])}}return d}
+  function pchipEval(x,y,xq){if(x.length<2||xq<x[0]||xq>x[x.length-1])return NaN;
+    const d=pchipSlopes(x,y);
+    let i=x.length-2;
+    for(let k=0;k<x.length-1;k++)if(xq>=x[k]&&xq<=x[k+1]){i=k;
+      break}const h=x[i+1]-x[i],
+    t=(xq-x[i])/h,
+    h00=2*t**3-3*t**2+1,
+    h10=t**3-2*t**2+t,
+    h01=-2*t**3+3*t**2,
+    h11=t**3-t**2;
+    return h00*y[i]+h10*h*d[i]+h01*y[i+1]+h11*h*d[i+1]}
+  function filteredXY(x,y,reject=2e13){const z=x.map((v,i)=>[v,y[i]]).filter(p=>p.every(Number.isFinite)).sort((a,b)=>a[0]-b[0]),
+    ux=[],
+    uy=[];
+    for(let i=0;i<z.length;){let j=i+1,
+      sum=z[i][1],
+      n=1;
+      while(j<z.length&&Math.abs(z[j][0]-z[i][0])<1e-12){sum+=z[j][1];
+        n++;
+        j++}const xx=z[i][0],
+      yy=sum/n;
+      if((xx<.1||xx>.5)||yy<reject){ux.push(xx);
+        uy.push(yy)}i=j}return{ux,uy}}
   function medianBinnedXY(x,y,width){
     if(!(width>0)||x.length!==y.length)return{ux:[],uy:[]};
     const ux=[],uy=[],binKey=v=>Math.floor((v+1e-15)/width);
@@ -84,23 +181,88 @@
     return{mid,curve,knots:ux.map((v,i)=>({x:v,y:restore(uy[i])}))};
   }
   function variation(site,d,reject=2e13,vsbOverride=null,pchipScale='log10',window=null,pchipEnabled=true,pchipMethod='median',pchipMedianWindowV=.010){
-    const r=site.rows,vs=vsbOverride&&vsbOverride.length===r.length?vsbOverride:r.map(x=>x.Vsb),qc=r.map(x=>x.Qc),qs=vs.map(v=>qsc(v,d.doping,d.dopingType)),raw=[];for(let i=0;i<r.length-1;i++){const dv=vs[i+1]-vs[i],dq=Math.abs(qc[i+1]-qc[i])-Math.abs(qs[i+1]-qs[i]);raw.push(Math.abs(dv)>0?Math.abs(dq)/Math.abs(dv):NaN)}
-    const x=vs.slice(0,-1),gate=window?windowedMin(x,raw,window.min,window.max):windowedMin(x,raw,-Infinity,Infinity),fitX=x.filter((_,i)=>gate.accepted[i]),fitY=raw.filter((_,i)=>gate.accepted[i]),fit=pchipEnabled?makeCurve(fitX,fitY,d,reject,pchipScale,pchipMethod,pchipMedianWindowV):{mid:NaN,curve:[],knots:[]};let p=0;while(p<vs.length&&vs[p]<.010)p++;if(p>=vs.length)p=vs.length-1;const qsurface=qc[p],qeff=qc.map(x=>x-qsurface),qit=qs.map((x,i)=>-x-qeff[i]),direct=[];
+    const r=site.rows,
+      vs=vsbOverride&&vsbOverride.length===r.length?vsbOverride:r.map(x=>x.Vsb),
+      qc=r.map(x=>x.Qc),
+      qs=vs.map(v=>qsc(v,d.doping,d.dopingType)),
+      raw=[];
+      for(let i=0;i<r.length-1;i++){const dv=vs[i+1]-vs[i],
+      dq=Math.abs(qc[i+1]-qc[i])-Math.abs(qs[i+1]-qs[i]);
+      raw.push(Math.abs(dv)>0?Math.abs(dq)/Math.abs(dv):NaN)}
+    const x=vs.slice(0,-1),
+      gate=window?windowedMin(x,raw,window.min,window.max):windowedMin(x,raw,-Infinity,Infinity),
+      fitX=x.filter((_,i)=>gate.accepted[i]),
+      fitY=raw.filter((_,i)=>gate.accepted[i]),
+      fit=pchipEnabled?makeCurve(fitX,fitY,d,reject,pchipScale,pchipMethod,pchipMedianWindowV):{mid:NaN,curve:[],knots:[]};
+      let p=0;
+      while(p<vs.length&&vs[p]<.010)p++;
+      if(p>=vs.length)p=vs.length-1;
+      const qsurface=qc[p],
+      qeff=qc.map(x=>x-qsurface),
+      qit=qs.map((x,i)=>-x-qeff[i]),
+      direct=[];
+      
     // Historical charge-derivative diagnostic, retained internally for regression only.
-    for(let i=0;i<r.length-1;i++){const dv=vs[i+1]-vs[i],dq=qit[i+1]-qit[i];direct.push(Math.abs(dv)>0?Math.abs(dq/dv):NaN)}const dfit=pchipEnabled?makeCurve(x,direct,d,reject,pchipScale,'original',pchipMedianWindowV):{mid:NaN,curve:[]};return{vsb:vs,raw,min:gate.min,minIndex:gate.minIndex,minVsbAt:gate.minIndex>=0?x[gate.minIndex]:NaN,accepted:gate.accepted,acceptedCount:gate.count,totalIntervals:gate.total,window,mid:fit.mid,curve:fit.curve,fitKnots:fit.knots||[],directRaw:direct,directMid:dfit.mid,directCurve:dfit.curve,midgapV:Math.abs(k*T/q*Math.log(d.doping/9.65e9))};
+    for(let i=0;i<r.length-1;i++){
+      const dv=vs[i+1]-vs[i],
+      dq=qit[i+1]-qit[i];
+      direct.push(Math.abs(dv)>0?Math.abs(dq/dv):NaN)}const dfit=pchipEnabled?makeCurve(x,direct,d,reject,pchipScale,'original',pchipMedianWindowV):{mid:NaN,curve:[]};
+      return{vsb:vs,raw,min:gate.min,minIndex:gate.minIndex,minVsbAt:gate.minIndex>=0?x[gate.minIndex]:NaN,accepted:gate.accepted,acceptedCount:gate.count,totalIntervals:gate.total,window,mid:fit.mid,curve:fit.curve,fitKnots:fit.knots||[],directRaw:direct,directMid:dfit.mid,directCurve:dfit.curve,midgapV:Math.abs(k*T/q*Math.log(d.doping/9.65e9))};
+      
   }
   function analyze(d,opts={}){
-    const accumN=opts.accumN||5,pchipScale=opts.pchipScale==='linear'?'linear':'log10',pchipEnabled=opts.pchipEnabled!==false,pchipMethod=opts.pchipMethod==='original'?'original':'median',pchipMedianWindowV=Number.isFinite(opts.pchipMedianWindowV)?opts.pchipMedianWindowV:.010,requested=['xml','standard','pv2000-re'].includes(opts.cocosMode)?opts.cocosMode:'xml',effective=requested==='xml'?(d.useCocosII?'pv2000-re':'standard'):requested,recommendation=cocosRecommendation(d,accumN);
-    const eotA=Number.isFinite(opts.cocosIIEOT_A)?opts.cocosIIEOT_A:(Number.isFinite(d.cocosIIEOT)&&d.cocosIIEOT>0?d.cocosIIEOT:recommendation.eotA),minVsb=Number.isFinite(opts.cocosIIMinVsb)?opts.cocosIIMinVsb:(Number.isFinite(d.cocosIIMinVsb)?d.cocosIIMinVsb:-0.1),maxVsb=Number.isFinite(opts.cocosIIMaxVsb)?opts.cocosIIMaxVsb:(Number.isFinite(d.cocosIIMaxVsb)?d.cocosIIMaxVsb:0.65),backSurfaceShift=opts.backSurfaceShift??d.backSurfaceShift??false,errors=[];
+    const accumN=opts.accumN||5,
+      pchipScale=opts.pchipScale==='linear'?'linear':'log10',
+      pchipEnabled=opts.pchipEnabled!==false,
+      pchipMethod=opts.pchipMethod==='original'?'original':'median',
+      pchipMedianWindowV=Number.isFinite(opts.pchipMedianWindowV)?opts.pchipMedianWindowV:.010,
+      requested=['xml','standard','pv2000-re'].includes(opts.cocosMode)?opts.cocosMode:'xml',
+      effective=requested==='xml'?(d.useCocosII?'pv2000-re':'standard'):requested,
+      recommendation=cocosRecommendation(d,accumN);
+      
+    const eotA=Number.isFinite(opts.cocosIIEOT_A)?opts.cocosIIEOT_A:(Number.isFinite(d.cocosIIEOT)&&d.cocosIIEOT>0?d.cocosIIEOT:recommendation.eotA),
+      minVsb=Number.isFinite(opts.cocosIIMinVsb)?opts.cocosIIMinVsb:(Number.isFinite(d.cocosIIMinVsb)?d.cocosIIMinVsb:-0.1),
+      maxVsb=Number.isFinite(opts.cocosIIMaxVsb)?opts.cocosIIMaxVsb:(Number.isFinite(d.cocosIIMaxVsb)?d.cocosIIMaxVsb:0.65),
+      backSurfaceShift=opts.backSurfaceShift??d.backSurfaceShift??false,
+      errors=[];
+      
     if(effective==='pv2000-re'&&(!(eotA>0)||!(maxVsb>minVsb)))errors.push(!(eotA>0)?'COCOS-II EOT must be greater than 0 Å.':'COCOS-II Max Vsb must be greater than Min Vsb.');
     if(pchipEnabled&&pchipMethod==='median'&&!(pchipMedianWindowV>0))errors.push('Median Vsb window must be greater than 0 mV.');
     const settingsError=errors.join(' ');
-    const sites=d.sites.map(s=>{const f=flat(s,d,accumN),c2=effective==='pv2000-re'?cocosIIReverse(s,d,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift}):{enabled:false,valid:false,source:'standard measured light'},requiresC2=effective==='pv2000-re',usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,v=variation(s,d,opts.ditReject||2e13,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,Qsc:Math.abs(qsc(s.Vsb,d.doping,d.dopingType)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
-    const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],stats={};keys.forEach(k=>stats[k]=S.summary(sites.filter(x=>x.valid).map(x=>x[k])));const mode=effective==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';return{sites,stats,recommendation,error:settingsError,options:{accumN,ditReject:opts.ditReject||2e13,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
+    const sites=d.sites.map(s=>{
+      const f=flat(s,d,accumN),
+      c2=effective==='pv2000-re'?cocosIIReverse(s,d,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift}):{enabled:false,valid:false,source:'standard measured light'},
+      requiresC2=effective==='pv2000-re',
+      usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
+      window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
+      v=variation(s,d,opts.ditReject||2e13,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
+      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,Qsc:Math.abs(qsc(s.Vsb,d.doping,d.dopingType)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
+      
+    const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],
+      stats={};
+      keys.forEach(k=>stats[k]=S.summary(sites.filter(x=>x.valid).map(x=>x[k])));
+      const mode=effective==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
+      return{sites,stats,recommendation,error:settingsError,options:{accumN,ditReject:opts.ditReject||2e13,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
+      
   }
 
-  function svgAxes(W,H,m,xmin,xmax,ymin,ymax,{xFmt=x=>x.toExponential(1),yFmt=y=>y.toFixed(2),logY=false}={}){const X=x=>m.l+(x-xmin)/(xmax-xmin||1)*(W-m.l-m.r),Y=y=>{const yy=logY?Math.log10(y):y,a=logY?Math.log10(ymin):ymin,b=logY?Math.log10(ymax):ymax;return H-m.b-(yy-a)/(b-a||1)*(H-m.t-m.b)};let out=`<rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;for(let i=0;i<=4;i++){const yy=logY?10**(Math.log10(ymin)+(Math.log10(ymax)-Math.log10(ymin))*i/4):ymin+(ymax-ymin)*i/4,py=Y(yy);out+=`<line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${yFmt(yy)}</text>`}for(let i=0;i<=4;i++){const xx=xmin+(xmax-xmin)*i/4,px=X(xx);out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-12}" text-anchor="middle" fill="var(--muted)" font-size="9">${xFmt(xx)}</text>`}return{X,Y,out}}
-  function pathXY(x,y,X,Y,color,w=2,dash=''){const pts=x.map((v,i)=>Number.isFinite(v)&&Number.isFinite(y[i])?`${X(v)},${Y(y[i])}`:null).filter(Boolean).join(' ');return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${w}" ${dash?`stroke-dasharray="${dash}"`:''}/>`}
+  function svgAxes(W,H,m,xmin,xmax,ymin,ymax,{xFmt=x=>x.toExponential(1),yFmt=y=>y.toFixed(2),logY=false}={}){
+    const X=x=>m.l+(x-xmin)/(xmax-xmin||1)*(W-m.l-m.r),
+    Y=y=>{
+      const yy=logY?Math.log10(y):y,
+      a=logY?Math.log10(ymin):ymin,
+      b=logY?Math.log10(ymax):ymax;
+      return H-m.b-(yy-a)/(b-a||1)*(H-m.t-m.b)};
+    let out=`<rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;
+    for(let i=0;i<=4;i++){
+      const yy=logY?10**(Math.log10(ymin)+(Math.log10(ymax)-Math.log10(ymin))*i/4):ymin+(ymax-ymin)*i/4,
+      py=Y(yy);
+      out+=`<line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${yFmt(yy)}</text>`}for(let i=0;i<=4;i++){
+      const xx=xmin+(xmax-xmin)*i/4,
+      px=X(xx);
+      out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-12}" text-anchor="middle" fill="var(--muted)" font-size="9">${xFmt(xx)}</text>`}return{X,Y,out}}
+  function pathXY(x,y,X,Y,color,w=2,dash=''){const pts=x.map((v,i)=>Number.isFinite(v)&&Number.isFinite(y[i])?`${X(v)},${Y(y[i])}`:null).filter(Boolean).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${w}" ${dash?`stroke-dasharray="${dash}"`:''}/>`}
   function pointsXY(x,y,X,Y,color,r=2.5){return x.map((v,i)=>Number.isFinite(v)&&Number.isFinite(y[i])?`<circle cx="${X(v)}" cy="${Y(y[i])}" r="${r}" fill="${color}" stroke="var(--chart-bg)" stroke-width=".7"/>`:'').join('')}
 
   function metric(s,key){if(key==='EOT')return s.eot;return s[key]}
@@ -111,16 +273,44 @@
   function render(host,d,baseAnalysis){
     let analysis=baseAnalysis,site=Math.max(0,analysis.sites.findIndex(x=>x.valid)),mapKey='Qtot',analysisOpen=false,zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
     const controlNum=(id,fallback)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return NaN;const v=Number(raw);return Number.isFinite(v)?v:NaN};
-    const rebuild=()=>{analysisOpen=true;const accumN=controlNum('#ditAccumN',analysis.options.accumN||5),ditReject=controlNum('#ditReject',analysis.options.ditReject||2e13),pchipScale=host.querySelector('#ditPchipScale')?.value||analysis.options.pchipScale,pchipEnabled=host.querySelector('#ditUsePchip')?.checked!==false,pchipMethod=host.querySelector('#ditPchipMethod')?.value||analysis.options.pchipMethod||'median',medianMv=controlNum('#ditPchipMedianMv',(analysis.options.pchipMedianWindowV??.010)*1e3),pchipMedianWindowV=medianMv*1e-3,cocosMode=host.querySelector('#ditCocosMode')?.value||analysis.options.cocosMode||'xml',cocosIIEOT_A=controlNum('#ditCocosEotA',analysis.options.cocosIIEOT_A),cocosIIMinVsb=controlNum('#ditCocosMin',analysis.options.cocosIIMinVsb),cocosIIMaxVsb=controlNum('#ditCocosMax',analysis.options.cocosIIMaxVsb),backSurfaceShift=analysis.options.backSurfaceShift;analysis=analyze(d,{accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode,cocosIIEOT_A,cocosIIMinVsb,cocosIIMaxVsb,backSurfaceShift});zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};if(site>=analysis.sites.length)site=0;renderShell()};
+    const rebuild=()=>{analysisOpen=true;
+      const accumN=controlNum('#ditAccumN',analysis.options.accumN||5),
+      ditReject=controlNum('#ditReject',analysis.options.ditReject||2e13),
+      pchipScale=host.querySelector('#ditPchipScale')?.value||analysis.options.pchipScale,
+      pchipEnabled=host.querySelector('#ditUsePchip')?.checked!==false,
+      pchipMethod=host.querySelector('#ditPchipMethod')?.value||analysis.options.pchipMethod||'median',
+      medianMv=controlNum('#ditPchipMedianMv',(analysis.options.pchipMedianWindowV??.010)*1e3),
+      pchipMedianWindowV=medianMv*1e-3,
+      cocosMode=host.querySelector('#ditCocosMode')?.value||analysis.options.cocosMode||'xml',
+      cocosIIEOT_A=controlNum('#ditCocosEotA',analysis.options.cocosIIEOT_A),
+      cocosIIMinVsb=controlNum('#ditCocosMin',analysis.options.cocosIIMinVsb),
+      cocosIIMaxVsb=controlNum('#ditCocosMax',analysis.options.cocosIIMaxVsb),
+      backSurfaceShift=analysis.options.backSurfaceShift;
+      analysis=analyze(d,{accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode,cocosIIEOT_A,cocosIIMinVsb,cocosIIMaxVsb,backSurfaceShift});
+      zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
+      if(site>=analysis.sites.length)site=0;
+      renderShell()};
+      
     const statText=(key)=>{const st=analysis.stats[key];return st&&Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)}`:'—'};
     const resultHelp={Qtot:'Total dielectric/interface charge obtained from the horizontal charge separation between the natural initial condition and the flatband point on the dark V–Q characteristic.',Dit:'PV-2000-style minimum interface-state density: the minimum accepted discrete variation-method Dit point. It does not use PCHIP interpolation.',MidgapDit:'Optional PCHIP-derived Dit evaluated at the theoretical midgap surface potential. PCHIP settings affect this result and the green fit curve, but never the PV2000-style minimum Dit.',eot:'Equivalent oxide thickness expressed as the thickness of SiO₂ (κ≈3.9) giving the measured dielectric capacitance. For any other dielectric or multilayer stack it is an electrical-equivalent thickness, not physical thickness.',Cox:'Dielectric capacitance per unit area obtained from the dark accumulation V–Q slope.',Qsc:'Semiconductor space charge evaluated at the natural initial Vsb using the same MOS charge model as the group MATLAB code.',InitialQc:'Barrier-adjustment corona bookkeeping: number of PreProcess charge events multiplied by the PreProcess corona-charge step.',MaxVsb:'Maximum absolute surface-barrier magnitude reached by the analysis Vsb curve; with COCOS-II enabled this uses the reconstructed corrected Vsb.'};
+      
     const metaHelp={recipe:'PV-2000 recipe/job name stored in the result XML.',substrate:'Substrate identifier stored with the result.',lot:'Lot identifier stored with the result; it may be empty.',status:'PV-2000 execution status.',start:'Execution start timestamp from the result XML.',end:'Execution completion timestamp from the result XML.',elapsed:'Total elapsed measurement time.',pattern:'Measurement pattern name/type and number of measured sites.',points:'Number of Kelvin-probe samples averaged for each Vcpd reading.',interval:'Time interval between the Vcpd samples used to form each vector.',offset:'Kelvin-probe Vcpd calibration offset stored in MeasurementData and applied to reconstructed Vcpd values.',factor:'Standard COCOS correction factor applied to the measured dark-light Vcpd difference when COCOS-II is disabled.',qitRange:'Surface-barrier range configured for Qit/Dit extraction.',c2:'Whether the XML requests COCOS-II. When true, this analyzer replaces the experimental light curve with a synthetic straight light curve before Dit extraction.',c2eot:'Raw COCOS-II EOT setting stored in the XML. The PV2000 inferred method interprets this vendor value as Å.',preCharge:'Corona charge increment used during barrier adjustment before the main sweep.',preTarget:'Target Vsb range for the barrier-adjustment stage.',preAttempts:'Maximum barrier-adjustment attempts and number of extra scans.',processCharge:'Positive/negative corona charge increment used during the main Process sweep.',processTarget:'Target measurement range for terminating the main Process sweep.',processAttempts:'Maximum Process attempts and number of extra scans.'};
+      
     const md=(label,value,tip)=>`<dt>${esc(label)} ${help(tip)}</dt><dd>${value}</dd>`;
     const methodLabel=m=>m==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
     function analysisControls(){
-      const o=analysis.options,eff=o.effectiveCocosMode,isPv=eff==='pv2000-re',resolved=methodLabel(eff),xmlLine=o.cocosMode==='xml'?`<div class="analysis-resolved"><b>XML:</b> UseCocosII = ${d.useCocosII?'true':'false'} <span>→</span> <b>${resolved}</b></div>`:'',current=analysis.sites[site]||{},rec=analysis.recommendation||{},field=(label,tip,control,cls='')=>`<label class="compact-field ${cls}"><span class="field-name">${label} ${help(tip)}</span>${control}</label>`;
+      const o=analysis.options,
+        eff=o.effectiveCocosMode,
+        isPv=eff==='pv2000-re',
+        resolved=methodLabel(eff),
+        xmlLine=o.cocosMode==='xml'?`<div class="analysis-resolved"><b>XML:</b> UseCocosII = ${d.useCocosII?'true':'false'} <span>→</span> <b>${resolved}</b></div>`:'',
+        current=analysis.sites[site]||{},
+        rec=analysis.recommendation||{},
+        field=(label,tip,control,cls='')=>`<label class="compact-field ${cls}"><span class="field-name">${label} ${help(tip)}</span>${control}</label>`;
+        
       const diagnostics=isPv?`<div class="cocos-diagnostics"><span>Accepted intervals <b>${current.ditAcceptedCount??0}/${current.ditIntervalCount??0}</b></span><span>Minimum at Vsb <b>${fmt(current.ditMinVsb,3)} V</b></span></div>`:'';
       const recommendation=isPv?`<div class="cocos-recommendation"><span><b>Suggested from data:</b> EOT ${fmt(rec.eotA,1)} Å · window ${fmt(rec.minVsb,2)}…${fmt(rec.maxVsb,2)} V <small>${esc(rec.eotSource||'')}</small></span><button id="ditUseRecommendation" type="button">Use</button></div>`:'';
+        
       return `<details id="ditAnalysisControls" class="panel" ${analysisOpen?'open':''}><summary>Analysis controls</summary>
         <div class="setting-row compact-settings analysis-method-row">${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the inferred PV2000 COCOS-II implementation.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV2000 COCOS-II (inferred)</option></select>`)}</div>
         ${xmlLine}
@@ -158,15 +348,219 @@
         <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Surface barrier versus corona charge. Standard COCOS display |Vsb|. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Raw standard |Vsb| is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span><button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
         <div class="panel chart map-panel"><header><b>Wafer map</b>${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. Map any calculated Dit/COCOS parameter across the measured sites. Each site displays its numeric value; click a site to select it.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select><button id="e4" title="Export the selected wafer-map quantity for every site.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 620 315"></svg></div></div>
       </section></div>`;
-      host.querySelector('#ditMapMetric').value=mapKey;host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;host.querySelector('#ditPchipMethod').value=analysis.options.pchipMethod;host.querySelector('#ditCocosMode').value=analysis.options.cocosMode;const analysisPanel=host.querySelector('#ditAnalysisControls'),applyBtn=host.querySelector('#ditRecalc');if(analysisPanel)analysisPanel.ontoggle=()=>{analysisOpen=analysisPanel.open};const markDirty=()=>{if(applyBtn){applyBtn.classList.add('dirty');applyBtn.textContent='Apply analysis settings •'}};['#ditCocosEotA','#ditCocosMin','#ditCocosMax','#ditAccumN','#ditReject','#ditPchipMedianMv'].forEach(id=>{const el=host.querySelector(id);if(el){el.oninput=markDirty;el.onkeydown=e=>{if(e.key==='Enter')rebuild()}}});const pchipToggle=host.querySelector('#ditUsePchip'),pchipMethod=host.querySelector('#ditPchipMethod'),pchipMedian=host.querySelector('#ditPchipMedianMv'),pchipScale=host.querySelector('#ditPchipScale'),pchipReject=host.querySelector('#ditReject'),syncPchipControls=()=>{const enabled=pchipToggle?.checked!==false,isMedian=pchipMethod?.value==='median';if(pchipMethod)pchipMethod.disabled=!enabled;if(pchipMedian)pchipMedian.disabled=!enabled||!isMedian;if(pchipScale)pchipScale.disabled=!enabled;if(pchipReject)pchipReject.disabled=!enabled;host.querySelector('.pchip-settings')?.classList.toggle('disabled',!enabled)};if(pchipToggle)pchipToggle.onchange=()=>{syncPchipControls();markDirty()};if(pchipMethod)pchipMethod.onchange=()=>{syncPchipControls();markDirty()};if(pchipScale)pchipScale.onchange=()=>markDirty();syncPchipControls();host.querySelector('#ditCocosMode').onchange=()=>rebuild();const recBtn=host.querySelector('#ditUseRecommendation');if(recBtn)recBtn.onclick=()=>{const rec=analysis.recommendation||{};const e=host.querySelector('#ditCocosEotA'),mn=host.querySelector('#ditCocosMin'),mx=host.querySelector('#ditCocosMax');if(e&&Number.isFinite(rec.eotA))e.value=Number(rec.eotA.toFixed(3));if(mn&&Number.isFinite(rec.minVsb))mn.value=Number(rec.minVsb.toFixed(3));if(mx&&Number.isFinite(rec.maxVsb))mx.value=Number(rec.maxVsb.toFixed(3));markDirty()};host.querySelector('#ditSite').onchange=e=>{site=+e.target.value;zoom.vcpd={x:null,y:null};zoom.dit={x:null,y:null};zoom.vsb={x:null,y:null};renderShell()};host.querySelector('#ditPrev').onclick=()=>{if(site>0){site--;zoom.vcpd={x:null,y:null};zoom.dit={x:null,y:null};zoom.vsb={x:null,y:null};renderShell()}};host.querySelector('#ditNext').onclick=()=>{if(site<analysis.sites.length-1){site++;zoom.vcpd={x:null,y:null};zoom.dit={x:null,y:null};zoom.vsb={x:null,y:null};renderShell()}};host.querySelector('#ditMapMetric').onchange=e=>{mapKey=e.target.value;zoom.map={x:null,y:null};drawMap()};applyBtn.onclick=()=>rebuild();
+      host.querySelector('#ditMapMetric').value=mapKey;
+        host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;
+        host.querySelector('#ditPchipMethod').value=analysis.options.pchipMethod;
+        host.querySelector('#ditCocosMode').value=analysis.options.cocosMode;
+        const analysisPanel=host.querySelector('#ditAnalysisControls'),
+        applyBtn=host.querySelector('#ditRecalc');
+        if(analysisPanel)analysisPanel.ontoggle=()=>{analysisOpen=analysisPanel.open};
+        const markDirty=()=>{
+        if(applyBtn){applyBtn.classList.add('dirty');
+          applyBtn.textContent='Apply analysis settings •'}};
+        ['#ditCocosEotA','#ditCocosMin','#ditCocosMax','#ditAccumN','#ditReject','#ditPchipMedianMv'].forEach(id=>{
+        const el=host.querySelector(id);if(el){el.oninput=markDirty;el.onkeydown=e=>{
+            if(e.key==='Enter')rebuild()}}});
+        const pchipToggle=host.querySelector('#ditUsePchip'),
+        pchipMethod=host.querySelector('#ditPchipMethod'),
+        pchipMedian=host.querySelector('#ditPchipMedianMv'),
+        pchipScale=host.querySelector('#ditPchipScale'),
+        pchipReject=host.querySelector('#ditReject'),
+        syncPchipControls=()=>{
+        const enabled=pchipToggle?.checked!==false,
+        isMedian=pchipMethod?.value==='median';
+        if(pchipMethod)pchipMethod.disabled=!enabled;
+        if(pchipMedian)pchipMedian.disabled=!enabled||!isMedian;
+        if(pchipScale)pchipScale.disabled=!enabled;
+        if(pchipReject)pchipReject.disabled=!enabled;
+        host.querySelector('.pchip-settings')?.classList.toggle('disabled',!enabled)};
+        if(pchipToggle)pchipToggle.onchange=()=>{syncPchipControls();
+        markDirty()};
+        if(pchipMethod)pchipMethod.onchange=()=>{syncPchipControls();
+        markDirty()};
+        if(pchipScale)pchipScale.onchange=()=>markDirty();
+        syncPchipControls();
+        host.querySelector('#ditCocosMode').onchange=()=>rebuild();
+        const recBtn=host.querySelector('#ditUseRecommendation');
+        if(recBtn)recBtn.onclick=()=>{
+        const rec=analysis.recommendation||{};
+        const e=host.querySelector('#ditCocosEotA'),
+        mn=host.querySelector('#ditCocosMin'),
+        mx=host.querySelector('#ditCocosMax');
+        if(e&&Number.isFinite(rec.eotA))e.value=Number(rec.eotA.toFixed(3));
+        if(mn&&Number.isFinite(rec.minVsb))mn.value=Number(rec.minVsb.toFixed(3));
+        if(mx&&Number.isFinite(rec.maxVsb))mx.value=Number(rec.maxVsb.toFixed(3));
+        markDirty()};
+        host.querySelector('#ditSite').onchange=e=>{site=+e.target.value;
+        zoom.vcpd={x:null,y:null};
+        zoom.dit={x:null,y:null};
+        zoom.vsb={x:null,y:null};
+        renderShell()};
+        host.querySelector('#ditPrev').onclick=()=>{
+        if(site>0){site--;
+          zoom.vcpd={x:null,y:null};
+          zoom.dit={x:null,y:null};
+          zoom.vsb={x:null,y:null};
+          renderShell()}};
+        host.querySelector('#ditNext').onclick=()=>{
+        if(site<analysis.sites.length-1){site++;
+          zoom.vcpd={x:null,y:null};
+          zoom.dit={x:null,y:null};
+          zoom.vsb={x:null,y:null};
+          renderShell()}};
+        host.querySelector('#ditMapMetric').onchange=e=>{mapKey=e.target.value;
+        zoom.map={x:null,y:null};
+        drawMap()};
+        applyBtn.onclick=()=>rebuild();
+        
       host.querySelector('#e1').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vcpd.csv`,['Qc','VDark','Measured VLight','Analysis Vsb','COCOS-II synthetic VLight'],s.rows.map((r,i)=>[r.Qc,r.VDark,r.VLight,s.analysisVsb[i],s.c2?.light?.[i]??'']));
-      host.querySelector('#e2').onclick=()=>{const fitMethod=analysis.options.pchipEnabled?(analysis.options.pchipMethod==='median'?'Median-binned PCHIP':'PCHIP (original)'):'Off',medianMv=analysis.options.pchipMethod==='median'?analysis.options.pchipMedianWindowV*1e3:'',scale=analysis.options.pchipScale==='log10'?'LOG10':'Linear';PV.exporter.csv(`Dit_site${site+1}_Dit.csv`,['Vsb','Variation Dit','Accepted by COCOS-II window','Midgap fit method','Median Vsb window [mV]','Interpolation scale'],s.rows.slice(0,-1).map((r,i)=>[s.analysisVsb[i],s.ditRaw[i],s.ditAccepted?.[i]===false?'NO':'YES',fitMethod,medianMv,scale]))};
-      host.querySelector('#e3').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vsb.csv`,['Qc','Raw standard |Vsb|',analysis.options.effectiveCocosMode==='pv2000-re'?'Analysis signed Vsb':'Analysis |Vsb|'],s.rows.map((r,i)=>[r.Qc,r.Vsb,s.analysisVsb[i]]));host.querySelector('#e4').onclick=()=>{const [label,unit]=mapSpec(mapKey);PV.exporter.csv(`Dit_wafer_${mapKey}.csv`,['Site','x','y',label,unit,'Valid'],analysis.sites.map((x,i)=>[i+1,x.coord?.x??'',x.coord?.y??'',metric(x,mapKey),unit,x.valid?'YES':'NO']))};drawAll();
+      host.querySelector('#e2').onclick=()=>{
+        const fitMethod=analysis.options.pchipEnabled?(analysis.options.pchipMethod==='median'?'Median-binned PCHIP':'PCHIP (original)'):'Off',
+        medianMv=analysis.options.pchipMethod==='median'?analysis.options.pchipMedianWindowV*1e3:'',
+        scale=analysis.options.pchipScale==='log10'?'LOG10':'Linear';
+        PV.exporter.csv(`Dit_site${site+1}_Dit.csv`,['Vsb','Variation Dit','Accepted by COCOS-II window','Midgap fit method','Median Vsb window [mV]','Interpolation scale'],s.rows.slice(0,-1).map((r,i)=>[s.analysisVsb[i],s.ditRaw[i],s.ditAccepted?.[i]===false?'NO':'YES',fitMethod,medianMv,scale]))};
+        
+      host.querySelector('#e3').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vsb.csv`,['Qc','Raw standard |Vsb|',analysis.options.effectiveCocosMode==='pv2000-re'?'Analysis signed Vsb':'Analysis |Vsb|'],s.rows.map((r,i)=>[r.Qc,r.Vsb,s.analysisVsb[i]]));
+        host.querySelector('#e4').onclick=()=>{
+        const [label,unit]=mapSpec(mapKey);
+        PV.exporter.csv(`Dit_wafer_${mapKey}.csv`,['Site','x','y',label,unit,'Valid'],analysis.sites.map((x,i)=>[i+1,x.coord?.x??'',x.coord?.y??'',metric(x,mapKey),unit,x.valid?'YES':'NO']))};
+        drawAll();
+        
     }
-    function drawVcpd(){const s=analysis.sites[site],r=s.rows,svg=host.querySelector('#d1');if(!r.length){svg.innerHTML='';return}const qc=r.map(x=>x.Qc),vd=r.map(x=>x.VDark),vl=r.map(x=>x.VLight),c2=s.c2?.valid?s.c2.light:[],ys=finite([...vd,...vl,...c2,s.VDark]),W=620,H=285,m={l:58,r:12,t:22,b:36},autoX=[Math.min(...qc),Math.max(...qc)],y0=Math.min(...ys),y1=Math.max(...ys),pad=(y1-y0||1)*.05,autoY=[y0-pad,y1+pad],xr=PV.plot.resolve(autoX,zoom.vcpd.x),yr=PV.plot.resolve(autoY,zoom.vcpd.y),{X,Y,out:base}=svgAxes(W,H,m,xr[0],xr[1],yr[0],yr[1]),parts=[base,pathXY(qc,vd,X,Y,'var(--red)',1.7),pointsXY(qc,vd,X,Y,'var(--red)',2.5),pathXY(qc,vl,X,Y,'var(--blue)',1.5),pointsXY(qc,vl,X,Y,'var(--blue)',2.5)];if(c2.length)parts.push(pathXY(qc,c2,X,Y,'var(--green)',1.8,'6,4'),pointsXY(qc,c2,X,Y,'var(--green)',2.3));if(Number.isFinite(s.qinit))parts.push(`<line x1="${X(s.qinit)}" x2="${X(s.qinit)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--yellow)" stroke-width="1.3" stroke-dasharray="4,4"/><circle cx="${X(s.qinit)}" cy="${Y(s.VDark)}" r="4" fill="var(--yellow)"><title>Initial projection ${sci(s.qinit,4)}</title></circle>`);if(Number.isFinite(s.qfb))parts.push(`<line x1="${X(s.qfb)}" x2="${X(s.qfb)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--green)" stroke-width="1.3" stroke-dasharray="4,4"><title>Flatband ${sci(s.qfb,4)}</title></line>`);parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Vcpd (V)</text>`);svg.innerHTML=parts.join('');PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vcpd=n;drawVcpd()},onReset:()=>{zoom.vcpd={x:null,y:null};drawVcpd()}});host.querySelector('#ditVcpdLegend').innerHTML='<span><i style="background:var(--red)"></i>Dark</span><span><i style="background:var(--blue)"></i>Measured light</span>'+(c2.length?'<span><i style="background:var(--green)"></i>COCOS-II synthetic light</span>':'')+'<span class="yellow">│ initial</span><span class="green">│ flatband</span>';host.querySelector('#ditVcpdMeta').textContent=`${analysis.mode} · Qtot ${sci(s.Qtot,2)}`}
-    function drawVsb(){const s=analysis.sites[site],r=s.rows,svg=host.querySelector('#d3');if(!r.length){svg.innerHTML='';return}const signed=analysis.options.effectiveCocosMode==='pv2000-re',qc=r.map(x=>x.Qc),raw=r.map(x=>x.Vsb),v=s.analysisVsb,all=finite(signed?v:[...raw,...v]);if(!all.length){svg.innerHTML='<text x="310" y="142" text-anchor="middle" fill="var(--muted)" font-size="11">No valid Vsb for current analysis settings</text>';host.querySelector('#ditVsbLegend').innerHTML='';host.querySelector('#ditVsbMeta').textContent=analysis.error||'invalid analysis';return}const W=620,H=285,m={l:52,r:12,t:22,b:36},lo=signed?Math.min(...all):0,hi=Math.max(...all),pad=(hi-lo||1)*.05,autoX=[Math.min(...qc),Math.max(...qc)],autoY=[signed?lo-pad:0,hi+pad],xr=PV.plot.resolve(autoX,zoom.vsb.x),yr=PV.plot.resolve(autoY,zoom.vsb.y),{X,Y,out:base}=svgAxes(W,H,m,xr[0],xr[1],yr[0],yr[1],{xFmt:x=>x.toExponential(1),yFmt:y=>y.toFixed(2)}),parts=[base,pathXY(qc,v,X,Y,'var(--blue)',2.1),pointsXY(qc,v,X,Y,'var(--blue)',2.2)];if(analysis.options.effectiveCocosMode!=='standard')parts.push(pathXY(qc,raw,X,Y,'var(--soft)',1.3,'5,4'));if(Number.isFinite(s.qfb))parts.push(`<line x1="${X(s.qfb)}" x2="${X(s.qfb)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--green)" stroke-width="1.3" stroke-dasharray="4,4"/>`);parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">${signed?'Vsb':'|Vsb|'} (V)</text>`);svg.innerHTML=parts.join('');PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vsb=n;drawVsb()},onReset:()=>{zoom.vsb={x:null,y:null};drawVsb()}});host.querySelector('#ditVsbLegend').innerHTML='<span><i style="background:var(--blue)"></i>'+(signed?'PV2000 RE signed Vsb':'Vsb')+'</span>'+(analysis.options.effectiveCocosMode!=='standard'?'<span><i style="background:var(--soft)"></i>raw standard</span>':'')+'<span class="green">│ flatband</span>';host.querySelector('#ditVsbMeta').textContent=`max |Vsb| ${fmt(s.MaxVsb,3)} V`}
-    function drawDit(){const s=analysis.sites[site],svg=host.querySelector('#d2'),signed=analysis.options.effectiveCocosMode==='pv2000-re',raw=s.ditRaw.map((y,i)=>({x:s.analysisVsb[i],y,accepted:s.ditAccepted?.[i]!==false})).filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.y)&&r.y>0),cur=s.ditCurve||[],xs=finite([...raw.map(x=>x.x),...cur.map(x=>x.x)]),ys=finite([...raw.map(x=>x.y),...cur.map(x=>x.y)]).filter(x=>x>0);if(!xs.length||!ys.length){svg.innerHTML='';return}const W=620,H=285,m={l:62,r:12,t:22,b:36},autoY=[10**Math.floor(Math.log10(Math.min(...ys))),10**Math.ceil(Math.log10(Math.max(...ys)))],xmin=Math.min(0,...xs),xmax=Math.max(...xs),autoX=[xmin,xmax+(xmax-xmin||1)*.02],xr=PV.plot.resolve(autoX,zoom.dit.x),yr=PV.plot.resolve(autoY,zoom.dit.y),{X,Y,out:base}=svgAxes(W,H,m,xr[0],xr[1],yr[0],yr[1],{xFmt:x=>x.toFixed(2),yFmt:y=>'1e'+Math.round(Math.log10(y)),logY:true}),parts=[base];raw.forEach(p=>{if(p.x<xr[0]||p.x>xr[1]||p.y<yr[0]||p.y>yr[1])return;parts.push(`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="2.1" fill="${p.accepted?'var(--blue)':'var(--soft)'}" opacity="${p.accepted?'.78':'.38'}"><title>Vsb ${fmt(p.x,4)} V · Dit ${sci(p.y,4)}${p.accepted?'':' · outside COCOS-II window'}</title></circle>`)});if(cur.length)parts.push(`<polyline points="${cur.filter(p=>p.y>0&&p.x>=xr[0]&&p.x<=xr[1]&&p.y>=yr[0]&&p.y<=yr[1]).map(p=>`${X(p.x)},${Y(p.y)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2.4"/>`);if(Number.isFinite(s.midgapV)&&!signed)parts.push(`<line x1="${X(s.midgapV)}" x2="${X(s.midgapV)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--yellow)" stroke-width="1.3" stroke-dasharray="4,4"/>`);parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">${signed?'Vsb':'|Vsb|'} (V)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Dit (cm⁻² eV⁻¹)</text>`);svg.innerHTML=parts.join('');PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},yLog:true,onChange:n=>{zoom.dit=n;drawDit()},onReset:()=>{zoom.dit={x:null,y:null};drawDit()}});const fitLabel=analysis.options.pchipMethod==='median'?'Median-PCHIP '+fmt(analysis.options.pchipMedianWindowV*1e3,1)+' mV':'PCHIP (original)',scaleLabel=analysis.options.pchipScale==='log10'?'LOG10':'Linear';host.querySelector('#ditDitLegend').innerHTML='<span><i style="background:var(--blue)"></i>accepted variation points</span>'+(signed?'<span><i style="background:var(--soft)"></i>outside Min/Max Vsb</span>':'')+(analysis.options.pchipEnabled?'<span><i style="background:var(--green)"></i>'+fitLabel+'</span>':'')+(signed||!analysis.options.pchipEnabled?'':'<span class="yellow">│ midgap</span>');host.querySelector('#ditDitMeta').textContent=analysis.options.pchipEnabled?analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · '+fitLabel+' '+scaleLabel+' midgap '+sci(s.MidgapDit,2):analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · PCHIP off'}
-    function drawMap(){const svg=host.querySelector('#d4'),[label,unit,log]=mapSpec(mapKey),vals=analysis.sites.map(x=>metric(x,mapKey)),vv=vals.filter(Number.isFinite).map(v=>log&&v>0?Math.log10(v):v),lo=vv.length?Math.min(...vv):0,hi=vv.length?Math.max(...vv):1,W=620,H=315,m={l:50,r:24,t:28,b:42},coords=analysis.sites.map(x=>x.coord||{x:0,y:0}),maxRad=Math.max(1,...coords.map(p=>Math.hypot(p.x||0,p.y||0))),rawX=[-maxRad*1.15,maxRad*1.15],rawY=[-maxRad*1.15,maxRad*1.15],aspect=PV.plot.equalAspectRanges(rawX,rawY,W-m.l-m.r,H-m.t-m.b),autoX=aspect.x,autoY=aspect.y,xr=PV.plot.resolve(autoX,zoom.map.x),yr=PV.plot.resolve(autoY,zoom.map.y),X=x=>m.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-m.l-m.r),Y=y=>H-m.b-(y-yr[0])/(yr[1]-yr[0]||1)*(H-m.t-m.b);let out=`<rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;for(let i=0;i<=4;i++){const x=xr[0]+(xr[1]-xr[0])*i/4,px=X(x),y=yr[0]+(yr[1]-yr[0])*i/4,py=Y(y);out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-18}" text-anchor="middle" fill="var(--muted)" font-size="9">${fmt(x,1)}</text><line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${fmt(y,1)}</text>`};out+=`<ellipse cx="${X(0)}" cy="${Y(0)}" rx="${Math.abs(X(maxRad)-X(0))}" ry="${Math.abs(Y(maxRad)-Y(0))}" fill="var(--panel2)" stroke="var(--soft)" stroke-width="2"/><text x="${(m.l+W-m.r)/2}" y="14" text-anchor="middle" fill="var(--muted)" font-size="10">${esc(label)} [${esc(unit)}]</text><text x="${(m.l+W-m.r)/2}" y="${H-3}" text-anchor="middle" fill="var(--muted)" font-size="9">X [mm]</text><text x="11" y="${(m.t+H-m.b)/2}" transform="rotate(-90 11 ${(m.t+H-m.b)/2})" text-anchor="middle" fill="var(--muted)" font-size="9">Y [mm]</text>`;analysis.sites.forEach((s,i)=>{const p=coords[i],v=vals[i],z=Number.isFinite(v)?(log&&v>0?Math.log10(v):v):NaN,t=Number.isFinite(z)&&hi>lo?(z-lo)/(hi-lo):.5,col=Number.isFinite(z)?mapColor(t):'#666',x=X(p.x||0),y=Y(p.y||0),txt=mapValue(v,mapKey);if(x<m.l||x>W-m.r||y<m.t||y>H-m.b)return;out+=`<g data-site="${i}" class="map-site"><title>Site ${i+1}: ${txt} ${unit}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title><circle cx="${x}" cy="${y}" r="12" fill="${col}" stroke="${i===site?'var(--text)':s.valid?'var(--border)':'var(--bad)'}" stroke-width="${i===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">${i+1}</text></g>`});svg.innerHTML=out;svg.querySelectorAll('[data-site]').forEach(g=>g.onclick=()=>{site=+g.dataset.site;renderShell()});PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.map=n;drawMap()},onReset:()=>{zoom.map={x:null,y:null};drawMap()}})}
+    function drawVcpd(){
+      const s=analysis.sites[site],
+      r=s.rows,
+      svg=host.querySelector('#d1');
+      if(!r.length){svg.innerHTML='';
+        return}const qc=r.map(x=>x.Qc),
+      vd=r.map(x=>x.VDark),
+      vl=r.map(x=>x.VLight),
+      c2=s.c2?.valid?s.c2.light:[],
+      ys=finite([...vd,...vl,...c2,s.VDark]),
+      W=620,
+      H=285,
+      m={l:58,r:12,t:22,b:36},
+      autoX=[Math.min(...qc),Math.max(...qc)],
+      y0=Math.min(...ys),
+      y1=Math.max(...ys),
+      pad=(y1-y0||1)*.05,
+      autoY=[y0-pad,y1+pad],
+      xr=PV.plot.resolve(autoX,zoom.vcpd.x),
+      yr=PV.plot.resolve(autoY,zoom.vcpd.y),
+      {X,Y,out:base}=svgAxes(W,H,m,xr[0],xr[1],yr[0],yr[1]),
+      parts=[base,pathXY(qc,vd,X,Y,'var(--red)',1.7),pointsXY(qc,vd,X,Y,'var(--red)',2.5),pathXY(qc,vl,X,Y,'var(--blue)',1.5),pointsXY(qc,vl,X,Y,'var(--blue)',2.5)];
+      if(c2.length)parts.push(pathXY(qc,c2,X,Y,'var(--green)',1.8,'6,4'),pointsXY(qc,c2,X,Y,'var(--green)',2.3));
+      if(Number.isFinite(s.qinit))parts.push(`<line x1="${X(s.qinit)}" x2="${X(s.qinit)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--yellow)" stroke-width="1.3" stroke-dasharray="4,4"/><circle cx="${X(s.qinit)}" cy="${Y(s.VDark)}" r="4" fill="var(--yellow)"><title>Initial projection ${sci(s.qinit,4)}</title></circle>`);
+      if(Number.isFinite(s.qfb))parts.push(`<line x1="${X(s.qfb)}" x2="${X(s.qfb)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--green)" stroke-width="1.3" stroke-dasharray="4,4"><title>Flatband ${sci(s.qfb,4)}</title></line>`);
+      parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Vcpd (V)</text>`);
+      svg.innerHTML=parts.join('');
+      PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vcpd=n;drawVcpd()},onReset:()=>{zoom.vcpd={x:null,y:null};drawVcpd()}});
+      host.querySelector('#ditVcpdLegend').innerHTML='<span><i style="background:var(--red)"></i>Dark</span><span><i style="background:var(--blue)"></i>Measured light</span>'+(c2.length?'<span><i style="background:var(--green)"></i>COCOS-II synthetic light</span>':'')+'<span class="yellow">│ initial</span><span class="green">│ flatband</span>';
+      host.querySelector('#ditVcpdMeta').textContent=`${analysis.mode} · Qtot ${sci(s.Qtot,2)}`}
+    function drawVsb(){
+      const s=analysis.sites[site],
+      r=s.rows,
+      svg=host.querySelector('#d3');
+      if(!r.length){svg.innerHTML='';
+        return}const signed=analysis.options.effectiveCocosMode==='pv2000-re',
+      qc=r.map(x=>x.Qc),
+      raw=r.map(x=>x.Vsb),
+      v=s.analysisVsb,
+      all=finite(signed?v:[...raw,...v]);
+      if(!all.length){svg.innerHTML='<text x="310" y="142" text-anchor="middle" fill="var(--muted)" font-size="11">No valid Vsb for current analysis settings</text>';
+        host.querySelector('#ditVsbLegend').innerHTML='';
+        host.querySelector('#ditVsbMeta').textContent=analysis.error||'invalid analysis';
+        return}const W=620,
+      H=285,
+      m={l:52,r:12,t:22,b:36},
+      lo=signed?Math.min(...all):0,
+      hi=Math.max(...all),
+      pad=(hi-lo||1)*.05,
+      autoX=[Math.min(...qc),Math.max(...qc)],
+      autoY=[signed?lo-pad:0,hi+pad],
+      xr=PV.plot.resolve(autoX,zoom.vsb.x),
+      yr=PV.plot.resolve(autoY,zoom.vsb.y),
+      {X,Y,out:base}=svgAxes(W,H,m,xr[0],xr[1],yr[0],yr[1],{xFmt:x=>x.toExponential(1),yFmt:y=>y.toFixed(2)}),
+      parts=[base,pathXY(qc,v,X,Y,'var(--blue)',2.1),pointsXY(qc,v,X,Y,'var(--blue)',2.2)];
+      if(analysis.options.effectiveCocosMode!=='standard')parts.push(pathXY(qc,raw,X,Y,'var(--soft)',1.3,'5,4'));
+      if(Number.isFinite(s.qfb))parts.push(`<line x1="${X(s.qfb)}" x2="${X(s.qfb)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--green)" stroke-width="1.3" stroke-dasharray="4,4"/>`);
+      parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">Qc (q/cm²)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">${signed?'Vsb':'|Vsb|'} (V)</text>`);
+      svg.innerHTML=parts.join('');
+      PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vsb=n;drawVsb()},onReset:()=>{zoom.vsb={x:null,y:null};drawVsb()}});
+      host.querySelector('#ditVsbLegend').innerHTML='<span><i style="background:var(--blue)"></i>'+(signed?'PV2000 RE signed Vsb':'Vsb')+'</span>'+(analysis.options.effectiveCocosMode!=='standard'?'<span><i style="background:var(--soft)"></i>raw standard</span>':'')+'<span class="green">│ flatband</span>';
+      host.querySelector('#ditVsbMeta').textContent=`max |Vsb| ${fmt(s.MaxVsb,3)} V`}
+    function drawDit(){
+      const s=analysis.sites[site],
+      svg=host.querySelector('#d2'),
+      signed=analysis.options.effectiveCocosMode==='pv2000-re',
+      raw=s.ditRaw.map((y,i)=>({x:s.analysisVsb[i],y,accepted:s.ditAccepted?.[i]!==false})).filter(r=>Number.isFinite(r.x)&&Number.isFinite(r.y)&&r.y>0),
+      cur=s.ditCurve||[],
+      xs=finite([...raw.map(x=>x.x),...cur.map(x=>x.x)]),
+      ys=finite([...raw.map(x=>x.y),...cur.map(x=>x.y)]).filter(x=>x>0);
+      if(!xs.length||!ys.length){svg.innerHTML='';
+        return}const W=620,
+      H=285,
+      m={l:62,r:12,t:22,b:36},
+      autoY=[10**Math.floor(Math.log10(Math.min(...ys))),10**Math.ceil(Math.log10(Math.max(...ys)))],
+      xmin=Math.min(0,...xs),
+      xmax=Math.max(...xs),
+      autoX=[xmin,xmax+(xmax-xmin||1)*.02],
+      xr=PV.plot.resolve(autoX,zoom.dit.x),
+      yr=PV.plot.resolve(autoY,zoom.dit.y),
+      {X,Y,out:base}=svgAxes(W,H,m,xr[0],xr[1],yr[0],yr[1],{xFmt:x=>x.toFixed(2),yFmt:y=>'1e'+Math.round(Math.log10(y)),logY:true}),
+      parts=[base];
+      raw.forEach(p=>{
+        if(p.x<xr[0]||p.x>xr[1]||p.y<yr[0]||p.y>yr[1])return;parts.push(`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="2.1" fill="${p.accepted?'var(--blue)':'var(--soft)'}" opacity="${p.accepted?'.78':'.38'}"><title>Vsb ${fmt(p.x,4)} V · Dit ${sci(p.y,4)}${p.accepted?'':' · outside COCOS-II window'}</title></circle>`)});
+      if(cur.length)parts.push(`<polyline points="${cur.filter(p=>p.y>0&&p.x>=xr[0]&&p.x<=xr[1]&&p.y>=yr[0]&&p.y<=yr[1]).map(p=>`${X(p.x)},${Y(p.y)}`).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2.4"/>`);
+      if(Number.isFinite(s.midgapV)&&!signed)parts.push(`<line x1="${X(s.midgapV)}" x2="${X(s.midgapV)}" y1="${m.t}" y2="${H-m.b}" stroke="var(--yellow)" stroke-width="1.3" stroke-dasharray="4,4"/>`);
+      parts.push(`<text x="${W/2}" y="${H-2}" text-anchor="middle" fill="var(--text)" font-size="9">${signed?'Vsb':'|Vsb|'} (V)</text><text x="11" y="${H/2}" transform="rotate(-90 11 ${H/2})" text-anchor="middle" fill="var(--text)" font-size="9">Dit (cm⁻² eV⁻¹)</text>`);
+      svg.innerHTML=parts.join('');
+      PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},yLog:true,onChange:n=>{zoom.dit=n;drawDit()},onReset:()=>{zoom.dit={x:null,y:null};drawDit()}});
+      const fitLabel=analysis.options.pchipMethod==='median'?'Median-PCHIP '+fmt(analysis.options.pchipMedianWindowV*1e3,1)+' mV':'PCHIP (original)',
+      scaleLabel=analysis.options.pchipScale==='log10'?'LOG10':'Linear';
+      host.querySelector('#ditDitLegend').innerHTML='<span><i style="background:var(--blue)"></i>accepted variation points</span>'+(signed?'<span><i style="background:var(--soft)"></i>outside Min/Max Vsb</span>':'')+(analysis.options.pchipEnabled?'<span><i style="background:var(--green)"></i>'+fitLabel+'</span>':'')+(signed||!analysis.options.pchipEnabled?'':'<span class="yellow">│ midgap</span>');
+      host.querySelector('#ditDitMeta').textContent=analysis.options.pchipEnabled?analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · '+fitLabel+' '+scaleLabel+' midgap '+sci(s.MidgapDit,2):analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · PCHIP off'}
+    function drawMap(){
+      const svg=host.querySelector('#d4'),
+      [label,unit,log]=mapSpec(mapKey),
+      vals=analysis.sites.map(x=>metric(x,mapKey)),
+      vv=vals.filter(Number.isFinite).map(v=>log&&v>0?Math.log10(v):v),
+      lo=vv.length?Math.min(...vv):0,
+      hi=vv.length?Math.max(...vv):1,
+      W=620,
+      H=315,
+      m={l:50,r:24,t:28,b:42},
+      coords=analysis.sites.map(x=>x.coord||{x:0,y:0}),
+      maxRad=Math.max(1,...coords.map(p=>Math.hypot(p.x||0,p.y||0))),
+      rawX=[-maxRad*1.15,maxRad*1.15],
+      rawY=[-maxRad*1.15,maxRad*1.15],
+      aspect=PV.plot.equalAspectRanges(rawX,rawY,W-m.l-m.r,H-m.t-m.b),
+      autoX=aspect.x,
+      autoY=aspect.y,
+      xr=PV.plot.resolve(autoX,zoom.map.x),
+      yr=PV.plot.resolve(autoY,zoom.map.y),
+      X=x=>m.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-m.l-m.r),
+      Y=y=>H-m.b-(y-yr[0])/(yr[1]-yr[0]||1)*(H-m.t-m.b);
+      let out=`<rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;
+      for(let i=0;i<=4;i++){
+        const x=xr[0]+(xr[1]-xr[0])*i/4,
+        px=X(x),
+        y=yr[0]+(yr[1]-yr[0])*i/4,
+        py=Y(y);
+        out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-18}" text-anchor="middle" fill="var(--muted)" font-size="9">${fmt(x,1)}</text><line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${fmt(y,1)}</text>`};
+      out+=`<ellipse cx="${X(0)}" cy="${Y(0)}" rx="${Math.abs(X(maxRad)-X(0))}" ry="${Math.abs(Y(maxRad)-Y(0))}" fill="var(--panel2)" stroke="var(--soft)" stroke-width="2"/><text x="${(m.l+W-m.r)/2}" y="14" text-anchor="middle" fill="var(--muted)" font-size="10">${esc(label)} [${esc(unit)}]</text><text x="${(m.l+W-m.r)/2}" y="${H-3}" text-anchor="middle" fill="var(--muted)" font-size="9">X [mm]</text><text x="11" y="${(m.t+H-m.b)/2}" transform="rotate(-90 11 ${(m.t+H-m.b)/2})" text-anchor="middle" fill="var(--muted)" font-size="9">Y [mm]</text>`;
+      analysis.sites.forEach((s,i)=>{
+        const p=coords[i],
+        v=vals[i],
+        z=Number.isFinite(v)?(log&&v>0?Math.log10(v):v):NaN,
+        t=Number.isFinite(z)&&hi>lo?(z-lo)/(hi-lo):.5,
+        col=Number.isFinite(z)?mapColor(t):'#666',
+        x=X(p.x||0),
+        y=Y(p.y||0),
+        txt=mapValue(v,mapKey);if(x<m.l||x>W-m.r||y<m.t||y>H-m.b)return;out+=`<g data-site="${i}" class="map-site"><title>Site ${i+1}: ${txt} ${unit}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title><circle cx="${x}" cy="${y}" r="12" fill="${col}" stroke="${i===site?'var(--text)':s.valid?'var(--border)':'var(--bad)'}" stroke-width="${i===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">${i+1}</text></g>`});
+      svg.innerHTML=out;
+      svg.querySelectorAll('[data-site]').forEach(g=>g.onclick=()=>{site=+g.dataset.site;renderShell()});
+      PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.map=n;drawMap()},onReset:()=>{zoom.map={x:null,y:null};drawMap()}})}
     function drawAll(){drawVcpd();drawVsb();drawDit();drawMap()}
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)drawAll()});renderShell();
   }
