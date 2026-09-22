@@ -131,6 +131,17 @@
     }else if(d.targetType==='SquareCell')ctx.strokeRect(Xp(-hw),Yp(hh),Xp(hw)-Xp(-hw),Yp(-hh)-Yp(hh));
     ctx.setLineDash([]);
   }
+  function clipScheduledTarget(ctx,d,Xp,Yp){
+    const hw=d.mapHalfWidth,hh=d.mapHalfHeight,r=d.mapRadius;
+    if(d.targetType==='PseudoSquareCell'){
+      ctx.beginPath();
+      ctx.rect(Xp(-hw),Yp(hh),Xp(hw)-Xp(-hw),Yp(-hh)-Yp(hh));
+      ctx.clip();
+      ctx.beginPath();
+      ctx.ellipse(Xp(0),Yp(0),Math.abs(Xp(r)-Xp(0)),Math.abs(Yp(r)-Yp(0)),0,0,2*Math.PI);
+      ctx.clip();
+    }
+  }
   function drawMap(canvas,d,a,key,mask,zoom,onZoom,pointsMode=false){
     const ctx=canvas.getContext('2d'),m=a.metrics[key],vals=m.values,W=canvas.width=760,H=canvas.height=440,p={l:56,r:82,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b;
     const nominalHalf=Math.max(d.targetWidth/2||0,d.targetHeight/2||0,d.diameter/2||0,1)*1.06;
@@ -140,7 +151,7 @@
     for(const t of ticks(xr[0],xr[1])){const x=Xp(t);ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,H-p.b);ctx.stroke()}
     for(const t of ticks(yr[0],yr[1])){const y=Yp(t);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke()}
     const good=vals.filter((v,i)=>mask[i]&&Number.isFinite(v)),lo=good.length?Math.min(...good):0,hi=good.length?Math.max(...good):1;
-    ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,plotW,plotH);ctx.clip();
+    ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,plotW,plotH);ctx.clip();clipScheduledTarget(ctx,d,Xp,Yp);
     const sx=Math.max(1.2,Math.abs(Xp((d.pitchX||1)/2)-Xp(-(d.pitchX||1)/2))),sy=Math.max(1.2,Math.abs(Yp((d.pitchY||1)/2)-Yp(-(d.pitchY||1)/2)));
     for(let i=0;i<d.coords.length;i++){
       const pt=d.coords[i],v=vals[i];if(!pt||!Number.isFinite(v)||!mask[i])continue;
