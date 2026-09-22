@@ -24,14 +24,17 @@
     const lo=range[0],hi=range[1],a=lo+(hi-lo)*fraction;
     return[a-(a-lo)*factor,a+(hi-a)*factor];
   }
-  function axisControls(id,{label='Axes',distribution=false,swapped=false,bins=30}={}){
-    const n=Math.max(5,Math.min(200,Math.round(Number(bins)||30))),
-      extra=distribution
-        ?`<div class="axis-extra-row"><button type="button" data-axis-swap aria-pressed="${!!swapped}" title="Swap the Distribution count and quantity axes.">Swap axes</button><label class="axis-bin-control" title="Histogram bin count. More bins make narrower bars; fewer bins make wider bars.">Bins<input type="number" min="5" max="200" step="1" value="${n}" data-axis-bins></label></div>`
-        :'';
+  function axisControls(id,{label='Axes',distribution=false,swapped=false}={}){
+    const extra=distribution
+      ?`<div class="axis-extra-row"><button type="button" data-axis-swap aria-pressed="${!!swapped}" title="Swap the Distribution count and quantity axes.">Swap axes</button></div>`
+      :'';
     return `<details class="axis-popover" data-axis-controls="${id}"><summary title="Set manual numeric X/Y limits.">${label}</summary><div class="axis-popover-card"><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label></div>${extra}<div class="axis-limit-actions"><button type="button" data-axis-auto>Auto</button><button type="button" data-axis-apply>Apply</button></div></div></details>`;
   }
-  function bindAxisControls(root,id,state,onChange,{xLog=false,yLog=false,swapped=false,bins=30,onSwap=null,onBins=null}={}){
+  function binControls(id,bins=30){
+    const n=Math.max(5,Math.min(200,Math.round(Number(bins)||30)));
+    return `<details class="axis-popover bin-popover" data-bin-controls="${id}"><summary title="Set histogram bin count.">Bins</summary><div class="axis-popover-card bin-popover-card"><label class="axis-bin-control" title="More bins make narrower bars; fewer bins make wider bars.">Bin count<input type="number" min="5" max="200" step="1" value="${n}" data-bin-count></label></div></details>`;
+  }
+  function bindAxisControls(root,id,state,onChange,{xLog=false,yLog=false,swapped=false,onSwap=null}={}){
     const box=root?.querySelector(`[data-axis-controls="${id}"]`);if(!box)return;
     const input=k=>box.querySelector(`[data-axis="${k}"]`),
       set=(axis,loKey,hiKey)=>{const r=finiteRange(state?.[axis])?state[axis]:null;
@@ -64,22 +67,25 @@
       swap.setAttribute('aria-pressed',String(!!swapped));
       swap.onclick=()=>onSwap?.();
     }
-    const binInput=box.querySelector('[data-axis-bins]');
-    if(binInput){
-      binInput.value=String(Math.max(5,Math.min(200,Math.round(Number(bins)||30))));
-      const setBins=()=>{
-        const n=Math.round(Number(binInput.value));
-        if(!Number.isFinite(n)||n<5||n>200){
-          alert('Bins: enter an integer from 5 to 200.');
-          binInput.value=String(Math.max(5,Math.min(200,Math.round(Number(bins)||30))));
-          return;
-        }
-        onBins?.(n);
-      };
-      binInput.onchange=setBins;
-      binInput.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();setBins()}};
-    }
     box.querySelectorAll('[data-axis="xmin"],[data-axis="xmax"],[data-axis="ymin"],[data-axis="ymax"]').forEach(el=>el.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply()}});
+  }
+  function bindBinControls(root,id,bins,onChange){
+    const box=root?.querySelector(`[data-bin-controls="${id}"]`);if(!box)return;
+    const input=box.querySelector('[data-bin-count]');
+    if(!input)return;
+    input.value=String(Math.max(5,Math.min(200,Math.round(Number(bins)||30))));
+    const apply=()=>{
+      const n=Math.round(Number(input.value));
+      if(!Number.isFinite(n)||n<5||n>200){
+        alert('Bins: enter an integer from 5 to 200.');
+        input.value=String(Math.max(5,Math.min(200,Math.round(Number(bins)||30))));
+        return;
+      }
+      box.open=false;
+      onChange?.(n);
+    };
+    input.onchange=apply;
+    input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply()}};
   }
   function point(el,W,H,e){const r=el.getBoundingClientRect();return{x:(e.clientX-r.left)*W/(r.width||1),y:(e.clientY-r.top)*H/(r.height||1)}}
   function bind(el,{W,H,plotRect,ranges,xLog=false,yLog=false,yDown=false,onChange,onReset}){
@@ -105,5 +111,5 @@
     el.onpointerleave=()=>{el.style.cursor='default'};
   }
   function clear(state){state.x=null;state.y=null;return state}
-  PV.plot={resolve,equalAspectRanges,zoomRange,axisControls,bindAxisControls,bind,clear};
+  PV.plot={resolve,equalAspectRanges,zoomRange,axisControls,binControls,bindAxisControls,bindBinControls,bind,clear};
 })(typeof window!=='undefined'?window:globalThis);
