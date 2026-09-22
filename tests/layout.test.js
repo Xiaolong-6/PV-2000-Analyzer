@@ -4,7 +4,7 @@ test('desktop/multicolumn sidebar has its own viewport scroll container',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/\.module-grid>\.side\{[^}]*position:sticky[^}]*height:calc\(100dvh - 66px\)[^}]*overflow-y:scroll/);
   assert.match(css,/\.module-grid>\.side>\*\{flex:0 0 auto\}/);
-  assert.doesNotMatch(css,/@media\(max-width:900px\)\{\.module-grid>\.side\{position:static/);
+  assert.doesNotMatch(css,/@media\(max-width:1200px\)\{\.module-grid>\.side\{position:static/);
   assert.match(css,/@media\(max-width:700px\),\(pointer:coarse\) and \(orientation:portrait\) and \(max-width:950px\)\{\.module-grid>\.side\{position:static/);
 });
 
@@ -43,9 +43,9 @@ test('landing page advertises supported analyzers without overclaiming generic i
 });
 
 
-test('zoom-width layout keeps a dedicated sidebar column instead of a stretched two-column sidebar grid',()=>{
+test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/@media\(max-width:900px\)\{\.module-grid\{grid-template-columns:minmax\(260px,300px\) minmax\(0,1fr\)\}\.module-grid>\.side\{grid-column:1;grid-row:1 \/ span 2;display:flex\}\.module-grid>\.plots\{grid-column:2\}/);
+  assert.match(css,/@media\(max-width:1200px\)\{\.module-grid\{grid-template-columns:minmax\(260px,300px\) minmax\(0,1fr\)\}\.module-grid>\.side\{grid-column:1;grid-row:1 \/ span 2;display:flex\}\.module-grid>\.plots\{grid-column:2\}/);
   assert.doesNotMatch(css,/\.side\{grid-column:1\/-1;display:grid;grid-template-columns:1fr 1fr\}/);
 });
 
