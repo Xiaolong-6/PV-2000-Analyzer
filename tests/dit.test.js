@@ -38,6 +38,42 @@ test('Qsc uses the same legacy MATLAB ni as the midgap target', () => {
   assert.ok(Math.abs(actual / roundedLegacyExpected - 1) > 1e-4);
 });
 
+test('Ge Qsc restores the legacy MATLAB ni and permittivity constants', () => {
+  const q = 1.60218e-19, k = 1.38e-23, T = 300, eps0 = 8.85e-12;
+  const vsb = 0.3, dopingCm3 = 1.5e15, ni = 2e13 * 1e6, Nd = dopingCm3 * 1e6;
+  const p0 = ni * ni / Nd, n0 = Nd, beta = q / (k * T);
+  const term = (Math.exp(-beta * vsb) + beta * vsb - 1)
+    + (p0 / n0) * (Math.exp(beta * vsb) - beta * vsb - 1);
+  const expected = -Math.sqrt(2 * k * T * eps0 * 16.2 * n0) * Math.sqrt(Math.max(0, term)) * 1e-4 / q;
+  const actual = PV2000.modules.dit.qsc(vsb, dopingCm3, 'n', 'Ge');
+  assert.ok(Math.abs(actual / expected - 1) < 1e-12);
+});
+
+test('material selection moves theoretical midgap target and defaults to Si', () => {
+  const data = { sites: [], doping: 1.5e15, dopingType: 'n', useCocosII: false };
+  const si = PV2000.modules.dit.analyze(data);
+  const ge = PV2000.modules.dit.analyze(data, { material: 'Ge' });
+  const k = 1.38e-23, T = 300, q = 1.60218e-19;
+  const expectedSi = Math.abs(k * T / q * Math.log(data.doping / 9.65e9));
+  const expectedGe = Math.abs(k * T / q * Math.log(data.doping / 2e13));
+  assert.equal(si.options.material, 'Si');
+  assert.equal(ge.options.material, 'Ge');
+  assert.ok(Math.abs(PV2000.modules.dit.midgapTargetV({ ...data, material: 'Si' }) - expectedSi) < 1e-12);
+  assert.ok(Math.abs(PV2000.modules.dit.midgapTargetV({ ...data, material: 'Ge' }) - expectedGe) < 1e-12);
+  assert.ok(expectedSi - expectedGe > 0.15);
+});
+
+test('variation-method Dit changes with semiconductor material', () => {
+  const site = { rows: [0.05,0.12,0.20,0.30,0.42].map((vsb,i)=>({
+    Qc:i*3e11, VDark:i*0.02, VLight:i*0.01, Vsb
+  })) };
+  const base = { doping: 1.5e15, dopingType: 'n' };
+  const si = PV2000.modules.dit.variation(site, { ...base, material: 'Si' });
+  const ge = PV2000.modules.dit.variation(site, { ...base, material: 'Ge' });
+  assert.equal(si.raw.length, ge.raw.length);
+  assert.ok(si.raw.some((v,i)=>Number.isFinite(v)&&Number.isFinite(ge.raw[i])&&Math.abs(v/ge.raw[i]-1)>1e-3));
+});
+
 test('Linear PCHIP keeps the existing Dit-space midpoint', () => {
   const fit = PV2000.modules.dit.makeCurve(sample.x, sample.dit, sample.data, Infinity, 'linear');
   assert.ok(Math.abs(fit.mid / 5.05e11 - 1) < 1e-12);

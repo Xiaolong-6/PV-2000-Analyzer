@@ -5,8 +5,16 @@
     q=1.60218e-19,
     k=1.38e-23,
     T=300;
-  // Legacy MATLAB midgap value, adopted as the unified Si intrinsic-carrier concentration for the Dit model.
-  const NI_SI_300K_CM3=9.65e9;
+  const MATERIALS=Object.freeze({
+    Si:Object.freeze({key:'Si',label:'Silicon',niCm3:9.65e9,epsR:11.68,status:'validated reference material'}),
+    Ge:Object.freeze({key:'Ge',label:'Germanium',niCm3:2e13,epsR:16.2,status:'legacy MATLAB; PV-2000 Ge export not yet validated'})
+  });
+  const materialKey=value=>value==='Ge'?'Ge':'Si';
+  const materialProfile=value=>MATERIALS[materialKey(value)];
+  const midgapTargetV=d=>{
+    const material=materialProfile(d?.material);
+    return Math.abs(k*T/q*Math.log(d.doping/material.niCm3));
+  };
   const finite=a=>(a||[]).filter(Number.isFinite),mean=S.mean;
   const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
@@ -55,10 +63,11 @@
         
   }
 
-  function qsc(vsb,doping,type){
-    const ni=NI_SI_300K_CM3*1e6,
+  function qsc(vsb,doping,type,material='Si'){
+    const profile=materialProfile(material),
+      ni=profile.niCm3*1e6,
       eps0=8.85e-12,
-      eps=11.68,
+      eps=profile.epsR,
       Nd=doping*1e6,
       p0=type==='p'?Nd:ni*ni/Nd,
       n0=type==='n'?Nd:ni*ni/Nd,
@@ -93,7 +102,7 @@
       end=d.dopingType==='n'?r.length:Math.min(n,r.length),
       mox=linSlope(qc.slice(start,end),v.slice(start,end)),
       eps0=8.8541878128e-14,
-      eps=11.68,
+      eps=materialProfile(d.material).epsR,
       Cs=Math.sqrt(eps*eps0*q*q*d.doping/(k*T)),
       mfb=mox+q/Cs,
       sl=[];
@@ -196,7 +205,7 @@
     const useLog=pchipScale==='log10';
     if(useLog){const positive=ux.map((v,i)=>[v,uy[i]]).filter(([,v])=>v>0);ux=positive.map(p=>p[0]);uy=positive.map(p=>Math.log10(p[1]))}
     if(pchipMethod==='median'){({ux,uy}=medianBinnedXY(ux,uy,medianWindowV))}
-    const target=Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3)),
+    const target=midgapTargetV(d),
       restore=v=>useLog?10**v:v,
       fitMinVsb=ux.length?ux[0]:NaN,
       fitMaxVsb=ux.length?ux[ux.length-1]:NaN,
@@ -210,7 +219,7 @@
     const r=site.rows,
       vs=vsbOverride&&vsbOverride.length===r.length?vsbOverride:r.map(x=>x.Vsb),
       qc=r.map(x=>x.Qc),
-      qs=vs.map(v=>qsc(v,d.doping,d.dopingType)),
+      qs=vs.map(v=>qsc(v,d.doping,d.dopingType,d.material)),
       raw=[];
       for(let i=0;i<r.length-1;i++){
       const dv=vs[i+1]-vs[i],
@@ -220,7 +229,7 @@
       measuredVsb=finite(vs),
       measuredMinVsb=measuredVsb.length?Math.min(...measuredVsb):NaN,
       measuredMaxVsb=measuredVsb.length?Math.max(...measuredVsb):NaN,
-      midgapV=Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3)),
+      midgapV=midgapTargetV(d),
       gate=window?windowedMin(x,raw,window.min,window.max):windowedMin(x,raw,-Infinity,Infinity),
       fitX=x.filter((_,i)=>gate.accepted[i]),
       fitY=raw.filter((_,i)=>gate.accepted[i]),
@@ -252,7 +261,9 @@
       pchipMedianWindowV=Number.isFinite(opts.pchipMedianWindowV)?opts.pchipMedianWindowV:.010,
       requested=['xml','standard','pv2000-re'].includes(opts.cocosMode)?opts.cocosMode:'xml',
       effective=requested==='xml'?(d.useCocosII?'pv2000-re':'standard'):requested,
-      recommendation=cocosRecommendation(d,accumN);
+      material=materialKey(opts.material??d.material),
+      model={...d,material},
+      recommendation=cocosRecommendation(model,accumN);
       
     const eotA=Number.isFinite(opts.cocosIIEOT_A)?opts.cocosIIEOT_A:(Number.isFinite(d.cocosIIEOT)&&d.cocosIIEOT>0?d.cocosIIEOT:recommendation.eotA),
       minVsb=Number.isFinite(opts.cocosIIMinVsb)?opts.cocosIIMinVsb:(Number.isFinite(d.cocosIIMinVsb)?d.cocosIIMinVsb:-0.1),
@@ -264,20 +275,20 @@
     if(pchipEnabled&&pchipMethod==='median'&&!(pchipMedianWindowV>0))errors.push('Median Vsb window must be greater than 0 mV.');
     if(pchipEnabled&&Number.isFinite(ditReject)&&!(ditReject>0))errors.push('PCHIP outlier limit must be greater than 0 when set.');
     const settingsError=errors.join(' ');
-    const sites=d.sites.map(s=>{
-      const f=flat(s,d,accumN),
-      c2=effective==='pv2000-re'?cocosIIReverse(s,d,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift}):{enabled:false,valid:false,source:'standard measured light'},
+    const sites=model.sites.map(s=>{
+      const f=flat(s,model,accumN),
+      c2=effective==='pv2000-re'?cocosIIReverse(s,model,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift}):{enabled:false,valid:false,source:'standard measured light'},
       requiresC2=effective==='pv2000-re',
       usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
       window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
-      v=variation(s,d,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
-      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,midgapStatus:v.midgapStatus,midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,midgapFitMinVsb:v.midgapFitMinVsb,midgapFitMaxVsb:v.midgapFitMaxVsb,Qsc:Math.abs(qsc(s.Vsb,d.doping,d.dopingType)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
+      v=variation(s,model,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
+      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,midgapStatus:v.midgapStatus,midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,midgapFitMinVsb:v.fitMinVsb,midgapFitMaxVsb:v.fitMaxVsb,Qsc:Math.abs(qsc(s.Vsb,model.doping,model.dopingType,material)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
       
     const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],
       stats={};
       keys.forEach(k=>stats[k]=S.summary(sites.filter(x=>x.valid).map(x=>x[k])));
       const mode=effective==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
-      return{sites,stats,recommendation,error:settingsError,options:{accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
+      return{sites,stats,recommendation,error:settingsError,options:{material,accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
       
   }
 
@@ -311,7 +322,8 @@
     const controlNum=(id,fallback)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return NaN;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const controlOptionalNum=(id,fallback=Infinity)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return Infinity;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const rebuild=()=>{analysisOpen=true;
-      const accumN=controlNum('#ditAccumN',analysis.options.accumN||5),
+      const material=host.querySelector('#ditMaterial')?.value||analysis.options.material||'Si',
+      accumN=controlNum('#ditAccumN',analysis.options.accumN||5),
       ditReject=controlOptionalNum('#ditReject',analysis.options.ditReject),
       pchipScale=host.querySelector('#ditPchipScale')?.value||analysis.options.pchipScale,
       pchipEnabled=host.querySelector('#ditUsePchip')?.checked!==false,
@@ -323,7 +335,7 @@
       cocosIIMinVsb=controlNum('#ditCocosMin',analysis.options.cocosIIMinVsb),
       cocosIIMaxVsb=controlNum('#ditCocosMax',analysis.options.cocosIIMaxVsb),
       backSurfaceShift=analysis.options.backSurfaceShift;
-      analysis=analyze(d,{accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode,cocosIIEOT_A,cocosIIMinVsb,cocosIIMaxVsb,backSurfaceShift});
+      analysis=analyze(d,{material,accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode,cocosIIEOT_A,cocosIIMinVsb,cocosIIMaxVsb,backSurfaceShift});
       zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
       if(site>=analysis.sites.length)site=0;
       renderShell()};
@@ -358,6 +370,7 @@
         xmlLine=o.cocosMode==='xml'?`<div class="analysis-resolved"><b>XML:</b> UseCocosII = ${d.useCocosII?'true':'false'} <span>→</span> <b>${resolved}</b></div>`:'',
         current=analysis.sites[site]||{},
         rec=analysis.recommendation||{},
+        material=MATERIALS[o.material]||MATERIALS.Si,
         field=(label,tip,control,cls='')=>`<label class="compact-field ${cls}"><span class="field-name">${label} ${help(tip)}</span>${control}</label>`;
         
       const diagnostics=isPv?`<div class="cocos-diagnostics"><span>Accepted intervals <b>${current.ditAcceptedCount??0}/${current.ditIntervalCount??0}</b></span><span>Minimum at Vsb <b>${fmt(current.ditMinVsb,3)} V</b></span></div>`:'';
@@ -365,7 +378,11 @@
       const recommendation=isPv?`<div class="cocos-recommendation"><span><b>Suggested from data:</b> EOT ${fmt(rec.eotA,1)} Å · window ${fmt(rec.minVsb,2)}…${fmt(rec.maxVsb,2)} V <small>${esc(rec.eotSource||'')}</small></span><button id="ditUseRecommendation" type="button">Use</button></div>`:'';
         
       return `<details id="ditAnalysisControls" class="panel" ${analysisOpen?'open':''}><summary>Analysis controls</summary>
-        <div class="setting-row compact-settings analysis-method-row">${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the inferred PV2000 COCOS-II implementation.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV2000 COCOS-II (inferred)</option></select>`)}</div>
+        <div class="setting-row compact-settings analysis-method-row">
+          ${field('Material','Semiconductor material used by Qsc, flatband semiconductor capacitance, variation/Minimum Dit and theoretical Midgap Dit. Si is the validated/default path. Ge restores the legacy MATLAB constants ni=2E13 cm⁻³ and εr=16.2 and remains unvalidated against a matching PV-2000 Ge export.',`<select id="ditMaterial"><option value="Si">Silicon (Si)</option><option value="Ge">Germanium (Ge)</option></select>`)}
+          ${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the inferred PV2000 COCOS-II implementation.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV2000 COCOS-II (inferred)</option></select>`)}
+        </div>
+        ${o.material==='Ge'?`<div class="analysis-resolved"><b>Ge model:</b> legacy MATLAB compatibility · ni = 2E13 cm⁻³ · εr = 16.2 · <b>not yet PV-2000 Ge validated</b></div>`:''}
         ${xmlLine}
         ${analysis.error?`<div class="analysis-error">${esc(analysis.error)} Invalid settings are not silently corrected or replaced.</div>`:''}
         ${isPv?`<div class="control-section-title">COCOS-II ${help('Inferred, not vendor-exact. Back Surface Shift exists in PV-2000 but its mathematical effect is not identified, so it is not applied.')}</div><div class="setting-row compact-settings">
@@ -391,7 +408,7 @@
         rows=[['Qtot','Qtot'],['Minimum Dit (PV2000-style)','Dit'],['Midgap Dit (PCHIP)','MidgapDit'],['EOT (SiO₂ eq.)','eot'],['Cox','Cox'],['Qsc','Qsc'],['Initial Qc','InitialQc'],['Max |Vsb|','MaxVsb']];
         
       host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
-        <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div></section>
+        <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML except the semiconductor Material selected in Analysis controls.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(analysis.options.material)} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div></section>
         ${analysisControls()}
         <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Valid-site mean uses only sites with a usable surface-barrier sweep. Current-site values correspond to the selected site above.')}</summary><div class="result-list">${rows.map(([n,k])=>{const v=metric(s,k),sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean</span><strong>${statText(sk)}</strong></div><div><span class="result-label">Current site</span><strong>${fmt(v)}</strong></div></div>${k==='MidgapDit'&&midgapCoverageText(s)?`<div class="note">${esc(midgapCoverageText(s))}</div>`:''}</div>`}).join('')}</div></details>
         <details class="panel"><summary>Measurement metadata ${help('Detailed recipe, substrate, timing and COCOS settings parsed directly from the imported XML.')}</summary><dl class="meta meta-detail">${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}${md('Substrate ID',esc(d.substrateId||'—'),metaHelp.substrate)}${md('Lot ID',esc(d.lotId||'—'),metaHelp.lot)}${md('Status',esc(d.status||'—'),metaHelp.status)}${md('Start',esc(d.start||'—'),metaHelp.start)}${md('End',esc(d.end||'—'),metaHelp.end)}${md('Elapsed',esc(d.elapsed||'—'),metaHelp.elapsed)}${md('Pattern',`${esc(d.patternName||d.patternType||'—')} · ${analysis.sites.length} sites`,metaHelp.pattern)}${md('Data points / Vcpd',fmt(d.numberOfDataPoints,0),metaHelp.points)}${md('Measurement interval',`${fmt(d.measurementInterval,4)} s`,metaHelp.interval)}${md('Vcpd offset',`${fmt(d.offset,6)} V`,metaHelp.offset)}${md('Vsb factor',fmt(d.factor,3),metaHelp.factor)}${md('Qit barrier range',`${fmt(d.qitMin,3)} to ${fmt(d.qitMax,3)} V`,metaHelp.qitRange)}${md('Use COCOS-II',d.useCocosII?'True':'False',metaHelp.c2)}${md('COCOS-II EOT raw',fmt(d.cocosIIEOT,3),metaHelp.c2eot)}${md('COCOS-II Min/Max Vsb',`${fmt(d.cocosIIMinVsb,3)} to ${fmt(d.cocosIIMaxVsb,3)} V`,'Vendor COCOS-II Vsb limits when available in XML; otherwise the reverse-engineered defaults are -0.10 and 0.65 V.')}${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this Boolean adjustment. Its effect was not identified in the supplied tests, so the reverse-engineered method records but does not apply it.')}</dl></details>
@@ -407,6 +424,7 @@
       host.querySelector('#ditMapMetric').value=mapKey;
         host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;
         host.querySelector('#ditPchipMethod').value=analysis.options.pchipMethod;
+        host.querySelector('#ditMaterial').value=analysis.options.material;
         host.querySelector('#ditCocosMode').value=analysis.options.cocosMode;
         const analysisPanel=host.querySelector('#ditAnalysisControls'),
         applyBtn=host.querySelector('#ditRecalc');
@@ -438,6 +456,7 @@
         markDirty()};
         if(pchipScale)pchipScale.onchange=()=>markDirty();
         syncPchipControls();
+        host.querySelector('#ditMaterial').onchange=()=>markDirty();
         host.querySelector('#ditCocosMode').onchange=()=>rebuild();
         const recBtn=host.querySelector('#ditUseRecommendation');
         if(recBtn)recBtn.onclick=()=>{
@@ -632,5 +651,5 @@
     function drawAll(){drawVcpd();drawVsb();drawDit();drawMap()}
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)drawAll()});renderShell();
   }
-  PV.modules=PV.modules||{};PV.modules.dit={types:['DITMeasurement'],parse,analyze,render,qsc,flat,cocosIIReverse,cocosRecommendation,windowedMin,variation,makeCurve,medianBinnedXY};PV.registry.register(PV.modules.dit);
+  PV.modules=PV.modules||{};PV.modules.dit={types:['DITMeasurement'],parse,analyze,render,qsc,flat,cocosIIReverse,cocosRecommendation,windowedMin,variation,makeCurve,medianBinnedXY,midgapTargetV,materialProfile,materials:MATERIALS};PV.registry.register(PV.modules.dit);
 })(typeof window!=='undefined'?window:globalThis);
