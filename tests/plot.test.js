@@ -83,6 +83,8 @@ test('Distribution controls keep Swap axes inside Axes and expose a separate Bin
   const bins=P.binControls('histBins',42);
   assert.match(axes,/data-axis-swap/);
   assert.match(axes,/aria-pressed="true"/);
+  assert.match(axes,/class="axis-limit-actions">.*data-axis-swap.*data-axis-auto.*data-axis-apply/);
+  assert.doesNotMatch(axes,/axis-extra-row/);
   assert.doesNotMatch(axes,/data-bin-count/);
   assert.match(bins,/data-bin-controls="histBins"/);
   assert.match(bins,/>Bins<\/summary>/);
