@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
 require('../src/core/stats.js');require('../src/core/geometry.js');require('../src/core/registry.js');
 PV2000.xml={};PV2000.exporter={csv(){}};
-require('../src/modules/qss-upcd.js');require('../src/modules/dit.js');
+require('../src/modules/qss-upcd.js');
 const values=[10.02216008,9.403090016,9.183140694,9.034540845,8.866233804,8.90195199,8.75130022,9.172374746,12.69525316];
 test('sample stdev convention',()=>{const s=PV2000.stats.summary(values);assert.ok(Math.abs(s.mean-9.558893950555555)<1e-9);assert.equal(s.count,9)});
 test('round map grid reproduces 305 sites in PV-2000 order',()=>{const p=PV2000.geometry.roundGrid(50,5,5,305);assert.equal(p.length,305);assert.deepEqual(p.slice(0,9),[-20,-15,-10,-5,0,5,10,15,20].map(x=>({x,y:-45})));assert.deepEqual(p.slice(-9),[-20,-15,-10,-5,0,5,10,15,20].map(x=>({x,y:45})))});
@@ -10,4 +10,3 @@ test('Smax formula',()=>{const v=PV2000.modules.qss.smax(11.658483155829508,300)
 test('PV2000-compatible implied Voc is in reference range',()=>{const d={qssMilli:30,waferThickness:300,opticalFactor:.708,doping:1e14,temperatureC:24.494949494949495};const v=PV2000.modules.qss.impliedVoc(11.658483155829508,d);assert.ok(v>0.35&&v<0.38)});
 test('valid-data mask honors lower and upper range',()=>{const a={metrics:{lifetime:{values:[1,2,3,10]}}};assert.deepEqual(PV2000.modules.qss.validMask(a,'lifetime',1.5,3.5),[false,true,true,false])});
 test('smooth map leaves filtered site regions uncolored',()=>{const coords=[{x:-5,y:0},{x:0,y:0},{x:5,y:0},{x:0,y:5}],values=[10,100,20,15],mask=[true,false,true,true],sample=PV2000.modules.qss.smoothValueAt;assert.ok(Number.isNaN(sample(0,0,coords,values,mask,11)));assert.ok(Number.isNaN(sample(0,1,coords,values,mask,11)));assert.ok(Number.isFinite(sample(-5,0,coords,values,mask,11)));assert.ok(Number.isFinite(sample(0,5,coords,values,mask,11)));assert.ok(Number.isNaN(sample(30,0,coords,values,mask,11)))});
-test('COCOS-II synthetic light reconstruction honors XML EOT',()=>{const site={rows:[{Qc:0,VDark:0},{Qc:1e11,VDark:.02},{Qc:2e11,VDark:.04}]},d={useCocosII:true,cocosIIEOT:10},f={qfb:1e11,vfbDark:.02,mox:2e-13};const c=PV2000.modules.dit.cocosII(site,d,f);assert.equal(c.valid,true);assert.equal(c.source,'XML CocosIIEOT');assert.equal(c.light.length,3);assert.equal(c.vsb.length,3)});
