@@ -30,7 +30,7 @@ Current modules:
 
 ## Run
 
-Open `dist/index.html` directly. No server or installation is required.
+Open `dist/index.html` or `dist/PV-2000-Analyzer.html` directly. Both are the same self-contained build; the latter is the stable filename used by the landing-page **Download Offline** shortcut. No server or installation is required.
 
 Development:
 
