@@ -118,3 +118,45 @@ test('invalid median window is surfaced', () => {
   const analysis = PV2000.modules.dit.analyze(base, { pchipMethod: 'median', pchipMedianWindowV: 0 });
   assert.match(analysis.error, /Median Vsb window must be greater than 0 mV/);
 });
+
+
+test('PCHIP outlier limit is disabled by default but a finite manual limit is still supported', () => {
+  const base = { sites: [], doping: 1e14, dopingType: 'n', useCocosII: false };
+  const def = PV2000.modules.dit.analyze(base);
+  assert.equal(def.options.ditReject, Infinity);
+  const x = [0.05, 0.15, 0.25];
+  const y = [1e13, 1e14, 1e13];
+  const noLimit = PV2000.modules.dit.makeCurve(x, y, sample.data, Infinity, 'log10', 'original');
+  const manualLimit = PV2000.modules.dit.makeCurve(x, y, sample.data, 2e13, 'log10', 'original');
+  assert.equal(noLimit.knots.length, 3);
+  assert.equal(manualLimit.knots.length, 2);
+});
+
+test('Midgap Dit is unavailable when theoretical midgap lies outside measured Vsb coverage', () => {
+  const site = {
+    VDark: 0, Vsb: 0.05, InitialQc: 0,
+    rows: [0.01, 0.05, 0.10, 0.15, 0.218].map((vsb, i) => ({
+      Qc: i * 4e11, VDark: i * 0.02, VLight: i * 0.01, Vsb: vsb
+    }))
+  };
+  const data = { sites: [site], doping: 1.5e15, dopingType: 'n', useCocosII: false };
+  const analysis = PV2000.modules.dit.analyze(data);
+  assert.ok(analysis.sites[0].midgapV > 0.30);
+  assert.equal(analysis.sites[0].midgapStatus, 'outside-measured');
+  assert.ok(Number.isNaN(analysis.sites[0].MidgapDit));
+  assert.equal(analysis.sites[0].midgapMeasuredMaxVsb, 0.218);
+});
+
+test('PCHIP never extrapolates beyond retained fit coverage', () => {
+  const targetData = { doping: 1.5e15 };
+  const fit = PV2000.modules.dit.makeCurve([0.02, 0.10, 0.218], [1e13, 2e13, 3e13], targetData, Infinity, 'log10', 'median', 0.010);
+  assert.equal(fit.midgapCovered, false);
+  assert.ok(Number.isNaN(fit.mid));
+  assert.equal(fit.fitMaxVsb, 0.218);
+});
+
+test('non-positive finite PCHIP outlier limits are surfaced', () => {
+  const base = { sites: [], doping: 1e14, dopingType: 'n', useCocosII: false };
+  const analysis = PV2000.modules.dit.analyze(base, { ditReject: 0 });
+  assert.match(analysis.error, /PCHIP outlier limit must be greater than 0 when set/);
+});

@@ -171,7 +171,7 @@
     h01=-2*t**3+3*t**2,
     h11=t**3-t**2;
     return h00*y[i]+h10*h*d[i]+h01*y[i+1]+h11*h*d[i+1]}
-  function filteredXY(x,y,reject=2e13){
+  function filteredXY(x,y,reject=Infinity){
     const z=x.map((v,i)=>[v,y[i]]).filter(p=>p.every(Number.isFinite)).sort((a,b)=>a[0]-b[0]),
     ux=[],
     uy=[];
@@ -191,18 +191,22 @@
     for(let i=0;i<x.length;){const key=binKey(x[i]),xs=[],ys=[];let j=i;while(j<x.length&&binKey(x[j])===key){xs.push(x[j]);ys.push(y[j]);j++}ux.push(S.median(xs));uy.push(S.median(ys));i=j}
     return{ux,uy};
   }
-  function makeCurve(x,y,d,reject,pchipScale='log10',pchipMethod='original',medianWindowV=.010){
+  function makeCurve(x,y,d,reject=Infinity,pchipScale='log10',pchipMethod='original',medianWindowV=.010){
     let {ux,uy}=filteredXY(x,y,reject);
     const useLog=pchipScale==='log10';
     if(useLog){const positive=ux.map((v,i)=>[v,uy[i]]).filter(([,v])=>v>0);ux=positive.map(p=>p[0]);uy=positive.map(p=>Math.log10(p[1]))}
     if(pchipMethod==='median'){({ux,uy}=medianBinnedXY(ux,uy,medianWindowV))}
-    const target=Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3)),restore=v=>useLog?10**v:v;
-    if(ux.length<2)return{mid:NaN,curve:[],knots:ux.map((v,i)=>({x:v,y:restore(uy[i])}))};
-    const mid=restore(pchipEval(ux,uy,target)),curve=[];
+    const target=Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3)),
+      restore=v=>useLog?10**v:v,
+      fitMinVsb=ux.length?ux[0]:NaN,
+      fitMaxVsb=ux.length?ux[ux.length-1]:NaN,
+      targetInsideFit=Number.isFinite(fitMinVsb)&&target>=fitMinVsb&&target<=fitMaxVsb;
+    if(ux.length<2)return{mid:NaN,curve:[],knots:ux.map((v,i)=>({x:v,y:restore(uy[i])})),targetVsb:target,fitMinVsb,fitMaxVsb,midgapCovered:false};
+    const mid=targetInsideFit?restore(pchipEval(ux,uy,target)):NaN,curve=[];
     for(let xx=ux[0];xx<=ux[ux.length-1]+1e-12;xx+=.006)curve.push({x:xx,y:restore(pchipEval(ux,uy,xx))});
-    return{mid,curve,knots:ux.map((v,i)=>({x:v,y:restore(uy[i])}))};
+    return{mid,curve,knots:ux.map((v,i)=>({x:v,y:restore(uy[i])})),targetVsb:target,fitMinVsb,fitMaxVsb,midgapCovered:Number.isFinite(mid)};
   }
-  function variation(site,d,reject=2e13,vsbOverride=null,pchipScale='log10',window=null,pchipEnabled=true,pchipMethod='median',pchipMedianWindowV=.010){
+  function variation(site,d,reject=Infinity,vsbOverride=null,pchipScale='log10',window=null,pchipEnabled=true,pchipMethod='median',pchipMedianWindowV=.010){
     const r=site.rows,
       vs=vsbOverride&&vsbOverride.length===r.length?vsbOverride:r.map(x=>x.Vsb),
       qc=r.map(x=>x.Qc),
@@ -213,10 +217,16 @@
       dq=Math.abs(qc[i+1]-qc[i])-Math.abs(qs[i+1]-qs[i]);
       raw.push(Math.abs(dv)>0?Math.abs(dq)/Math.abs(dv):NaN)}
     const x=vs.slice(0,-1),
+      measuredVsb=finite(vs),
+      measuredMinVsb=measuredVsb.length?Math.min(...measuredVsb):NaN,
+      measuredMaxVsb=measuredVsb.length?Math.max(...measuredVsb):NaN,
+      midgapV=Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3)),
       gate=window?windowedMin(x,raw,window.min,window.max):windowedMin(x,raw,-Infinity,Infinity),
       fitX=x.filter((_,i)=>gate.accepted[i]),
       fitY=raw.filter((_,i)=>gate.accepted[i]),
-      fit=pchipEnabled?makeCurve(fitX,fitY,d,reject,pchipScale,pchipMethod,pchipMedianWindowV):{mid:NaN,curve:[],knots:[]};
+      fit=pchipEnabled?makeCurve(fitX,fitY,d,reject,pchipScale,pchipMethod,pchipMedianWindowV):{mid:NaN,curve:[],knots:[],fitMinVsb:NaN,fitMaxVsb:NaN,midgapCovered:false},
+      measuredCoversMidgap=Number.isFinite(measuredMinVsb)&&midgapV>=measuredMinVsb&&midgapV<=measuredMaxVsb,
+      midgapStatus=!pchipEnabled?'off':!measuredCoversMidgap?'outside-measured':!fit.midgapCovered?'outside-fit':'available';
       let p=0;
       while(p<vs.length&&vs[p]<.010)p++;
       if(p>=vs.length)p=vs.length-1;
@@ -230,11 +240,12 @@
       const dv=vs[i+1]-vs[i],
       dq=qit[i+1]-qit[i];
       direct.push(Math.abs(dv)>0?Math.abs(dq/dv):NaN)}const dfit=pchipEnabled?makeCurve(x,direct,d,reject,pchipScale,'original',pchipMedianWindowV):{mid:NaN,curve:[]};
-      return{vsb:vs,raw,min:gate.min,minIndex:gate.minIndex,minVsbAt:gate.minIndex>=0?x[gate.minIndex]:NaN,accepted:gate.accepted,acceptedCount:gate.count,totalIntervals:gate.total,window,mid:fit.mid,curve:fit.curve,fitKnots:fit.knots||[],directRaw:direct,directMid:dfit.mid,directCurve:dfit.curve,midgapV:Math.abs(k*T/q*Math.log(d.doping/NI_SI_300K_CM3))};
+      return{vsb:vs,raw,min:gate.min,minIndex:gate.minIndex,minVsbAt:gate.minIndex>=0?x[gate.minIndex]:NaN,accepted:gate.accepted,acceptedCount:gate.count,totalIntervals:gate.total,window,mid:fit.mid,curve:fit.curve,fitKnots:fit.knots||[],directRaw:direct,directMid:dfit.mid,directCurve:dfit.curve,midgapV,midgapStatus,midgapMeasuredMinVsb:measuredMinVsb,midgapMeasuredMaxVsb:measuredMaxVsb,midgapFitMinVsb:fit.fitMinVsb,midgapFitMaxVsb:fit.fitMaxVsb};
       
   }
   function analyze(d,opts={}){
     const accumN=opts.accumN||5,
+      ditReject=Number.isFinite(opts.ditReject)?opts.ditReject:Infinity,
       pchipScale=opts.pchipScale==='linear'?'linear':'log10',
       pchipEnabled=opts.pchipEnabled!==false,
       pchipMethod=opts.pchipMethod==='original'?'original':'median',
@@ -251,6 +262,7 @@
       
     if(effective==='pv2000-re'&&(!(eotA>0)||!(maxVsb>minVsb)))errors.push(!(eotA>0)?'COCOS-II EOT must be greater than 0 Å.':'COCOS-II Max Vsb must be greater than Min Vsb.');
     if(pchipEnabled&&pchipMethod==='median'&&!(pchipMedianWindowV>0))errors.push('Median Vsb window must be greater than 0 mV.');
+    if(pchipEnabled&&Number.isFinite(ditReject)&&!(ditReject>0))errors.push('PCHIP outlier limit must be greater than 0 when set.');
     const settingsError=errors.join(' ');
     const sites=d.sites.map(s=>{
       const f=flat(s,d,accumN),
@@ -258,14 +270,14 @@
       requiresC2=effective==='pv2000-re',
       usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
       window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
-      v=variation(s,d,opts.ditReject||2e13,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
-      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,Qsc:Math.abs(qsc(s.Vsb,d.doping,d.dopingType)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
+      v=variation(s,d,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
+      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,midgapStatus:v.midgapStatus,midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,midgapFitMinVsb:v.midgapFitMinVsb,midgapFitMaxVsb:v.midgapFitMaxVsb,Qsc:Math.abs(qsc(s.Vsb,d.doping,d.dopingType)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
       
     const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],
       stats={};
       keys.forEach(k=>stats[k]=S.summary(sites.filter(x=>x.valid).map(x=>x[k])));
       const mode=effective==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
-      return{sites,stats,recommendation,error:settingsError,options:{accumN,ditReject:opts.ditReject||2e13,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
+      return{sites,stats,recommendation,error:settingsError,options:{accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
       
   }
 
@@ -297,9 +309,10 @@
   function render(host,d,baseAnalysis){
     let analysis=baseAnalysis,site=Math.max(0,analysis.sites.findIndex(x=>x.valid)),mapKey='Qtot',analysisOpen=true,resultsOpen=true,zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
     const controlNum=(id,fallback)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return NaN;const v=Number(raw);return Number.isFinite(v)?v:NaN};
+    const controlOptionalNum=(id,fallback=Infinity)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return Infinity;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const rebuild=()=>{analysisOpen=true;
       const accumN=controlNum('#ditAccumN',analysis.options.accumN||5),
-      ditReject=controlNum('#ditReject',analysis.options.ditReject||2e13),
+      ditReject=controlOptionalNum('#ditReject',analysis.options.ditReject),
       pchipScale=host.querySelector('#ditPchipScale')?.value||analysis.options.pchipScale,
       pchipEnabled=host.querySelector('#ditUsePchip')?.checked!==false,
       pchipMethod=host.querySelector('#ditPchipMethod')?.value||analysis.options.pchipMethod||'median',
@@ -316,12 +329,27 @@
       renderShell()};
       
     const statText=(key)=>{const st=analysis.stats[key];return st&&Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)}`:'—'};
-    const resultHelp={Qtot:'Total dielectric/interface charge obtained from the horizontal charge separation between the natural initial condition and the flatband point on the dark V–Q characteristic.',Dit:'PV-2000-style minimum interface-state density: the minimum accepted discrete variation-method Dit point. It does not use PCHIP interpolation.',MidgapDit:'Optional PCHIP-derived Dit evaluated at the theoretical midgap surface potential. PCHIP settings affect this result and the green fit curve, but never the PV2000-style minimum Dit.',eot:'Equivalent oxide thickness expressed as the thickness of SiO₂ (κ≈3.9) giving the measured dielectric capacitance. For any other dielectric or multilayer stack it is an electrical-equivalent thickness, not physical thickness.',Cox:'Dielectric capacitance per unit area obtained from the dark accumulation V–Q slope.',Qsc:'Semiconductor space charge evaluated at the natural initial Vsb using the same MOS charge model as the group MATLAB code.',InitialQc:'Barrier-adjustment corona bookkeeping: number of PreProcess charge events multiplied by the PreProcess corona-charge step.',MaxVsb:'Maximum absolute surface-barrier magnitude reached by the analysis Vsb curve; with COCOS-II enabled this uses the reconstructed corrected Vsb.'};
+    const resultHelp={
+      Qtot:'Total dielectric/interface charge obtained from the horizontal charge separation between the natural initial condition and the flatband point on the dark V–Q characteristic.',
+      Dit:'PV-2000-style minimum interface-state density: the minimum accepted discrete variation-method Dit point. It does not use PCHIP interpolation.',
+      MidgapDit:'Optional PCHIP-derived Dit evaluated at the theoretical midgap surface potential. PCHIP settings affect this result and the green fit curve, but never the PV2000-style minimum Dit. Midgap Dit is reported only when the theoretical target lies inside both measured Vsb coverage and the retained PCHIP fit domain; no extrapolation is performed.',
+      eot:'Equivalent oxide thickness expressed as the thickness of SiO₂ (κ≈3.9) giving the measured dielectric capacitance. For any other dielectric or multilayer stack it is an electrical-equivalent thickness, not physical thickness.',
+      Cox:'Dielectric capacitance per unit area obtained from the dark accumulation V–Q slope.',
+      Qsc:'Semiconductor space charge evaluated at the natural initial Vsb using the same MOS charge model as the group MATLAB code.',
+      InitialQc:'Barrier-adjustment corona bookkeeping: number of PreProcess charge events multiplied by the PreProcess corona-charge step.',
+      MaxVsb:'Maximum absolute surface-barrier magnitude reached by the analysis Vsb curve; with COCOS-II enabled this uses the reconstructed corrected Vsb.'
+    };
       
     const metaHelp={recipe:'PV-2000 recipe/job name stored in the result XML.',substrate:'Substrate identifier stored with the result.',lot:'Lot identifier stored with the result; it may be empty.',status:'PV-2000 execution status.',start:'Execution start timestamp from the result XML.',end:'Execution completion timestamp from the result XML.',elapsed:'Total elapsed measurement time.',pattern:'Measurement pattern name/type and number of measured sites.',points:'Number of Kelvin-probe samples averaged for each Vcpd reading.',interval:'Time interval between the Vcpd samples used to form each vector.',offset:'Kelvin-probe Vcpd calibration offset stored in MeasurementData and applied to reconstructed Vcpd values.',factor:'Standard COCOS correction factor applied to the measured dark-light Vcpd difference when COCOS-II is disabled.',qitRange:'Surface-barrier range configured for Qit/Dit extraction.',c2:'Whether the XML requests COCOS-II. When true, this analyzer replaces the experimental light curve with a synthetic straight light curve before Dit extraction.',c2eot:'Raw COCOS-II EOT setting stored in the XML. The PV2000 inferred method interprets this vendor value as Å.',preCharge:'Corona charge increment used during barrier adjustment before the main sweep.',preTarget:'Target Vsb range for the barrier-adjustment stage.',preAttempts:'Maximum barrier-adjustment attempts and number of extra scans.',processCharge:'Positive/negative corona charge increment used during the main Process sweep.',processTarget:'Target measurement range for terminating the main Process sweep.',processAttempts:'Maximum Process attempts and number of extra scans.'};
       
     const md=(label,value,tip)=>`<dt>${esc(label)} ${help(tip)}</dt><dd>${value}</dd>`;
     const methodLabel=m=>m==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
+    const midgapCoverageText=s=>{
+      if(!analysis.options.pchipEnabled||s.midgapStatus==='available')return'';
+      if(s.midgapStatus==='outside-measured')return`Theoretical midgap Vsb ${fmt(s.midgapV,3)} V is outside measured coverage ${fmt(s.midgapMeasuredMinVsb,3)}–${fmt(s.midgapMeasuredMaxVsb,3)} V; no extrapolation.`;
+      if(s.midgapStatus==='outside-fit')return`Theoretical midgap Vsb ${fmt(s.midgapV,3)} V is outside retained PCHIP fit coverage ${fmt(s.midgapFitMinVsb,3)}–${fmt(s.midgapFitMaxVsb,3)} V after preprocessing; no extrapolation.`;
+      return'Midgap Dit unavailable from the retained PCHIP fit.';
+    };
     function analysisControls(){
       const o=analysis.options,
         eff=o.effectiveCocosMode,
@@ -350,7 +378,7 @@
         <div class="setting-row compact-settings pchip-settings ${o.pchipEnabled?'':'disabled'}">
           ${field('Method','Median-binned PCHIP groups nearby fit points into fixed Vsb bins and replaces each bin by its median representative before interpolation. PCHIP (original) keeps the previous raw-point preprocessing for compatibility.',`<select id="ditPchipMethod" ${o.pchipEnabled?'':'disabled'}><option value="median">Median-binned PCHIP</option><option value="original">PCHIP (original)</option></select>`)}
           ${field('Median Vsb window [mV]','Editable bin width used only by Median-binned PCHIP. Default 10 mV; enter any positive value and Apply analysis settings. Smaller windows preserve more local variation; larger windows aggregate more strongly.',`<input id="ditPchipMedianMv" type="number" min="0.1" step="any" value="${Number.isFinite(o.pchipMedianWindowV)?Number((o.pchipMedianWindowV*1e3).toPrecision(6)):''}" ${o.pchipEnabled&&o.pchipMethod==='median'?'':'disabled'}>`)}
-          ${field('PCHIP outlier limit','Only affects the optional PCHIP fit used for Midgap Dit. Points above this limit inside 0.1–0.5 V are rejected from that fit.',`<input id="ditReject" type="number" step="any" value="${Number.isFinite(o.ditReject)?o.ditReject.toExponential(3).replace('e','E'):''}" ${o.pchipEnabled?'':'disabled'}>`)}
+          ${field('PCHIP outlier limit','Optional manual upper Dit threshold used only by the Midgap PCHIP fit inside 0.1–0.5 V. Leave blank to disable absolute-value rejection. A finite value preserves the legacy threshold behavior; Minimum Dit is never changed.',`<input id="ditReject" type="number" min="0" step="any" placeholder="disabled" value="${Number.isFinite(o.ditReject)?o.ditReject.toExponential(3).replace('e','E'):''}" ${o.pchipEnabled?'':'disabled'}>`)}
           ${field('Interpolation scale','Applies to both PCHIP methods. LOG10 interpolates log10(Dit); Linear interpolates Dit directly. Median-binned PCHIP also takes its per-bin median in the selected interpolation space.',`<select id="ditPchipScale" ${o.pchipEnabled?'':'disabled'}><option value="log10">LOG10</option><option value="linear">Linear</option></select>`)}
         </div>
         <div class="analysis-actions"><button id="ditRecalc">Apply analysis settings</button></div>
@@ -365,7 +393,7 @@
       host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div></section>
         ${analysisControls()}
-        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Valid-site mean uses only sites with a usable surface-barrier sweep. Current-site values correspond to the selected site above.')}</summary><div class="result-list">${rows.map(([n,k])=>{const v=metric(s,k),sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean</span><strong>${statText(sk)}</strong></div><div><span class="result-label">Current site</span><strong>${fmt(v)}</strong></div></div></div>`}).join('')}</div></details>
+        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Valid-site mean uses only sites with a usable surface-barrier sweep. Current-site values correspond to the selected site above.')}</summary><div class="result-list">${rows.map(([n,k])=>{const v=metric(s,k),sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean</span><strong>${statText(sk)}</strong></div><div><span class="result-label">Current site</span><strong>${fmt(v)}</strong></div></div>${k==='MidgapDit'&&midgapCoverageText(s)?`<div class="note">${esc(midgapCoverageText(s))}</div>`:''}</div>`}).join('')}</div></details>
         <details class="panel"><summary>Measurement metadata ${help('Detailed recipe, substrate, timing and COCOS settings parsed directly from the imported XML.')}</summary><dl class="meta meta-detail">${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}${md('Substrate ID',esc(d.substrateId||'—'),metaHelp.substrate)}${md('Lot ID',esc(d.lotId||'—'),metaHelp.lot)}${md('Status',esc(d.status||'—'),metaHelp.status)}${md('Start',esc(d.start||'—'),metaHelp.start)}${md('End',esc(d.end||'—'),metaHelp.end)}${md('Elapsed',esc(d.elapsed||'—'),metaHelp.elapsed)}${md('Pattern',`${esc(d.patternName||d.patternType||'—')} · ${analysis.sites.length} sites`,metaHelp.pattern)}${md('Data points / Vcpd',fmt(d.numberOfDataPoints,0),metaHelp.points)}${md('Measurement interval',`${fmt(d.measurementInterval,4)} s`,metaHelp.interval)}${md('Vcpd offset',`${fmt(d.offset,6)} V`,metaHelp.offset)}${md('Vsb factor',fmt(d.factor,3),metaHelp.factor)}${md('Qit barrier range',`${fmt(d.qitMin,3)} to ${fmt(d.qitMax,3)} V`,metaHelp.qitRange)}${md('Use COCOS-II',d.useCocosII?'True':'False',metaHelp.c2)}${md('COCOS-II EOT raw',fmt(d.cocosIIEOT,3),metaHelp.c2eot)}${md('COCOS-II Min/Max Vsb',`${fmt(d.cocosIIMinVsb,3)} to ${fmt(d.cocosIIMaxVsb,3)} V`,'Vendor COCOS-II Vsb limits when available in XML; otherwise the reverse-engineered defaults are -0.10 and 0.65 V.')}${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this Boolean adjustment. Its effect was not identified in the supplied tests, so the reverse-engineered method records but does not apply it.')}</dl></details>
         <details class="panel"><summary>Recipe charge sequence ${help('Corona charge increments, target ranges and loop limits controlling barrier adjustment and the main COCOS sweep.')}</summary><dl class="meta meta-detail">${md('PreProcess ΔQc',`${sci(d.pre.charge,3)} cm⁻²`,metaHelp.preCharge)}${md('PreProcess target',`${esc(d.pre.targetMin)} to ${esc(d.pre.targetMax)}`,metaHelp.preTarget)}${md('Pre attempts / extra',`${fmt(d.pre.attempts,0)} / ${fmt(d.pre.extra,0)}`,metaHelp.preAttempts)}${md('Process ΔQc',`${sci(d.process.charge,3)} cm⁻²`,metaHelp.processCharge)}${md('Process target',`${esc(d.process.targetMin)} to ${esc(d.process.targetMax)}`,metaHelp.processTarget)}${md('Process attempts / extra',`${fmt(d.process.attempts,0)} / ${fmt(d.process.extra,0)}`,metaHelp.processAttempts)}</dl></details>
         <details class="panel"><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV2000 inferred mode uses the flatband anchor, EOT in Å, signed Vsb, and Min/Max Vsb for reported-minimum Dit acceptance. Back Surface Shift remains unresolved and is not applied.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
@@ -448,8 +476,11 @@
       host.querySelector('#e2').onclick=()=>{
         const fitMethod=analysis.options.pchipEnabled?(analysis.options.pchipMethod==='median'?'Median-binned PCHIP':'PCHIP (original)'):'Off',
         medianMv=analysis.options.pchipMethod==='median'?analysis.options.pchipMedianWindowV*1e3:'',
-        scale=analysis.options.pchipScale==='log10'?'LOG10':'Linear';
-        PV.exporter.csv(`Dit_site${site+1}_Dit.csv`,['Vsb','Variation Dit','Accepted by COCOS-II window','Midgap fit method','Median Vsb window [mV]','Interpolation scale'],s.rows.slice(0,-1).map((r,i)=>[s.analysisVsb[i],s.ditRaw[i],s.ditAccepted?.[i]===false?'NO':'YES',fitMethod,medianMv,scale]))};
+        scale=analysis.options.pchipScale==='log10'?'LOG10':'Linear',
+        reject=Number.isFinite(analysis.options.ditReject)?analysis.options.ditReject:'',
+        midgapStatus=s.midgapStatus||'',
+        midgapTarget=s.midgapV;
+        PV.exporter.csv(`Dit_site${site+1}_Dit.csv`,['Vsb','Variation Dit','Accepted by COCOS-II window','Midgap fit method','Median Vsb window [mV]','Interpolation scale','PCHIP outlier limit','Midgap target Vsb [V]','Midgap status'],s.rows.slice(0,-1).map((r,i)=>[s.analysisVsb[i],s.ditRaw[i],s.ditAccepted?.[i]===false?'NO':'YES',fitMethod,medianMv,scale,reject,midgapTarget,midgapStatus]))};
         
       host.querySelector('#e3').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vsb.csv`,['Qc','Raw standard |Vsb|',analysis.options.effectiveCocosMode==='pv2000-re'?'Analysis signed Vsb':'Analysis |Vsb|'],s.rows.map((r,i)=>[r.Qc,r.Vsb,s.analysisVsb[i]]));
         host.querySelector('#e4').onclick=()=>{
@@ -552,8 +583,10 @@
       PV.plot.bindAxisControls(host,'ditDitAxes',zoom.dit,n=>{zoom.dit=n;drawDit()},{yLog:true});
       const fitLabel=analysis.options.pchipMethod==='median'?'Median-PCHIP '+fmt(analysis.options.pchipMedianWindowV*1e3,1)+' mV':'PCHIP (original)',
       scaleLabel=analysis.options.pchipScale==='log10'?'LOG10':'Linear';
-      host.querySelector('#ditDitLegend').innerHTML='<span><i style="background:var(--blue)"></i>accepted variation points</span>'+(signed?'<span><i style="background:var(--soft)"></i>outside Min/Max Vsb</span>':'')+(analysis.options.pchipEnabled?'<span><i style="background:var(--green)"></i>'+fitLabel+'</span>':'')+(signed||!analysis.options.pchipEnabled?'':'<span class="yellow">│ midgap</span>');
-      host.querySelector('#ditDitMeta').textContent=analysis.options.pchipEnabled?analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · '+fitLabel+' '+scaleLabel+' midgap '+sci(s.MidgapDit,2):analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · PCHIP off'}
+      const coverage=midgapCoverageText(s),
+      midgapLegend=!signed&&analysis.options.pchipEnabled?(coverage?`<span class="yellow">midgap ${fmt(s.midgapV,3)} V → outside coverage</span>`:'<span class="yellow">│ midgap</span>'):'';
+      host.querySelector('#ditDitLegend').innerHTML='<span><i style="background:var(--blue)"></i>accepted variation points</span>'+(signed?'<span><i style="background:var(--soft)"></i>outside Min/Max Vsb</span>':'')+(analysis.options.pchipEnabled?'<span><i style="background:var(--green)"></i>'+fitLabel+'</span>':'')+midgapLegend;
+      host.querySelector('#ditDitMeta').textContent=analysis.options.pchipEnabled?analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · '+fitLabel+' '+scaleLabel+(coverage?' · '+coverage:' · midgap '+sci(s.MidgapDit,2)):analysis.mode+' · PV2000 min '+sci(s.Dit,2)+' · PCHIP off'}
     function drawMap(){
       const svg=host.querySelector('#d4'),
       [label,unit,log]=mapSpec(mapKey),

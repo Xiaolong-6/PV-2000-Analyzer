@@ -294,8 +294,31 @@
     const validVals=m.values.filter((v,i)=>mask[i]&&Number.isFinite(v)),
       scaleLo=Math.min(...validVals),
       scaleHi=Math.max(...validVals),
-      barColor=b=>validVals.length?color(scaleHi===scaleLo?0:((b.lo+b.hi)/2-scaleLo)/(scaleHi-scaleLo)):css('--soft');
+      barColor=b=>validVals.length?color(scaleHi===scaleLo?0:((b.lo+b.hi)/2-scaleLo)/(scaleHi-scaleLo)):css('--soft'),
+      histXRange=swapped?cr:mr,
+      histYRange=swapped?mr:cr,
+      histXPos=v=>p.l+(swapped?countPos(v):metricPos(v))*plotW,
+      histYPos=v=>H-p.b-(swapped?metricPos(v):countPos(v))*plotH;
       ctx.font='10px system-ui';
+      ctx.strokeStyle=css('--grid2');
+      ctx.fillStyle=css('--muted');
+      ctx.textAlign='center';
+      niceTicks(histXRange[0],histXRange[1],5).forEach(t=>{
+        const x=histXPos(t);
+        ctx.beginPath();
+        ctx.moveTo(x,p.t);
+        ctx.lineTo(x,H-p.b);
+        ctx.stroke();
+        ctx.fillText(axisFmt(t),x,H-17)});
+      ctx.strokeStyle=css('--grid');
+      ctx.textAlign='right';
+      niceTicks(histYRange[0],histYRange[1],5).forEach(t=>{
+        const y=histYPos(t);
+        ctx.beginPath();
+        ctx.moveTo(p.l,y);
+        ctx.lineTo(W-p.r,y);
+        ctx.stroke();
+        ctx.fillText(axisFmt(t),p.l-8,y+4)});
       ctx.save();
       ctx.beginPath();
       ctx.rect(p.l,p.t,plotW,plotH);
