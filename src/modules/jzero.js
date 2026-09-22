@@ -25,7 +25,7 @@
   }
   function iterationValues(iter){
     const data=X.direct(iter,'Data');
-    return X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value')).filter(Number.isFinite);
+    return X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value',NaN));
   }
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),
@@ -38,12 +38,16 @@
       mapHalfWidth=effectiveHalf(targetWidth,edgeExclusion),mapHalfHeight=effectiveHalf(targetHeight,edgeExclusion),mapRadius=effectiveHalf(diameter,edgeExclusion),
       count=values.length>=2&&values[0].length===values[1].length?values[0].length:0,
       qssMilli=qssIntensities(m,c);
+    if(iterations.length!==2)throw new Error(`JZeroMeasurement currently supports the validated two-iteration result path; found ${iterations.length} iterations.`);
+    if(values.some(v=>!v.length)||values[0].length!==values[1].length)throw new Error('JZeroMeasurement lifetime iterations must contain the same number of sites.');
+    if(qssMilli.length!==2||qssMilli.some(v=>!Number.isFinite(v)||v<=0))throw new Error('JZeroMeasurement requires two finite positive QSS intensities.');
     let coords=[];
     if(patternType==='MapPattern'&&count){
       if(targetType==='PseudoSquareCell')coords=GEO.pseudoSquareGrid(mapHalfWidth,mapHalfHeight,mapRadius,pitchX,pitchY,count);
       else if(targetType==='RoundWafer')coords=GEO.roundGrid(mapRadius,pitchX,pitchY,count);
       else if(targetType==='SquareCell')coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,count);
     }
+    if(coords.length!==count)throw new Error(`JZeroMeasurement geometry is not supported for ${patternType||'unknown pattern'} + ${targetType||'unknown target'} (${count} sites).`);
     const avgIndex=X.num(m,'Averaging',NaN),avgValues=X.direct(m,'AveragingValues'),avgList=avgValues?X.children(avgValues).map(e=>Number(e.textContent)).filter(Number.isFinite):[],
       avgMode=Number.isInteger(avgIndex)&&avgIndex>=0&&avgIndex<avgList.length?avgList[avgIndex]:NaN,
       secondAvgIndex=X.num(m,'SecondAveraging',NaN),secondAvgMode=Number.isInteger(secondAvgIndex)&&secondAvgIndex>=0&&secondAvgIndex<avgList.length?avgList[secondAvgIndex]:NaN,
