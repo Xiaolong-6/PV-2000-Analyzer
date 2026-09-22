@@ -33,6 +33,23 @@ test('HighDensityPattern maps explicit normalized 35 x 35 coefficients to the Ed
   assert.deepEqual(g.scheduled,{halfWidth:71,halfHeight:71});
 });
 
+test('HighDensityPattern RoundWafer uses an inscribed square inside the effective radius',()=>{
+  const coeff15=[];
+  for(let row=0;row<15;row++)for(let col=0;col<15;col++)coeff15.push({x:-1+2*col/14,y:-1+2*row/14});
+  const radius=PV2000.modules.qss.effectiveMapRadius(100,7),scale=radius/Math.SQRT2;
+  const p15=PV2000.modules.qss.highDensityCoords(coeff15,scale,scale,225);
+  assert.equal(p15.length,225);
+  assert.ok(Math.hypot(p15[0].x,p15[0].y)<=radius+1e-12);
+  assert.ok(Math.abs(p15[112].x)<1e-12&&Math.abs(p15[112].y)<1e-12);
+  assert.ok(Math.abs((p15[1].x-p15[0].x)-(2*scale/14))<1e-12);
+
+  const coeff20=[];
+  for(let row=0;row<20;row++)for(let col=0;col<20;col++)coeff20.push({x:-1+2*col/19,y:-1+2*row/19});
+  const p20=PV2000.modules.qss.highDensityCoords(coeff20,scale,scale,400);
+  assert.equal(p20.length,400);
+  assert.ok(p20.every(({x,y})=>x*x+y*y<=radius*radius+1e-9));
+});
+
 test('SquareRegionPattern reference raster reproduces the 35 x 30 vendor coordinate order',()=>{const p=PV2000.geometry.rectGrid(-40,-30,70,60,35,30,1050,1);assert.equal(p.length,1050);assert.deepEqual(p[0],{x:-40,y:-30,row:0,col:0});assert.ok(Math.abs(p[34].x-30)<1e-12&&Math.abs(p[34].y+30)<1e-12);assert.ok(Math.abs(p[35].x+40)<1e-12&&Math.abs(p[35].y-(-30+60/29))<1e-12);assert.ok(Math.abs(p.at(-1).x-30)<1e-12&&Math.abs(p.at(-1).y-30)<1e-12)});
 test('SquareRegion target geometry uses the explicit measured rectangle',()=>{const g=PV2000.modules.qss.targetGeometry({patternType:'SquareRegionPattern',targetType:'SquareCell',targetWidth:100,targetHeight:100,regionX:-40,regionY:-30,regionWidth:70,regionHeight:60,mapHalfWidth:47,mapHalfHeight:47});assert.deepEqual(g.scheduled,{xMin:-40,xMax:30,yMin:-30,yMax:30});assert.equal(PV2000.modules.qss.insideScheduled(g,-40,-30),true);assert.equal(PV2000.modules.qss.insideScheduled(g,31,0),false)});
 test('valid-data histogram counts are determined only by the validity mask',()=>{const a={metrics:{lifetime:{values:[1,2,3,4,100]}}},mask=PV2000.modules.qss.validMask(a,'lifetime',2,4),bins=PV2000.modules.qss.histogram(a.metrics.lifetime.values,mask,5);assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2)});
