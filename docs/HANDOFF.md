@@ -69,6 +69,7 @@ Dit Analysis controls are contextual and compact:
 - shared Flatband accumulation points remain visible;
 - **Minimum Dit (PV2000-style)** is the accepted discrete minimum and does not use PCHIP;
 - **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox; disabling it removes Midgap Dit / the green fit while leaving Minimum Dit unchanged;
+- Midgap fitting defaults to **Median-binned PCHIP** with a 10 mV Vsb window; the window is adjustable, **PCHIP (original)** remains available for compatibility, and LOG10/Linear remain shared scale options;
 - COCOS-II and PCHIP can be combined because PCHIP runs after COCOS-II Vsb reconstruction and acceptance masking;
 - data-derived COCOS-II suggestions are shown but do not silently overwrite XML/user values;
 - invalid COCOS-II settings are shown as errors and no longer fall back silently to Standard COCOS;
