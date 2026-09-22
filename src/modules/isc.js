@@ -126,7 +126,7 @@
         const radius=effectiveHalf(diameter,edgeExclusion);
         if([radius,pitchX,pitchY].every(Number.isFinite)){
           coords=GEO.roundGrid(radius,pitchX,pitchY,sites.length);
-          if(coords.length)coordinateSource='MapPattern + RoundWafer (inferred)';
+          if(coords.length)coordinateSource=isVcpd?'MapPattern + RoundWafer':'MapPattern + RoundWafer (inferred)';
         }
       }
     }
