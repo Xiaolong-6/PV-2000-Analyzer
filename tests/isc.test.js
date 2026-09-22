@@ -93,7 +93,7 @@ test('Vcpd analysis exposes only Vcpd Dark and preserves sample statistics',()=>
   };
   const a=ISC.analyze(d);
   assert.deepEqual(Object.keys(a.metrics),['dark']);
-  assert.equal(a.summaries.dark.mean,0.4);
+  assert.ok(Math.abs(a.summaries.dark.mean-0.4)<1e-12);
   assert.equal(a.summaries.dark.median,0.4);
   assert.ok(Math.abs(a.summaries.dark.stdev-0.1)<1e-12);
 });
