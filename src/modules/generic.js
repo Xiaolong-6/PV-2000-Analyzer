@@ -1,5 +1,7 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,esc=PV.ui.escapeHtml;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml;
+
+  const esc=value=>PV.ui.escapeHtml(value);
 
   function parse(parsed){
     return{...X.common(parsed),parsed};

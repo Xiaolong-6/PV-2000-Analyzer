@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260922.1.5 — 2026-09-22 — branch
+## v20260922.1.6 — 2026-09-22 — branch
 
 - Reformatted dense executable JavaScript in Dit/QSS/LBIC into reviewable multi-line statements without changing scientific formulas or runtime data paths.
 - Added shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS variables and plot tooltips; removed duplicated module-local implementations.

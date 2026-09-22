@@ -1,13 +1,13 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,UI=PV.ui;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
   const q=1.602176634e-19,k=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI300_PV2000_COMPAT=1.517791063348261e10;
   const NI300_MANUAL=1.02e10;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
-  const esc=UI.escapeHtml;
+  const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
-  const help=UI.help;
-  const css=UI.cssVar;
+  const help=text=>PV.ui.help(text);
+  const css=name=>PV.ui.cssVar(name);
 
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),iter=X.direct(itd,'Iteration'),data=X.direct(iter,'Data');
@@ -79,9 +79,9 @@
     for(let x=start;x<=hi+step*1e-9;x+=step)out.push(x);
     return out}
   function axisFmt(v){if(!Number.isFinite(v))return'';const a=Math.abs(v);return a>=1e4||a>0&&a<1e-2?v.toExponential(1):Number(v.toPrecision(4)).toString()}
-  const setupTooltip=UI.setupTooltip;
-  const showTip=UI.showTooltip;
-  const hideTip=UI.hideTooltip;
+  const setupTooltip=canvas=>PV.ui.setupTooltip(canvas);
+  const showTip=(tip,event,html)=>PV.ui.showTooltip(tip,event,html);
+  const hideTip=tip=>PV.ui.hideTooltip(tip);
   function smoothValueAt(x,y,coords,values,mask,maxDist){
     let nearestSiteSq=Infinity,nearestSiteValid=false,nearestValidSq=Infinity,num=0,den=0;
     for(let i=0;i<coords.length;i++){

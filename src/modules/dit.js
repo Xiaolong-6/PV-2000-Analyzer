@@ -1,10 +1,10 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,UI=PV.ui,q=1.60218e-19,k=1.38e-23,T=300;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,q=1.60218e-19,k=1.38e-23,T=300;
   const finite=a=>(a||[]).filter(Number.isFinite),mean=S.mean;
-  const esc=UI.escapeHtml;
+  const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
   const sci=(v,n=3)=>!Number.isFinite(v)?'—':v.toExponential(n-1).replace('e+','e');
-  const help=UI.help;
+  const help=text=>PV.ui.help(text);
   function scalarMean(e){return e?mean([...e.children].map(x=>Number(x.textContent))):NaN}
   function vectorMeans(e){return e?[...e.children].map(scalarMean):[]}
   function firstNum(parents,names,d=NaN){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.num(p,n,NaN);if(Number.isFinite(v))return v}return d}

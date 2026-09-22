@@ -1,10 +1,10 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,UI=PV.ui,Q_PV2000=1.602e-19;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Q_PV2000=1.602e-19;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
-  const esc=UI.escapeHtml;
+  const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2&&v!==0?v.toExponential(n):v.toFixed(n);
-  const help=UI.help;
-  const css=UI.cssVar;
+  const help=text=>PV.ui.help(text);
+  const css=name=>PV.ui.cssVar(name);
   const aliases={
     current:['current','isc','shortcircuitcurrent'],
     direct:['directreflection','directreflectance','specularreflection','specularreflectance'],
@@ -105,9 +105,9 @@
     [b,c2]=stops[i+1],
     u=(t-a)/(b-a);
     return`rgb(${c1.map((v,j)=>Math.round(v+(c2[j]-v)*u)).join(',')})`}
-  const setupTooltip=UI.setupTooltip;
-  const showTip=UI.showTooltip;
-  const hideTip=UI.hideTooltip;
+  const setupTooltip=canvas=>PV.ui.setupTooltip(canvas);
+  const showTip=(tip,event,html)=>PV.ui.showTooltip(tip,event,html);
+  const hideTip=tip=>PV.ui.hideTooltip(tip);
   function drawMap(canvas,d,metric,selected,scaleMode,onSelect,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       W=canvas.width=760,
