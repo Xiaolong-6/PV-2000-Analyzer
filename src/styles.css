@@ -62,6 +62,8 @@
 .axis-extra-row>button{white-space:nowrap}
 .axis-bin-control{display:flex;align-items:center;gap:5px;margin-left:auto;color:var(--muted);font-size:9px}
 .axis-bin-control input{width:64px;padding:5px 6px;background:var(--button);color:var(--text);border:1px solid var(--button-border);border-radius:5px;font:inherit}
+.bin-popover-card{width:160px}
+.bin-popover-card .axis-bin-control{margin-left:0;justify-content:space-between}
 .axis-limit-actions{display:flex;justify-content:flex-end;gap:5px;margin-top:7px}
 .axis-limit-actions button{padding:5px 9px;font-size:9px;white-space:nowrap}
 .axis-limit-actions [data-axis-apply]{border-color:var(--blue);background:var(--blue);color:#fff}
