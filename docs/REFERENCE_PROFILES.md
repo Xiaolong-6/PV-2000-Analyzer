@@ -141,7 +141,7 @@ Examples include another pattern/coordinate encoding, reversed or serpentine acq
 
 Older QSS XMLs observed in the supplied development set use `HighDensityPattern` with a scalar `Dimension` and explicit normalized `Coefficients` covering a full square grid. Current observed instances include 15 × 15 and 20 × 20 on a 100 mm `RoundWafer` with 7 mm edge exclusion, plus 35 × 35 on a 156 × 156 mm `SquareCell` with 7 mm edge exclusion.
 
-Runtime support preserves coefficient order and requires coefficient count = measured-value count. `SquareCell` coefficients are scaled to the EdgeExclusion-adjusted rectangle. `RoundWafer` coefficients are mapped to the square inscribed in the EdgeExclusion-adjusted circle.
+Runtime support preserves coefficient order and requires coefficient count = measured-value count. `SquareCell` coefficients are scaled to the EdgeExclusion-adjusted rectangle. `RoundWafer` coefficients are restricted to the strict normalized unit-circle subset (`x²+y² < 1`) and then scaled by the EdgeExclusion-adjusted radius.
 
 This path is **inferred**, not a new validated profile, because no matching PV-2000 X/Y export has yet been supplied. A paired export should be used before promoting this coordinate mapping to validated status.
 
