@@ -70,7 +70,9 @@ The analyzer provides:
 - distribution histogram;
 - selected-site repeated dark/light reading plot;
 - CSV export for the selected map quantity, histogram and selected-site raw readings;
-- shared wheel zoom, axis-only zoom, double-click Auto reset and floating manual axis limits.
+- shared wheel zoom, axis-only zoom, double-click Auto reset and floating manual axis limits;
+- Distribution axis swapping;
+- geometry-aware map framing: solid nominal RoundWafer/SquareCell target boundary and dashed EdgeExclusion-adjusted scheduled boundary, with equal physical X/Y scale.
 
 The raster rendering and histogram presentation are analyzer visualizations. They are not claimed to reproduce PV-2000's proprietary interpolation or color-scaling implementation.
 

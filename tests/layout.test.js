@@ -257,15 +257,22 @@ test('QSS Distribution draws numeric tick labels on both axes in normal and swap
 });
 
 
-test('ISC module keeps the three manual-defined quantities, raw-reading view and manual axes',()=>{
+test('ISC module keeps the three manual-defined quantities, raw-reading view, Distribution swap and manual axes',()=>{
   const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   assert.match(isc,/types:\['ISCMeasurement'\]/);
   assert.match(isc,/Vcpd Dark/);
   assert.match(isc,/Vcpd Light/);
   assert.match(isc,/VSB/);
   assert.match(isc,/Raw readings/);
+  assert.match(isc,/id="iSwapHistAxes"/);
+  assert.match(isc,/histSwapped=!histSwapped/);
+  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histSwapped/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
   assert.match(isc,/axisControls\('iHistAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
   assert.match(isc,/equalAspectRanges\(autoX,autoY/);
+  assert.match(isc,/targetGeometry\(d\)/);
+  assert.match(isc,/setLineDash\(\[6,4\]\)/);
+  assert.match(isc,/geometry\.nominal/);
+  assert.match(isc,/geometry\.scheduled/);
 });
