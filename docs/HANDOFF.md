@@ -21,6 +21,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
+- landing page and analysis footer expose compact project provenance links (Live / GitHub / Contribute / Share data / Report) plus the exact deployed short commit SHA; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied.
 
 ## GitHub Pages deployment
 
@@ -35,7 +36,7 @@ The repository now supports two deliberately separate reference-data paths:
 - `private/reference/` remains local-only for confidential or not-yet-cleared XML/CSV/XPS/screenshots;
 - `reference_data/` is the opt-in public area for contributors who explicitly intend to publish a paired PV-2000 reference case and have the right to do so.
 
-A contributor does not need to write code. A data-only PR containing raw XML + matching PV-2000 export and preferably a screenshot is useful evidence for a new measurement/result combination. Developers may branch from current `main`, add implementation + regression coverage + the public case, and request merge. See `CONTRIBUTING.md` and `reference_data/README.md`.
+A contributor does not need to write code. A data-only PR containing raw XML + matching PV-2000 export and preferably a screenshot is useful evidence for a new measurement/result combination. The landing page and README also link to a guided **Share PV-2000 data** issue form for contributors who prefer not to prepare a PR. Developers may branch from current `main`, add implementation + regression coverage + the public case, and request merge. See `CONTRIBUTING.md` and `reference_data/README.md`.
 
 This does not weaken the reference-profile rule: numeric parameter changes inside an established semantic path are not automatically NEW PROFILE, while genuinely new schema/algorithm/channel/result/unit/validity paths require matching vendor evidence before the validation envelope expands.
 
