@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.10
+# Agent handoff — 2026-09-22 — v20260922.11
 
 ## Goal
 
@@ -18,14 +18,14 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, ISC, LBIC and Generic XML inspector;
-- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a floating bottom-left Axes popover that closes after Apply/Auto;
+- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a header Axes popover placed immediately before Export. Distribution plots default to Count on X, keep Swap axes inside that Axes popover, and expose a separate Bins header control (5–200 bins) for histogram spacing;
 - spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
 - LBIC right workspace uses Map + Distribution side-by-side with equal top-row chart sizing and X/Y profiles side-by-side below; Selected pixel and Channel provenance are in the left sidebar. Distribution retains axis swap and numeric ticks;
 - long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
-- landing page uses a structured product header, supported-analyzer strip, prominent XML drop card and explicit local-processing notice; GitHub is available from the header, Contribute / Share data / Report issue remain in the landing footer, the redundant deployed-page Live badge is removed, and the exact short build commit remains visible; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied.
+- landing page uses a structured product header, supported-analyzer strip, prominent XML drop card and explicit local-processing notice; compact README-style Guide / Source / Contribute / Share / Report / Download shortcuts sit below the drop area, build provenance shares the local-processing row, and `dist/PV-2000-Analyzer.html` is emitted alongside `dist/index.html` as the stable offline-download artifact. The redundant deployed-page Live badge remains removed; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied.
 - responsive workspace behavior: wide screens use sidebar + two plot columns; <=1200 CSS px keeps the sidebar and stacks both plot columns vertically in the right pane; true narrow/mobile layouts collapse to one column.
 
 ## GitHub Pages deployment
