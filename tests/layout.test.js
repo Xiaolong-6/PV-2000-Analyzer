@@ -87,11 +87,16 @@ test('all scientific plots expose shared zoom interactions and reset semantics',
   assert.match(lbic,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
 });
 
-test('LBIC Distribution supports axis swapping',()=>{
+test('LBIC Distribution defaults to Count on X and keeps Swap/Bins in header controls',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
-  assert.match(src,/id="lSwapHistAxes"/);
-  assert.match(src,/histSwapped=!histSwapped/);
-  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histSwapped/);
+  assert.match(src,/histSwapped=true/);
+  assert.match(src,/histBins=30/);
+  assert.match(src,/axisControls\('lHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
+  assert.match(src,/binControls\('lHistBins',histBins\)/);
+  assert.match(src,/onSwap:\(\)=>\{histSwapped=!histSwapped/);
+  assert.match(src,/bindBinControls\(host,'lHistBins',histBins/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histBins,histSwapped/);
+  assert.doesNotMatch(src,/id="lSwapHistAxes"/);
 });
 
 test('persistent scientific explanatory paragraphs are moved into hover help',()=>{
@@ -148,7 +153,7 @@ test('Optional Midgap Dit exposes original and median-binned PCHIP methods with 
 });
 
 
-test('landing page has a structured product shell, local-processing message and concise project provenance',()=>{
+test('landing page has a structured product shell, compact README-style shortcuts and same-row build provenance',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.ok(html.includes('class="landing-shell"'));
@@ -156,11 +161,18 @@ test('landing page has a structured product shell, local-processing message and 
   assert.ok(html.includes('class="drop-icon"'));
   assert.ok(html.includes('class="btn drop-open"'));
   assert.ok(html.includes('Local processing'));
-  assert.ok(html.includes('class="project-strip"'));
-  assert.ok(html.includes('https://github.com/Xiaolong-6/PV-2000-Analyzer'));
-  assert.ok(html.includes('Contribute'));
-  assert.ok(html.includes('Share data'));
-  assert.ok(html.includes('Report issue'));
+  assert.ok(html.includes('class="landing-status"'));
+  assert.ok(html.includes('class="project-shortcuts"'));
+  assert.ok(html.includes('class="readme-badge"'));
+  assert.ok(html.includes('>Guide</span>'));
+  assert.ok(html.includes('>Source</span>'));
+  assert.ok(html.includes('>Contribute</span>'));
+  assert.ok(html.includes('PV-2000 data'));
+  assert.ok(html.includes('>Report</span>'));
+  assert.ok(html.includes('>Download</span>'));
+  assert.ok(html.includes('href="./PV-2000-Analyzer.html"'));
+  assert.ok(html.includes('download="PV-2000-Analyzer.html"'));
+  assert.ok(!html.includes('class="landing-repo"'));
   assert.ok(!html.includes('project-live'));
   assert.ok(!html.includes('>Live</a>'));
   assert.ok(html.includes('__BUILD_COMMIT_SHORT__'));
@@ -169,8 +181,8 @@ test('landing page has a structured product shell, local-processing message and 
   assert.ok(css.includes('.landing-shell{'));
   assert.ok(css.includes('.drop::before{'));
   assert.ok(css.includes('.drop-open{'));
-  assert.ok(css.includes('.landing-privacy{'));
-  assert.ok(css.includes('.project-link{'));
+  assert.ok(css.includes('.landing-status{'));
+  assert.ok(css.includes('.readme-badge{'));
 });
 
 test('build injects exact CI commit provenance and has an explicit local fallback',()=>{
@@ -178,6 +190,12 @@ test('build injects exact CI commit provenance and has an explicit local fallbac
   assert.match(build,/process\.env\.PV2000_BUILD_SHA\|\|process\.env\.GITHUB_SHA\|\|'local'/);
   assert.match(build,/replaceAll\('__BUILD_COMMIT_SHORT__'/);
   assert.match(build,/replaceAll\('__BUILD_COMMIT_URL__'/);
+});
+
+test('build emits the same single-file analyzer for Pages and offline download',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  assert.match(build,/const outputs=\['index\.html','PV-2000-Analyzer\.html'\]/);
+  assert.match(build,/for\(const output of outputs\) fs\.writeFileSync/);
 });
 
 
@@ -193,9 +211,11 @@ test('all spatial maps preserve equal physical X/Y scale by default',()=>{
   const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   assert.match(dit,/equalAspectRanges\(rawX,rawY,W-m\.l-m\.r,H-m\.t-m\.b\)/);
   assert.match(lbic,/equalAspectRanges\(rawX,rawY,availW,availH\)/);
   assert.match(qss,/plot=Math\.min\(W-p\.l-p\.r,H-p\.t-p\.b\)/);
+  assert.match(isc,/equalAspectRanges\(autoX,autoY,W-p\.l-p\.r,H-p\.t-p\.b\)/);
 });
 
 test('landing page removes the redundant deployed-site Live shortcut and its dead runtime handling',()=>{
@@ -211,7 +231,7 @@ test('QSS runtime omits fixed reference-validation card and exposes manual axes 
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(qss,/Algorithm validation — reference dataset/);
   assert.match(qss,/axisControls\('qMapAxes'\)/);
-  assert.match(qss,/axisControls\('qHistAxes'\)/);
+  assert.match(qss,/axisControls\('qHistAxes'/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
   assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots">'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
@@ -223,9 +243,9 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   assert.match(lbic,/function niceTicks\(/);
   assert.match(lbic,/fillText\(axisFmt\(v\)/);
   assert.match(lbic,/axisControls\('lMapAxes'\)/);
-  assert.match(lbic,/axisControls\('lHistAxes'\)/);
-  assert.match(lbic,/axisControls\('lXProfileAxes'\)/);
-  assert.match(lbic,/axisControls\('lYProfileAxes'\)/);
+  assert.match(lbic,/axisControls\('lHistAxes'/);
+  assert.match(lbic,/axisControls\('lXProfileAxes'/);
+  assert.match(lbic,/axisControls\('lYProfileAxes'/);
   assert.match(lbic,/class="lbic-workspace"/);
   assert.ok(lbic.indexOf('Selected pixel')<lbic.indexOf('</aside><section class="lbic-workspace">'));
   assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="lbic-workspace">'));
@@ -256,23 +276,61 @@ test('QSS Distribution draws numeric tick labels on both axes in normal and swap
   assert.match(src,/ctx\.fillText\(axisFmt\(t\),p\.l-8,y\+4\)/);
 });
 
+test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shared controls',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/histSwapped=true/);
+  assert.match(src,/histBins=30/);
+  assert.match(src,/axisControls\('qHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
+  assert.match(src,/binControls\('qHistBins',histBins\)/);
+  assert.match(src,/bindBinControls\(host,'qHistBins',histBins/);
+  assert.match(src,/drawHist\(host\.querySelector\('#qHist'\),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
+  assert.doesNotMatch(src,/id="qSwapHistAxes"/);
+});
 
-test('ISC module keeps the three manual-defined quantities, raw-reading view, Distribution swap and manual axes',()=>{
+
+test('ISC keeps validated quantities, geometry-aware map and standardized Distribution controls',()=>{
   const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   assert.match(isc,/types:\['ISCMeasurement'\]/);
   assert.match(isc,/Vcpd Dark/);
   assert.match(isc,/Vcpd Light/);
   assert.match(isc,/VSB/);
   assert.match(isc,/Raw readings/);
-  assert.match(isc,/id="iSwapHistAxes"/);
-  assert.match(isc,/histSwapped=!histSwapped/);
-  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histSwapped/);
+  assert.match(isc,/histSwapped=true/);
+  assert.match(isc,/histBins=30/);
+  assert.match(isc,/axisControls\('iHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
+  assert.match(isc,/binControls\('iHistBins',histBins\)/);
+  assert.match(isc,/bindBinControls\(host,'iHistBins',histBins/);
+  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histBins,histSwapped/);
+  assert.doesNotMatch(isc,/id="iSwapHistAxes"/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
-  assert.match(isc,/axisControls\('iHistAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
   assert.match(isc,/equalAspectRanges\(autoX,autoY/);
   assert.match(isc,/targetGeometry\(d\)/);
   assert.match(isc,/setLineDash\(\[6,4\]\)/);
   assert.match(isc,/geometry\.nominal/);
   assert.match(isc,/geometry\.scheduled/);
+});
+
+
+test('all plot Axes controls are rendered in chart headers immediately before export controls',()=>{
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  for(const src of [dit,qss,lbic,isc]){
+    assert.doesNotMatch(src,/class="(?:canvas-wrap|chart-stage)[^"]*"[^>]*>\$\{PV\.plot\.axisControls/);
+  }
+  assert.match(dit,/axisControls\('ditVcpdAxes'\)\}<button id="e1"/);
+  assert.match(dit,/axisControls\('ditDitAxes'\)\}<button id="e2"/);
+  assert.match(dit,/axisControls\('ditVsbAxes'\)\}<button id="e3"/);
+  assert.match(dit,/axisControls\('ditMapAxes'\)\}<button id="e4"/);
+  assert.match(qss,/axisControls\('qMapAxes'\)\}<button id="qExportMap"/);
+  assert.match(qss,/binControls\('qHistBins',histBins\)\}<button id="qExportHist"/);
+  assert.match(qss,/axisControls\('qProfileAxes'\)\}<button id="qExportProfile"/);
+  assert.match(lbic,/axisControls\('lMapAxes'\)\}<button id="lExportMap"/);
+  assert.match(lbic,/binControls\('lHistBins',histBins\)\}<button id="lExportHist"/);
+  assert.match(lbic,/axisControls\('lYProfileAxes',\{label:'Y axes'\}\)\}<button id="lExportProfile"/);
+  assert.match(isc,/axisControls\('iMapAxes'\)\}<button id="iExportMap"/);
+  assert.match(isc,/binControls\('iHistBins',histBins\)\}<button id="iExportHist"/);
+  assert.match(isc,/axisControls\('iRawAxes'\)\}<button id="iExportRaw"/);
 });

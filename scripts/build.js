@@ -38,5 +38,6 @@ const html=template
   .replaceAll('__BUILD_COMMIT_URL__',commitUrl);
 
 fs.mkdirSync(path.join(root,'dist'),{recursive:true});
-fs.writeFileSync(path.join(root,'dist/index.html'),html);
-console.log(`Built dist/index.html [${shortSha}]`);
+const outputs=['index.html','PV-2000-Analyzer.html'];
+for(const output of outputs) fs.writeFileSync(path.join(root,'dist',output),html);
+console.log(`Built ${outputs.map(output=>`dist/${output}`).join(', ')} [${shortSha}]`);

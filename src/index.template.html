@@ -6,6 +6,9 @@
   <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5"/><path d="m8 9 4-4 4 4"/><path d="M5 14v5h14v-5"/></symbol>
   <symbol id="i-bug" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="12" rx="5"/><path d="M9 7V5m6 2V5M4 11h3m10 0h3M4 16h3m10 0h3"/></symbol>
   <symbol id="i-commit" viewBox="0 0 24 24"><path d="M2 12h6m8 0h6"/><circle cx="12" cy="12" r="4"/></symbol>
+  <symbol id="i-guide" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v17h4.5A2.5 2.5 0 0 1 20 22z"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 8-4 4 4 4"/><path d="m16 8 4 4-4 4"/><path d="m14 5-4 14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="m8 11 4 4 4-4"/><path d="M5 20h14"/></symbol>
 </svg>
 <div id="landing" class="landing">
   <div class="landing-shell">
@@ -14,7 +17,6 @@
         <h1>PV-2000 Analyzer</h1>
         <p class="landing-subtitle">PV-2000 XML analysis and visualization</p>
       </div>
-      <a class="landing-repo" href="https://github.com/Xiaolong-6/PV-2000-Analyzer" target="_blank" rel="noopener" title="Open the project repository"><svg class="project-icon"><use href="#i-repo"/></svg>GitHub</a>
     </header>
     <div class="feature-tags" aria-label="Supported analysis modules">
       <span class="feature-label">Supported analyzers</span>
@@ -31,21 +33,22 @@
       <label class="btn drop-open">Open XML<input id="openLanding" type="file" accept=".xml,text/xml,application/xml"></label>
       <div class="drop-hint">or drag and drop an XML file</div>
     </div>
-    <div class="landing-privacy">
-      <svg class="project-icon" aria-hidden="true"><use href="#i-lock"/></svg>
-      <strong>Local processing</strong>
-      <span>Files stay in your browser and are not uploaded.</span>
+    <div class="landing-status">
+      <div class="landing-privacy">
+        <svg class="project-icon" aria-hidden="true"><use href="#i-lock"/></svg>
+        <strong>Local processing</strong>
+        <span>Files stay in your browser and are not uploaded.</span>
+      </div>
+      <a class="project-build" href="__BUILD_COMMIT_URL__" target="_blank" rel="noopener" title="Build commit __BUILD_COMMIT_FULL__"><svg class="project-icon"><use href="#i-commit"/></svg><span>build</span><code>__BUILD_COMMIT_SHORT__</code></a>
     </div>
-    <footer class="project-strip" aria-label="Project links and build provenance">
-      <div class="project-actions">
-        <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" title="How to contribute code or reference data"><svg class="project-icon"><use href="#i-branch"/></svg>Contribute</a>
-        <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml" target="_blank" rel="noopener" title="Share a matching PV-2000 XML + vendor export + screenshot"><svg class="project-icon"><use href="#i-upload"/></svg>Share data</a>
-        <a class="project-link" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new" target="_blank" rel="noopener" title="Report a problem or request a feature"><svg class="project-icon"><use href="#i-bug"/></svg>Report issue</a>
-      </div>
-      <div class="project-meta">
-        <a class="project-link project-commit" href="__BUILD_COMMIT_URL__" target="_blank" rel="noopener" title="Build commit __BUILD_COMMIT_FULL__"><svg class="project-icon"><use href="#i-commit"/></svg><span>build</span><code>__BUILD_COMMIT_SHORT__</code></a>
-      </div>
-    </footer>
+    <nav class="project-shortcuts" aria-label="Project shortcuts">
+      <a class="readme-badge" href="https://github.com/Xiaolong-6/PV-2000-Analyzer#readme" target="_blank" rel="noopener" title="User guide and project documentation"><span class="badge-icon"><svg class="project-icon"><use href="#i-guide"/></svg></span><span class="badge-part badge-blue">Guide</span></a>
+      <a class="readme-badge" href="https://github.com/Xiaolong-6/PV-2000-Analyzer" target="_blank" rel="noopener" title="Source code"><span class="badge-icon"><svg class="project-icon"><use href="#i-code"/></svg></span><span class="badge-part badge-black">Source</span></a>
+      <a class="readme-badge" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" title="Contribution guide"><span class="badge-icon"><svg class="project-icon"><use href="#i-branch"/></svg></span><span class="badge-part">Contribute</span><span class="badge-part badge-blue">Guide</span></a>
+      <a class="readme-badge" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml" target="_blank" rel="noopener" title="Share matching PV-2000 XML, vendor export and screenshots"><span class="badge-icon"><svg class="project-icon"><use href="#i-upload"/></svg></span><span class="badge-part">Share</span><span class="badge-part badge-purple">PV-2000 data</span></a>
+      <a class="readme-badge" href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new" target="_blank" rel="noopener" title="Report a problem or request a feature"><span class="badge-icon"><svg class="project-icon"><use href="#i-bug"/></svg></span><span class="badge-part">Report</span><span class="badge-part badge-red">Issue</span></a>
+      <a class="readme-badge" href="./PV-2000-Analyzer.html" download="PV-2000-Analyzer.html" title="Download this exact analyzer build for offline use"><span class="badge-icon"><svg class="project-icon"><use href="#i-download"/></svg></span><span class="badge-part">Download</span><span class="badge-part badge-blue">Offline HTML</span></a>
+    </nav>
   </div>
 </div>
 <div id="app" class="hidden"><div class="toolbar"><div class="brand">PV-2000 Analyzer</div><div id="measurementType" class="type"></div><label class="btn">Open XML<input id="openTop" type="file" accept=".xml,text/xml,application/xml"></label><div id="fileName" class="filename"></div><div id="status" class="status"></div><div class="grow"></div><button id="themeBtn" title="Toggle the interface between light and dark themes. The initial theme follows the operating-system preference.">Theme</button></div><main class="content"><div id="moduleHost"></div></main><footer class="app-footer"><span class="footer-brand">PV-2000 Analyzer</span><a href="https://github.com/Xiaolong-6/PV-2000-Analyzer" target="_blank" rel="noopener">GitHub</a><a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contribute</a><a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml" target="_blank" rel="noopener">Share data</a><a class="footer-commit" href="__BUILD_COMMIT_URL__" target="_blank" rel="noopener" title="Build commit __BUILD_COMMIT_FULL__"><svg class="project-icon"><use href="#i-commit"/></svg><code>__BUILD_COMMIT_SHORT__</code></a></footer></div>
