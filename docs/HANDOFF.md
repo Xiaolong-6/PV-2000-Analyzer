@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — v20260922.2
+# Agent handoff — 2026-09-22 — v20260922.3
 
 ## Goal
 
@@ -17,14 +17,15 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; Dit/QSS/LBIC/Generic no longer carry duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
 - landing-page support tags for Dit / COCOS, QSS-µPCD, LBIC and Generic XML inspector;
-- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale;
+- shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots also expose manual X/Y lower/upper limits;
 - spatial maps use equal physical X/Y scale at auto/default view: Dit and QSS wafer outlines remain circular, and LBIC rectangular rasters preserve their measured aspect ratio instead of filling the chart box anisotropically;
-- LBIC Distribution axis swap, matching the existing QSS Distribution interaction;
+- LBIC Distribution axis swap, numeric Distribution/profile ticks, and compact canvas sizing, matching the existing QSS interaction model;
 - long Dit/QSS/LBIC scientific explanations moved to hover help instead of persistent UI paragraphs;
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
 - landing page uses a structured product header, supported-analyzer strip, prominent XML drop card and explicit local-processing notice; GitHub is available from the header, Contribute / Share data / Report issue remain in the landing footer, the redundant deployed-page Live badge is removed, and the exact short build commit remains visible; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied.
+- responsive workspace behavior: wide screens use sidebar + two plot columns; <=1200 CSS px keeps the sidebar and stacks both plot columns vertically in the right pane; true narrow/mobile layouts collapse to one column.
 
 ## GitHub Pages deployment
 
@@ -60,7 +61,7 @@ The QSS UI has also been upgraded: proper axes/ticks/units, map colorbar, distri
 
 ### Important QSS validity behavior
 
-The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. The QSS module now exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
+The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction now uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. The QSS module exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
 
 Do not remove this behavior during refactors.
 
@@ -99,7 +100,7 @@ LOG10 remains the default optional PCHIP interpolation scale; Linear remains ava
 
 QSS Distribution has a Swap axes button beside Export. The map-selected metric (lifetime by default) starts on the horizontal axis with count vertically; swapping moves the metric to the vertical axis and count to the horizontal axis. Valid histogram bars use the same color scale and valid-point value range as the wafer map; excluded counts remain gray. The histogram CSV remains in metric bins and includes the selected metric's units in bin headers.
 
-The QSS result view separates Current dataset facts from fixed algorithm-validation evidence for the 305-point reference. Importing another XML does not imply agreement with an unseen vendor export.
+The QSS runtime shows only facts for the currently imported dataset. Fixed reference-validation evidence for the 305-point paired dataset remains in project documentation rather than being presented as if it belonged to a newly imported XML.
 
 ## LBIC status
 
