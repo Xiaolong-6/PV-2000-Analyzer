@@ -1,0 +1,28 @@
+module.exports=[
+  {ignores:['dist/**','legacy/**','private/**']},
+  {
+    files:['src/**/*.js','scripts/**/*.js','tests/**/*.js'],
+    languageOptions:{ecmaVersion:'latest',sourceType:'script'},
+    linterOptions:{reportUnusedDisableDirectives:'error'},
+    rules:{
+      'no-debugger':'error',
+      'no-dupe-args':'error',
+      'no-dupe-keys':'error',
+      'no-duplicate-case':'error',
+      'no-func-assign':'error',
+      'no-import-assign':'error',
+      'no-invalid-regexp':'error',
+      'no-irregular-whitespace':'error',
+      'no-loss-of-precision':'error',
+      'no-obj-calls':'error',
+      'no-redeclare':'error',
+      'no-self-assign':'error',
+      'no-sparse-arrays':'error',
+      'no-unreachable':'error',
+      'no-unsafe-finally':'error',
+      'no-unsafe-negation':'error',
+      'use-isnan':'error',
+      'valid-typeof':'error'
+    }
+  }
+];
