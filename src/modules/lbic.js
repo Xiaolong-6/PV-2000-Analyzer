@@ -126,8 +126,14 @@
 
     if(patternType==='SquareRegionPattern'&&[nx,ny,regionX,regionY,width,height].every(Number.isFinite)){
       expected=nx*ny;
-      coords=GEO.rectGrid(regionX,regionY,width,height,nx,ny,actual,1);
-      if(coords.length)coordinateSource='SquareRegionPattern Region + Dimension';
+      const scheduled=GEO.rectGrid(regionX,regionY,width,height,nx,ny,null,1);
+      if(actual===expected){
+        coords=scheduled;
+        if(coords.length)coordinateSource='SquareRegionPattern Region + Dimension';
+      }else if(actual>0&&actual<expected&&scheduled.length===expected){
+        coords=scheduled.slice(0,actual);
+        coordinateSource='SquareRegionPattern acquisition prefix (partial)';
+      }
     }else if(patternType==='MapPattern'&&targetType==='PseudoSquareCell'){
       const halfWidth=effectiveHalf(targetWidth,edgeExclusion),
         halfHeight=effectiveHalf(targetHeight,edgeExclusion),
@@ -156,7 +162,8 @@
       expectedPointCount:expected,
       coords,
       coordinateSource,
-      geometryStatus:coords.length?'reconstructed':'unavailable',
+      geometryStatus:coords.length?(Number.isFinite(expected)&&actual<expected?'partial':'reconstructed'):'unavailable',
+      geometryComplete:coords.length>0&&(!Number.isFinite(expected)||actual===expected),
       targetType,
       targetWidth,
       targetHeight,
@@ -186,7 +193,7 @@
       expected=['Current','DirectReflection','ScatteredReflection'],
       exactChannels=names.length===expected.length&&expected.every(n=>names.includes(n)),
       unit=/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,'')),
-      squareGeometry=d.patternType==='SquareRegionPattern'&&[d.nx,d.ny,d.regionX,d.regionY,d.width,d.height].every(Number.isFinite)&&d.nx>=1&&d.ny>=1,
+      squareGeometry=d.patternType==='SquareRegionPattern'&&[d.nx,d.ny,d.regionX,d.regionY,d.width,d.height].every(Number.isFinite)&&d.nx>=1&&d.ny>=1&&(!Number.isFinite(d.pointCount)||!Number.isFinite(d.expectedPointCount)||d.pointCount===d.expectedPointCount),
       pseudoGeometry=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell'&&[d.targetWidth,d.targetHeight,d.diameter,d.pitchX,d.pitchY,d.edgeExclusion].every(Number.isFinite)&&d.targetWidth>0&&d.targetHeight>0&&d.diameter>0&&d.pitchX>0&&d.pitchY>0,
       beamCount=d.beamCount??1,
       iterationCount=d.iterationCount??1,
@@ -265,7 +272,7 @@
     return{iterations:d.iterations.map(it=>{
         const keys=new Set([...Object.keys(it.beams),...Object.keys(d.laserByKey)]),
         beams={},
-        profileContext={...d,beamCount:keys.size,iterationCount:d.iterations.length};for(const key of [...keys].sort((a,b)=>Number(a)-Number(b)))beams[key]=deriveBeam(it.beams[key]||{key:Number(key),channels:{}},
+        profileContext={...d,beamCount:keys.size,iterationCount:d.iterations.length,pointCount:it.pointCount};for(const key of [...keys].sort((a,b)=>Number(a)-Number(b)))beams[key]=deriveBeam(it.beams[key]||{key:Number(key),channels:{}},
         d.laserByKey[key]||{index:Number(key),photonFlux:d.flux[key]},
         profileContext);return{...it,beams}})}}
   function qtile(a,p){const z=(a||[]).filter(Number.isFinite).slice().sort((x,y)=>x-y);if(!z.length)return NaN;const q=(z.length-1)*p,i=Math.floor(q),f=q-i;return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f}
@@ -636,7 +643,7 @@
         const st=S.summary(m.values);return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
     function renderShell(){const {it,beam,metrics,metric}=current(),
-      pointOk=it&&d.coords.length===it.pointCount&&(!Number.isFinite(d.expectedPointCount)||it.pointCount===d.expectedPointCount),
+      pointOk=it&&d.coords.length===it.pointCount,
       laser=beam?.laser||{},
       pseudo=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell',
       patternText=pseudo?`${d.patternDisplayName||d.patternType} · PseudoSquareCell`:`${d.patternDisplayName||d.patternType} · ${fmt(d.nx,0)} × ${fmt(d.ny,0)}`,
@@ -644,12 +651,12 @@
       stepText=pseudo?`${fmt(d.pitchX,4)} × ${fmt(d.pitchY,4)} mm`:`${d.nx>1?fmt(d.width/(d.nx-1),4):'—'} × ${d.ny>1?fmt(d.height/(d.ny-1),4):'—'} mm`,
       measurementMode=flagState(d.measureCurrent)===false&&flagState(d.measureDirect)===true&&flagState(d.measureDiffuse)===true?'Reflectance only':flagState(d.measureCurrent)===true?'Current + optical':'From XML flags';
       host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
-      <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}${metaRow('Pattern',patternText)}${metaRow(pseudo?'Target':'Region',regionText)}${metaRow(pseudo?'Pitch':'Step',stepText)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?'Point count matches the reconstructed geometry schedule.':'A mismatch disables coordinate-based maps.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl></section>
+      <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}${metaRow('Pattern',patternText)}${metaRow(pseudo?'Target':'Region',regionText)}${metaRow(pseudo?'Pitch':'Step',stepText)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?(d.geometryComplete?'Point count matches the complete reconstructed geometry schedule.':'The XML is a partial acquisition. Available DataItems are mapped to the leading X-fast / ascending-Y schedule; this partial coordinate path is shown but not vendor-validated.'):'Coordinate reconstruction is unavailable for this point count / geometry combination.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl></section>
       <section class="panel"><h3>View ${help('Primary quantities follow the active XML measurement flags. Current-enabled validated scans expose Current / Reflectivity / IQE. Reflectance-only scans default to Reflectivity and do not synthesize Current, EQE or IQE from disabled placeholder fields. Advanced exposes active raw/intermediate channels. New semantic paths still require paired PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
       <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows(metrics)}</tbody></table></div></section>
       <section class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></section>
       <section class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></section>
-      <details class="panel"><summary>Geometry / validation ${help('Coordinate validation is profile-specific and documented against matching PV-2000 exports. The on-screen map uses reconstructed physical X/Y coordinates.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Coordinate source',d.coordinateSource)}${metaRow('Acquisition mapping','X-fast, ascending Y where validated')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
+      <details class="panel"><summary>Geometry / validation ${help('Coordinate validation is profile-specific and documented against matching PV-2000 exports. The on-screen map uses reconstructed physical X/Y coordinates.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Coordinate source',d.coordinateSource)}${metaRow('Acquisition mapping','X-fast, ascending Y where validated')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
       </aside><section class="lbic-workspace">
         <div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
         <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Mouse wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('lHistBins',histBins)}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
