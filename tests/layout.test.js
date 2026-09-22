@@ -161,3 +161,11 @@ test('build injects exact CI commit provenance and has an explicit local fallbac
   assert.match(build,/replaceAll\('__BUILD_COMMIT_SHORT__'/);
   assert.match(build,/replaceAll\('__BUILD_COMMIT_URL__'/);
 });
+
+
+test('Median Vsb window stays user-editable for Median-binned PCHIP',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/id="ditPchipMedianMv" type="number" min="0\.1" step="any"/);
+  assert.match(src,/ditPchipMedianMv.*oninput=markDirty|\['#ditCocosEotA'[^\]]*'#ditPchipMedianMv'/);
+  assert.match(src,/pchipMedianWindowV=medianMv\*1e-3/);
+});
