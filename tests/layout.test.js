@@ -231,7 +231,7 @@ test('QSS runtime omits fixed reference-validation card and exposes manual axes 
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(qss,/Algorithm validation — reference dataset/);
   assert.match(qss,/axisControls\('qMapAxes'\)/);
-  assert.match(qss,/axisControls\('qHistAxes'\)/);
+  assert.match(qss,/axisControls\('qHistAxes'/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
   assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots">'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
@@ -243,7 +243,7 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   assert.match(lbic,/function niceTicks\(/);
   assert.match(lbic,/fillText\(axisFmt\(v\)/);
   assert.match(lbic,/axisControls\('lMapAxes'\)/);
-  assert.match(lbic,/axisControls\('lHistAxes'\)/);
+  assert.match(lbic,/axisControls\('lHistAxes'/);
   assert.match(lbic,/axisControls\('lXProfileAxes'\)/);
   assert.match(lbic,/axisControls\('lYProfileAxes'\)/);
   assert.match(lbic,/class="lbic-workspace"/);
