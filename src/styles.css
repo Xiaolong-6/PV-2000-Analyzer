@@ -95,3 +95,21 @@
   .feature-tag{font-size:9.5px;padding:3px 7px}
   .drop{padding:26px 18px}
 }
+
+/* Project provenance / contribution links */
+.icon-sprite{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+.project-strip{display:flex;justify-content:center;align-items:center;gap:7px;flex-wrap:wrap;margin-top:15px;padding-top:13px;border-top:1px solid var(--border)}
+.project-link{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:5px 9px;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--panel) 82%,var(--bg));color:var(--muted);font-size:10px;font-weight:650;line-height:1;text-decoration:none;box-shadow:0 1px 0 rgba(0,0,0,.04);transition:transform .14s ease,border-color .14s ease,color .14s ease,background .14s ease}
+a.project-link:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--blue) 45%,var(--border));color:var(--text);background:color-mix(in srgb,var(--blue) 7%,var(--panel))}
+.project-icon{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.project-local{cursor:default;color:var(--good)}
+.project-live{color:var(--good)}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 14%,transparent)}
+.project-commit code,.footer-commit code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:9.5px;color:inherit}
+.app-footer{display:flex;justify-content:center;align-items:center;gap:11px;flex-wrap:wrap;min-height:38px;margin-top:4px;padding:8px 12px;border-top:1px solid var(--border);color:var(--muted);font-size:9.5px}
+.app-footer a{display:inline-flex;align-items:center;gap:4px;color:var(--muted);text-decoration:none}
+.app-footer a:hover{color:var(--text)}
+.footer-brand{font-weight:700;color:var(--text)}
+.app-footer .project-icon{width:11px;height:11px}
+@media(max-width:430px){.project-strip{gap:5px;margin-top:12px;padding-top:11px}.project-link{min-height:27px;padding:5px 8px;font-size:9.5px}.app-footer{gap:8px}}
+@media(prefers-reduced-motion:reduce){.project-link{transition:none}a.project-link:hover{transform:none}}
