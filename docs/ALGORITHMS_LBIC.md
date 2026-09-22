@@ -52,7 +52,7 @@ The four matching CSV exports establish:
 
 Status: **validated for the SquareRegionPattern coordinate rule used by this single-beam family**. The reference instances exercise two raster resolutions and two origins. New numeric grid dimensions (for example 4×4 or 5×5) use the same rule and are not automatically a NEW PROFILE.
 
-The on-screen heat map follows acquisition row order. This coordinate validation does not separately claim that the browser's screen orientation matches every PV-2000 map display convention.
+The on-screen heat map uses the reconstructed physical coordinates with conventional Cartesian orientation (+Y upward). Coordinate values/order are vendor-regressed; palette/interpolation appearance is an analyzer presentation choice.
 
 ## Multi-beam PseudoSquareCell raster reconstruction
 
@@ -66,7 +66,7 @@ radius     = Target.Diameter / 2 - EdgeExclusion
 
 A centered lattice is generated at `Pattern/Pitch/X,Y` with X-fast, ascending-Y acquisition order. A point is retained only when it lies inside both the adjusted rectangle and adjusted circle. The supplied 125 × 125 mm, 150 mm-diameter, 3 mm-edge-exclusion, 0.5 mm-pitch reference therefore uses halfWidth = halfHeight = 59.5 mm and radius = 72 mm, yielding exactly **54,449** points. All reconstructed X/Y coordinates match the paired PV-2000 CSV exactly.
 
-The browser map displays the nominal pseudo-square outline, a dashed EdgeExclusion-adjusted scheduled boundary, equal physical X/Y scale, and clips raster cells to the scheduled shape. X/Y profiles are extracted by matching the selected point's physical Y or X coordinate, respectively; they do not assume a dense rectangular `row * nx + col` layout.
+The browser map displays the nominal pseudo-square outline, a dashed EdgeExclusion-adjusted scheduled boundary, equal physical X/Y scale with +Y upward, and clips raster cells to the scheduled shape. X/Y profiles are extracted by matching the selected point's physical Y or X coordinate, respectively; they do not assume a dense rectangular `row * nx + col` layout.
 
 Status: **validated for the MapPattern + PseudoSquareCell coordinate rule in LBIC-MULTI-002**.
 
