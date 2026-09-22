@@ -38,6 +38,32 @@
     return edge>=0&&edge<half?half-edge:NaN;
   }
 
+  function targetGeometry(d){
+    if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
+      const radius=d.diameter/2,
+        scheduledRadius=effectiveHalf(d.diameter,d.edgeExclusion);
+      return{
+        shape:'circle',
+        nominal:{radius},
+        scheduled:Number.isFinite(scheduledRadius)?{radius:scheduledRadius}:null
+      };
+    }
+    if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)&&d.targetWidth>0&&d.targetHeight>0){
+      const halfWidth=d.targetWidth/2,
+        halfHeight=d.targetHeight/2,
+        scheduledHalfWidth=effectiveHalf(d.targetWidth,d.edgeExclusion),
+        scheduledHalfHeight=effectiveHalf(d.targetHeight,d.edgeExclusion);
+      return{
+        shape:'rect',
+        nominal:{halfWidth,halfHeight},
+        scheduled:Number.isFinite(scheduledHalfWidth)&&Number.isFinite(scheduledHalfHeight)
+          ?{halfWidth:scheduledHalfWidth,halfHeight:scheduledHalfHeight}
+          :null
+      };
+    }
+    return null;
+  }
+
   function parse(parsed){
     const m=parsed.measurement,
       c=X.common(parsed),
