@@ -110,6 +110,10 @@ QSS Distribution defaults to Count on X and keeps Swap axes inside the Axes acti
 
 The QSS runtime shows only facts for the currently imported dataset. Fixed reference-validation evidence for the 305-point paired dataset remains in project documentation rather than being presented as if it belonged to a newly imported XML. The empty `Algorithm notes` disclosure has also been removed from the runtime; detailed algorithm notes stay in `docs/ALGORITHMS_QSS_UPCD.md`.
 
+Older QSS XMLs using `HighDensityPattern` are now supported as an **inferred coordinate path**. These XMLs carry a scalar `Dimension` and a count-matched normalized `Coefficients` grid. Current observed examples cover 15×15 and 20×20 RoundWafer maps and a 35×35 SquareCell map. SquareCell coefficients scale to the EdgeExclusion-adjusted rectangle; RoundWafer coefficients use the inscribed square of the effective circle. Keep this labelled inferred until a matching PV-2000 X/Y export is regressed.
+
+The main toolbar also exposes `← Open XML →` navigation. After one folder authorization, the arrows traverse XML files in natural filename order without reopening the picker for each file. The ordinary Open XML and drag/drop paths remain unchanged; a `webkitdirectory` fallback covers browsers without the File System Access API.
+
 ## ISC status
 
 ISC support is now a separate `ISCMeasurement` module rather than a Generic Inspector fallback. The PV-2000A manual defines ISC as dark/illuminated Kelvin-probe VCPD with VSB determined from their difference, and lists Vcpd Dark / Vcpd Light / VSB as the three data-view quantities.
