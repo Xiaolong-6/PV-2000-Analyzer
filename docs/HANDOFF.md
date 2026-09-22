@@ -22,7 +22,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - confidential/local user/vendor files protected under ignored `private/reference/`;
 - opt-in public community regression cases supported under `reference_data/`, with data-only PRs allowed.
 - GitHub Pages workflow builds and publishes `dist/` after every successful push to `main`; repository Pages must use **GitHub Actions** as its publishing source.
-- landing page and analysis footer expose compact project provenance links (Live / GitHub / Contribute / Share data / Report) plus the exact deployed short commit SHA; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied. The Live shortcut is hidden when already running on the official GitHub Pages URL.
+- landing page uses a structured product header, supported-analyzer strip, prominent XML drop card and explicit local-processing notice; GitHub is available from the header, Contribute / Share data / Report issue remain in the landing footer, the redundant deployed-page Live badge is removed, and the exact short build commit remains visible; local builds display `local` unless `PV2000_BUILD_SHA` or `GITHUB_SHA` is supplied.
 
 ## GitHub Pages deployment
 
