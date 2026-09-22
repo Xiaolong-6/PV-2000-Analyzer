@@ -124,7 +124,9 @@ One matching XML + vendor CSV establishes exact numerical behavior for the curre
 
 Alternate ISC pattern/target/raw-reading/result paths remain **NEW PROFILE** unless paired PV-2000 output confirms them. The runtime never reads the vendor CSV.
 
-See `docs/ALGORITHMS_ISC.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+The same module now also dispatches the separately validated `VcpdMeasurement` family. The current VCPD reference is `MapPattern + RoundWafer`: 1649 sites, 200 mm diameter, 8 mm edge exclusion, 4 mm pitch, one direct `Readings` value/site, `LightOn=false` and iteration-level `VcpdOffset=0`. All 1649 reconstructed X/Y coordinates and Vcpd Dark values match the vendor CSV exactly; summary statistics use sample Stdev and match to floating-point precision. VCPD exposes only Vcpd Dark and does not synthesize ISC-only Vcpd Light/VSB. Non-zero VcpdOffset, illumination, multiple readings/site or another result path remain **NEW PROFILE**.
+
+See `docs/ALGORITHMS_ISC.md`, `docs/ALGORITHMS_VCPD.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
 ## LBIC status
 
@@ -169,6 +171,7 @@ npm run check
 npm run build
 npm run validate:qss
 npm run validate:isc
+npm run validate:vcpd
 npm run validate:lbic
 git status --short --ignored
 ```

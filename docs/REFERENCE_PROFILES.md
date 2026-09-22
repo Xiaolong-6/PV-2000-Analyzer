@@ -199,6 +199,68 @@ Ordinary numeric changes in pitch, target size, edge exclusion, reading count, o
 
 ---
 
+### VCPD-MAP-001 — direct dark-contact-potential wafer map
+
+**Measurement type**
+
+`VcpdMeasurement`
+
+**Reference material**
+
+One matching PV-2000 XML + CSV export plus a PV-2000 result screenshot. The XML contains one `Readings/double` value for every `VcpdDataItem`; the CSV contains X/Y coordinates, vendor `Vcpd Dark [V]` and summary statistics.
+
+**Validated family**
+
+Semantic input/output path:
+
+- one iteration;
+- `VcpdDataItem/Readings` with exactly one reading/site;
+- `MapPattern + RoundWafer`;
+- `LightOn=false`;
+- iteration-level `VcpdOffset=0 V`;
+- vendor output `Vcpd Dark [V]`.
+
+For this paired reference:
+
+```text
+Vcpd Dark = XML Reading
+```
+
+The runtime stores VCPD site results through the shared ISC/Kelvin-probe data model and uses the mean of the `Readings` container. This does **not** expand the validated claim to multiple readings/site or non-zero offsets.
+
+The reference instance has 1649 sites, one reading/site, a 200 mm RoundWafer, 8 mm EdgeExclusion and 4 × 4 mm pitch. Those numeric settings are evidence, not a runtime whitelist.
+
+**Validated / established**
+
+- 1649 XML sites = 1649 vendor rows;
+- scheduled radius = 200/2 − 8 = **92 mm**;
+- strict circular `x²+y²<r²` X-fast row-major lattice reproduces every vendor coordinate exactly;
+- first coordinate = **(-24, -88) mm** and last coordinate = **(24, 88) mm**;
+- Vcpd Dark pointwise maximum absolute error = **0 V**;
+- Average = **0.40415552129527 V**;
+- Median = **0.431620389 V**;
+- sample Stdev = **0.292987392588935 V**;
+- Min = **-3.43040323 V**;
+- Max = **2.16074562 V**;
+- analyzer finite-site summary reproduces the vendor summary to floating-point precision.
+
+**Shared analyzer behavior**
+
+`VcpdMeasurement` reuses the ISC/Kelvin-probe map, distribution, selected-site reading inspection, geometry, zoom/manual-axis and CSV-export infrastructure. Its result selector contains only Vcpd Dark; ISC-only Vcpd Light and VSB are not synthesized.
+
+**NEW PROFILE triggers**
+
+Examples include:
+
+- non-zero iteration-level VcpdOffset;
+- `LightOn=true`;
+- multiple readings/site;
+- another pattern/coordinate encoding or target geometry;
+- multiple iterations;
+- another unit convention or additional vendor result quantity.
+
+---
+
 ### LBIC-SINGLE-001 — single-beam Current/Reflectivity/IQE family
 
 **Measurement type**
