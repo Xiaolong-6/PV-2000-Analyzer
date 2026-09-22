@@ -73,9 +73,9 @@ test('all scientific plots expose shared zoom interactions and reset semantics',
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
   assert.match(build,/'src\/core\/plot\.js'/);
-  assert.equal((dit.match(/PV\.plot\.bind/g)||[]).length,4);
-  assert.equal((qss.match(/PV\.plot\.bind/g)||[]).length,3);
-  assert.equal((lbic.match(/PV\.plot\.bind/g)||[]).length,3);
+  assert.equal((dit.match(/PV\.plot\.bind\(/g)||[]).length,4);
+  assert.equal((qss.match(/PV\.plot\.bind\(/g)||[]).length,3);
+  assert.equal((lbic.match(/PV\.plot\.bind\(/g)||[]).length,3);
   assert.match(dit,/onReset:\(\)=>\{zoom\.vcpd=\{x:null,y:null\}/);
   assert.match(qss,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
   assert.match(lbic,/onReset:\(\)=>onZoom\?\.\(\{x:null,y:null\}\)/);
@@ -196,4 +196,32 @@ test('landing page removes the redundant deployed-site Live shortcut and its dea
   assert.ok(!html.includes('project-live'));
   assert.ok(!app.includes('project-live'));
   assert.ok(!app.includes('xiaolong-6.github.io'));
+});
+
+
+test('QSS runtime omits fixed reference-validation card and exposes manual axes on data plots',()=>{
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.doesNotMatch(qss,/Algorithm validation — reference dataset/);
+  assert.match(qss,/axisControls\('qHistAxes'\)/);
+  assert.match(qss,/axisControls\('qProfileAxes'\)/);
+  assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
+});
+
+test('LBIC distribution and profiles render numeric ticks, manual axes and no forced blank canvas height',()=>{
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(lbic,/function niceTicks\(/);
+  assert.match(lbic,/fillText\(axisFmt\(v\)/);
+  assert.match(lbic,/axisControls\('lHistAxes'\)/);
+  assert.match(lbic,/axisControls\('lXProfileAxes'\)/);
+  assert.match(lbic,/axisControls\('lYProfileAxes'\)/);
+  assert.match(css,/\.lbic-module \.canvas-wrap\{min-height:0\}/);
+});
+
+test('Dit numeric line plots expose manual X and Y limits',()=>{
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(dit,/axisControls\('ditVcpdAxes'\)/);
+  assert.match(dit,/axisControls\('ditVsbAxes'\)/);
+  assert.match(dit,/axisControls\('ditDitAxes'\)/);
+  assert.match(dit,/bindAxisControls\(host,'ditDitAxes'[^]*\{yLog:true\}/);
 });

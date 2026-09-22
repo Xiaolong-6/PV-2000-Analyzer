@@ -47,6 +47,13 @@
 .measurement-title{font-weight:750;line-height:1.3;overflow-wrap:anywhere;margin-bottom:5px}.measurement-sub{font-size:10px;color:var(--muted);margin-bottom:8px}.mode-badge{display:inline-block;border:1px solid var(--border);border-radius:999px;padding:1px 6px;font-size:9px}.mode-badge.good{border-color:var(--good);color:var(--good)}
 .meta-detail{padding:9px}.filter-grid{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:6px}.filter-grid label{display:flex;flex-direction:column;gap:3px;font-size:9px;color:var(--muted)}.filter-grid input,.filter-grid select{width:100%;font:inherit;background:var(--button);color:var(--text);border:1px solid var(--button-border);border-radius:6px;padding:5px}.filter-actions{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:9px;color:var(--muted)}.filter-actions b{color:var(--text);font-size:11px}.canvas-wrap{position:relative;background:var(--chart-bg);min-height:300px}.canvas-wrap canvas{width:100%;height:auto;display:block;max-height:none}.plot-tooltip{position:absolute;z-index:8;pointer-events:none;max-width:230px;background:color-mix(in srgb,var(--panel) 94%,transparent);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:9px;line-height:1.45;box-shadow:0 4px 18px rgba(0,0,0,.18)}.plot-tooltip.hidden{display:none}.qss-module .chart canvas{max-height:none}.qss-module .panel.chart header .help,.dit-module .panel.chart header .help{flex:0 0 auto}.qss-module .validation{grid-template-columns:repeat(2,1fr)}
 .good{color:var(--good)}.bad{color:var(--bad)}
+.axis-limits{padding:0 8px;border-bottom:1px solid var(--border);background:color-mix(in srgb,var(--panel) 92%,var(--bg))}
+.axis-limits>summary{width:max-content;padding:4px 0;color:var(--muted);font-size:9px;font-weight:700;cursor:pointer;user-select:none}
+.axis-limit-grid{display:grid;grid-template-columns:repeat(4,minmax(64px,1fr)) auto auto;gap:5px;align-items:end;padding:1px 0 7px}
+.axis-limit-grid label{display:flex;flex-direction:column;gap:2px;min-width:0;color:var(--muted);font-size:8.5px}
+.axis-limit-grid input{width:100%;min-width:0;padding:4px 5px;background:var(--button);color:var(--text);border:1px solid var(--button-border);border-radius:5px;font:inherit}
+.axis-limit-grid button{padding:4px 7px;font-size:9px;white-space:nowrap}
+@media(max-width:700px){.axis-limit-grid{grid-template-columns:repeat(2,minmax(80px,1fr)) auto auto}}
 @media(max-width:1150px){.filter-grid{grid-template-columns:1fr 1fr}.filter-grid label:first-child{grid-column:1/-1}}
 @media(max-width:700px),(pointer:coarse) and (orientation:portrait) and (max-width:950px){.filter-grid{grid-template-columns:1fr}.filter-grid label:first-child{grid-column:auto}}
 
@@ -102,10 +109,12 @@
 
 /* LBIC raster viewer */
 .lbic-module .chart canvas{max-height:none}
+.lbic-module .canvas-wrap{min-height:0}
 .lbic-module .side .setting-row label,.lbic-module .side .setting-row select,.lbic-module .side table,.lbic-module .side th,.lbic-module .side .note{font-size:inherit}
 .lbic-module .side .setting-row select{font-family:inherit}
 .lbic-module .profile-grid{display:grid;grid-template-columns:1fr;gap:5px}
 .lbic-module .mini-title{padding:5px 8px 0;font-size:9px;color:var(--muted)}
+.lbic-module .profile-grid .axis-limits{margin:3px 8px 0;border:1px solid var(--border);border-radius:6px}
 .lbic-module .canvas-wrap.compact{min-height:0}
 .lbic-module .canvas-wrap.compact canvas{max-height:230px}
 .lbic-module .panel.chart header{flex-wrap:wrap;height:auto;min-height:35px}
