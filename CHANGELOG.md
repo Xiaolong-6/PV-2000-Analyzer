@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260922.11 — 2026-09-22
+
+- Refreshed the welcome page with compact Guide / Source / Contribute / Share / Report shortcuts, same-row build provenance and a stable `PV-2000-Analyzer.html` offline download artifact.
+- Moved every scientific plot's `Axes` control from the lower-left plot overlay into the chart header immediately before export controls, with one shared visual style.
+- Standardized QSS, LBIC and ISC Distribution orientation to **Count on X** by default; `Swap axes` now lives inside the Distribution Axes popover instead of occupying the chart header.
+- Added a dedicated `Bins` header control to every Distribution. Users can set 5–200 bins to make histogram bars wider or narrower; changing bins resets only the Distribution zoom.
+
 ## v20260922.10 — 2026-09-22
 
 - Hardened ISC validation semantics so a missing `VcpdOffset` remains missing instead of silently becoming zero; the private validator now requires both offset and VSB correction factor for the validated result path.
