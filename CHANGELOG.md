@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260923.11.1 — 2026-09-23 (ISC/VCPD Valid-data filter branch)
+## v20260923.12 — 2026-09-23
 
 - Added a reusable shared Valid-data filter controller and UI contract on top of the Phase A selection primitives.
 - Connected ISC/VCPD to one site-level active mask: ISC can filter by Vcpd Dark, Vcpd Light or VSB; VCPD filters by Vcpd Dark.
