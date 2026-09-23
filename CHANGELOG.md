@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.11.1 — 2026-09-23 (ISC/VCPD Valid-data filter branch)
+
+- Added a reusable shared Valid-data filter controller and UI contract on top of the Phase A selection primitives.
+- Connected ISC/VCPD to one site-level active mask: ISC can filter by Vcpd Dark, Vcpd Light or VSB; VCPD filters by Vcpd Dark.
+- Applied the active mask consistently to summary statistics, maps, distributions and exports while preserving raw result/readings for excluded sites.
+- Extended map/histogram exports with active filter provenance and added regression coverage for controller state, cross-metric masking and ISC/VCPD integration.
+
 ## v20260923.11 — 2026-09-23
 
 - Added an explicit PV-2000 software-version validation boundary: the current reference baseline is Semilab PV-2000 v1.3.0.5. The landing page, README and reference-profile registry distinguish this evidence boundary from schema/profile compatibility with other versions.
