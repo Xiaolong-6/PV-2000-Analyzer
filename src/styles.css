@@ -7,7 +7,9 @@
 .landing-heading{min-width:0}
 .landing h1{margin:0;font-size:36px;line-height:1.08;letter-spacing:-.035em;font-weight:780}
 .landing-subtitle{margin:8px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
-.feature-tags{display:flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;margin:0 0 14px;padding:9px 10px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--panel) 72%,var(--bg))}
+.feature-tags{display:grid;gap:6px;margin:0 0 14px;padding:9px 10px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--panel) 72%,var(--bg))}
+.feature-row{display:flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap}
+.feature-row-secondary{padding-top:6px;border-top:1px solid color-mix(in srgb,var(--border) 72%,transparent)}
 .feature-label{margin:0 4px 0 1px;color:var(--muted);font-size:9px;font-weight:780;letter-spacing:.075em;line-height:1;text-transform:uppercase}
 .feature-tag{display:inline-flex;align-items:center;min-height:26px;padding:4px 9px;border:1px solid var(--border);border-radius:999px;background:var(--bg);color:var(--text);font-size:10px;font-weight:680;line-height:1.2}
 .feature-tag-muted{color:var(--muted);font-weight:580}
