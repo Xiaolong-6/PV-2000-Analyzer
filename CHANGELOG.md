@@ -1,9 +1,15 @@
 # Changelog
 
-## v20260923.6.1 — 2026-09-23 — architecture planning branch
+## v20260923.8 — 2026-09-23
 
-- Added a staged measurement-domain refactor plan based on the current measurement semantics, validation profiles and result-provenance model.
-- The next implementation branch is deliberately limited to domain primitives plus an ISC/VCPD pilot; no runtime or scientific changes are made on this planning branch.
+- Added `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`, defining a staged measurement-domain refactor around quantity provenance, availability, compatibility profiles, normalized geometry and pure scientific services.
+- The planned first implementation phase is limited to shared domain primitives plus an ISC/VCPD pilot, preserving all existing numerical results, UI behavior and validation labels.
+
+## v20260923.7 — 2026-09-23
+
+- Added a generic, read-only DIT XML/raw-CSV diagnostic and optional strict dark-channel regression gate; private file paths and data remain outside the repository.
+- Audited a larger private Standard COCOS OnePoint corpus: 176 paired row-aligned cases / 11,575 process rows reproduce the Qc schedule exactly, while eight cases exceed 2 mV dark-channel error and the exported light/Vsb branches are not generally derivable from saved measured-light XML.
+- Confirmed that the inspected historical backup, installation data and Ge/COCOS measurement XML sets contain no `UseCocosII=true` DIT instance; COCOS-II and the Analyzer-only Ge model retain their existing validation boundaries. No runtime calculation changed.
 
 ## v20260923.6 — 2026-09-23
 

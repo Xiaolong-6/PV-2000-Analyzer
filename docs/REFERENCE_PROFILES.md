@@ -34,6 +34,7 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 - The default Analyzer Si model uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc, with `εr = 11.68`; Qsc previously used the rounded `1.00e10 cm^-3`.
 - The optional Ge choice is an **Analyzer-only legacy-MATLAB model** using `ni = 2e13 cm^-3` and `εr = 16.2`. PV-2000 itself has no Si/Ge material selector, so a Ge-sample export is not evidence for a PV-2000 Ge algorithm/profile.
 - Re-run the private DIT-STD-001 Si-sample regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
+- A broader private OnePoint/raw-CSV audit has 176 row-aligned Standard COCOS pairs and exact Qc schedule agreement across 11,575 process rows. Only 168 pairs remain within 2 mV maximum dark-channel error; eight diverge, and the corrected light/Vsb/Dit export path remains unresolved. This audit does not expand validation to the whole corpus or to the Analyzer Ge option.
 
 **Not validated by this profile**
 
@@ -51,7 +52,7 @@ Treat as a new profile when a real dataset introduces a materially different Dit
 - new COCOS-II acceptance/window behavior;
 - a different pointwise Dit/Vsb export structure;
 - materially different flatband/extraction fields that require new parser or calculation assumptions;
-- a new semiconductor material reference (including the first PV-2000 Ge reference) that establishes material-specific vendor parity.
+- independent evidence of a material-specific vendor algorithm; a Ge-named sample/export alone does not establish one because PV-2000 provides no Si/Ge selector in these files.
 
 Current COCOS-II status remains **inferred** until matching vendor pointwise output validates it.
 
