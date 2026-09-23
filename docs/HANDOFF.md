@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — codex/reflectance-xml-iteration v20260922.17.2
+# Agent handoff — 2026-09-23 — main v20260923.1
 
 ## Goal
 
