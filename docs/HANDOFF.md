@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — v20260923.21
+# Agent handoff — 2026-09-23 — v20260923.21.1
 
 ## Analyzer index + sidebar consistency audit
 
