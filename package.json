@@ -4,6 +4,7 @@
   "scripts": {
     "build": "node scripts/build.js",
     "test": "node --test tests/*.test.js",
+    "validate:dit": "node scripts/run_python.js scripts/validate_dit_raw_reference.py",
     "validate:qss": "node scripts/run_python.js scripts/validate_qss_reference.py",
     "validate:dual-qss": "node scripts/run_python.js scripts/validate_dual_qss_reference.py",
     "validate:jzero": "node scripts/run_python.js scripts/validate_jzero_reference.py",

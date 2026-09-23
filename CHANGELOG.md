@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260923.6.1 — 2026-09-23 (DIT reference audit branch)
+
+- Added a generic, read-only DIT XML/raw-CSV diagnostic and optional strict dark-channel regression gate; private file paths and data remain outside the repository.
+- Audited a larger private Standard COCOS OnePoint corpus: 176 paired row-aligned cases / 11,575 process rows reproduce the Qc schedule exactly, while eight cases exceed 2 mV dark-channel error and the exported light/Vsb branches are not generally derivable from saved measured-light XML.
+- Confirmed that the inspected historical backup, installation data and Ge/COCOS measurement XML sets contain no `UseCocosII=true` DIT instance; COCOS-II and the Analyzer-only Ge model retain their existing validation boundaries. No runtime calculation changed.
+
 ## v20260923.6 — 2026-09-23
 
 - Moved the Dual QSS **Measurement position** schematic out of the left metadata sidebar and into the right visualization column, matching the established DIT placement rule for OnePoint geometry.
