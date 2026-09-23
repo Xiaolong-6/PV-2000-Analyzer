@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — fix/dual-qss-initial-lifetime-render v20260923.9.1
+# Agent handoff — 2026-09-23 — main v20260923.10
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
