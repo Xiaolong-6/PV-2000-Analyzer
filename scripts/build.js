@@ -8,6 +8,7 @@ const files=[
   'src/core/geometry.js',
   'src/core/validity.js',
   'src/core/quantity.js',
+  'src/core/selection.js',
   'src/core/measurement.js',
   'src/core/profiles.js',
   'src/core/export.js',

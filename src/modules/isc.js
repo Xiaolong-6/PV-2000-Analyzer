@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Q=PV.quantity,M=PV.measurement,Profiles=PV.profiles;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Q=PV.quantity,Sel=PV.selection,M=PV.measurement,Profiles=PV.profiles;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const esc=value=>PV.ui.escapeHtml(value);
   const help=text=>PV.ui.help(text);
@@ -249,7 +249,8 @@
     }
     const summaries={};
     for(const [key,metric] of Object.entries(metrics))summaries[key]=Q.summary(metric);
-    return{metrics,summaries,profile:d.profile||null};
+    const selection=Sel.evaluate({metrics,siteCount:d.sites.length,filter:{metricKey:'dark'}});
+    return{metrics,summaries,profile:d.profile||null,selection};
   }
 
   function color(t){

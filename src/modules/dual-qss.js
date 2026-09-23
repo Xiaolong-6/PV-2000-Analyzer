@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
   const esc=v=>PV.ui.escapeHtml(v),help=t=>PV.ui.help(t),css=n=>PV.ui.cssVar(n);
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2&&v!==0?v.toExponential(n):v.toFixed(n);

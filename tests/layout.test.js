@@ -12,11 +12,12 @@ test('measurement domain primitives load before profile and module code',()=>{
   const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
   const validity=build.indexOf("'src/core/validity.js'");
   const quantity=build.indexOf("'src/core/quantity.js'");
+  const selection=build.indexOf("'src/core/selection.js'");
   const measurement=build.indexOf("'src/core/measurement.js'");
   const profiles=build.indexOf("'src/core/profiles.js'");
   const iscProfile=build.indexOf("'src/profiles/isc.js'");
   const iscModule=build.indexOf("'src/modules/isc.js'");
-  assert.ok(validity>=0&&quantity>validity&&measurement>quantity&&profiles>measurement);
+  assert.ok(validity>=0&&quantity>validity&&selection>quantity&&measurement>selection&&profiles>measurement);
   assert.ok(iscProfile>profiles&&iscModule>iscProfile);
 });
 
