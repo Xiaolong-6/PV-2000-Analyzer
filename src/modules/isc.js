@@ -44,6 +44,9 @@
   }
 
   function targetGeometry(d){
+    const resolved=d?.resolvedGeometry;
+    if(resolved?.shape==='circle'&&resolved.nominal)return{shape:'circle',nominal:resolved.nominal,scheduled:resolved.scheduled};
+    if(resolved?.shape==='rect'&&resolved.nominal)return{shape:'rect',nominal:resolved.nominal,scheduled:resolved.scheduled};
     if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
       const radius=d.diameter/2,
         scheduledRadius=effectiveHalf(d.diameter,d.edgeExclusion);

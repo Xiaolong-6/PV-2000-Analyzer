@@ -190,6 +190,7 @@
       targetType,diameter,targetWidth,targetHeight,edgeExclusion,substrateShape,substrateRadius
     });
     let pointsMm=[],
+      resolvedScheduled=boundary.scheduled,
       sourceSpace='none',
       interpretation='unresolved',
       evidenceStatus='unclassified',
@@ -213,6 +214,9 @@
         sourceSpace='absolute-region-mm';
         interpretation='explicit-region-grid';
         acquisitionOrder='x-fast / ascending-y';
+        if(boundary.shape==='rect'&&[regionX,regionY,regionWidth,regionHeight].every(Number.isFinite)){
+          resolvedScheduled={xMin:regionX,xMax:regionX+regionWidth,yMin:regionY,yMax:regionY+regionHeight};
+        }
       }
     }else if(patternType==='HighDensityPattern'&&boundary.scheduled){
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
@@ -254,7 +258,7 @@
       targetType,
       shape:boundary.shape,
       nominal:boundary.nominal,
-      scheduled:boundary.scheduled,
+      scheduled:resolvedScheduled,
       pointsMm,
       rawCoefficients,
       edgeExclusion,

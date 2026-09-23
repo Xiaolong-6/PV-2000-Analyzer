@@ -13,6 +13,13 @@
   function effectiveMapRadius(diameter,edgeExclusion=0){return GEO.effectiveRadius(diameter,edgeExclusion)}
   function effectiveMapHalfExtent(size,edgeExclusion=0){return GEO.effectiveHalfExtent(size,edgeExclusion)}
   function targetGeometry(d){
+    const resolved=d?.geometryModel;
+    if(resolved?.shape==='circle'&&resolved.nominal){
+      return{shape:'circle',nominal:resolved.nominal,scheduled:resolved.scheduled,extent:resolved.nominal.radius};
+    }
+    if(resolved?.shape==='rect'&&resolved.nominal){
+      return{shape:'rect',nominal:resolved.nominal,scheduled:resolved.scheduled,extent:Math.max(resolved.nominal.halfWidth||0,resolved.nominal.halfHeight||0)};
+    }
     if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
       const radius=d.diameter/2;
       return{
