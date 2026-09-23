@@ -127,8 +127,8 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
   ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<h3>Selected injection point</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected site ','<summary>Acquisition metadata</summary>']);
-  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected pixel</h3>','<h3>Channel provenance</h3>','<summary>Geometry / validation ']);
-  ordered(sources.cet,['<h3>CET measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
+  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected pixel</h3>','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
+  ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
 });
 
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
