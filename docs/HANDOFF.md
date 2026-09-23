@@ -1,10 +1,10 @@
-# Agent handoff — 2026-09-23 — docs/reference-knowledge-wiki-plan v20260922.17.2
+# Agent handoff — 2026-09-23 — docs/reference-knowledge-wiki-plan v20260922.17.5
 
 ## Documentation/Wiki planning branch
 
 This branch is intentionally documentation-only while other agents continue feature work on `main`. `docs/DOCUMENTATION_WIKI_PLAN.md` is the planning source for public measurement-semantics documentation and GitHub Wiki structure. Do not use this branch to refactor the analyzer architecture or alter scientific calculations/validation labels.
 
-The proposed policy is: repository docs remain canonical; Wiki pages summarize and link to those docs. Public material should describe independently stated reference behavior, formulas, field semantics, units, validity rules and regression evidence, without publishing vendor binaries, debug metadata, proprietary source fragments, internal build paths or local research notes.
+The proposed policy is now deliberately asymmetric: the GitHub Wiki is the primary public reading surface for physics, equations, derivations, units, assumptions and scientific interpretation; repository docs remain authoritative for XML/implementation mapping, validation profile IDs, regression evidence, tests and development constraints. Public material should describe independently stated scientific/reference behavior without publishing vendor binaries, debug metadata, proprietary source fragments, internal build paths or local research notes.
 
 ## Goal
 

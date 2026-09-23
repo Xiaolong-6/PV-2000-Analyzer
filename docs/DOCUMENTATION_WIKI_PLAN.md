@@ -4,29 +4,56 @@ Status: **planning only**. This branch must not change analyzer runtime behavior
 
 ## 1. Goal
 
-Turn the project's accumulated measurement knowledge into a maintainable public developer reference without creating a second, conflicting source of truth.
+Turn the project's accumulated measurement knowledge into a maintainable public scientific and developer reference without mixing scientific explanation with project bookkeeping.
 
-The public documentation should help future contributors answer four questions quickly:
+The documentation should let a future reader answer two different classes of questions:
 
-1. What does a measurement family contain?
-2. Which values are raw/stored, corrected, derived, or device/controller supplied?
-3. Which formulas, units, validity rules, and option semantics are implemented?
-4. Which behavior is validated against matching PV-2000 output, and which remains a compatibility/reference model?
+### Scientific questions
 
-The repository documentation remains canonical. GitHub Wiki pages are a browsable developer layer that summarizes and links to the canonical files.
+- What physical quantity is being measured?
+- What is the governing physical or mathematical model?
+- What do the parameters mean physically?
+- What are the equations, units, assumptions and boundary conditions?
+- What is raw, corrected, derived, or device/controller supplied?
+- When does the model become invalid or undefined?
+- How do related measurement families differ scientifically?
 
-## 2. Public documentation language
+### Project questions
 
-Use neutral, implementation-focused terminology:
+- Which XML type and fields feed the analyzer?
+- Which calculation path is implemented?
+- Which profile is validated?
+- Which reference datasets support that claim?
+- Which tests and modules enforce the behavior?
+- What remains inferred or unsupported?
+
+The **GitHub Wiki should be the primary public reading surface for scientific knowledge**. Repository docs should remain the authoritative record for implementation mapping, validation envelopes, regression evidence, contributor rules and architecture constraints.
+
+## 2. Public documentation language and boundary
+
+Use neutral, implementation-independent terminology:
 
 - **reference behavior**
 - **measurement semantics**
+- **physical model**
+- **mathematical model**
 - **compatibility model**
 - **reference profile**
 - **observed output behavior**
 - **validated / reproduced / inferred / unsupported**
 
-Do not publish provenance that is unnecessary for implementation or validation.
+Public pages may freely explain independently stated scientific knowledge, including:
+
+- physical principles;
+- equations and derivations;
+- units and dimensional analysis;
+- parameter meaning;
+- assumptions and approximations;
+- validity ranges and failure conditions;
+- observable input/output relationships;
+- measurement workflow semantics;
+- comparison with standard semiconductor/device-physics relationships;
+- regression evidence and uncertainty labels.
 
 Public documentation should not contain:
 
@@ -35,138 +62,194 @@ Public documentation should not contain:
 - method RVAs or binary offsets;
 - copied implementation fragments from proprietary software;
 - local-only research notebooks or raw investigative notes;
-- statements that imply access to or disclosure of proprietary source code.
+- statements that imply disclosure of proprietary source code.
 
-A public page should describe independently stated formulas, field semantics, units, validity rules, observable data flow, and regression evidence.
+The public scientific explanation should stand on its own. It should describe **what the model means and how it behaves**, not how that knowledge was obtained.
 
-## 3. Source-of-truth hierarchy
+## 3. Two-layer information model
 
-### Canonical repository docs
+### 3.1 Wiki — primary scientific reference
 
-These files own normative technical facts:
+The Wiki is the main human-readable home for:
 
-| Topic | Canonical file |
+- semiconductor/device physics;
+- measurement principles;
+- mathematical equations and derivations;
+- parameter definitions;
+- units;
+- assumptions and approximations;
+- correction factors and their physical meaning;
+- validity/blanking logic where it is part of the scientific result;
+- relationships between measurement families;
+- worked conceptual examples;
+- version/profile-specific scientific behavior when that distinction matters.
+
+A Wiki family page may therefore contain the full equations. It should not be reduced to a navigation stub.
+
+### 3.2 Repository docs — project truth and traceability
+
+Repository docs own:
+
+| Topic | Canonical repository location |
 |---|---|
 | Runtime/module structure | `docs/ARCHITECTURE.md` |
-| Supported XML measurement families | `docs/MEASUREMENT_TYPES.md` |
-| Per-family algorithms already implemented | `docs/ALGORITHMS_*.md` |
-| Validation envelope / profile registry | `docs/REFERENCE_PROFILES.md` |
+| Supported XML measurement families | `docs/MEASUREMENT_TYPES.md` / future family index |
+| XML-field → implementation mapping | family implementation notes / current `ALGORITHMS_*.md` |
+| Validation envelope / profile IDs | `docs/REFERENCE_PROFILES.md` |
 | Detailed regression evidence | `docs/VALIDATION.md` |
 | Agent/development state | `docs/HANDOFF.md` |
 | Contributor/public-reference rules | `CONTRIBUTING.md`, `REFERENCE_DATA_LICENSE.md`, `reference_data/README.md` |
 
-### Wiki
+The repository should not need to duplicate every scientific derivation verbatim. Instead it should point to the relevant Wiki scientific section and state:
 
-The Wiki should not own numeric truth, validation claims, or formulas that are absent from the repository docs.
+- which formula/model is implemented;
+- any project-specific compatibility deviation;
+- validation/profile status;
+- tests and reference evidence;
+- unresolved implementation boundaries.
 
-Its job is to:
+### 3.3 Conflict rule
 
-- provide a readable entry point;
-- explain measurement families in plain technical language;
-- link to the canonical algorithm/profile/validation pages;
-- guide contributors to the correct extension workflow;
-- explain common concepts once: raw vs corrected vs derived, result provenance, profile scope, validity/blanking, geometry.
+If Wiki scientific prose and repository implementation facts appear inconsistent:
 
-When a value or formula changes, update the repo document first. The Wiki should then be refreshed from that canonical source.
+1. `REFERENCE_PROFILES.md` and `VALIDATION.md` decide what may be called validated.
+2. Code/tests decide what the current analyzer actually does.
+3. The Wiki should then be corrected to describe the current scientific/reference model accurately.
 
-## 4. Proposed repository-document additions
+The Wiki may be the **primary explanatory source for equations**, but it must never silently upgrade an inferred model to validated status.
+
+## 4. Proposed repository-document changes
 
 ### 4.1 `docs/MEASUREMENT_SEMANTICS.md`
 
-Purpose: shared concepts that currently appear repeatedly across algorithm documents.
+Purpose: define project-wide data/provenance concepts without reproducing all physics.
 
 Planned sections:
 
-- XML measurement type as the dispatch key;
+- XML measurement type as dispatch key;
 - raw/stored vs corrected vs derived quantities;
 - controller/device-computed values vs analyzer-computed values;
 - acquisition container vs derived-result measurement;
 - result provenance;
-- validity/undefined/blanking behavior;
-- units and unit conversion ownership;
+- validity/undefined/blanking semantics;
+- unit conversion ownership;
+- compatibility model vs physical model;
 - reference-profile scope;
-- version-specific compatibility behavior.
-
-This should become the conceptual bridge between `ARCHITECTURE.md` and the family-specific algorithm pages.
+- link to the Wiki scientific reference.
 
 ### 4.2 `docs/MEASUREMENT_FAMILY_INDEX.md`
 
-Purpose: one compact table covering every known measurement family, including families not yet implemented.
+Purpose: one compact engineering index covering every known measurement family.
 
 Suggested columns:
 
 - XML type / aliases;
 - scientific purpose;
-- primary raw/stored channels;
-- primary derived quantities;
+- raw/stored channels;
+- derived quantities;
 - result ownership: analyzer / controller-device / passthrough / acquisition-only;
 - implementation status;
 - validation status;
-- canonical detail page.
+- Wiki scientific page;
+- repository implementation/validation page.
 
-This should replace duplicated roadmap prose, not duplicate `REFERENCE_PROFILES.md`.
+This should replace duplicated roadmap prose, not duplicate the detailed physics.
 
-### 4.3 New family-specific reference pages
+### 4.3 Existing `ALGORITHMS_*.md` pages
 
-Only add a page when there is enough stable, independently stated behavior to justify it.
+Do not delete or rewrite them wholesale while active feature agents are working.
 
-High-value candidates currently missing dedicated public pages:
+Long term, split their responsibilities:
 
-- `ALGORITHMS_CV_CET.md`
-- `ALGORITHMS_SPV_DL.md`
-- `ALGORITHMS_VOC.md`
-- `ALGORITHMS_FREQUENCY_SCAN.md`
-- `ALGORITHMS_LEAKAGE.md`
-- `ALGORITHMS_FE_LID.md`
-- `ALGORITHMS_PASSIVATION.md`
-- `ALGORITHMS_JUNCTION_LT.md`
-- `ALGORITHMS_SHEET_RESISTANCE_EDDY.md`
+**Keep in repo:**
+- XML mappings;
+- implementation-specific conventions;
+- profile identifiers;
+- exact validation status;
+- test references;
+- compatibility deviations;
+- unresolved implementation items.
 
-Each page should clearly distinguish:
-
-- observable/stored inputs;
-- derived outputs;
+**Move or summarize into Wiki:**
+- physical background;
 - equations;
-- units;
-- invalid/blank behavior;
-- parameter/default semantics where public and useful;
-- implementation status;
-- validation status;
-- unresolved items.
+- derivation narrative;
+- interpretation of parameters;
+- scientific assumptions;
+- comparisons between methods.
 
-Do not add unsupported implementation claims merely because a formula is known.
+Existing DIT/QSS/ISC/LBIC pages can be migrated gradually after the Wiki structure is stable.
 
-### 4.4 Existing pages to keep, not replace
+### 4.4 Missing scientific families
 
-Keep the current family pages:
+For families that currently have no dedicated page, create the **Wiki scientific page first** and add only the engineering mapping needed in the repo index/implementation notes.
 
-- DIT
-- QSS-uPCD
-- Dual QSS
-- JZero
-- ISC
-- VCPD
-- LBIC
+Priority families:
 
-These already contain project-specific implementation and validation history. New shared semantics pages should reduce duplicated introductory material, not rewrite them wholesale in the first pass.
+- CV / CET
+- SPV / Diffusion Length
+- Voc / Voc Mapping
+- Frequency Scan
+- Leakage
+- Fe / LID
+- Surface Passivation
+- Junction Lifetime
+- Sheet Resistance / Eddy
+
+This avoids creating a second large set of repo algorithm documents merely to hold scientific exposition.
 
 ## 5. Proposed Wiki page tree
 
 ### Home
 
-Short project/developer landing page:
+Scientific/developer landing page:
 
-- what PV-2000 Analyzer does;
+- what PV-2000 Analyzer is;
+- measurement families;
 - XML-only runtime;
-- supported measurement families;
-- where validation claims live;
-- links to Live Analyzer / source / contributor guide.
+- scientific-reference philosophy;
+- validation-status legend;
+- links to analyzer/source/contribution docs.
+
+### Scientific Foundations
+
+Cross-family physics pages:
+
+#### Semiconductor quantities and conventions
+- carrier density;
+- intrinsic carrier concentration;
+- doping type/sign conventions;
+- thermal voltage;
+- excess carrier density;
+- surface band bending;
+- charge density;
+- lifetime;
+- recombination;
+- surface recombination velocity;
+- implied Voc.
+
+#### Measurement-data provenance
+- raw signal;
+- averaged/stored result;
+- corrected result;
+- derived result;
+- device/controller result;
+- analyzer compatibility result.
+
+#### Units and sign conventions
+- V, mV;
+- q/cm²;
+- cm⁻² eV⁻¹;
+- µs;
+- cm/s;
+- A/cm² / mA/cm² / fA/cm²;
+- µm / nm / Å;
+- percentage quantities;
+- sign conventions for P/N material and charge.
 
 ### Measurement Families
 
-Overview table sourced from `docs/MEASUREMENT_FAMILY_INDEX.md`.
-
-Subpages:
+Each family page is a **full scientific reference**, not a short stub.
 
 - DIT
 - QSS-uPCD
@@ -184,146 +267,176 @@ Subpages:
 - Surface Passivation
 - Junction Lifetime
 - Sheet Resistance / Eddy
+- Height
 - Other acquisition/calibration families
-
-Each Wiki family page should be concise and link to its canonical `docs/ALGORITHMS_*.md` page for equations and edge cases.
-
-### Measurement Semantics
-
-Explain once:
-
-- raw measurement;
-- stored device/controller result;
-- corrected result;
-- derived result;
-- undefined vs zero;
-- profile-specific validity;
-- why similar quantities from different measurement families may use different compatibility models.
 
 ### Validation and Reference Profiles
 
-Summarize:
+Explain the methodology:
 
-- what “validated” means;
-- reference instance vs validated profile family;
-- when numeric changes stay within one profile;
-- what creates a NEW PROFILE;
+- validated vs reproduced vs inferred vs unsupported;
+- reference instance vs profile family;
+- ordinary numeric variation vs categorical profile change;
+- why paired vendor output matters;
+- why scientific plausibility alone does not establish compatibility;
 - public vs private reference-data workflow.
 
-Canonical source remains `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+The exact profile registry remains in `docs/REFERENCE_PROFILES.md`.
 
 ### Geometry and Coordinate Reconstruction
 
-Developer-focused overview of:
+Scientific/developer overview of:
 
 - MapPattern;
 - SquareRegionPattern;
 - HighDensityPattern;
-- RoundWafer / SquareCell / PseudoSquareCell;
+- RoundWafer;
+- SquareCell;
+- PseudoSquareCell;
 - EdgeExclusion;
-- X-fast ordering;
-- nominal sample geometry vs measured support.
+- raster pitch;
+- acquisition order;
+- nominal sample boundary vs measured support.
 
-Only include rules already documented or validated/inferred in canonical docs.
+### Result Provenance and Compatibility
+
+Explain clearly:
+
+- physical model;
+- compatibility model;
+- stored device/controller result;
+- optional analyzer-only analysis;
+- why two measurement families can use different compatibility constants;
+- why a compatibility model should not silently replace a general physical model.
 
 ### Adding Support for a New Measurement
 
 Developer workflow:
 
-1. inspect `Measurement/@xsi:type`;
+1. identify `Measurement/@xsi:type`;
 2. inspect actual XML schema;
-3. classify raw/stored/derived values;
+3. classify each quantity by provenance;
 4. identify geometry;
-5. decide whether the path matches an existing reference profile;
-6. implement isolated module;
-7. add tests;
-8. obtain paired output before expanding a validated label;
-9. update family index, algorithm page, reference profile and Wiki summary.
+5. map the scientific model;
+6. decide whether an existing profile applies;
+7. implement isolated module;
+8. add tests;
+9. obtain paired output before expanding validated status;
+10. update repo family index/profile and Wiki science page.
 
-### Result Provenance and Compatibility
-
-Explain why one project may contain:
-
-- physically motivated model;
-- compatibility model;
-- stored vendor/device result;
-- user-facing optional analysis.
-
-This page should explicitly warn against replacing one with another silently.
-
-## 6. Standard family-page template
-
-Use the same template in repo docs and a shortened version in Wiki:
+## 6. Standard Wiki scientific-family template
 
 ```text
 # <Measurement family>
 
-## Purpose
-## XML type(s)
-## Raw / stored inputs
-## Settings and defaults
-## Derived quantities
-## Reference calculation model
-## Units
-## Validity / blanking / undefined rules
-## Geometry / acquisition order
-## Version- or profile-specific behavior
-## Validation coverage
-## Unsupported / unresolved behavior
-## Implementation mapping
+## What the measurement represents physically
+## Measured / stored observables
+## Derived physical quantities
+## Governing equations
+## Derivation / rationale
+## Parameter definitions
+## Units and dimensional checks
+## Sign conventions
+## Assumptions and approximations
+## Validity / undefined / blanking conditions
+## Geometry or acquisition-order semantics
+## Relationship to other measurement families
+## Compatibility / profile-specific behavior
+## Validation status
+## Known unresolved questions
+## Project implementation links
 ```
 
-For a passthrough/device-calculated family, the “Reference calculation model” section should explicitly say that the value is supplied by the device/controller or stored XML rather than inventing an analyzer formula.
+### Example: what belongs in Wiki
 
-## 7. Planned page ownership
+For a DIT page, the Wiki should explain:
 
-| Wiki page | Canonical source |
-|---|---|
-| Home | README + MEASUREMENT_TYPES |
-| Measurement Families | MEASUREMENT_FAMILY_INDEX |
-| DIT | ALGORITHMS_DIT + REFERENCE_PROFILES |
-| QSS-uPCD | ALGORITHMS_QSS_UPCD + REFERENCE_PROFILES |
-| Dual QSS | ALGORITHMS_DUAL_QSS + REFERENCE_PROFILES |
-| Emitter J0 | ALGORITHMS_JZERO + REFERENCE_PROFILES |
-| ISC | ALGORITHMS_ISC + REFERENCE_PROFILES |
-| VCPD | ALGORITHMS_VCPD + REFERENCE_PROFILES |
-| LBIC | ALGORITHMS_LBIC + REFERENCE_PROFILES |
-| CV / CET | future ALGORITHMS_CV_CET |
-| SPV / DL | future ALGORITHMS_SPV_DL |
-| Voc | future ALGORITHMS_VOC |
-| Frequency Scan | future ALGORITHMS_FREQUENCY_SCAN |
-| Leakage | future ALGORITHMS_LEAKAGE |
-| Fe / LID | future ALGORITHMS_FE_LID |
-| Passivation | future ALGORITHMS_PASSIVATION |
-| Junction Lifetime | future ALGORITHMS_JUNCTION_LT |
-| Sheet Resistance / Eddy | future ALGORITHMS_SHEET_RESISTANCE_EDDY |
-| Validation and Reference Profiles | REFERENCE_PROFILES + VALIDATION |
-| Geometry | ARCHITECTURE + family algorithm docs |
-| Adding Support | CONTRIBUTING + AGENTS |
-| Measurement Semantics | future MEASUREMENT_SEMANTICS |
+- what Vsb means physically;
+- semiconductor surface charge;
+- why a derivative of charge with respect to surface potential gives an interface-state density term;
+- P/N sign handling;
+- flat-band concept;
+- COCOS vs COCOS-II reference behavior;
+- Qit versus Dit;
+- units and validity windows.
 
-## 8. Rollout plan
+The repo DIT document then records exactly which branch/profile/formula variant the analyzer implements and how it is tested.
 
-### Phase 1 — documentation-only, safe to do while feature agents are active
+## 7. Page ownership map
+
+| Scientific topic | Primary public explanation | Repository authority |
+|---|---|---|
+| DIT physics and equations | Wiki: DIT | ALGORITHMS_DIT + REFERENCE_PROFILES |
+| QSS-uPCD physics/equations | Wiki: QSS-uPCD | ALGORITHMS_QSS_UPCD + REFERENCE_PROFILES |
+| Dual QSS physics/equations | Wiki: Dual QSS | ALGORITHMS_DUAL_QSS + REFERENCE_PROFILES |
+| Emitter J0 physics/equations | Wiki: Emitter J0 | ALGORITHMS_JZERO + REFERENCE_PROFILES |
+| ISC / VCPD semantics | Wiki: ISC / VCPD | ALGORITHMS_ISC / ALGORITHMS_VCPD + profiles |
+| LBIC optics/electrical formulas | Wiki: LBIC | ALGORITHMS_LBIC + profiles |
+| CV / CET | Wiki: CV / CET | family index + future implementation notes |
+| SPV / diffusion length | Wiki: SPV / Diffusion Length | family index + validation notes |
+| Voc / pseudo-IV | Wiki: Voc | family index + validation notes |
+| Frequency response / lifetime fit | Wiki: Frequency Scan | family index + validation notes |
+| Leakage / VSASS / I-V transform | Wiki: Leakage | family index + validation notes |
+| Fe / LID | Wiki: Fe / LID | family index + validation notes |
+| Passivation | Wiki: Surface Passivation | family index + validation notes |
+| Junction lifetime | Wiki: Junction Lifetime | family index + validation notes |
+| Sheet resistance / Eddy | Wiki: Sheet Resistance / Eddy | family index + validation notes |
+| Validation status | Wiki explanation | REFERENCE_PROFILES + VALIDATION are authoritative |
+| XML/runtime architecture | Wiki summary only | ARCHITECTURE is authoritative |
+
+## 8. How to publish formulas safely and usefully
+
+A Wiki formula should include enough context to be scientifically useful:
+
+1. define every symbol;
+2. state units;
+3. state whether the formula is a physical model, compatibility relation, or observed result relationship;
+4. state assumptions;
+5. state validity/blanking conditions;
+6. state validation status separately from physical plausibility;
+7. avoid implementation provenance that is unnecessary to the science.
+
+Preferred language:
+
+> The reference compatibility model evaluates …
+
+> For the validated profile, the exported quantity is reproduced by …
+
+> Under the stated assumptions, the physical relation is …
+
+> This path is reconstructed as a reference model and is not yet paired-output validated.
+
+Avoid claims about undisclosed vendor internals.
+
+## 9. Rollout plan
+
+### Phase 1 — documentation/Wiki only, safe while feature agents are active
 
 No runtime changes.
 
 1. Add `MEASUREMENT_SEMANTICS.md`.
 2. Add `MEASUREMENT_FAMILY_INDEX.md`.
-3. Add missing algorithm/reference pages family by family.
-4. Cross-link existing algorithm pages to the family index and reference profiles.
-5. Draft Wiki Home / Measurement Families / Measurement Semantics / Validation pages.
-6. Publish family Wiki pages only after their canonical repo page exists.
+3. Draft Wiki **Scientific Foundations** pages.
+4. Draft full scientific Wiki pages for newly documented families.
+5. Add concise repo implementation/validation links for those pages.
+6. Migrate existing DIT/QSS/ISC/LBIC scientific explanations only when doing so will not disrupt active development.
 7. Keep all validation labels unchanged.
 
-### Phase 2 — documentation consolidation
+### Phase 2 — scientific Wiki consolidation
 
-Still no scientific-model changes.
+Still no analyzer architecture changes.
 
-1. Remove duplicated roadmap text from `MEASUREMENT_TYPES.md` after the family index is established.
-2. Shorten repeated validation prose in algorithm pages by linking to `REFERENCE_PROFILES.md`.
-3. Add a simple documentation checklist to contribution guidance.
-4. Optionally add a script/check that verifies canonical links and Wiki-page source mapping.
+1. Move duplicated physics explanations out of repo implementation docs where practical.
+2. Keep concise formulas in repo only where needed for tests/implementation clarity.
+3. Add reciprocal links: Wiki scientific page ↔ repo implementation/profile page.
+4. Add a documentation review checklist:
+   - symbols defined;
+   - units stated;
+   - assumptions stated;
+   - validity rules stated;
+   - validation status stated;
+   - no unsupported vendor-internal claim.
+5. Optionally add a link checker/source-map check.
 
 ### Phase 3 — future architecture work
 
@@ -331,41 +444,47 @@ Explicitly out of scope for this branch.
 
 Potential future topics:
 
-- measurement definitions/registry metadata;
-- result provenance model;
+- measurement-definition metadata;
+- result provenance schema;
 - compatibility-profile objects;
-- unified quantity/validity schema.
+- unified quantity/validity model.
 
 Do not start these while the current feature agents are changing analyzers.
 
-## 9. Immediate first-pass page priority
+## 10. Immediate first-pass Wiki priority
 
-Recommended order based on developer value:
+Recommended order:
 
-1. Measurement Semantics
-2. Measurement Family Index
-3. CV / CET
-4. SPV / Diffusion Length
-5. Voc / Voc Mapping
-6. Frequency Scan
-7. Leakage
-8. Fe / LID
-9. Surface Passivation
-10. Junction Lifetime
-11. Sheet Resistance / Eddy
-12. Wiki navigation pages
+1. Scientific Foundations — quantities, units and provenance
+2. Measurement Families index
+3. DIT scientific page cleanup/expansion
+4. QSS-uPCD / J0 shared lifetime and recombination foundations
+5. CV / CET
+6. SPV / Diffusion Length
+7. Voc / Voc Mapping
+8. Frequency Scan
+9. Leakage
+10. Fe / LID
+11. Surface Passivation
+12. Junction Lifetime
+13. Sheet Resistance / Eddy
+14. Geometry and coordinate reconstruction
+15. Validation / reference-profile explanation
 
-This order documents the newly understood families first while leaving stable existing DIT/QSS/ISC/LBIC pages largely untouched.
+The newly understood families should be documented before any code architecture refactor.
 
-## 10. Acceptance criteria for this documentation effort
+## 11. Acceptance criteria
 
-The documentation/wiki phase is complete when:
+The documentation/Wiki phase is complete when:
 
-- every known measurement family appears in one index;
-- each implemented family links to one canonical algorithm page;
-- every family states whether its values are analyzer-derived, device/controller-derived, passthrough, or acquisition-only;
-- every scientific formula has a validation status;
-- no Wiki page is the sole source of a formula or validation claim;
+- every known measurement family appears in one engineering index;
+- every scientifically meaningful family has a Wiki page explaining the physics and mathematics;
+- symbols, units, assumptions and validity conditions are explicit;
+- each quantity states its provenance: raw/stored, corrected, derived, device/controller, or analyzer-only;
+- every compatibility formula has a validation-status statement;
+- repo docs link to the Wiki scientific explanation instead of duplicating long derivations;
+- `REFERENCE_PROFILES.md` and `VALIDATION.md` remain authoritative for validation claims;
 - no public page contains vendor binaries, source fragments, debug metadata, internal build paths, or local research notes;
-- a new contributor can identify the correct file to edit without reading `HANDOFF.md`;
-- documentation can evolve independently from any future analyzer architecture refactor.
+- no page claims knowledge of undisclosed vendor internals;
+- a contributor can understand the scientific meaning of a measurement without reading `HANDOFF.md`;
+- the documentation can evolve independently from any future analyzer architecture refactor.

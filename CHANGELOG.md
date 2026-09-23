@@ -1,8 +1,9 @@
 # Changelog
 
-## v20260922.17.2 — 2026-09-23 (documentation planning branch)
+## v20260922.17.5 — 2026-09-23 (documentation planning branch)
 
-- Added `docs/DOCUMENTATION_WIKI_PLAN.md` defining the canonical repo-docs vs GitHub Wiki split, public wording/content boundaries, proposed measurement-family documentation, Wiki page tree, ownership mapping and phased rollout.
+- Added `docs/DOCUMENTATION_WIKI_PLAN.md` defining the repo-docs/Wiki split, public wording/content boundaries, proposed measurement-family documentation, Wiki page tree, ownership mapping and phased rollout.
+- Refined the plan so the GitHub Wiki is the primary public surface for physics, mathematical models, equations, assumptions, units and scientific interpretation, while repository docs remain authoritative for implementation mapping, profile IDs and regression evidence.
 - This branch is documentation-only: no analyzer runtime, calculation, validation-envelope or UI behavior changes are planned here.
 
 ## v20260922.17 — 2026-09-22
