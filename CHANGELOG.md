@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260922.17.2 — 2026-09-23 (branch)
+
+- Browser-imported all 62 private reflectance XMLs in the built analyzer. Every file selected Reflectivity and rendered a data-bearing raster map, distribution and X/Y profiles without an import dialog or runtime error. The one partial acquisition now states `partial acquisition · inferred` directly in Reference parity.
+
 ## v20260922.17.1 — 2026-09-23 (branch)
 
 - Rechecked the private reflectance corpus: 44 complete XMLs match 60 vendor XPS summaries, 17 complete XMLs have no matching XPS, and one partial acquisition remains coordinate-inferred. The LBIC validator now reports these evidence states separately with `--allow-unpaired` while retaining strict paired validation by default.

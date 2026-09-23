@@ -627,6 +627,8 @@ Runtime semantics for this family therefore are:
 
 One supplied 61 × 61 recipe contains only **2814 of 3721** scheduled DataItems. The analyzer maps those available points to the leading X-fast / ascending-Y SquareRegionPattern schedule so the partial map remains usable, but this incomplete-prefix coordinate interpretation is labelled **partial / inferred** and is not claimed as `LBIC-REFLECTANCE-003` vendor parity until a matching vendor coordinate export confirms the incomplete-scan behavior.
 
+The UI exposes this status as `partial acquisition · inferred` in Reference parity, alongside the measured/expected point count.
+
 **NEW PROFILE triggers**
 
 Examples include:

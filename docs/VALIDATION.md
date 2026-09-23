@@ -235,6 +235,8 @@ The reflectance-only corpus contains **62 XML files**. All 62 use `MeasureCurren
 
 The full-corpus inventory check reports **44 PASS** with matching XPS summaries, **17 UNPAIRED** complete XMLs without a matching vendor printout, **1 INFERRED** partial acquisition (2814/3721 points), and **0 FAIL**. `UNPAIRED` confirms the XML fits the known structural path but does not claim result parity for that instance. The validator is strict by default; `--allow-unpaired` is for a mixed corpus inventory and never labels missing vendor evidence as `PASS`.
 
+A browser smoke sweep of the built analyzer imported **all 62 XMLs**. For every file, the selected quantity was Reflectivity (marked inferred for the partial acquisition), Results summary and Selected pixel contained Reflectivity values, and raster map, distribution, X profile and Y profile canvases all had plotted pixels. There were no import dialogs or runtime exceptions. Visual inspection of a complete file and the partial file confirmed the expected map shapes. This verifies display operation, not vendor parity for the 17 unpaired files or the partial coordinate schedule.
+
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
 | `LBICMeasurement` dispatch | unit tested | tested |
