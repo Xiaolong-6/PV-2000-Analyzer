@@ -5,6 +5,7 @@ require('../src/core/stats.js');
 require('../src/core/geometry.js');
 require('../src/core/validity.js');
 require('../src/core/quantity.js');
+require('../src/core/selection.js');
 require('../src/core/measurement.js');
 require('../src/core/profiles.js');
 require('../src/core/registry.js');
