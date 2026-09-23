@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260922.17.1 — 2026-09-23
+
+- Expanded Dual QSS regression to 273 exact XML/CSV pairs from a 330-XML injection corpus, covering 5833 injection points and 11,660,167 paired raw Time/Voltage samples.
+- Corrected raw-lifetime semantics: PV-2000 raw CSV LifeTime maps to TransientInfo@LifeTime; XML Values remains a distinct diagnostic lifetime source.
+- Dual QSS now defaults to the validated PV-2000 raw lifetime, provides an XML Values curve-source selector, and labels both lifetime fields explicitly in UI/export.
+- Hardened the private validator for RoundWafer structure, Raw data/ lookup and Values↔TransientInfo drift reporting.
+
 ## v20260922.17 — 2026-09-22
 
 - Added validated `LBIC-REFLECTANCE-003` handling for reflectance-only `LBICMeasurement` XMLs where `MeasureCurrent=false` but BeamData still carry zero-valued Current placeholders. Disabled Current is no longer exposed or used to synthesize EQE/IQE; Reflectivity becomes the default result.

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Validate the raw DualQssMeasurement XML path against paired PV-2000 raw CSV.
+"""Validate DualQssMeasurement raw XML data against paired PV-2000 raw CSV exports.
 
-The validator deliberately separates two different lifetime quantities:
-- XML Values / TransientInfo@LifeTime / CSV raw LifeTime: validated raw path.
+The validator keeps three lifetime quantities separate:
+- TransientInfo@LifeTime: the lifetime exported in the CSV raw-data LifeTime row.
+- XML Values: a closely related XML vector that can differ from TransientInfo@LifeTime.
 - CSV top-table Lifetime[us]: vendor post-processing, observed but not reconstructed.
 
 Runtime remains XML-only. This script is development/regression tooling.
@@ -16,7 +17,7 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-RAW_LIFETIME_TOL_US = 0.006
+RAW_LIFETIME_TOL_US = 1e-12
 DN_REL_TOL = 0.006
 
 
@@ -88,6 +89,11 @@ def parse_xml(path: Path):
     if xtype(pattern) != "OnePointPattern":
         raise AssertionError(
             f"NEW PROFILE: pattern={xtype(pattern)!r}, expected OnePointPattern"
+        )
+    target = child(measurement, "Target")
+    if xtype(target) != "RoundWafer":
+        raise AssertionError(
+            f"NEW PROFILE: target={xtype(target)!r}, expected RoundWafer"
         )
     iteration = child(child(child(measurement, "MeasurementData"), "IterationData"), "Iteration")
     data = child(iteration, "Data")
@@ -184,10 +190,12 @@ def parse_vendor_csv(path: Path):
 
 
 def find_csv(xml_path: Path) -> Path | None:
+    raw_name = "Raw " + xml_path.stem + ".csv"
     candidates = [
         xml_path.with_suffix(".csv"),
-        xml_path.with_name("Raw " + xml_path.stem + ".csv"),
-        xml_path.parent.parent / "Raw data (csv)" / ("Raw " + xml_path.stem + ".csv"),
+        xml_path.with_name(raw_name),
+        xml_path.parent.parent / "Raw data" / raw_name,
+        xml_path.parent.parent / "Raw data (csv)" / raw_name,
     ]
     return next((p for p in candidates if p.exists()), None)
 
@@ -207,16 +215,25 @@ def validate_pair(xml_path: Path, csv_path: Path):
         )
 
     max_lifetime = 0.0
+    max_values_transient = 0.0
+    values_transient_gt_006 = 0
     for i, value in enumerate(x["values"]):
         col = 1 + 3 * i
         if col >= len(raw_lifetime):
             raise AssertionError(f"raw LifeTime column missing for point {i + 1}")
         csv_value = finite_float(raw_lifetime[col])
-        if not math.isfinite(csv_value):
+        transient_lifetime = attr_num(x["transients"][i], "LifeTime")
+        if not (math.isfinite(csv_value) and math.isfinite(transient_lifetime)):
             raise AssertionError(f"raw LifeTime missing for point {i + 1}")
-        max_lifetime = max(max_lifetime, abs(csv_value - value))
+        max_lifetime = max(max_lifetime, abs(csv_value - transient_lifetime))
+        if math.isfinite(value):
+            delta = abs(value - transient_lifetime)
+            max_values_transient = max(max_values_transient, delta)
+            values_transient_gt_006 += delta > 0.006
     if max_lifetime > RAW_LIFETIME_TOL_US:
-        raise AssertionError(f"raw LifeTime max error={max_lifetime:g} us")
+        raise AssertionError(
+            f"raw CSV LifeTime vs TransientInfo@LifeTime max error={max_lifetime:g} us"
+        )
 
     compared = 0
     max_time = 0.0
@@ -275,6 +292,8 @@ def validate_pair(xml_path: Path, csv_path: Path):
         "csv_samples_min": min(csv_samples) if csv_samples else 0,
         "csv_samples_max": max(csv_samples) if csv_samples else 0,
         "raw_lifetime_error": max_lifetime,
+        "values_transient_error": max_values_transient,
+        "values_transient_gt_006": values_transient_gt_006,
         "vendor_positive": vendor_positive,
         "vendor_zero": vendor_zero,
         "dn_rel_error": max_dn_rel,
@@ -294,6 +313,8 @@ def main():
         "vendor_positive": 0,
         "vendor_zero": 0,
         "raw_lifetime_error": 0.0,
+        "values_transient_error": 0.0,
+        "values_transient_gt_006": 0,
         "dn_rel_error": 0.0,
     }
     ok = True
@@ -315,10 +336,13 @@ def main():
         totals["vendor_positive"] += result["vendor_positive"]
         totals["vendor_zero"] += result["vendor_zero"]
         totals["raw_lifetime_error"] = max(totals["raw_lifetime_error"], result["raw_lifetime_error"])
+        totals["values_transient_error"] = max(totals["values_transient_error"], result["values_transient_error"])
+        totals["values_transient_gt_006"] += result["values_transient_gt_006"]
         totals["dn_rel_error"] = max(totals["dn_rel_error"], result["dn_rel_error"])
         print(
             f"PASS {xml_path.name}: points={result['points']}; "
-            f"raw lifetime max={result['raw_lifetime_error']:.6g} us; "
+            f"raw CSV/TransientInfo max={result['raw_lifetime_error']:.6g} us; "
+            f"Values/TransientInfo max={result['values_transient_error']:.6g} us; "
             f"CSV transient samples={result['csv_samples_min']}..{result['csv_samples_max']}; "
             f"vendor +Lifetime/zero={result['vendor_positive']}/{result['vendor_zero']}; "
             f"Lifetime->dn rel max={result['dn_rel_error']:.4g}"
@@ -329,7 +353,9 @@ def main():
             "SUMMARY "
             f"pairs={totals['pairs']}; points={totals['points']}; "
             f"raw samples={totals['raw_samples']}; "
-            f"raw lifetime max={totals['raw_lifetime_error']:.7g} us; "
+            f"raw CSV/TransientInfo max={totals['raw_lifetime_error']:.7g} us; "
+            f"Values/TransientInfo max={totals['values_transient_error']:.7g} us; "
+            f"Values/TransientInfo >0.006 us={totals['values_transient_gt_006']}; "
             f"vendor +Lifetime/zero={totals['vendor_positive']}/{totals['vendor_zero']}; "
             f"Lifetime->dn rel max={totals['dn_rel_error']:.5g}"
         )
