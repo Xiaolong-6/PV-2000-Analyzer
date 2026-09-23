@@ -1,4 +1,6 @@
-# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.11
+# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.12
+
+The project now records **Semilab PV-2000 v1.3.0.5** as the software-version validation baseline. This is an evidence boundary rather than an exact-version parser whitelist: other releases may remain schema/profile-compatible, but must stay version-unvalidated until paired vendor output from that release is regressed.
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 

@@ -94,6 +94,7 @@ test('landing page advertises supported analyzers without overclaiming generic i
   assert.match(html,/ISC/);
   assert.match(html,/LBIC/);
   assert.match(html,/Generic XML inspector/);
+  assert.match(html,/Reference: PV-2000 v1\.3\.0\.5/);
 });
 
 

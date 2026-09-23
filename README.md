@@ -22,6 +22,8 @@
 
 Local, browser-based analysis of Semilab PV-2000 XML result files. The user imports one XML; the app detects `Measurement/@xsi:type` and dispatches it to a measurement-specific analyzer.
 
+**PV-2000 software-version boundary:** current version-level vendor validation is anchored to measurement files and matching exports produced by **Semilab PV-2000 v1.3.0.5**. Files from other PV-2000 versions may still load when their schemas and measurement profiles are compatible, but they are not version-validated unless separately recorded in `docs/REFERENCE_PROFILES.md`.
+
 Scientific background, measurement semantics and user guidance are maintained in the [project Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki).
 
 Current modules:
