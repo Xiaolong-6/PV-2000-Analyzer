@@ -594,6 +594,8 @@ Semantic input/output path:
 - every supplied reflectance-only XML has `Current=0` at every site, so this field is an inactive placeholder rather than a measured current result;
 - vendor result shown in the paired XPS printouts is **Reflectivity [%]**.
 
+The validated label requires these flags explicitly and the zero-valued inactive Current placeholder. If an XML has a different or missing flag state, or nonzero inactive Current data, the active raw channels remain inspectable but the derived Reflectivity is labelled **inferred** pending a matching vendor result. Current-enabled LBIC profiles likewise require explicit active Current/Direct/Scattered flags and an explicit µA unit; absent unit metadata cannot justify calculated EQE/IQE.
+
 The supplied corpus spans 656, 855 and 984 nm lasers plus ordinary numeric Region/grid changes. Those numeric settings are evidence values, not runtime whitelist keys.
 
 **Validated / established**
@@ -624,6 +626,8 @@ Runtime semantics for this family therefore are:
 **Partial acquisitions**
 
 One supplied 61 × 61 recipe contains only **2814 of 3721** scheduled DataItems. The analyzer maps those available points to the leading X-fast / ascending-Y SquareRegionPattern schedule so the partial map remains usable, but this incomplete-prefix coordinate interpretation is labelled **partial / inferred** and is not claimed as `LBIC-REFLECTANCE-003` vendor parity until a matching vendor coordinate export confirms the incomplete-scan behavior.
+
+The UI exposes this status as `partial acquisition · inferred` in Reference parity, alongside the measured/expected point count.
 
 **NEW PROFILE triggers**
 
