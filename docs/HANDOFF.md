@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — main v20260923.8
+# Agent handoff — 2026-09-23 — main v20260923.9
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
@@ -7,6 +7,8 @@ The larger private OnePoint collection contains 176 row-aligned XML/raw-CSV pair
 The inspected historical backup, software data archive and Ge/COCOS collection have no `DITMeasurement` XML with `UseCocosII=true`; COCOS-II remains inferred. A further ten exact-name XML/vendor-summary CSV candidates were located but their summary/result calculations have **not** been regressed. Next work should either obtain a real `UseCocosII=true` XML plus matching output, or examine the specific extra reprocessing state behind the corrected-light export without guessing an XML-only formula.
 
 The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. The first implementation branch should add shared domain primitives and migrate ISC/VCPD as the pilot without numerical, validation-label or UI changes.
+
+Scientific Wiki source pages are tracked under `wiki/`; `docs/DOCUMENTATION_WIKI_PLAN.md` defines their role and `docs/WIKI_HANDOFF.md` documents Wiki synchronization. Wiki prose is maintained as the current scientific reference, while validation/profile evidence remains in repository docs.
 
 ## Goal
 

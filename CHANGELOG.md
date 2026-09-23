@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260923.9 — 2026-09-23
+
+- Merged the scientific Wiki source set and documentation/Wiki information-architecture plan into the main repository for continued maintenance.
+- Wiki pages present current scientific knowledge directly; repository docs retain implementation, validation-profile and regression evidence.
+
 ## v20260923.8 — 2026-09-23
 
 - Added `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`, defining a staged measurement-domain refactor around quantity provenance, availability, compatibility profiles, normalized geometry and pure scientific services.
