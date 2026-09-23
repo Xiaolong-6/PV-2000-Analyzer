@@ -85,18 +85,51 @@ test('desktop zoom does not use portrait-only mobile fallback on fine pointers',
 });
 
 
-test('landing page advertises supported analyzers without overclaiming generic inspection',()=>{
+test('landing page separates supported analyzers from fallback and validation boundary',()=>{
   const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8');
   assert.match(html,/feature-tags/);
+  assert.match(html,/Supported analyzers/);
   assert.match(html,/Dit \/ COCOS/);
   assert.match(html,/QSS-µPCD/);
   assert.match(html,/QSS Injection/);
-  assert.match(html,/ISC/);
+  assert.match(html,/Emitter J0/);
+  assert.match(html,/ISC \/ VCPD/);
+  assert.match(html,/CET \/ EOT/);
   assert.match(html,/LBIC/);
+  assert.match(html,/Fallback \/ reference/);
   assert.match(html,/Generic XML inspector/);
-  assert.match(html,/Reference: PV-2000 v1\.3\.0\.5/);
+  assert.match(html,/Validation boundary: PV-2000 v1\.3\.0\.5/);
+  assert.ok(html.indexOf('Supported analyzers')<html.indexOf('Fallback / reference'));
 });
 
+
+
+test('dedicated analyzer sidebars follow the shared information hierarchy where applicable',()=>{
+  const sources={
+    dit:fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
+    qss:fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8'),
+    dual:fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8'),
+    jzero:fs.readFileSync(require.resolve('../src/modules/jzero.js'),'utf8'),
+    isc:fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
+    lbic:fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8'),
+    cet:fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8')
+  };
+  const ordered=(src,labels)=>{
+    let last=-1;
+    for(const label of labels){
+      const next=src.indexOf(label,last+1);
+      assert.ok(next>last,\`expected sidebar order item ${label}\`);
+      last=next;
+    }
+  };
+  ordered(sources.dit,['<h3>Measurement ','Analysis controls','validDataFilterMarkup','Results summary','<h3>Selected site ','Measurement metadata']);
+  ordered(sources.qss,['<h3>Measurement ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset ','<summary>Full metadata']);
+  ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<h3>Selected injection point</h3>','<summary>Acquisition metadata</summary>']);
+  ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
+  ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected site ','<summary>Acquisition metadata</summary>']);
+  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected pixel</h3>','<h3>Channel provenance</h3>','<summary>Geometry / validation ']);
+  ordered(sources.cet,['<h3>CET measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
+});
 
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
