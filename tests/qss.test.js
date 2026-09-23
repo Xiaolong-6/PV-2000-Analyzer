@@ -33,6 +33,25 @@ test('HighDensityPattern maps explicit normalized 35 x 35 coefficients to the Ed
   assert.deepEqual(g.scheduled,{halfWidth:71,halfHeight:71});
 });
 
+test('shared geometry resolver reproduces the established HighDensity mappings',()=>{
+  const coeff=[];
+  for(let row=0;row<35;row++)for(let col=0;col<35;col++)coeff.push({x:-1+2*col/34,y:-1+2*row/34});
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'HighDensityPattern',
+    targetType:'SquareCell',
+    rawCoefficients:coeff,
+    pointCount:1225,
+    targetWidth:156,
+    targetHeight:156,
+    edgeExclusion:7
+  });
+  assert.equal(g.pointsMm.length,1225);
+  assert.deepEqual(g.pointsMm[0],{x:-71,y:-71});
+  assert.deepEqual(g.pointsMm.at(-1),{x:71,y:71});
+  assert.equal(g.sourceSpace,'normalized-target-coefficient');
+  assert.equal(g.evidenceStatus,'inferred');
+});
+
 test('HighDensityPattern RoundWafer selects the strict unit-circle subset before physical scaling',()=>{
   const coeff15=[];
   for(let row=0;row<15;row++)for(let col=0;col<15;col++)coeff15.push({x:-1+2*col/14,y:-1+2*row/14});

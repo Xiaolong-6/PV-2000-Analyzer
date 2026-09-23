@@ -2,6 +2,7 @@
   const PV=root.PV2000=root.PV2000||{},
     X=PV.xml,
     S=PV.stats,
+    GEO=PV.geometry,
     q=1.60218e-19,
     k=1.38e-23,
     T=300;
@@ -48,9 +49,29 @@
       data=X.direct(X.direct(X.direct(md,'IterationData'),'Iteration'),'Data'),
       items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
       pattern=X.direct(m,'Pattern'),
+      patternType=X.attrType(pattern),
       target=X.direct(m,'Target'),
+      targetType=X.attrType(target),
+      targetSize=X.direct(target,'Size'),
+      targetWidth=X.num(targetSize,'Width',NaN),
+      targetHeight=X.num(targetSize,'Height',NaN),
+      diameter=X.num(target,'Diameter',Number.isFinite(c.radius)?2*c.radius:NaN),
+      edgeExclusion=firstNum([target,m],['EdgeExclusion'],NaN),
       coeff=X.direct(pattern,'Coefficients'),
-      coords=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',0),y:X.num(p,'Y',0)})):[],
+      rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[],
+      geometryModel=GEO.resolveMeasurementGeometry({
+        patternType,
+        targetType,
+        rawCoefficients,
+        pointCount:items.length,
+        diameter,
+        targetWidth,
+        targetHeight,
+        edgeExclusion,
+        substrateShape:c.shapeType,
+        substrateRadius:c.radius
+      }),
+      coords=geometryModel.pointsMm,
       sites=[];
       
     items.forEach((it,si)=>{
@@ -68,7 +89,7 @@
       const id=scalarMean(X.direct(it,'InitialVcpdDark'))-off,
         il=scalarMean(X.direct(it,'InitialVcpdLight'))-off,
         iv=standardVsb(id,il,factor,dopingType);
-      sites.push({rows,coord:coords[si]||{x:si,y:0},VDark:id,VLight:il,Vsb:iv,InitialQc:Number.isFinite(prestep)?X.children(X.direct(pred,'VcpdDark')).length*prestep:NaN});
+      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,Vsb:iv,InitialQc:Number.isFinite(prestep)?X.children(X.direct(pred,'VcpdDark')).length*prestep:NaN});
     });
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
@@ -76,7 +97,7 @@
       cocosIIMinVsb:firstNum([m,md],['CocosIIMinVsb','CocosIIMinVSB','COCOSIIMinVsb','COCOSIIMinVSB'],-0.1),
       cocosIIMaxVsb:firstNum([m,md],['CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
       backSurfaceShift:firstBool([m,md],['BackSurfaceShift'],false),
-      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),targetType:X.attrType(target),diameter:X.num(target,'Diameter',NaN),edgeExclusion:firstNum([target,m],['EdgeExclusion'],NaN),pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
+      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,diameter,edgeExclusion,coords,rawCoefficients,geometryModel,pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
         
   }
 

@@ -47,8 +47,20 @@
     if(!item)throw new Error('Dual QSS XML has no QssDataItem.');
     const values=vector(item,'Values'),intensity=vector(item,'Intensity'),power=vector(item,'Power'),tr=X.direct(item,'Transients'),transients=tr?X.children(tr).filter(e=>X.lname(e)==='TransientInfo').map(parseTransient):[],n=Math.max(values.length,intensity.length,power.length,transients.length),pattern=X.direct(m,'Pattern'),target=X.direct(m,'Target'),coeff=X.direct(pattern,'Coefficients'),coords=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',0),y:X.num(p,'Y',0)})):[];
     const points=Array.from({length:n},(_,i)=>({intensityMilli:intensity[i],intensitySun:Number.isFinite(intensity[i])?intensity[i]/1000:NaN,lifetime:values[i],power:power[i],transient:transients[i]||null}));
-    const targetDiameter=X.num(target,'Diameter',NaN),targetEdge=X.num(target,'EdgeExclusion',NaN),measurementEdge=X.num(m,'EdgeExclusion',NaN);
-    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:coords[0]||{x:0,y:0},targetType:X.attrType(target),diameter:Number.isFinite(targetDiameter)?targetDiameter:Number.isFinite(c.radius)?2*c.radius:NaN,edgeExclusion:Number.isFinite(targetEdge)?targetEdge:measurementEdge,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity')};
+    const targetDiameter=X.num(target,'Diameter',NaN),targetEdge=X.num(target,'EdgeExclusion',NaN),measurementEdge=X.num(m,'EdgeExclusion',NaN),
+      diameter=Number.isFinite(targetDiameter)?targetDiameter:Number.isFinite(c.radius)?2*c.radius:NaN,
+      edgeExclusion=Number.isFinite(targetEdge)?targetEdge:measurementEdge,
+      geometryModel=GEO.resolveMeasurementGeometry({
+        patternType:X.attrType(pattern),
+        targetType:X.attrType(target),
+        rawCoefficients:coords,
+        pointCount:1,
+        diameter,
+        edgeExclusion,
+        substrateShape:c.shapeType,
+        substrateRadius:c.radius
+      });
+    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,rawCoefficients:coords,targetType:X.attrType(target),diameter,edgeExclusion,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity')};
   }
   function measurementGeometry(d){
     const targetRadius=d?.targetType==='RoundWafer'&&Number.isFinite(d?.diameter)&&d.diameter>0?d.diameter/2:NaN,

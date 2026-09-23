@@ -143,35 +143,26 @@
       return{index,darkRaw,lightRaw,...result,coord:null};
     });
 
-    let coords=[],
-      coordinateSource='unavailable';
-    const coeff=X.direct(pattern,'Coefficients');
-    if(coeff){
-      const explicit=X.children(coeff)
-        .map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)}))
-        .filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
-      if(explicit.length===sites.length){
-        coords=explicit;
-        coordinateSource='XML coefficients';
-      }
-    }
-
-    if(!coords.length&&patternType==='MapPattern'){
-      if(targetType==='SquareCell'){
-        const hx=effectiveHalf(targetWidth,edgeExclusion),
-          hy=effectiveHalf(targetHeight,edgeExclusion);
-        if([hx,hy,pitchX,pitchY].every(Number.isFinite)){
-          coords=GEO.centeredRectGrid(hx,hy,pitchX,pitchY,sites.length);
-          if(coords.length)coordinateSource='MapPattern + SquareCell';
-        }
-      }else if(targetType==='RoundWafer'){
-        const radius=effectiveHalf(diameter,edgeExclusion);
-        if([radius,pitchX,pitchY].every(Number.isFinite)){
-          coords=GEO.roundGrid(radius,pitchX,pitchY,sites.length);
-          if(coords.length)coordinateSource=isVcpd?'MapPattern + RoundWafer':'MapPattern + RoundWafer (inferred)';
-        }
-      }
-    }
+    const coeff=X.direct(pattern,'Coefficients'),
+      rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[],
+      geometryResolved=GEO.resolveMeasurementGeometry({
+        patternType,
+        targetType,
+        rawCoefficients,
+        pointCount:sites.length,
+        diameter,
+        targetWidth,
+        targetHeight,
+        edgeExclusion,
+        substrateShape:c.shapeType,
+        substrateRadius:c.radius,
+        pitchX,
+        pitchY
+      }),
+      coords=geometryResolved.pointsMm,
+      coordinateSource=coords.length
+        ?(targetType==='SquareCell'?'MapPattern + SquareCell':isVcpd?'MapPattern + RoundWafer':'MapPattern + RoundWafer (inferred)')
+        :'unavailable';
 
     sites.forEach((site,i)=>{site.coord=coords[i]||null});
     const out={
@@ -200,6 +191,8 @@
       doRastering:X.text(m,'DoRastering',''),
       temperatureC:X.num(iter,'ChuckTemperature',NaN),
       measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),
+      rawCoefficients,
+      resolvedGeometry:geometryResolved,
       raw:parsed
     };
     return attachDomain(out);

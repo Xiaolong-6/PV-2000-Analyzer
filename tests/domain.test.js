@@ -54,3 +54,18 @@ test('profile registry resolves semantic matches without numeric identity whitel
   assert.equal(PV2000.profiles.resolve('test',{mode:'a'}).id,'TEST-PROFILE');
   assert.equal(PV2000.profiles.resolve('test',{mode:'b'}),null);
 });
+
+
+test('unknown coefficient semantics never become physical mm implicitly',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'UnclassifiedPattern',
+    targetType:'RoundWafer',
+    rawCoefficients:[{x:-0.6,y:0},{x:0.6,y:0}],
+    pointCount:2,
+    diameter:100,
+    edgeExclusion:4
+  });
+  assert.deepEqual(g.rawCoefficients,[{x:-0.6,y:0},{x:0.6,y:0}]);
+  assert.deepEqual(g.pointsMm,[]);
+  assert.equal(g.interpretation,'unresolved');
+});
