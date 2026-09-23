@@ -1,4 +1,10 @@
-# Agent handoff — 2026-09-23 — v20260923.13
+# Agent handoff — 2026-09-23 — v20260923.14
+
+## JZero Valid-data filter rollout
+
+JZero's pre-existing module-local range filter has been migrated to the shared `PV2000.selection.createFilter()` and shared UI binder introduced in `v20260923.12`. Any of the seven aligned JZero result quantities can define one paired-site active mask. Each displayed quantity then applies its own finite/support mask on top of that selection. Summary, map, distribution and both map/histogram exports consume the same state; the two lifetime arrays and J0/Smax/Implied-Voc calculations are unchanged.
+
+Pointwise exports preserve all sites and now include availability, filter-pass/display state and filter provenance. Regression coverage explicitly checks a case where a site passes a lifetime filter but the derived J0 is unavailable.
 
 ## Phase B — ISC/VCPD Valid-data filter
 

@@ -1,6 +1,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 global.PV2000={};
 require('../src/core/stats.js');
+require('../src/core/selection.js');
 require('../src/core/geometry.js');
 require('../src/core/registry.js');
 PV2000.xml={};
@@ -44,7 +45,12 @@ test('JZero UI keeps all seven metrics and shared plot controls',()=>{
   assert.match(src,/axisControls\('jMapAxes'\)/);
   assert.match(src,/axisControls\('jHistAxes'/);
   assert.match(src,/binControls\('jHistBins'/);
-  assert.match(src,/Valid-data filter/);
+  assert.match(src,/Sel\.createFilter/);
+  assert.match(src,/PV\.ui\.validDataFilterMarkup/);
+  assert.match(src,/PV\.ui\.bindValidDataFilter/);
+  assert.match(src,/filterController\.metricMask/);
+  assert.match(src,/Pass valid-data filter/);
+  assert.doesNotMatch(src,/jCentral98|jApplyFilter|jResetFilter|validMask\(/);
   assert.match(src,/PseudoSquareCell/);
 });
 
@@ -84,4 +90,24 @@ test('JZero no longer hard-codes MapPattern + PseudoSquareCell as the only loada
   assert.match(src,/JZERO-CALC-001/);
   assert.match(src,/JZERO-GEOM-MAP-PSEUDOSQUARE-001/);
   assert.match(src,/Measurement position/);
+});
+
+
+test('JZero shared filter keeps one paired-site mask and adds displayed-metric support',()=>{
+  const d={
+    values:[[200,-1,300],[125,130,140]],
+    qssMilli:[1000,3000],
+    waferThickness:200,
+    opticalFactor:1,
+    doping:1.5e16,
+    temperatures:[28,28]
+  };
+  const a=PV2000.modules.jzero.analyze(d);
+  const filter=PV2000.selection.createFilter({metrics:a.metrics,siteCount:3,metricKey:'tau2'});
+  let state=filter.apply(129,141);
+  assert.deepEqual(state.selection.activeMask,[false,true,true]);
+  assert.deepEqual(filter.metricMask('tau2'),[false,true,true]);
+  assert.deepEqual(filter.metricMask('j0'),[false,false,true]);
+  state=filter.setMetric('j0');
+  assert.deepEqual(state.selection.activeMask,[true,false,true]);
 });

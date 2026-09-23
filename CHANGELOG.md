@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.14 — 2026-09-23
+
+- Migrated JZero's older module-local valid-data filter to the shared selection controller and shared filter UI introduced in `v20260923.12`.
+- Any of the seven JZero result quantities can define one paired-site active mask; displayed quantities additionally apply their own finite/support mask.
+- Applied the shared selection state consistently to JZero summaries, maps, distributions and exports without changing the paired lifetime inputs or J0/Smax/Implied-Voc calculations.
+- Extended JZero point/histogram exports with filter provenance and added regression coverage for cross-metric availability.
+
 ## v20260923.13 — 2026-09-23
 
 - Added shared geometry schedule matching with explicit complete / partial-prefix / mismatch states, expected/acquired point counts and completion metadata.
