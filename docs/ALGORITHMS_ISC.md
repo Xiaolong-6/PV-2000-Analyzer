@@ -58,6 +58,21 @@ For the reference instance this gives coordinates from -18 to +18 mm in both axe
 
 The validated ISC/VCPD profiles use the documented MapPattern target/pitch coordinate rules. Raw XML coefficients are preserved when present, but an unclassified coefficient encoding is not treated as millimetres automatically. Another coefficient interpretation remains inferred/unsupported until paired PV-2000 X/Y output establishes its coordinate semantics.
 
+### Partial / terminated acquisitions
+
+A saved map can contain fewer DataItems than the complete target/pitch schedule when acquisition stops early. The shared geometry layer separates **canonical schedule generation** from **actual point-count matching**. For ISC/VCPD, leading-prefix reconstruction is enabled only when the XML job status explicitly indicates an incomplete acquisition such as `Terminated`, `Aborted` or `Interrupted`.
+
+The runtime first generates the complete X-fast / ascending-Y schedule from the target, EdgeExclusion and pitch. If the acquired point count is a strict positive prefix of that complete schedule, the available DataItems are assigned to the first N scheduled coordinates and the geometry is labelled:
+
+```text
+geometryStatus = partial
+coordinateCompleteness = prefix-inferred
+```
+
+A supplied terminated `ISCMeasurement + MapPattern + RoundWafer` case with a 200 mm target, 4 mm EdgeExclusion and 1 × 1 mm pitch contains 10,947 acquired sites versus 28,913 scheduled sites; the analyzer therefore renders the acquired prefix while retaining the full wafer and exclusion boundaries.
+
+This incomplete-prefix coordinate interpretation is **inferred**, not vendor-validated. It does not expand `ISC-MAP-001` or `VCPD-MAP-001` parity. A point-count mismatch on a normal/completed acquisition remains unavailable rather than being silently truncated, so corrupted XML or an incorrect geometry rule is not masked.
+
 ## Statistics
 
 The ISC summary table reports finite-site Average, Median, sample Stdev, Min and Max. The paired reference reproduces the vendor summary to floating-point precision.
