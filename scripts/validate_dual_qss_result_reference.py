@@ -211,29 +211,30 @@ def parse_vendor_csv(path: Path):
     }
 
 
-def clamped_linear(xs, ys, target):
+def paired_teffd_one_sun(xs, ys):
+    """Return only extraction behaviors directly covered by current real pairs.
+
+    Evidence currently covers:
+    1) an exact 1000 mSun sample;
+    2) an acquisition ending below 1000 mSun, where PV-2000 returns the final
+       acquired XML Values element.
+
+    Interior interpolation and left-side clamping are intentionally not
+    generalized until a matching XML+CSV pair exercises those cases.
+    """
     pairs = sorted(
         (float(x), float(y))
         for x, y in zip(xs, ys)
         if math.isfinite(x) and math.isfinite(y)
     )
     if not pairs:
-        return math.nan
-    if target <= pairs[0][0]:
-        return pairs[0][1]
-    if target >= pairs[-1][0]:
-        return pairs[-1][1]
-    for (x0, y0), (x1, y1) in zip(pairs, pairs[1:]):
-        if target == x0:
-            return y0
-        if target == x1:
-            return y1
-        if x0 < target < x1:
-            if x1 == x0:
-                return y0
-            f = (target - x0) / (x1 - x0)
-            return y0 + f * (y1 - y0)
-    return math.nan
+        return math.nan, "unavailable"
+    exact = next((y for x, y in pairs if x == 1000.0), None)
+    if exact is not None:
+        return exact, "exact-1000"
+    if pairs[-1][0] < 1000.0:
+        return pairs[-1][1], "right-endpoint-below-1000"
+    return math.nan, "unvalidated-target-placement"
 
 
 def relative_error(calculated, expected):
@@ -248,7 +249,7 @@ def validate_pair(xml_path: Path, csv_path: Path):
     xml = parse_xml(xml_path)
     vendor = parse_vendor_csv(csv_path)
 
-    teffd_calc = clamped_linear(xml["intensity"], xml["values"], 1000.0)
+    teffd_calc, teffd_rule = paired_teffd_one_sun(xml["intensity"], xml["values"])
     if not math.isfinite(vendor["teffd_1sun"]):
         raise AssertionError(f"{csv_path.name}: vendor teff.d (1 Sun) unavailable")
     teffd_error = abs(teffd_calc - vendor["teffd_1sun"])
@@ -300,6 +301,7 @@ def validate_pair(xml_path: Path, csv_path: Path):
         "teffd_calc": teffd_calc,
         "teffd_vendor": vendor["teffd_1sun"],
         "teffd_error": teffd_error,
+        "teffd_rule": teffd_rule,
         "smax_1_error": smax_1_error,
         "smax_max_error": smax_max_error,
         "dn_rel_error": dn_rel,
@@ -361,7 +363,7 @@ def main():
             f"points={result['points']}; "
             f"I={result['intensity_min']:g}..{result['intensity_max']:g} mSun; "
             f"teff.d@1sun={result['teffd_calc']:.12g} us "
-            f"(err={result['teffd_error']:.3g}); "
+            f"(rule={result['teffd_rule']}, err={result['teffd_error']:.3g}); "
             f"Smax1 err={result['smax_1_error']:.3g}; "
             f"SmaxMax err={result['smax_max_error']:.3g}; "
             f"dn rel={dn}; "
