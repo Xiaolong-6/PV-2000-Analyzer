@@ -87,6 +87,7 @@ npm run validate:jzero
 npm run validate:isc
 npm run validate:vcpd
 npm run validate:lbic
+npm run validate:cet
 npm run build
 ```
 
