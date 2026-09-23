@@ -1,10 +1,11 @@
 # Changelog
 
-## v20260922.17.5 — 2026-09-23 (documentation planning branch)
+## v20260922.17.6 — 2026-09-23 (documentation planning branch)
 
 - Added `docs/DOCUMENTATION_WIKI_PLAN.md` defining the repo-docs/Wiki split, public wording/content boundaries, proposed measurement-family documentation, Wiki page tree, ownership mapping and phased rollout.
 - Refined the plan so the GitHub Wiki is the primary public surface for physics, mathematical models, equations, assumptions, units and scientific interpretation, while repository docs remain authoritative for implementation mapping, profile IDs and regression evidence.
 - This branch is documentation-only: no analyzer runtime, calculation, validation-envelope or UI behavior changes are planned here.
+- Added publishable Wiki source pages under `wiki/` for Home, scientific foundations, measurement-family index, validation methodology, DIT, QSS-uPCD and CV/CET, plus a local-agent Wiki push handoff.
 
 ## v20260922.17 — 2026-09-22
 

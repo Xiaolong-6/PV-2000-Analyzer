@@ -1,0 +1,224 @@
+# DIT
+
+Interface-state-density analysis combines corona charge, Kelvin-probe surface potential and semiconductor space-charge physics.
+
+## 1. Physical picture
+
+A controlled corona charge changes the electrostatic boundary condition at the semiconductor surface. Dark and illuminated Kelvin-probe measurements provide the corresponding surface-potential response.
+
+Important quantities are:
+
+- \(Q_c\): applied corona charge density;
+- \(V_{\rm CPD,dark}\): dark contact potential difference;
+- \(V_{\rm CPD,light}\): illuminated contact potential difference;
+- \(V_{\rm sb}\): surface band bending;
+- \(Q_{\rm sc}\): semiconductor space charge;
+- \(D_{it}\): interface-state density;
+- \(V_{\rm fb}\): flat-band potential;
+- \(Q_{it}\): integrated interface-related charge over a selected barrier interval.
+
+## 2. Surface band bending
+
+The reference relation is
+
+\[
+V_{\rm sb}
+=
+F_{\rm sb}
+\left(
+V_{\rm CPD,dark}
+-
+V_{\rm CPD,light}
+\right),
+\]
+
+where \(F_{\rm sb}\) is the Vsb correction factor.
+
+The sign convention is tied to doping type and the chosen compatibility profile.
+
+## 3. Semiconductor space charge
+
+Define
+
+\[
+\beta=\frac{q}{kT},
+\qquad
+\varepsilon_s=\varepsilon_0\varepsilon_r,
+\]
+
+and let \(N\) denote the majority-carrier doping density.
+
+For p-type material,
+
+\[
+F_p=
+e^{-\beta V_{\rm sb}}
++\beta V_{\rm sb}
+-1
++
+\frac{n_i^2}{N^2}
+\left(
+e^{\beta V_{\rm sb}}
+-\beta V_{\rm sb}
+-1
+\right).
+\]
+
+For n-type material,
+
+\[
+F_n=
+e^{\beta V_{\rm sb}}
+-\beta V_{\rm sb}
+-1
++
+\frac{n_i^2}{N^2}
+\left(
+e^{-\beta V_{\rm sb}}
++\beta V_{\rm sb}
+-1
+\right).
+\]
+
+The semiconductor space-charge magnitude is
+
+\[
+Q_{\rm sc}
+=
+\frac{\sqrt{2\varepsilon_s kTNF}}{q},
+\]
+
+for positive \(F\).
+
+When \(Q_{\rm sc}\) is expressed after division by \(q\), the unit is elementary charges per square centimetre.
+
+## 4. Interface-state density
+
+For adjacent measurement intervals,
+
+\[
+\frac{dQ_c}{dV_{\rm sb}}
+\approx
+\frac{Q_{c,i+1}-Q_{c,i}}
+{V_{{\rm sb},i+1}-V_{{\rm sb},i}},
+\]
+
+and
+
+\[
+\frac{dQ_{\rm sc}}{dV_{\rm sb}}
+\approx
+\frac{Q_{{\rm sc},i+1}-Q_{{\rm sc},i}}
+{V_{{\rm sb},i+1}-V_{{\rm sb},i}}.
+\]
+
+For the p-type reference path,
+
+\[
+D_{it}
+=
+\frac{dQ_c}{dV_{\rm sb}}
+-
+\frac{dQ_{\rm sc}}{dV_{\rm sb}}.
+\]
+
+The n-type path uses the corresponding charge-sign convention.
+
+The usual reported unit is \({\rm cm^{-2}\,eV^{-1}}\).
+
+## 5. Charge-grid interpolation
+
+The reference calculation uses a denser internal \(Q_c\) grid for interpolation and intermediate calculations.
+
+A discrete result is retained separately for the vendor-style Minimum Dit quantity. Optional PCHIP/midgap analysis is treated as an additional interpolation result.
+
+This distinction preserves the meaning of a measured discrete minimum.
+
+## 6. Flat band
+
+Flat band is estimated from the local relationship between the dark and illuminated branches near a configured surface-band-bending threshold.
+
+The corresponding corona charge is \(Q_{c,fb}\), with flat-band potential \(V_{fb}\).
+
+If \(Q_{c,init}\) is the inferred initial-state charge,
+
+\[
+Q_{\rm total}
+=
+Q_{c,init}-Q_{c,fb}.
+\]
+
+## 7. Integrated interface charge \(Q_{it}\)
+
+Two configured surface-band-bending barriers can be mapped through the semiconductor charge relation and back onto equivalent corona-charge coordinates.
+
+If those two coordinates are \(Q_{c,1}\) and \(Q_{c,2}\),
+
+\[
+Q_{it}
+=
+\left|Q_{c,2}-Q_{c,1}\right|.
+\]
+
+The result represents an integrated charge difference over the selected surface-potential interval.
+
+## 8. COCOS-II reference behavior
+
+A COCOS-II compatibility path can reconstruct the illuminated-equivalent branch from a flat-band reference and oxide capacitance.
+
+A useful relation is
+
+\[
+C_{\rm ox}
+=
+\frac{\varepsilon_{\rm ox}}{{\rm EOT}}.
+\]
+
+The reconstructed light-side potential can then be written in the form
+
+\[
+V_{\rm light}
+=
+V_{fb}
++
+\frac{(Q_c-Q_{c,fb})q}{C_{\rm ox}}.
+\]
+
+Surface band bending and \(Q_{\rm sc}\) are subsequently evaluated from this reconstructed branch.
+
+The project keeps validation status attached to the specific COCOS-II profile because the acceptance window and compatibility details are version/profile dependent.
+
+## 9. Back-surface shift
+
+A legacy compatibility option can translate the illuminated CPD branch when the selected endpoint indicates a surface-band-bending offset around the 15 mV scale.
+
+The current public scientific description treats this as an endpoint correction in the compatibility model. Its practical effect depends on dataset and profile.
+
+## 10. Validity and discrete limits
+
+DIT calculation requires finite neighboring \(V_{\rm sb}\) separation.
+
+Typical reference-profile rules include:
+
+- undefined intervals when \(\Delta V_{\rm sb}=0\);
+- accepted surface-potential windows for selected compatibility paths;
+- lower and upper limits for display/acceptance;
+- explicit undefined state in addition to a numerical placeholder.
+
+Optional interpolation must stay inside measured/retained coverage and should not extrapolate to a midgap target outside the supported domain.
+
+## 11. Material model
+
+Semiconductor material enters through at least:
+
+- intrinsic carrier concentration \(n_i\);
+- relative permittivity \(\varepsilon_r\);
+- derived flat-band and midgap relations.
+
+The analyzer currently supports silicon and a legacy-compatible germanium model. Validation remains material/profile specific.
+
+## 12. Validation status
+
+Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. COCOS-II and material extensions retain their documented profile status until matching output establishes parity.
+
+Exact validation envelopes are maintained in docs/REFERENCE_PROFILES.md.

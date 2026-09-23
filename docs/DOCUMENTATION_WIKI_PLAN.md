@@ -488,3 +488,15 @@ The documentation/Wiki phase is complete when:
 - no page claims knowledge of undisclosed vendor internals;
 - a contributor can understand the scientific meaning of a measurement without reading `HANDOFF.md`;
 - the documentation can evolve independently from any future analyzer architecture refactor.
+
+
+## Wiki editing style
+
+Wiki pages are maintained as current scientific references rather than chronological patch notes.
+
+- Rewrite a section in place when understanding improves.
+- Present the latest model directly.
+- Use Git history for revision history.
+- Keep correction narratives and investigative provenance out of the scientific prose.
+- Prefer positive definitions and continuous explanations over repeated contrastive wording.
+- State uncertainty through validation labels and explicit assumptions.
