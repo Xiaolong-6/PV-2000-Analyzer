@@ -696,7 +696,10 @@
           prefix:'qFilter',
           metrics:a.metrics,
           state:filterState,
-          helpText:'Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.'
+          helpText:'Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.',
+          centralTitle:'Set limits to the 1st–99th percentile of the selected filter metric. This is only a convenience starting point; inspect the distribution before accepting it.',
+          resetTitle:'Reset the range to include every point available under the current lifetime-validity mode.',
+          applyTitle:'Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.'
         })}
         <section class="panel qss-results-panel"><h3>Results summary ${help('Statistics use the active lifetime-validity mode plus the Valid-data filter. Stdev uses N−1, matching the PV-2000 convention. Default scientific mode excludes non-positive lifetime sentinels; Raw / PV-2000 style can retain them for vendor-parity inspection.')}</h3><div class="qss-result-list">${summaryCards()}</div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
@@ -719,7 +722,11 @@
         prefix:'qFilter',
         controller:filterController,
         onChange:()=>renderShell(),
-        onError:message=>alert(message)
+        onError:message=>alert(
+          message==='Valid-data filter requires finite lower and upper bounds.'
+            ?'Enter finite lower and upper limits.'
+            :message
+        )
       });
       host.querySelector('#qApplyAnalysis').onclick=()=>{
         const bulkText=host.querySelector('#qSrvBulk').value.trim(),
