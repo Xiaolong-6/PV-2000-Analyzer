@@ -17,7 +17,7 @@ Open XML
       -> semantic reference-profile resolution
   -> module.analyze()
       -> Quantity objects for migrated families
-      -> existing analysis objects for families not yet migrated
+      -> family-specific analysis objects where a normalized Quantity layer is not used
   -> module.render()
 ```
 
@@ -272,7 +272,7 @@ Additional families should gain shared profile metadata only when their referenc
 - `src/modules/qss-upcd.js` — QSS-uPCD map parser, calculations and UI.
 - `src/modules/dual-qss.js` — Dual QSS injection sweep and stored-transient viewer.
 - `src/modules/jzero.js` — Emitter J0 map analyzer.
-- `src/modules/isc.js` — ISC/VCPD pilot on the domain core.
+- `src/modules/isc.js` — ISC/VCPD analyzer on the shared domain core.
 - `src/modules/lbic.js` — LBIC raster analyzer.
 - `src/modules/cet.js` — contactless capacitance / EOT analyzer.
 - `src/modules/generic.js` — unknown-type fallback.
