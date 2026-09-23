@@ -369,7 +369,7 @@ test('ISC keeps validated quantities, geometry-aware map and standardized Distri
   assert.match(isc,/axisControls\('iHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(isc,/binControls\('iHistBins',histBins\)/);
   assert.match(isc,/bindBinControls\(host,'iHistBins',histBins/);
-  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,histBins,histSwapped/);
+  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,displayMask,histBins,histSwapped/);
   assert.doesNotMatch(isc,/id="iSwapHistAxes"/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
