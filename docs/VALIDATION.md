@@ -37,6 +37,42 @@ npm run validate:qss
 
 The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
+### Expanded RoundWafer corpus
+
+A later private corpus adds **96 `QssUpcdMeasurement + MapPattern + RoundWafer` XML files**. The geometry remains inside QSS-MAP-001:
+
+- 95 files use 100 mm RoundWafer geometry with 5 mm pitch and 305 XML lifetime values;
+- one file uses 125 mm RoundWafer geometry with 5 mm pitch and 489 XML lifetime values;
+- nine files have same-measurement numeric PV-2000 CSV exports;
+- 108 associated XPS printouts show the same τeff.d / Smax / Implied-Voc result family.
+
+Pointwise regression on the nine numeric pairs establishes:
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| paired CSV cases | 9 | expanded evidence set |
+| X/Y coordinates | max abs error 0 mm | validated |
+| XML τeff.d vs CSV | max abs error 0 µs | validated |
+| Smax from `W/(2τ)` | max abs error ~5e-8 cm/s | validated to CSV numeric precision |
+| finite Implied Voc, existing compatibility model | max abs error ~1.94 mV | compatibility close, not vendor-exact |
+
+The original 305-point reference remains the tighter <0.1 mV Implied-Voc instance. The expanded corpus demonstrates that this tighter figure must not be generalized to all RoundWafer files.
+
+The corpus also establishes an important raw-value convention: **76 of the 96 XML files contain `τeff.d = -1 µs` sentinel sites**. Across the corpus this occurs at **13,649 of 29,464 XML sites**. Matching vendor output preserves the raw sentinel and can carry it into negative Smax values. Runtime therefore preserves raw XML/Smax values for parity/export, while default scientific analysis marks non-positive lifetime unavailable before user filtering. Users can explicitly select Raw / PV-2000 style when inspecting vendor-style raw behavior.
+
+### QSS analyzer-derived SRV and material modes
+
+The QSS analyzer now exposes lifetime → SRV as optional post-processing:
+
+```text
+planar:   S = W/2 * (1/tau_eff - 1/tau_bulk)
+textured: S = W   * (1/tau_eff - 1/tau_bulk) - S_planar_reference
+```
+
+Bulk lifetime is optional (blank = infinity), textured mode exposes the planar-reference SRV, and an optional minimum-lifetime threshold can reject low-lifetime points. Negative calculated SRV is clamped to zero. This is **analyzer-derived**, not a PV-2000 vendor-result validation claim.
+
+Implied Voc remains **PV-2000 compatible by default**. Optional Physical Si / Physical Ge modes are explicit user-selected estimates. The QSS XML family does not provide a trustworthy material identifier, so the analyzer never infers material from filenames, result names or substrate IDs.
+
 ### HighDensityPattern compatibility
 
 Status: **inferred coordinate reconstruction**, not vendor-validated.
@@ -47,7 +83,7 @@ For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle.
 
 ### Valid-data filtering
 
-The new valid-range UI is an analyzer feature rather than a vendor-output replication. Tests verify range masking; users must choose limits appropriate to the sample geometry/data distribution. This is especially important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
+The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw / PV-2000 style can retain the sentinel for parity inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
 
 ## Dual QSS injection sweep — paired raw XML/CSV regression
 
