@@ -4,8 +4,8 @@
 
 - Reused the shared Valid-data filter controller/UI for LBIC with filter scope tied to the current iteration and beam/wavelength.
 - Applied one active site mask consistently to LBIC summaries, raster map, Distribution and X/Y line profiles while preserving raw channel/result arrays.
-- Added filter-aware map/histogram/profile/all exports, selected-pixel validity state, isolated-point profile markers and a distinct no-active-sites map empty state.
-- Preserved the shared partial SquareRegion geometry handling introduced in `v20260923.13` and added renderer-level smoke coverage without changing LBIC calculation/profile semantics.
+- Added filter-aware map/histogram/profile/all exports, selected-pixel validity state and a distinct no-active-sites map empty state.
+- Added regression coverage for masked LBIC profiles and shared filter wiring without changing LBIC calculation/profile semantics.
 
 ## v20260923.14 — 2026-09-23
 
