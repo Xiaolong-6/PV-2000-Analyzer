@@ -14,6 +14,11 @@
     INFERRED:'inferred',
     UNSUPPORTED:'unsupported'
   });
+  const TIER=Object.freeze({
+    PRIMARY:'primary',
+    ADVANCED:'advanced',
+    DIAGNOSTIC:'diagnostic'
+  });
 
   function create({
     id,
@@ -27,6 +32,8 @@
     modelId=null,
     profileId=null,
     validation=VALIDATION.INFERRED,
+    tier=TIER.PRIMARY,
+    evidence=null,
     help=''
   }={}){
     if(!id)throw new Error('Quantity id is required.');
@@ -45,6 +52,8 @@
       modelId,
       profileId,
       validation,
+      tier,
+      evidence:evidence?{...evidence}:null,
       help
     };
   }
@@ -58,5 +67,5 @@
     return PV.stats.summary(availableValues(quantity));
   }
 
-  PV.quantity={PROVENANCE,VALIDATION,create,availableValues,summary};
+  PV.quantity={PROVENANCE,VALIDATION,TIER,create,availableValues,summary};
 })(typeof window!=='undefined'?window:globalThis);

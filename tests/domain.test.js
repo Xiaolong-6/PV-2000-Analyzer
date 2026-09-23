@@ -166,3 +166,19 @@ test('shared geometry resolver reproduces JZero pseudo-square schedule',()=>{
   assert.deepEqual(g.pointsMm.at(-1),{x:64,y:70,row:70,col:67});
   assert.equal(g.interpretation,'pseudo-square-target-pitch-grid');
 });
+
+
+test('quantity presentation tier is independent from provenance and validation',()=>{
+  const q=PV2000.quantity.create({
+    id:'xml-hidden',
+    values:[1,2],
+    provenance:PV2000.quantity.PROVENANCE.RAW,
+    validation:PV2000.quantity.VALIDATION.INFERRED,
+    tier:PV2000.quantity.TIER.ADVANCED,
+    evidence:{xmlStored:true,vendorExported:false,vendorDisplayed:false}
+  });
+  assert.equal(q.tier,'advanced');
+  assert.equal(q.provenance,'raw');
+  assert.equal(q.validation,'inferred');
+  assert.deepEqual(q.evidence,{xmlStored:true,vendorExported:false,vendorDisplayed:false});
+});

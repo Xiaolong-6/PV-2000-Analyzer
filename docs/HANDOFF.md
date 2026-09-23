@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.9
+# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.11
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
@@ -10,6 +10,12 @@ The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_
 
 Scientific Wiki source pages are tracked under `wiki/`; `docs/DOCUMENTATION_WIKI_PLAN.md` defines their role and `docs/WIKI_HANDOFF.md` documents Wiki synchronization. Wiki prose is maintained as the current scientific reference, while validation/profile evidence remains in repository docs.
 
+## XML-only discovery / Advanced analysis
+
+PV-2000 UI/CSV output is not treated as the ceiling of available information. During family audits, inspect and preserve useful XML-stored/unknown numeric quantities even when they are absent from vendor exports. Presentation tier is independent from provenance/validation: extra fields may be primary, advanced or diagnostic. XML presence alone never upgrades a quantity to a validated vendor result.
+
+LBIC is the current reference implementation for this policy.
+
 ## Shared site selection and canonical geometry
 
 Phase A now includes two cross-cutting contracts:
@@ -20,6 +26,8 @@ Phase A now includes two cross-cutting contracts:
 DIT NinePointPattern no longer treats ±0.632 coefficients as ±0.632 mm. On the current 100 mm / 4 mm-edge family they resolve against the 46 mm scheduled radius to about ±29.09 mm. This is marked inferred until paired vendor X/Y coordinates are available.
 
 A repository scan found coefficient-bearing runtime paths in DIT, QSS HighDensity, ISC/VCPD and Dual QSS. They now route through or preserve the shared geometry contract; LBIC/JZero do not currently contain the same direct coefficient-as-mm path.
+
+JZero calculation and geometry are now separate. The paired two-iteration post-processing path is tracked as `JZERO-CALC-001`; the paired pseudo-square map geometry is `JZERO-GEOM-MAP-PSEUDOSQUARE-001`. Resolver-supported OnePoint + SquareCell data can load with inferred geometry instead of failing the whole measurement.
 
 ## Measurement-domain Phase A
 

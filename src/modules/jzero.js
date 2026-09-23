@@ -257,9 +257,32 @@
         onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
       });
       PV.plot.bindBinControls(host,'jHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
-      host.querySelector('#jExportMap').onclick=exportMetric;host.querySelector('#jExportHist').onclick=()=>{const m=a.metrics[metricKey];PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count'],rows.map(r=>[r.lo,r.hi,r.count]))};
+      host.querySelector('#jExportMap').onclick=exportMetric;
+      host.querySelector('#jExportHist').onclick=()=>{
+        const m=a.metrics[metricKey];
+        PV.exporter.csv(
+          `${safe(d.resultName)}_${metricKey}_histogram.csv`,
+          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count'],
+          rows.map(r=>[r.lo,r.hi,r.count])
+        );
+      };
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});shell();
   }
-  PV.modules=PV.modules||{};PV.modules.jzero={familyId:'jzero',capabilities:{map:true,onePoint:true,distribution:true,validDataFilter:true},types:['JZeroMeasurement'],parse,analyze,render,generation,smax,basoreJ0,impliedVoc,insideTarget,constants:{NI_BASORE_COMPAT,NI_VOC_300}};PV.registry.register(PV.modules.jzero);
+  PV.modules=PV.modules||{};
+  PV.modules.jzero={
+    familyId:'jzero',
+    capabilities:{map:true,onePoint:true,distribution:true,validDataFilter:true},
+    types:['JZeroMeasurement'],
+    parse,
+    analyze,
+    render,
+    generation,
+    smax,
+    basoreJ0,
+    impliedVoc,
+    insideTarget,
+    constants:{NI_BASORE_COMPAT,NI_VOC_300}
+  };
+  PV.registry.register(PV.modules.jzero);
 })(typeof window!=='undefined'?window:globalThis);

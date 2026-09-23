@@ -187,6 +187,18 @@ Parsing should extract and normalize structure only.
 
 Scientific calculations should not happen inside XML parsing.
 
+## 5A. XML discovery / Advanced analysis
+
+For every measurement family, inspect the XML beyond the fields reproduced in PV-2000 CSV/UI. Preserve useful stored quantities and unknown numeric channels instead of designing the analyzer only around vendor-visible outputs.
+
+The quantity model distinguishes presentation tier from evidence:
+
+- primary;
+- advanced;
+- diagnostic.
+
+This allows XML-only information to be useful without implying vendor parity. LBIC already demonstrates the intended behavior.
+
 ## 6. First-class quantity model
 
 Introduce a shared quantity object.
@@ -203,7 +215,9 @@ Conceptually:
   availability,
   modelId,
   profileId,
-  validation
+  validation,
+  tier,
+  evidence
 }
 ```
 

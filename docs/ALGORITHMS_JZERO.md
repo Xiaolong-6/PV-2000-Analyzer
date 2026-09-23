@@ -14,6 +14,14 @@ The supplied reference contains two `UpcdIterationData` maps measured at the fir
 - Implied Voc at the first QSS intensity;
 - Implied Voc at the second QSS intensity.
 
+## Calculation semantics and geometry semantics
+
+The JZero calculation path and the measurement geometry are separate concerns.
+
+The calculation path is determined by the JZero measurement schema: two lifetime iterations, two QSS intensities, wafer thickness, doping, optical factor and iteration metadata. Pattern/Target determines where those paired lifetime sites are located.
+
+The supplied paired reference validates one geometry instance, but that geometry does not define the JZero calculation itself.
+
 ## Reference geometry
 
 The paired reference uses:
@@ -144,11 +152,16 @@ The filled map uses the measured lattice cells directly rather than an expensive
 
 ## Validated envelope
 
-The current paired reference establishes:
+The current paired reference establishes the **calculation path**:
 
 - `JZeroMeasurement`;
 - exactly two `UpcdIterationData` lifetime iterations;
 - first/second QSS-intensity pairing by iteration order;
+- direct XML lifetime → τeff.d;
+- Smax, Basore J0 and the JZero-specific Implied Voc compatibility equations.
+
+It separately establishes the **geometry profile**:
+
 - `MapPattern + PseudoSquareCell`;
 - X-fast row-major pseudo-square schedule;
 - direct XML lifetime → vendor τeff.d;
@@ -157,9 +170,11 @@ The current paired reference establishes:
 - the reference-regressed Implied Voc compatibility path;
 - sample-standard-deviation summary statistics.
 
-Ordinary numeric changes in pitch, target dimensions, EdgeExclusion, wafer thickness, doping, optical factor or the two QSS intensity values do not automatically define a new measurement type. However, the following are outside the current vendor-regressed envelope until paired output is supplied:
+Ordinary numeric changes in pitch, target dimensions, EdgeExclusion, wafer thickness, doping, optical factor or the two QSS intensity values do not automatically define a new measurement type.
 
-- another pattern or target geometry;
+A different resolver-supported Pattern/Target combination may reuse the same two-iteration JZero calculation path while carrying a separate geometry status. `MapPattern + PseudoSquareCell` is currently geometry-validated. `OnePointPattern + SquareCell` is loadable through the shared geometry resolver and remains geometry-**inferred** until paired X/Y/display evidence is supplied.
+
+The following remain outside the current vendor-regressed **calculation** envelope until paired output is supplied:
 - more or fewer than two lifetime iterations;
 - a different iteration/result ordering;
 - a different raw data item schema;

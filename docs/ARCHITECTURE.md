@@ -41,6 +41,8 @@ A Quantity includes:
 - model id;
 - profile id;
 - validation status;
+- presentation tier (`primary` / `advanced` / `diagnostic`);
+- optional evidence metadata;
 - help text.
 
 Current provenance vocabulary:
@@ -53,6 +55,29 @@ Current provenance vocabulary:
 - `analyzer-optional`
 
 The numerical array remains separate from availability. A missing/unavailable value is not conflated with user filtering.
+
+### XML discovery and Advanced analysis
+
+PV-2000 UI panels and CSV/XPS exports are evidence surfaces, not the complete information model. Runtime parsing should inventory useful XML-stored quantities even when the legacy UI/export does not expose them.
+
+Each quantity can carry a presentation tier independent of provenance and validation:
+
+- `primary` — normal user-facing result;
+- `advanced` — useful stored/intermediate/derived information that should not dominate the default view;
+- `diagnostic` — audit/development information with limited user-facing interpretation.
+
+A quantity may therefore be, for example, `raw + advanced + inferred`.
+
+Rules:
+
+1. preserve semantically meaningful XML-stored fields even when absent from vendor CSV/UI;
+2. unknown numeric XML channels should remain discoverable under their XML names rather than being silently discarded;
+3. absence from vendor export does not make a stored XML quantity invalid;
+4. absence from vendor export also does not make that quantity a vendor result;
+5. advanced derived quantities require explicit formula/provenance and an evidence status;
+6. default UI remains concise; Advanced analysis is the opt-in surface for additional XML/stored/intermediate results.
+
+LBIC is the current reference implementation: active raw Direct/Scattered channels and inferred EQE can live under Advanced while Reflectivity/Current/IQE remain primary according to the validated family.
 
 ### Availability
 

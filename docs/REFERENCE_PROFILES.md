@@ -670,11 +670,12 @@ When a new real data combination arrives:
 5. compare parser structure and point count first;
 6. compare coordinates/acquisition order point-by-point where applicable;
 7. compare raw quantities point-by-point;
-8. reverse-engineer derived quantities only from the matching vendor output;
-9. check validity/blank/mask behavior and summary statistics;
-10. revise software logic if the new profile behaves differently;
-11. add or extend the appropriate validator; public reference cases should be regression-testable without becoming runtime dependencies;
-12. update this registry, `docs/VALIDATION.md`, the relevant algorithm document, HANDOFF and CHANGELOG;
-13. only then change a result from **inferred** to **validated**.
+8. inventory XML-only stored/unknown numeric quantities that the vendor UI/CSV does not expose; preserve meaningful extras and record whether they belong in Advanced/diagnostic analysis;
+9. reverse-engineer vendor-derived quantities only from matching vendor output;
+10. check validity/blank/mask behavior and summary statistics;
+11. revise software logic if the new profile behaves differently;
+12. add or extend the appropriate validator; public reference cases should be regression-testable without becoming runtime dependencies;
+13. update this registry, `docs/VALIDATION.md`, the relevant algorithm document, HANDOFF and CHANGELOG;
+14. only then change a result from **inferred** to **validated**.
 
 Do not create artificial NEW PROFILE boundaries around ordinary numeric parameter changes. At the same time, do not expand validation across a genuinely different input/output path merely because a formula is physically reasonable or the `xsi:type` is unchanged.
