@@ -37,6 +37,42 @@ npm run validate:qss
 
 The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
+### Expanded RoundWafer corpus
+
+A later private corpus adds **96 `QssUpcdMeasurement + MapPattern + RoundWafer` XML files**. The geometry remains inside QSS-MAP-001:
+
+- 95 files use 100 mm RoundWafer geometry with 5 mm pitch and 305 XML lifetime values;
+- one file uses 125 mm RoundWafer geometry with 5 mm pitch and 489 XML lifetime values;
+- nine files have same-measurement numeric PV-2000 CSV exports;
+- 108 associated XPS printouts show the same τeff.d / Smax / Implied-Voc result family.
+
+Pointwise regression on the nine numeric pairs establishes:
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| paired CSV cases | 9 | expanded evidence set |
+| X/Y coordinates | max abs error 0 mm | validated |
+| XML τeff.d vs CSV | max abs error 0 µs | validated |
+| Smax from `W/(2τ)` | max abs error ~5e-8 cm/s | validated to CSV numeric precision |
+| finite Implied Voc, existing compatibility model | max abs error ~1.94 mV | compatibility close, not vendor-exact |
+
+The original 305-point reference remains the tighter <0.1 mV Implied-Voc instance. The expanded corpus demonstrates that this tighter figure must not be generalized to all RoundWafer files.
+
+The corpus also establishes an important raw-value convention: **76 of the 96 XML files contain `τeff.d = -1 µs` sentinel sites**. Across the corpus this occurs at **13,649 of 29,464 XML sites**. Matching vendor output preserves the raw sentinel and can carry it into negative Smax values. Runtime therefore preserves raw XML/Smax values for parity/export, while default scientific analysis marks non-positive lifetime unavailable before user filtering. Users can explicitly select Raw / PV-2000 style when inspecting vendor-style raw behavior.
+
+### QSS analyzer-derived SRV and material modes
+
+The QSS analyzer now exposes lifetime → SRV as optional post-processing:
+
+```text
+planar:   S = W/2 * (1/tau_eff - 1/tau_bulk)
+textured: S = W   * (1/tau_eff - 1/tau_bulk) - S_planar_reference
+```
+
+Bulk lifetime is optional (blank = infinity), textured mode exposes the planar-reference SRV, and an optional minimum-lifetime threshold can reject low-lifetime points. Negative calculated SRV is clamped to zero. This is **analyzer-derived**, not a PV-2000 vendor-result validation claim.
+
+Implied Voc remains **PV-2000 compatible by default**. Optional Physical Si / Physical Ge modes are explicit user-selected estimates. The QSS XML family does not provide a trustworthy material identifier, so the analyzer never infers material from filenames, result names or substrate IDs.
+
 ### HighDensityPattern compatibility
 
 Status: **inferred coordinate reconstruction**, not vendor-validated.
@@ -47,34 +83,39 @@ For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle.
 
 ### Valid-data filtering
 
-The new valid-range UI is an analyzer feature rather than a vendor-output replication. Tests verify range masking; users must choose limits appropriate to the sample geometry/data distribution. This is especially important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
+The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw / PV-2000 style can retain the sentinel for parity inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
 
 ## Dual QSS injection sweep — paired raw XML/CSV regression
 
-The supplied private corpus contains **72 `DualQssMeasurement` XML files**. **57** have matching PV-2000 raw CSV exports, yielding **1003 paired injection points**.
+The supplied private corpus contains **330 `DualQssMeasurement` XML files**. **273** have exact-basename PV-2000 raw CSV exports, yielding **5833 paired injection points**. The other 57 XMLs are kept as structure/runtime coverage; 10 CSVs without an exact-basename XML are not auto-paired.
 
 Regression results:
 
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
-| XML/CSV paired files | 57 | validated evidence set |
-| paired injection rows | 1003 | exact count match |
+| XML corpus | 330 files | established current structure |
+| exact XML/CSV pairs | 273 | validated evidence set |
+| paired injection rows | 5833 | exact count match |
 | QSS intensity | max abs error 0 mSun | validated raw path |
 | laser power vector | max abs error 0 | validated raw path |
-| XML `Values` vs CSV raw `LifeTime [μs]` | max abs error ≈ 0.0050414 µs | validated to export rounding |
-| XML transient samples | 2000 per current transient | established XML structure |
+| `TransientInfo@LifeTime` vs CSV raw `LifeTime [μs]` | max abs error **0 µs** | validated raw path |
+| XML `Values` vs `TransientInfo@LifeTime` | max abs difference **0.020593307 µs**; one paired point >0.006 µs | distinct diagnostic XML field |
+| XML transient samples | 2000 per supplied transient | established XML structure |
 | CSV raw transient samples | first 1999 samples | vendor export behavior |
-| paired raw Time/Voltage samples | 2,004,997 compared; max abs error 0 at export precision | validated raw path |
-| vendor result-table Lifetime | 775 positive / 228 zero | observed, transformation unresolved |
-| vendor `dn` given positive vendor Lifetime | generation formula matches within <0.5% relative at rounded CSV precision | validated downstream step |
-| Implied Voc / J0 | output path not yet reproduced | inferred / unsupported |
+| paired raw Time/Voltage samples | **11,660,167** compared; max abs error 0 at export precision | validated raw path |
+| vendor result-table Lifetime | **4628 positive / 1205 zero** | observed, transformation unresolved |
+| vendor `dn` given positive vendor Lifetime | generation formula max relative discrepancy ≈ **0.509%** at rounded CSV precision | validated downstream step |
+| Implied Voc / J0 | output path not reproduced | inferred / unsupported |
 
-A critical semantic distinction is now locked in: **XML `Values` / `TransientInfo@LifeTime` are the raw transient-lifetime path, while CSV top-table `Lifetime[us]` is a different post-processed result.** The runtime therefore labels its curve as XML/transient lifetime and does not claim to reproduce the vendor result-table Lifetime.
+The expanded corpus resolves an earlier ambiguity: **CSV raw `LifeTime` corresponds to `TransientInfo@LifeTime`, while XML `Values` is a separate closely related lifetime vector.** The analyzer defaults to `TransientInfo@LifeTime`, exposes `XML Values` as a diagnostic curve source, and exports both explicitly.
 
-The analyzer remains XML-only at runtime. Paired CSVs are regression evidence and are not loaded by users.
+The CSV top-table `Lifetime[us]` remains a third, post-processed quantity. It is not synthesized at runtime until its transformation and validity rule are reproduced point-by-point.
+
+A supplemental six-XML set confirms `OnePointPattern` center coordinates with `SubstrateShape=Circle`, radius 50 mm and 7 mm edge exclusion. These files request J0-related post-processing but have no matching result-table export; they exercise one-point geometry/metadata handling only.
+
+The analyzer remains XML-only at runtime. Paired CSVs are private regression evidence and are not runtime inputs.
 
 See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
-
 
 ## Emitter J0 map — paired XML/CSV regression
 
@@ -107,17 +148,29 @@ The validator looks for matching private pairs under `private/reference/jzero/` 
 
 Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The default Si model uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc with `εr = 11.68`, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that was an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.
 
-The Analysis controls now also expose **Material: Silicon (Si) / Germanium (Ge)**. Ge restores the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`. The material selection feeds Qsc, variation/Minimum Dit, the flatband semiconductor-capacitance criterion/Qtot, and Midgap Dit targeting. The Ge path is **implemented but unvalidated against PV-2000 Ge output**; a real Ge XML + matching vendor export/display is required before expanding the validated envelope.
+The Analysis controls expose **Material: Silicon (Si) / Germanium (Ge)** as an Analyzer-level semiconductor-model choice. Ge restores the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selection feeds Qsc, variation/Minimum Dit, the flatband semiconductor-capacitance criterion/Qtot, and Midgap Dit targeting. PV-2000 itself has no Si/Ge material selector, so Ge-sample exports are numerical comparison references rather than evidence for a PV-2000 Ge mode.
 
 ### Standard COCOS
 
 Status: **validated against the available W1 export to the documented approximate error level**.
 
-The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS and preserves the measured dark/light path. The reference family is unchanged, but exact post-change numerical parity is pending re-run of the private W1 regression after the ni unification.
+The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS and preserves the measured dark/light path. Standard Vsb is doping-aware and signed: P-type uses `F*(VDark-VLight)`, while N-type reverses that sign. The reference family is unchanged, but exact post-change numerical parity is pending re-run of the private W1 regression after the ni unification.
+
+### OnePointPattern / circular-substrate regression
+
+Nine private one-point DIT XMLs have matching PV-2000 Raw COCOS CSV exports. All use a center-only `OnePointPattern`; nominal geometry is stored as `Substrate/SubstrateShape xsi:type="Circle"` with 50 mm radius and measurement-level 4 mm edge exclusion. The display therefore uses the real nominal substrate and center measurement position.
+
+Across 275 process rows, XML dark means after offset subtraction match exported `Vcpd Dark` with about **0.310 mV MAE** and **1.11 mV max absolute error**. The exported `Vcpd Light` is an almost straight processed branch and does not equal the saved measured-light means despite `UseCocosII=false`. The extra reprocessing state is not uniquely encoded in the XML and is not guessed at runtime.
+
+An expanded, read-only audit uses `scripts/validate_dit_raw_reference.py` to compare exact-name XML/raw-CSV candidates while treating comma- and semicolon-separated duplicate exports as one only when all exported numeric columns agree. Of 223 XMLs in that private collection, 178 have a matching raw CSV; 176 are row-aligned Standard COCOS OnePoint pairs, two have truncated/different row counts, and 45 XMLs are unpaired. Across the 176 aligned pairs, all **11,575 Qc positions** match the XML charge schedule exactly. **168/176** pairs keep the exported dark-channel maximum error within 2 mV; the other eight diverge, so the full collection is **not** a blanket validated profile. The median per-pair dark MAE is about 0.301 mV. Exported light/Vsb values generally differ from the saved measured-light branch, and 4,982 raw-export Dit cells are blank. No vendor Dit/Ge material parity is claimed from this audit.
+
+Run the diagnostic with `npm run validate:dit -- --xml-dir <local XML directory> --csv-dir <local raw CSV directory>`; repeat `--csv-dir` for additional locations. `--max-dark-error-mv 2` additionally requires every XML in the selected directory to pair and every dark row to stay within 2 mV. A focused eight-pair subset passes that gate (520 rows, 1.60 mV maximum dark error); the entire mixed corpus does not.
 
 ### PV2000 COCOS-II (inferred)
 
 Status: **inferred**, not vendor-exact.
+
+A read-only inventory of the supplied historical backup (5,710 XMLs, including 2,659 `DITMeasurement` files), the supplied software data archive (62 DIT XMLs), and the private Ge/COCOS measurement collection (220 DIT XMLs) found no DIT file with `UseCocosII=true`. These datasets therefore cannot upgrade the XML-driven COCOS-II path to validated, irrespective of the software-package or folder name.
 
 The current default COCOS-II path is derived from a same-raw-data adjustment series rather than a vendor algorithm disclosure. The supplied reprocessed exports established these behavioral constraints:
 
@@ -233,6 +286,10 @@ The current-enabled set contains five paired XML/CSV references: four 51×51/101
 
 The reflectance-only corpus contains **62 XML files**. All 62 use `MeasureCurrent=false`, `MeasureDirectReflectance=true`, `MeasureScatteredReflectance=true`; their BeamData still include `Current`, but every supplied Current value is exactly zero. **44** of those XMLs have **60 matching PV-2000 XPS result printouts** because several measurements were printed at more than one display color scale.
 
+The full-corpus inventory check reports **44 PASS** with matching XPS summaries, **17 UNPAIRED** complete XMLs without a matching vendor printout, **1 INFERRED** partial acquisition (2814/3721 points), and **0 FAIL**. `UNPAIRED` confirms the XML fits the known structural path but does not claim result parity for that instance. The validator is strict by default; `--allow-unpaired` is for a mixed corpus inventory and never labels missing vendor evidence as `PASS`.
+
+A browser smoke sweep of the built analyzer imported **all 62 XMLs**. For every file, the selected quantity was Reflectivity (marked inferred for the partial acquisition), Results summary and Selected pixel contained Reflectivity values, and raster map, distribution, X profile and Y profile canvases all had plotted pixels. There were no import dialogs or runtime exceptions. Visual inspection of a complete file and the partial file confirmed the expected map shapes. This verifies display operation, not vendor parity for the 17 unpaired files or the partial coordinate schedule.
+
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
 | `LBICMeasurement` dispatch | unit tested | tested |
@@ -266,6 +323,8 @@ npm run validate:lbic
 ```
 
 Current-enabled private references use same-basename XML/CSV pairs under `private/reference/lbic/`. Reflectance-only cases may use matching Reflectivity XPS printouts; the validator matches them by normalized XML-result-name prefix and checks the five vendor summary statistics at display precision.
+
+For a private reflectance folder inventory, pass `--allow-unpaired` followed by its XML paths to `scripts/validate_lbic_reference.py` through the Node Python wrapper. Omit the option when every supplied XML must have a matching vendor result.
 
 Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch and, within `LBIC-MULTI-002`, the number of independent beam keys do not by themselves create a new profile. A different coordinate encoding, target scheduling rule, active measurement-flag combination, raw channel set, unit convention, coupled cross-beam calculation, iteration path, or vendor result/validity behavior remains **NEW PROFILE**. Incomplete acquisition ordering is not promoted to validated parity without matching vendor coordinate evidence.
 

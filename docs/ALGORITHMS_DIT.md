@@ -41,24 +41,38 @@ For COCOS-II, PCHIP preprocessing is applied after COCOS-II reconstructs signed 
 
 ## Semiconductor material model
 
-The **Material** selector is part of Analysis controls because the semiconductor model affects more than the PCHIP target. The selected material is used by semiconductor Qsc, the adjacent-step variation Dit calculation (and therefore Minimum Dit), the flatband semiconductor-capacitance criterion, Qtot, and the theoretical Midgap Dit target.
+The **Material** selector is an Analyzer-level semiconductor model control. PV-2000 itself does not expose a Si/Ge material selector in these DIT result files. The selected Analyzer model feeds semiconductor Qsc, the adjacent-step variation Dit calculation (and therefore Minimum Dit), the flatband semiconductor-capacitance criterion, Qtot, and the theoretical Midgap Dit target.
 
 Current 300 K compatibility parameters are inherited from the legacy MATLAB path:
 
-| Material | ni [cm^-3] | εr | Validation status |
+| Material | ni [cm^-3] | εr | Analyzer status |
 |---|---:|---:|---|
-| Silicon (Si) | 9.65e9 | 11.68 | default; existing Si reference path |
-| Germanium (Ge) | 2e13 | 16.2 | legacy MATLAB compatibility; no matching PV-2000 Ge export yet |
+| Silicon (Si) | 9.65e9 | 11.68 | default Analyzer model; existing Si-sample reference path |
+| Germanium (Ge) | 2e13 | 16.2 | Analyzer-only legacy MATLAB compatibility model |
 
 The active Si implementation uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc. The earlier inherited Qsc code used the rounded `1.00e10 cm^-3`; that mismatch was removed previously.
 
-For Ge, the analyzer restores the legacy MATLAB constants rather than claiming a new PV-2000 vendor model. Ge results remain **unvalidated against PV-2000 Ge output** until a real Ge DIT XML plus matching vendor export/display is regressed. The analyzer never infers material from a sample name or substrate identifier.
+The Ge option must not be described as a PV-2000 Ge mode. A Ge sample can be measured and its result exported by PV-2000 without PV-2000 selecting a different semiconductor model. Comparisons against such exports test how the Analyzer's optional Ge model behaves on those samples; they do not establish a vendor material mode. The Analyzer never infers material from a sample name or substrate identifier.
 
 The previously documented Si W1 regression (about 2.6% mean difference for minimum Dit and Qtot) predates the Si ni unification. Re-run the private Standard COCOS reference regression before quoting an exact post-change error figure.
 
 ## Standard COCOS
 
-When Standard COCOS is active, the analyzer uses the XML `VsbCorrectionFactor` with measured dark/light curves and the selected-material MATLAB-compatible variation/PCHIP path.
+Standard COCOS keeps the measured dark/light XML branch. After Vcpd offset removal, let `D` and `L` be the measured dark and light values and `F` the XML `VsbCorrectionFactor`. The signed result convention is:
+
+```text
+direct = F * (D - L)
+P-type Vsb = direct
+N-type Vsb = -direct
+```
+
+The previous unconditional `abs(...)` lost real sign information and is no longer used. The same sign rule is applied to the initial dark/light state.
+
+A private nine-pair one-point reference set exposes an additional export distinction: its PV-2000 Raw COCOS CSVs contain an almost straight processed `Vcpd Light` branch that does not equal the measured light means stored in the matching XMLs even though the XMLs have `UseCocosII=false`. The XML alone does not uniquely encode whether or how that extra reprocessing was applied. The browser runtime therefore preserves the measured Standard COCOS branch and does **not** guess a straight corrected-light branch merely to fit those exports.
+
+## OnePointPattern geometry
+
+`OnePointPattern` is not a spatial map. The Analyzer still shows the measurement location in spatial context, but its outline and autoscale come from the XML target geometry rather than from the single point's coordinate extent. For `RoundWafer`, the solid outline uses `Diameter/2` and the dashed scheduled boundary uses `Diameter/2 - EdgeExclusion`. A center-only one-point measurement is labelled **Measurement position**, not presented as a heatmap.
 
 ## PV2000 COCOS-II (inferred)
 

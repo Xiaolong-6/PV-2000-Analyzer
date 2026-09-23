@@ -1,18 +1,62 @@
 # Changelog
 
-## v20260922.17.7 — 2026-09-23 (documentation and Wiki publication)
+## v20260923.9 — 2026-09-23
 
-- Published the eight `wiki/` source files to the GitHub Wiki (Wiki revision `a30f367`), including Home and the custom sidebar.
-- Changed Wiki equations to GitHub-rendered inline math and fenced display-math blocks, verified against the live Wiki.
-- Clarified QSS mSun units and the difference between the physical and vendor-compatible implied-Voc expressions; made unresolved Dual-QSS, LBIC diffusion-length and DIT Back Surface Shift boundaries explicit.
-- Updated Wiki sync instructions and branch handoff; no analyzer runtime, reference envelope or private data changed.
+- Merged the scientific Wiki source set and documentation/Wiki information-architecture plan into the main repository for continued maintenance.
+- Wiki pages present current scientific knowledge directly; repository docs retain implementation, validation-profile and regression evidence.
 
-## v20260922.17.6 — 2026-09-23 (documentation planning branch)
+## v20260923.8 — 2026-09-23
 
-- Added `docs/DOCUMENTATION_WIKI_PLAN.md` defining the repo-docs/Wiki split, public wording/content boundaries, proposed measurement-family documentation, Wiki page tree, ownership mapping and phased rollout.
-- Refined the plan so the GitHub Wiki is the primary public surface for physics, mathematical models, equations, assumptions, units and scientific interpretation, while repository docs remain authoritative for implementation mapping, profile IDs and regression evidence.
-- This branch is documentation-only: no analyzer runtime, calculation, validation-envelope or UI behavior changes are planned here.
-- Added publishable Wiki source pages under `wiki/` for Home, scientific foundations, measurement-family index, validation methodology, DIT, QSS-uPCD and CV/CET, plus a local-agent Wiki push handoff.
+- Added `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`, defining a staged measurement-domain refactor around quantity provenance, availability, compatibility profiles, normalized geometry and pure scientific services.
+- The planned first implementation phase is limited to shared domain primitives plus an ISC/VCPD pilot, preserving all existing numerical results, UI behavior and validation labels.
+
+## v20260923.7 — 2026-09-23
+
+- Added a generic, read-only DIT XML/raw-CSV diagnostic and optional strict dark-channel regression gate; private file paths and data remain outside the repository.
+- Audited a larger private Standard COCOS OnePoint corpus: 176 paired row-aligned cases / 11,575 process rows reproduce the Qc schedule exactly, while eight cases exceed 2 mV dark-channel error and the exported light/Vsb branches are not generally derivable from saved measured-light XML.
+- Confirmed that the inspected historical backup, installation data and Ge/COCOS measurement XML sets contain no `UseCocosII=true` DIT instance; COCOS-II and the Analyzer-only Ge model retain their existing validation boundaries. No runtime calculation changed.
+
+## v20260923.6 — 2026-09-23
+
+- Moved the Dual QSS **Measurement position** schematic out of the left metadata sidebar and into the right visualization column, matching the established DIT placement rule for OnePoint geometry.
+- Added a layout regression that prevents the Dual QSS position visualization from being rendered inside the sidebar again.
+
+## v20260923.5 — 2026-09-23
+
+- Changed the landing-page **Guide** shortcut to the project Wiki and added a matching Guide/Wiki entry point to the README.
+- The Wiki is the primary public reading surface for scientific background, measurement semantics and user-oriented reference material.
+
+## v20260923.4 — 2026-09-23
+
+- Fixed DIT `OnePointPattern` spatial rendering: nominal circular geometry now falls back to `Substrate/SubstrateShape` when no dedicated target node exists, EdgeExclusion drives the inner outline, and center-only datasets are labelled **Measurement position** instead of appearing as a fictitious tiny wafer map.
+- Preserved Standard COCOS Vsb sign using the doping-aware dark/light convention rather than an unconditional absolute value, including the initial state and exported analysis columns.
+- Regressed a private 9-pair one-point DIT corpus: 275 XML dark-process rows reproduce exported Vcpd Dark to about 0.310 mV MAE / 1.11 mV max error. A separate nearly straight corrected-light export branch is documented but not guessed because its activation/state is not uniquely encoded in the saved XML.
+- Clarified throughout the Dit UI/docs that **Material: Si / Ge is an Analyzer model choice**; PV-2000 itself has no Si/Ge material selector, so Ge-sample exports do not establish a PV-2000 Ge mode.
+- Added Dual QSS one-point geometry context: `OnePointPattern` reads the stored coefficient position, circular substrate geometry and EdgeExclusion, showing a measurement-position schematic without inventing a spatial lifetime heatmap. Six supplemental J0-requesting XMLs are documented as metadata/runtime coverage only because no matching vendor result-table export was supplied.
+
+
+## v20260923.3 — 2026-09-23
+
+- Documented the expanded QSS-INJ-001 envelope: 330 XMLs, 273 exact XML/CSV pairs, 5833 paired points and 11,660,167 exact raw Time/Voltage samples.
+- Locked the three-lifetime distinction across README, validation, algorithm notes, reference profiles and handoff: TransientInfo raw LifeTime, XML Values diagnostic lifetime, and unresolved vendor result-table Lifetime.
+- Recorded the expanded vendor result-table evidence (4628 positive / 1205 zero Lifetime rows) while keeping vendor Lifetime/Implied-Voc/J0 processing unsupported until pointwise parity is established.
+
+
+## v20260923.2 — 2026-09-23
+
+- Expanded `QSS-MAP-001` with a private **96-XML `QssUpcdMeasurement + MapPattern + RoundWafer` corpus**: 95 × 100 mm / 305-site maps plus one 125 mm / 489-site map. All 96 reconstruct the exact XML point count; all nine matching numeric PV-2000 CSV pairs reproduce X/Y and lifetime exactly, with Smax agreeing to CSV numeric precision.
+- Established PV-2000's numeric non-positive-lifetime sentinel behavior from the corpus: **76 / 96 files** contain `τeff.d <= 0`, totaling **13,649 / 29,464 sites**. Raw lifetime and PV-2000-style raw Smax remain preserved for traceability/export, while default scientific analysis marks those sites unavailable before user filtering. An explicit **Raw / PV-2000 style** mode retains vendor-style numeric behavior.
+- Added configurable lifetime→**SRV** analysis with Planar / Textured-black geometry, optional bulk lifetime, planar-reference SRV and minimum-lifetime threshold. SRV remains explicitly separate from vendor-compatible Smax.
+- Split Implied Voc semantics into the default **PV-2000-compatible** path and explicit analyzer-side **Physical Si / Physical Ge** estimates. QSS material is never inferred from filenames/result names/substrate IDs. The original <0.1 mV reference remains an instance-level result; the expanded nine-pair corpus reaches approximately **1.94 mV** maximum absolute compatibility error.
+- Reworked QSS Analysis controls into a sidebar-friendly two-column layout and replaced the clipped six-column summary table with compact per-metric result cards.
+- Browser-smoked the CI-built single-file analyzer against **all 96 XML files** with **96/96 successful analyzer dispatch/render**, finite default filter bounds, generated map/distribution/profile canvases and zero browser/page errors. Representative normal, sentinel-heavy and 125 mm / 489-site cases were visually inspected; CSV export was checked for raw-sentinel preservation and availability/filter flags.
+
+
+## v20260923.1 — 2026-09-23
+
+- Rechecked the private LBIC reflectance corpus: 44 complete XMLs match 60 vendor XPS summaries, 17 complete XMLs have no matching XPS, and one partial acquisition remains coordinate-inferred. The mixed-corpus validator now reports these evidence states separately with `--allow-unpaired` while retaining strict paired validation by default.
+- Restricted validated LBIC labels to the documented XML flag paths. Current-enabled parity requires explicit Current/Direct/Scattered flags and a known µA unit; reflectance-only parity requires zero-valued inactive Current placeholders. Unknown current units no longer trigger calculated EQE/IQE.
+- Browser-imported all 62 private reflectance XMLs in the built analyzer. Every file selected Reflectivity and rendered a data-bearing raster map, distribution and X/Y profiles without an import dialog or runtime error. The one partial acquisition now states `partial acquisition · inferred` directly in Reference parity.
 
 ## v20260922.17 — 2026-09-22
 
