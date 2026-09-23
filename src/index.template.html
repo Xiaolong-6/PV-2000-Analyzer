@@ -18,16 +18,22 @@
         <p class="landing-subtitle">PV-2000 XML analysis and visualization</p>
       </div>
     </header>
-    <div class="feature-tags" aria-label="Supported analysis modules and reference software">
-      <span class="feature-label">Supported analyzers</span>
-      <span class="feature-tag">Dit / COCOS</span>
-      <span class="feature-tag">QSS-µPCD</span>
-      <span class="feature-tag">QSS Injection</span>
-      <span class="feature-tag">Emitter J0</span>
-      <span class="feature-tag">ISC</span>
-      <span class="feature-tag">LBIC</span>
-      <span class="feature-tag feature-tag-muted">Generic XML inspector</span>
-      <span class="feature-tag feature-tag-muted" title="Version-level validation is anchored to Semilab PV-2000 v1.3.0.5. Other releases may be schema-compatible but are not version-validated without paired reference output.">Reference: PV-2000 v1.3.0.5</span>
+    <div class="feature-tags" aria-label="Supported analysis modules and compatibility boundary">
+      <div class="feature-row">
+        <span class="feature-label">Supported analyzers</span>
+        <span class="feature-tag">Dit / COCOS</span>
+        <span class="feature-tag">QSS-µPCD</span>
+        <span class="feature-tag">QSS Injection</span>
+        <span class="feature-tag">Emitter J0</span>
+        <span class="feature-tag">ISC / VCPD</span>
+        <span class="feature-tag">CET / EOT</span>
+        <span class="feature-tag">LBIC</span>
+      </div>
+      <div class="feature-row feature-row-secondary">
+        <span class="feature-label">Fallback / reference</span>
+        <span class="feature-tag feature-tag-muted">Generic XML inspector</span>
+        <span class="feature-tag feature-tag-muted" title="Version-level validation is anchored to Semilab PV-2000 v1.3.0.5. Other releases may be schema-compatible but are not version-validated without paired reference output.">Validation boundary: PV-2000 v1.3.0.5</span>
+      </div>
     </div>
     <div id="dropZone" class="drop">
       <div class="drop-icon" aria-hidden="true"><svg class="project-icon"><use href="#i-upload"/></svg></div>
