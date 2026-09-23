@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.10.9 — 2026-09-23 (measurement-domain refactor branch)
+
+- Added the shared site-selection contract with separate intrinsic support, user range filtering and active masks; all site-aligned arrays are required to share one index space.
+- Centralized Pattern/Target coordinate interpretation in the geometry core. Raw XML coefficients are retained separately from canonical physical `pointsMm`; unknown coefficient encodings are not assumed to be millimetres.
+- Fixed DIT NinePointPattern map geometry: target-relative ±0.632455532 coefficients on a 100 mm wafer with 4 mm EdgeExclusion resolve to approximately ±29.09 mm and remain labelled inferred pending paired X/Y validation.
+- Routed QSS HighDensity, ISC/VCPD generated map geometry, Dual QSS OnePoint context and DIT position/map rendering through the shared geometry contract while preserving established validated coordinate paths.
+
 ## v20260923.10.4 — 2026-09-23 (measurement-domain refactor branch)
 
 - Added the first measurement-domain core: explicit Quantity provenance/availability, normalized measurement and geometry envelopes, semantic profile registry, and backwards-compatible registry metadata.

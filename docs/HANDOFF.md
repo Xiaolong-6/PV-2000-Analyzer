@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.4
+# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.9
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
@@ -9,6 +9,17 @@ The inspected historical backup, software data archive and Ge/COCOS collection h
 The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. The first implementation branch should add shared domain primitives and migrate ISC/VCPD as the pilot without numerical, validation-label or UI changes.
 
 Scientific Wiki source pages are tracked under `wiki/`; `docs/DOCUMENTATION_WIKI_PLAN.md` defines their role and `docs/WIKI_HANDOFF.md` documents Wiki synchronization. Wiki prose is maintained as the current scientific reference, while validation/profile evidence remains in repository docs.
+
+## Shared site selection and canonical geometry
+
+Phase A now includes two cross-cutting contracts:
+
+- `PV2000.selection`: intrinsic support, user range filter and active mask are separate. QSS remains the existing behavioral reference; broad filter UI migration waits for the post-architecture feature branch.
+- `PV2000.geometry.resolveMeasurementGeometry`: Pattern/Target semantics produce canonical `pointsMm`, while raw coefficients remain separate.
+
+DIT NinePointPattern no longer treats ±0.632 coefficients as ±0.632 mm. On the current 100 mm / 4 mm-edge family they resolve against the 46 mm scheduled radius to about ±29.09 mm. This is marked inferred until paired vendor X/Y coordinates are available.
+
+A repository scan found coefficient-bearing runtime paths in DIT, QSS HighDensity, ISC/VCPD and Dual QSS. They now route through or preserve the shared geometry contract; LBIC/JZero do not currently contain the same direct coefficient-as-mm path.
 
 ## Measurement-domain Phase A
 

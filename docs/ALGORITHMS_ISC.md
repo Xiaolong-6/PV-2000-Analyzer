@@ -56,7 +56,7 @@ y = iy * PitchY
 
 For the reference instance this gives coordinates from -18 to +18 mm in both axes. All 169 X/Y pairs match the vendor export exactly.
 
-Explicit XML pattern coefficients, when present and count-matched, are preferred over inferred map geometry. Runtime support for other ISC coordinate paths can remain available as an inferred display aid, but they are not part of the current validated profile until paired PV-2000 output is supplied.
+The validated ISC/VCPD profiles use the documented MapPattern target/pitch coordinate rules. Raw XML coefficients are preserved when present, but an unclassified coefficient encoding is not treated as millimetres automatically. Another coefficient interpretation remains inferred/unsupported until paired PV-2000 X/Y output establishes its coordinate semantics.
 
 ## Statistics
 

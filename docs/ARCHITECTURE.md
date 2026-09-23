@@ -71,6 +71,40 @@ Current reason codes include:
 
 User-selected valid-data filtering is a separate concern and is not encoded as intrinsic availability.
 
+### Site selection
+
+`src/core/selection.js` defines the shared site-selection lifecycle for map-like measurements.
+
+```js
+selection = {
+  siteCount,
+  intrinsicMask,
+  supportMask,
+  filterMask,
+  activeMask,
+  filter: {
+    metricKey,
+    lower,
+    upper
+  }
+}
+```
+
+The masks have distinct meanings:
+
+- `intrinsicMask` — family/site support independent of the selected metric;
+- `supportMask` — intrinsic support plus the selected filter metric's Quantity availability;
+- `filterMask` — only the user's lower/upper numeric range;
+- `activeMask` — `supportMask && filterMask`.
+
+When a different quantity is rendered, `maskForMetric(selection, quantity)` also applies that quantity's own availability. This prevents a filter metric from making an unrelated unavailable derived result appear valid.
+
+All site-aligned arrays share one immutable site index space. Coordinates, Quantity values, availability states and masks must have equal length and refer to the same site index. A renderer must not independently reorder or filter one array.
+
+The selection layer also owns reset-range and percentile helpers. Valid-data UI controls consume this model; they do not define intrinsic validity themselves.
+
+QSS-uPCD remains the behavioral reference for the existing Valid-data filter until its later migration. JZero's local mask helpers are scheduled to migrate after the domain-core PR.
+
 ### Normalized measurement
 
 `src/core/measurement.js` creates a small common envelope:
@@ -115,9 +149,34 @@ Current migrated profile metadata:
 
 Exact evidence and validation boundaries remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
-### Geometry envelope
+### Canonical measurement geometry
 
-`src/core/geometry.js` retains the existing grid-generation helpers and now also exposes a normalized geometry envelope containing:
+`src/core/geometry.js` owns Pattern/Target-to-physical-coordinate interpretation for migrated coordinate paths. Raw XML coefficients are preserved separately from physical millimetre coordinates.
+
+The geometry resolver returns:
+
+- `rawCoefficients` — XML coefficients exactly as parsed;
+- `pointsMm` — canonical physical site coordinates in millimetres when the coordinate strategy is known;
+- nominal sample boundary;
+- scheduled measurement boundary after EdgeExclusion;
+- source coordinate space;
+- interpretation strategy;
+- acquisition order;
+- evidence/validation status.
+
+Known target-relative coefficient paths are converted centrally. Unknown coefficient encodings remain unresolved rather than being silently treated as millimetres.
+
+Current shared strategies include:
+
+- MapPattern target/pitch grids;
+- SquareRegionPattern explicit physical regions;
+- HighDensityPattern normalized target coefficients;
+- NinePointPattern / FivePointPattern normalized target coefficients;
+- center OnePointPattern.
+
+For RoundWafer target-relative patterns, normalized coefficients scale by the scheduled radius `Diameter/2 - EdgeExclusion`. For SquareCell they scale by the EdgeExclusion-adjusted half-width and half-height.
+
+The existing grid helpers remain available, and the normalized geometry envelope contains:
 
 - pattern type;
 - target type;
@@ -164,6 +223,7 @@ Untouched modules continue to register and resolve through the same registry API
 - `src/core/geometry.js` — grid reconstruction plus normalized geometry envelope.
 - `src/core/validity.js` — result availability/reason primitives.
 - `src/core/quantity.js` — quantity/provenance/validation model.
+- `src/core/selection.js` — intrinsic support, user range selection and active-mask lifecycle.
 - `src/core/measurement.js` — normalized measurement envelope.
 - `src/core/profiles.js` — semantic reference-profile registry.
 - `src/core/export.js` — CSV download.
