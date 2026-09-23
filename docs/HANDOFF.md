@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — main v20260922.17
+# Agent handoff — 2026-09-23 — branch `feat/qss-map-corpus-support`
 
 ## Goal
 
@@ -9,7 +9,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - modular source + generated single-file `dist/index.html` build; `dist/` is ignored and rebuilt by CI/Pages rather than tracked;
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
-- `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
+- `QssUpcdMeasurement` analyzer with raw-lifetime preservation, sentinel-aware scientific validity, lifetime/Smax/PV-2000-compatible Implied-Voc maps, explicit Physical Si/Ge estimates, configurable lifetime→SRV analysis, filtering, distributions/profiles and CSV export;
 - `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
 - `JZeroMeasurement` analyzer with two-intensity Emitter J0 maps, PseudoSquareCell geometry, Basore J0, both τeff.d/Smax/Implied-Voc channels, filtering, distributions and CSV export;
 - `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
@@ -311,10 +311,11 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - For LBIC-MULTI-002, verify the pseudo-square outline/exclusion boundary, 984/952/855/656 nm beam switching, Current / Reflectivity / IQE defaults, coordinate-based X/Y profiles and export.
    - Confirm ordinary numeric wavelength/power/FluxCache/raster-size changes stay inside the appropriate validated family; categorical path changes must report **NEW PROFILE**.
 
-4. **QSS regression smoke**
-   - Run `npm run validate:qss` with private references present.
-   - Import the reference XML and verify valid-range filtering, smooth-map masking, Distribution axis swap and CSV export still behave correctly after layout changes.
-   - Exercise map / Distribution / acquisition-profile wheel zoom, axis-only zoom and double-click auto-scale.
+4. **QSS expanded-corpus smoke — completed on this branch**
+   - CI quality gates / validator launcher / build are green.
+   - The CI-built single-file analyzer was loaded headlessly and all **96 supplied QSS XML files** were imported one-by-one: 96/96 dispatched to the QSS analyzer, produced coordinate-complete maps, finite default filter bounds and live map/Distribution/acquisition-profile canvases with no browser/page errors.
+   - Representative normal, sentinel-heavy and 125 mm / 489-site cases were visually inspected. SRV and Physical Ge controls were exercised after import.
+   - CSV export was checked on a sentinel-heavy case: raw `-1 µs` values remain present; default scientific mode marks them unavailable/filter-invalid; Raw / PV-2000 style marks them available/valid under the full raw lifetime range.
 
 5. **Landing / fallback / theme**
    - Verify the welcome tags render correctly in light and dark mode.
