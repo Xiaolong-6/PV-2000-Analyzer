@@ -93,6 +93,11 @@ test('CET source uses shared domain, quantity, geometry and valid-data contracts
   assert.match(src,/binControls\('cetHistBins'/);
 });
 
+test('CET defaults filtering to R2 so undefined EOT/Cd sites remain in other supported summaries',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8');
+  assert.match(src,/metricKey:'r2'/);
+});
+
 test('single-file build includes CET before generic fallback',()=>{
   const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
   const cet=build.indexOf("'src/modules/cet.js'");
