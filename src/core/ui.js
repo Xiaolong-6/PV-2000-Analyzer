@@ -47,7 +47,10 @@
     state,
     title='Valid-data filter',
     helpText='Choose a result quantity and numeric range. The resulting site mask is shared by summaries, maps, distributions and exports.',
-    centralLabel='1–99%'
+    centralLabel='1–99%',
+    centralTitle='Set limits to the 1st–99th percentile of the selected filter metric.',
+    resetTitle='Reset the range to all available sites for the selected filter metric.',
+    applyTitle='Apply the entered lower/upper limits to the shared site mask.'
   }={}){
     if(!prefix)throw new Error('Valid-data filter prefix is required.');
     const options=Object.values(metrics||{}).map(metric=>
@@ -64,9 +67,9 @@
       <div class="filter-actions">
         <span><b id="${prefix}Count">${state.validCount}</b> / ${state.siteCount} valid</span>
         <span class="grow"></span>
-        <button id="${prefix}Central" title="Set limits to the 1st–99th percentile of the selected filter metric.">${escapeHtml(centralLabel)}</button>
-        <button id="${prefix}Reset" title="Reset the range to all available sites for the selected filter metric.">Reset</button>
-        <button id="${prefix}Apply" title="Apply the entered lower/upper limits to the shared site mask.">Apply</button>
+        <button id="${prefix}Central" title="${escapeHtml(centralTitle)}">${escapeHtml(centralLabel)}</button>
+        <button id="${prefix}Reset" title="${escapeHtml(resetTitle)}">Reset</button>
+        <button id="${prefix}Apply" title="${escapeHtml(applyTitle)}">Apply</button>
       </div>
     </section>`;
   }

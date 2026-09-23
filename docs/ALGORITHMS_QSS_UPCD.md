@@ -20,6 +20,16 @@ For scientific analysis, the default is stricter: non-positive lifetime is intri
 
 The user can then choose a filter metric and lower/upper limits after inspecting the distribution. The resulting mask is applied consistently to summary statistics, maps, distributions and exports. Excluded sites remain diagnosable in point/profile views but are not used in smooth interpolation. Smooth-map interpolation is distance-limited to the neighborhood of valid measured sites to avoid painting an unmeasured quarter/coupon across the full nominal wafer.
 
+### Shared filter architecture
+
+As of the `v20260923.15.1` migration branch, QSS uses the same `PV2000.selection.createFilter()` and shared filter UI contract as ISC/VCPD, JZero and LBIC. This is an architecture migration only: the QSS filter metric, default lifetime filter, full-range initialization, inclusive lower/upper bounds, `1–99%`, Reset and Apply behavior are preserved.
+
+The scientific/intrinsic lifetime support mask remains a separate concept. In the default mode, finite `τ <= 0` sentinel values are excluded by `intrinsicLifetimeMask()` before the shared user filter is evaluated. In **Raw / PV-2000 style**, finite non-positive values can remain intrinsically supported. The shared controller receives this mask as `intrinsicMask`; user range filtering cannot convert an intrinsically unavailable point into an available one. Conversely, a finite supported point outside the user range is **FILTERED**, not invalid or unavailable.
+
+When Analysis controls change the lifetime-validity mode or recalculate derived Voc/SRV values, QSS rebuilds the shared controller using the new metric arrays and intrinsic support while preserving the currently selected filter metric. Matching the historical behavior, the numeric filter range resets to the full supported range of that metric after Apply analysis.
+
+The same shared active mask is passed to Results summary, map, Distribution, acquisition profile and CSV validity flags. QSS deliberately retains the separate intrinsic support mask in map/profile/histogram rendering so tooltips and diagnostics can continue to distinguish **UNAVAILABLE** from **FILTERED**. Histogram `Filter-excluded count` semantics and the existing CSV column layout are unchanged by this migration.
+
 The Distribution histogram follows the selected map metric (lifetime by default). The plotted Count is the number of valid available points only; filter-excluded points do not add to bar height, and intrinsically unavailable sentinel sites are outside the scientific histogram unless Raw / PV-2000 style is selected. Yellow lines mark the active lower/upper filter bounds. Swap axes changes only presentation and never changes validity.
 
 ## Smax

@@ -49,3 +49,22 @@ test('shared UI exposes reusable valid-data filter markup and binder',()=>{
   assert.match(html,/2<\/b> \/ 3 valid/);
   assert.equal(typeof UI.bindValidDataFilter,'function');
 });
+
+
+test('shared valid-data filter UI preserves defaults and supports QSS wording overrides',()=>{
+  const UI=globalThis.PV2000.ui,
+    state={metricKey:'lifetime',lower:10,upper:80,validCount:8,siteCount:9},
+    metrics={lifetime:{key:'lifetime',short:'τeff.d'}},
+    defaults=UI.validDataFilterMarkup({prefix:'d',metrics,state}),
+    custom=UI.validDataFilterMarkup({
+      prefix:'qFilter',metrics,state,
+      centralTitle:'QSS central title',
+      resetTitle:'QSS reset title',
+      applyTitle:'QSS apply title'
+    });
+  assert.match(defaults,/Set limits to the 1st–99th percentile of the selected filter metric\./);
+  assert.match(defaults,/Reset the range to all available sites for the selected filter metric\./);
+  assert.match(custom,/title="QSS central title"/);
+  assert.match(custom,/title="QSS reset title"/);
+  assert.match(custom,/title="QSS apply title"/);
+});

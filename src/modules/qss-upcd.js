@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection;
   const q=1.602176634e-19,k=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI300_PV2000_COMPAT=1.517791063348261e10;
   const NI300_MANUAL=1.02e10;
@@ -231,23 +231,6 @@
     return applyAnalysisOptions(d,a,options);
   }
   function summaryMasked(values,mask){return S.summary(values.filter((_,i)=>mask[i]&&Number.isFinite(values[i])))}
-  function supportedValues(values,supportMask){
-    return values.filter((v,i)=>Number.isFinite(v)&&(!supportMask||supportMask[i]));
-  }
-  function quantile(a,p,supportMask=null){
-    const z=supportedValues(a,supportMask).slice().sort((x,y)=>x-y);
-    if(!z.length)return NaN;
-    const q=(z.length-1)*p,i=Math.floor(q),f=q-i;
-    return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f;
-  }
-  function metricRange(a,key,supportMask=null){
-    const v=supportedValues(a.metrics[key].values,supportMask);
-    return{min:v.length?Math.min(...v):NaN,max:v.length?Math.max(...v):NaN};
-  }
-  function validMask(a,key,lo,hi,supportMask=null){
-    const v=a.metrics[key].values;
-    return v.map((x,i)=>(!supportMask||supportMask[i])&&Number.isFinite(x)&&x>=lo&&x<=hi);
-  }
   function color(t){t=Math.max(0,Math.min(1,t));
     const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];
     let i=0;
@@ -664,16 +647,18 @@
       histSwapped=true,
       histBins=30,
       mapMode='smooth',
-      filterKey='lifetime',
       zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
     a=applyAnalysisOptions(d,a,analysisOptions);
     let supportMask=intrinsicLifetimeMask(d.values,excludeInvalid),
-      init=metricRange(a,filterKey,supportMask),
-      filterLo=init.min,
-      filterHi=init.max,
-      mask=validMask(a,filterKey,filterLo,filterHi,supportMask);
+      filterController=Sel.createFilter({
+        metrics:a.metrics,
+        siteCount:d.values.length,
+        intrinsicMask:supportMask,
+        metricKey:'lifetime'
+      });
       
-    const statsFor=k=>summaryMasked(a.metrics[k].values,mask);
+    const activeMask=()=>filterController.snapshot().selection.activeMask,
+      statsFor=k=>summaryMasked(a.metrics[k].values,activeMask());
     const targetSummary=()=>{
       if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)){
         const geometryLabel=d.patternType==='SquareRegionPattern'?'explicit SquareRegion raster':d.patternType==='HighDensityPattern'?'inferred HighDensity coefficients':'inferred centered MapPattern';
@@ -690,7 +675,8 @@
     }
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
     function renderShell(){
-      const validN=mask.filter(Boolean).length;
+      const filterState=filterController.snapshot(),
+        validN=filterState.validCount;
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and effective X/Y site pitch. MapPattern uses target/pitch geometry; SquareRegionPattern uses Region + Dimension in X-fast, ascending-Y acquisition order; HighDensityPattern uses the explicit normalized Coefficients in XML order. SquareCell uses the full coefficient grid; RoundWafer keeps only coefficient sites with x²+y²<1, then scales them by the EdgeExclusion-adjusted radius.')}${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer MapPattern and SquareCell SquareRegionPattern coordinate paths have paired vendor regression references. HighDensityPattern and centered SquareCell MapPattern remain inferred until matching vendor X/Y exports are supplied.')}${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
@@ -706,10 +692,15 @@
           </div>
           <div class="filter-actions"><span><b>${a.audit.invalidLifetimeCount}</b> raw τ ≤ 0 sites</span><span class="grow"></span><button id="qApplyAnalysis">Apply analysis</button></div>
         </section>
-        <section class="panel"><h3>Valid-data filter ${help('Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.')}</h3>
-          <div class="filter-grid"><label>Filter metric<select id="qFilterMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option><option value="srv">SRV</option></select></label><label>Lower<input id="qFilterLo" type="number" step="any" value="${filterLo}"></label><label>Upper<input id="qFilterHi" type="number" step="any" value="${filterHi}"></label></div>
-          <div class="filter-actions"><span><b>${validN}</b> / ${d.values.length} valid</span><span class="grow"></span><button id="qCentral98" title="Set limits to the 1st–99th percentile of the selected filter metric. This is only a convenience starting point; inspect the distribution before accepting it.">1–99%</button><button id="qResetFilter" title="Reset the range to include every point available under the current lifetime-validity mode.">Reset</button><button id="qApplyFilter" title="Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.">Apply</button></div>
-        </section>
+        ${PV.ui.validDataFilterMarkup({
+          prefix:'qFilter',
+          metrics:a.metrics,
+          state:filterState,
+          helpText:'Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.',
+          centralTitle:'Set limits to the 1st–99th percentile of the selected filter metric. This is only a convenience starting point; inspect the distribution before accepting it.',
+          resetTitle:'Reset the range to include every point available under the current lifetime-validity mode.',
+          applyTitle:'Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.'
+        })}
         <section class="panel qss-results-panel"><h3>Results summary ${help('Statistics use the active lifetime-validity mode plus the Valid-data filter. Stdev uses N−1, matching the PV-2000 convention. Default scientific mode excludes non-positive lifetime sentinels; Raw / PV-2000 style can retain them for vendor-parity inspection.')}</h3><div class="qss-result-list">${summaryCards()}</div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
@@ -720,42 +711,23 @@
         <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
 
       </section></div>`;
-      host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;host.querySelector('#qFilterMetric').value=filterKey;
+      host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;
       host.querySelector('#qMetric').onchange=e=>{metricKey=e.target.value;
         zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
         redraw()};
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
         redraw()};
         
-      host.querySelector('#qFilterMetric').onchange=e=>{
-        filterKey=e.target.value;
-        const r=metricRange(a,filterKey,supportMask);
-        filterLo=r.min;filterHi=r.max;
-        mask=validMask(a,filterKey,filterLo,filterHi,supportMask);
-        renderShell();
-      };
-      host.querySelector('#qApplyFilter').onclick=()=>{
-        let lo=Number(host.querySelector('#qFilterLo').value),
-        hi=Number(host.querySelector('#qFilterHi').value);
-        if(!Number.isFinite(lo)||!Number.isFinite(hi))return alert('Enter finite lower and upper limits.');
-        if(lo>hi)[lo,hi]=[hi,lo];
-        filterLo=lo;
-        filterHi=hi;
-        mask=validMask(a,filterKey,filterLo,filterHi,supportMask);
-        renderShell()};
-        
-      host.querySelector('#qResetFilter').onclick=()=>{
-        const r=metricRange(a,filterKey,supportMask);
-        filterLo=r.min;filterHi=r.max;
-        mask=validMask(a,filterKey,filterLo,filterHi,supportMask);
-        renderShell();
-      };
-      host.querySelector('#qCentral98').onclick=()=>{
-        const v=a.metrics[filterKey].values;
-        filterLo=quantile(v,.01,supportMask);filterHi=quantile(v,.99,supportMask);
-        mask=validMask(a,filterKey,filterLo,filterHi,supportMask);
-        renderShell();
-      };
+      PV.ui.bindValidDataFilter(host,{
+        prefix:'qFilter',
+        controller:filterController,
+        onChange:()=>renderShell(),
+        onError:message=>alert(
+          message==='Valid-data filter requires finite lower and upper bounds.'
+            ?'Enter finite lower and upper limits.'
+            :message
+        )
+      });
       host.querySelector('#qApplyAnalysis').onclick=()=>{
         const bulkText=host.querySelector('#qSrvBulk').value.trim(),
           bulk=bulkText===''?Infinity:Number(bulkText),
@@ -773,18 +745,27 @@
           planarSrv,
           minLifetimeUs:minTau
         };
+        const filterMetric=filterController.snapshot().metricKey;
         a=applyAnalysisOptions(d,a,analysisOptions);
         supportMask=intrinsicLifetimeMask(d.values,excludeInvalid);
-        const r=metricRange(a,filterKey,supportMask);
-        filterLo=r.min;filterHi=r.max;
-        mask=validMask(a,filterKey,filterLo,filterHi,supportMask);
+        filterController=Sel.createFilter({
+          metrics:a.metrics,
+          siteCount:d.values.length,
+          intrinsicMask:supportMask,
+          metricKey:filterMetric
+        });
         zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
         renderShell();
       };
       redraw();
     }
     function redraw(){
-      const bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask);
+      const filterState=filterController.snapshot(),
+        mask=filterState.selection.activeMask,
+        filterKey=filterState.metricKey,
+        filterLo=filterState.lower,
+        filterHi=filterState.upper,
+        bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask);
         drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,zoom.map,n=>{zoom.map=n;redraw()},supportMask);
         drawProfile(host.querySelector('#qProfile'),d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
         PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
@@ -805,7 +786,7 @@
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,validMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);
