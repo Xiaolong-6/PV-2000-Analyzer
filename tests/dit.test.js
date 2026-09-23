@@ -63,6 +63,36 @@ test('material selection moves theoretical midgap target and defaults to Si', ()
   assert.ok(expectedSi - expectedGe > 0.15);
 });
 
+test('Standard COCOS Vsb keeps the doping-aware vendor sign convention', () => {
+  const n = PV2000.modules.dit.standardVsb(0.1, 0.2, 1.2, 'n');
+  const p = PV2000.modules.dit.standardVsb(0.1, 0.2, 1.2, 'p');
+  assert.ok(Math.abs(n - 0.12) < 1e-12);
+  assert.ok(Math.abs(p + 0.12) < 1e-12);
+});
+
+test('OnePoint circular substrate uses nominal geometry instead of point extent', () => {
+  const g = PV2000.modules.dit.spatialEnvelope(
+    { patternType: 'OnePointPattern', shapeType: 'Circle', radius: 50, edgeExclusion: 4 },
+    [{ x: 0, y: 0 }]
+  );
+  assert.equal(g.onePoint, true);
+  assert.equal(g.kind, 'round');
+  assert.equal(g.radius, 50);
+  assert.equal(g.innerRadius, 46);
+  assert.equal(g.coordRadius, 0);
+  assert.equal(g.geometrySource, 'substrate');
+});
+
+test('explicit RoundWafer target geometry takes precedence when present', () => {
+  const g = PV2000.modules.dit.spatialEnvelope(
+    { patternType: 'OnePointPattern', shapeType: 'Circle', radius: 75, targetType: 'RoundWafer', diameter: 100, edgeExclusion: 4 },
+    [{ x: 0, y: 0 }]
+  );
+  assert.equal(g.radius, 50);
+  assert.equal(g.innerRadius, 46);
+  assert.equal(g.geometrySource, 'target');
+});
+
 test('variation-method Dit changes with semiconductor material', () => {
   const site = { rows: [0.05,0.12,0.20,0.30,0.42].map((vsb,i)=>({
     Qc:i*3e11, VDark:i*0.02, VLight:i*0.01, Vsb:vsb

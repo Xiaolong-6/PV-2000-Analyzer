@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260923.4 — 2026-09-23
+
+- Fixed DIT `OnePointPattern` spatial rendering: nominal circular geometry now falls back to `Substrate/SubstrateShape` when no dedicated target node exists, EdgeExclusion drives the inner outline, and center-only datasets are labelled **Measurement position** instead of appearing as a fictitious tiny wafer map.
+- Preserved Standard COCOS Vsb sign using the doping-aware dark/light convention rather than an unconditional absolute value, including the initial state and exported analysis columns.
+- Regressed a private 9-pair one-point DIT corpus: 275 XML dark-process rows reproduce exported Vcpd Dark to about 0.310 mV MAE / 1.11 mV max error. A separate nearly straight corrected-light export branch is documented but not guessed because its activation/state is not uniquely encoded in the saved XML.
+- Clarified throughout the Dit UI/docs that **Material: Si / Ge is an Analyzer model choice**; PV-2000 itself has no Si/Ge material selector, so Ge-sample exports do not establish a PV-2000 Ge mode.
+- Added Dual QSS one-point geometry context: `OnePointPattern` reads the stored coefficient position, circular substrate geometry and EdgeExclusion, showing a measurement-position schematic without inventing a spatial lifetime heatmap. Six supplemental J0-requesting XMLs are documented as metadata/runtime coverage only because no matching vendor result-table export was supplied.
+
+
 ## v20260923.3 — 2026-09-23
 
 - Documented the expanded QSS-INJ-001 envelope: 330 XMLs, 273 exact XML/CSV pairs, 5833 paired points and 11,660,167 exact raw Time/Voltage samples.

@@ -87,6 +87,12 @@ The default curve source is **PV-2000 raw** (`TransientInfo@LifeTime`). Users ca
 
 Logarithmic X is the default because the supplied schedules span orders of magnitude. Clicking a curve point opens the corresponding stored transient and marks `TimeCursor`. Additional `DualQssMeasurement` XMLs can be loaded locally for LP/HP or repeat overlays; this overlay is an analyzer feature, not a claimed vendor stitching algorithm.
 
+## Supplemental J0-requesting examples
+
+Six additional `OnePointPattern` XMLs exercise high-range injection schedules with `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They confirm that these recipe requests occur on the same raw Dual QSS schema and that the one-point geometry remains meaningful context.
+
+No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only; Basore-Hansen J0, Kane-Swanson J0, result-table Lifetime, Δn and Implied Voc remain outside the validated result path.
+
 ## J0 and unresolved post-processing
 
 The XML exposes `CalculateJZeroParams`, `IncludeKSJ0`, `UseAugerCorrection`, `DeltaTauLimitForJ0Calc`, `DefaultDeltaN` and `DefaultDeltaNRangeInPercentage`. These remain metadata.

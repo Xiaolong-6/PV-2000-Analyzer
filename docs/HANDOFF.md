@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — main v20260923.3
+# Agent handoff — 2026-09-23 — main v20260923.4
 
 ## Goal
 
@@ -60,6 +60,14 @@ The repository now supports two deliberately separate reference-data paths:
 A contributor does not need to write code. A data-only PR containing raw XML + matching numeric PV-2000 export is useful evidence for a new measurement/result combination. Minimal screenshots are optional when needed and when publication rights are clear; full XPS/vendor reports and full-interface screenshots stay private by default. The landing page and README also link to a guided **Share PV-2000 data** issue form for contributors who prefer not to prepare a PR. Developers may branch from current `main`, add implementation + regression coverage + the public case, and request merge. See `CONTRIBUTING.md` and `reference_data/README.md`.
 
 This does not weaken the reference-profile rule: numeric parameter changes inside an established semantic path are not automatically NEW PROFILE, while genuinely new schema/algorithm/channel/result/unit/validity paths require matching vendor evidence before the validation envelope expands.
+
+## Dit one-point / Standard COCOS update
+
+A private 9-pair DIT reference family exercises center-only `OnePointPattern` on a nominal 100 mm circular substrate. The geometry is stored under `Substrate/SubstrateShape` (`Circle`, radius 50 mm) with measurement-level 4 mm edge exclusion. The runtime uses that nominal geometry for spatial context and labels the center-only view **Measurement position**.
+
+Standard measured-light Vsb preserves the doping-aware signed convention. The same private exports expose a separate nearly straight corrected `Vcpd Light` export branch that is not equal to the measured XML light values even with `UseCocosII=false`; the saved XML does not uniquely identify the extra processing state, so the XML-only runtime keeps the measured branch.
+
+The Material selector is an Analyzer model choice. Ge-sample reference files do not imply a PV-2000 Ge material mode.
 
 ## QSS-µPCD: reference export now available
 
@@ -140,7 +148,7 @@ The inferred PV2000 path comes from same-raw-data parameter sweeps. It interpret
 
 Dit Analysis controls are contextual and compact:
 
-- **Material** is selectable as Silicon (Si) or Germanium (Ge), with Si as the default. Ge uses the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selected material consistently feeds Qsc, variation/Minimum Dit, flatband/Qtot and the Midgap Dit target. Ge remains unvalidated against matching PV-2000 Ge output;
+- **Material** is selectable as Silicon (Si) or Germanium (Ge), with Si as the default. This is an Analyzer-only semiconductor-model choice; PV-2000 itself has no Si/Ge selector. Ge uses the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selected material consistently feeds Qsc, variation/Minimum Dit, flatband/Qtot and the Midgap Dit target;
 - inferred COCOS-II shows EOT / Min Vsb / Max Vsb on one-line label/input rows;
 - Standard COCOS hides COCOS-II-only settings;
 - shared Flatband accumulation points remain visible;
