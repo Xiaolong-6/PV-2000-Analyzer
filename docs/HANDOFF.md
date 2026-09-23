@@ -1,4 +1,10 @@
-# Agent handoff — 2026-09-23 — v20260923.11
+# Agent handoff — 2026-09-23 — feat/isc-vcpd-valid-data-filter v20260923.11.1
+
+## Phase B — ISC/VCPD Valid-data filter
+
+Phase B activates the shared site-selection architecture for the Kelvin-probe family. `PV2000.selection.createFilter()` owns metric/range/mask state, while `PV2000.ui.validDataFilterMarkup()` and `bindValidDataFilter()` provide the reusable UI contract.
+
+For ISC, Vcpd Dark / Vcpd Light / VSB can define the filter; one site-level active mask is shared across all three result quantities. VCPD exposes Vcpd Dark only. Summary, map, distribution and map export consume the active mask plus each displayed quantity's availability. Raw XML/readings remain preserved and excluded sites can still be inspected. This is Analyzer-side filtering and does not expand any vendor-validation profile.
 
 The project now records **Semilab PV-2000 v1.3.0.5** as the software-version validation baseline. This is an evidence boundary rather than an exact-version parser whitelist: other releases may remain schema/profile-compatible, but must stay version-unvalidated until paired vendor output from that release is regressed.
 
