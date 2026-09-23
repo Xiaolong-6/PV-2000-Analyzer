@@ -78,6 +78,44 @@ test('Vcpd RoundWafer reference geometry gives the validated 1649-site schedule'
   assert.deepEqual(coords.at(-1),{x:24,y:88});
 });
 
+test('terminated RoundWafer reconstructs a leading partial acquisition prefix without claiming completeness',()=>{
+  assert.equal(PV2000.geometry.isIncompleteAcquisitionStatus('Terminated'),true);
+  assert.equal(PV2000.geometry.isIncompleteAcquisitionStatus('Completed'),false);
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'MapPattern',
+    targetType:'RoundWafer',
+    pointCount:10947,
+    diameter:200,
+    edgeExclusion:4,
+    pitchX:1,
+    pitchY:1,
+    allowPartialPrefix:true
+  });
+  assert.equal(g.geometryStatus,'partial');
+  assert.equal(g.coordinateCompleteness,'prefix-inferred');
+  assert.equal(g.expectedPointCount,28913);
+  assert.equal(g.acquiredPointCount,10947);
+  assert.equal(g.pointsMm.length,10947);
+  assert.ok(Math.abs(g.completionFraction-10947/28913)<1e-15);
+  assert.deepEqual(g.pointsMm[0],{x:-13,y:-95});
+  assert.deepEqual(g.pointsMm.at(-1),{x:-81,y:-18});
+});
+
+test('RoundWafer point-count mismatch remains unavailable without explicit partial-prefix permission',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'MapPattern',
+    targetType:'RoundWafer',
+    pointCount:10947,
+    diameter:200,
+    edgeExclusion:4,
+    pitchX:1,
+    pitchY:1
+  });
+  assert.equal(g.geometryStatus,'mismatch');
+  assert.equal(g.expectedPointCount,28913);
+  assert.equal(g.pointsMm.length,0);
+});
+
 test('ISC SquareCell example geometry gives a centered 13x13 schedule',()=>{
   const half=ISC.effectiveHalf(100,30);
   assert.equal(half,20);
