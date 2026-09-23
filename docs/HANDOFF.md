@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — feat/isc-vcpd-valid-data-filter v20260923.11.1
+# Agent handoff — 2026-09-23 — v20260923.12
 
 ## Phase B — ISC/VCPD Valid-data filter
 
