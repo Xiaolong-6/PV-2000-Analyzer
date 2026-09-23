@@ -224,7 +224,6 @@ test('partial SquareRegion acquisition can use the leading validated row-major s
   assert.equal(L.referenceFamily(raw,laser,d),'');
 });
 
-
 test('LBIC line profiles honor the shared active mask without changing site indexing',()=>{
   const d={
     coords:[
