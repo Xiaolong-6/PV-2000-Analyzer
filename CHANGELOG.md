@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260923.21 — 2026-09-23
+
+- Updated the landing-page analyzer inventory to include ISC / VCPD and CET / EOT, and separated dedicated analyzers from the Generic XML Inspector fallback and the PV-2000 v1.3.0.5 validation boundary.
+- Audited every dedicated measurement-family sidebar and documented one shared information hierarchy: Measurement → optional Analysis/View controls → optional Valid-data filter → Results summary → selected point/site → dataset audit → collapsed detailed metadata.
+- Moved DIT site selection out of the Measurement identity block into a dedicated Selected site panel after Results summary.
+- Reordered Dual QSS so comparison/view controls precede Results summary, and aligned Measurement / Results summary / Acquisition metadata naming.
+- Aligned JZero and CET measurement-panel naming and collapsed LBIC Channel provenance as detailed metadata.
+- Fixed stale CET/EOT roadmap text and a literal newline artifact in `docs/MEASUREMENT_TYPES.md`; added layout regressions for analyzer inventory and sidebar order.
+
 ## v20260923.20 — 2026-09-23
 
 - Separated QSS Analyzer interpretation controls from PV-2000/XML measurement metadata.
