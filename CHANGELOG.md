@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260922.17.16 — 2026-09-23 — branch
+
+- Expanded `QSS-MAP-001` with a private **96-XML `QssUpcdMeasurement + MapPattern + RoundWafer` corpus**: 95 × 100 mm / 305-site maps plus one 125 mm / 489-site map. All 96 reconstruct the exact XML point count; all nine matching numeric PV-2000 CSV pairs reproduce X/Y and lifetime exactly, with Smax agreeing to CSV numeric precision.
+- Established PV-2000's numeric non-positive-lifetime sentinel behavior from the corpus: **76 / 96 files** contain `τeff.d <= 0`, totaling **13,649 / 29,464 sites**. Raw lifetime and PV-2000-style raw Smax remain preserved for traceability/export, while default scientific analysis marks those sites unavailable before user filtering. An explicit **Raw / PV-2000 style** mode retains vendor-style numeric behavior.
+- Added configurable lifetime→**SRV** analysis with Planar / Textured-black geometry, optional bulk lifetime, planar-reference SRV and minimum-lifetime threshold. SRV remains explicitly separate from vendor-compatible Smax.
+- Split Implied Voc semantics into the default **PV-2000-compatible** path and explicit analyzer-side **Physical Si / Physical Ge** estimates. QSS material is never inferred from filenames/result names/substrate IDs. The original <0.1 mV reference remains an instance-level result; the expanded nine-pair corpus reaches approximately **1.94 mV** maximum absolute compatibility error.
+- Reworked QSS Analysis controls into a sidebar-friendly two-column layout and replaced the clipped six-column summary table with compact per-metric result cards.
+- Browser-smoked the CI-built single-file analyzer against **all 96 XML files** with **96/96 successful analyzer dispatch/render**, finite default filter bounds, generated map/distribution/profile canvases and zero browser/page errors. Representative normal, sentinel-heavy and 125 mm / 489-site cases were visually inspected; CSV export was checked for raw-sentinel preservation and availability/filter flags.
+
 ## v20260922.17 — 2026-09-22
 
 - Added validated `LBIC-REFLECTANCE-003` handling for reflectance-only `LBICMeasurement` XMLs where `MeasureCurrent=false` but BeamData still carry zero-valued Current placeholders. Disabled Current is no longer exposed or used to synthesize EQE/IQE; Reflectivity becomes the default result.
