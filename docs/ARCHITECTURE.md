@@ -315,13 +315,17 @@ No npm runtime dependency is introduced by the refactor.
 
 The domain refactor does not redesign the scientific workspace.
 
-Left sidebar:
+Left sidebar follows one information hierarchy across dedicated analyzers:
 
-- controls;
-- metadata;
-- summaries;
-- selected-point details;
-- acquisition settings.
+1. **Measurement** — result identity, recipe/substrate/status and the minimum geometry/context needed to understand the dataset;
+2. **Analysis controls / View** — only when the analyzer has user-controlled interpretation or channel/view state;
+3. **Valid-data filter** — when the family supports site-level filtering;
+4. **Results summary** — aggregate calculated/measured quantities;
+5. **Selected site / pixel / injection point** — only when point selection is meaningful;
+6. **Current dataset / audit** — compact completeness/support counts when they add information beyond the summary;
+7. **Detailed acquisition / validation / provenance metadata** — collapsed by default unless it is essential to operate the analyzer.
+
+A family may omit inapplicable layers, but should not reorder the remaining layers without a measurement-specific reason. Scientific controls must not be mixed into XML metadata. Generic XML Inspector is a fallback, not a dedicated analyzer, and is exempt from this sidebar hierarchy.
 
 Right visualization area:
 
