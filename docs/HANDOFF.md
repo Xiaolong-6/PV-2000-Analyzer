@@ -1,10 +1,12 @@
-# Agent handoff — 2026-09-23 — main v20260923.7
+# Agent handoff — 2026-09-23 — main v20260923.8
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
 The larger private OnePoint collection contains 176 row-aligned XML/raw-CSV pairs with 11,575 exact Qc schedule points. Dark-channel parity is narrow rather than universal: 168 pairs are within 2 mV maximum error; eight diverge, while exported light/Vsb generally differs from measured-light XML. The optional strict validator gate passes an eight-pair/520-row subset and rejects a mixed collection with unmatched or divergent cases. Do not infer a vendor Ge material mode or implement the missing corrected-light path from these exports.
 
 The inspected historical backup, software data archive and Ge/COCOS collection have no `DITMeasurement` XML with `UseCocosII=true`; COCOS-II remains inferred. A further ten exact-name XML/vendor-summary CSV candidates were located but their summary/result calculations have **not** been regressed. Next work should either obtain a real `UseCocosII=true` XML plus matching output, or examine the specific extra reprocessing state behind the corrected-light export without guessing an XML-only formula.
+
+The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. The first implementation branch should add shared domain primitives and migrate ISC/VCPD as the pilot without numerical, validation-label or UI changes.
 
 ## Goal
 

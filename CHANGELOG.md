@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260923.8 — 2026-09-23
+
+- Added `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`, defining a staged measurement-domain refactor around quantity provenance, availability, compatibility profiles, normalized geometry and pure scientific services.
+- The planned first implementation phase is limited to shared domain primitives plus an ISC/VCPD pilot, preserving all existing numerical results, UI behavior and validation labels.
+
 ## v20260923.7 — 2026-09-23
 
 - Added a generic, read-only DIT XML/raw-CSV diagnostic and optional strict dark-channel regression gate; private file paths and data remain outside the repository.
