@@ -62,6 +62,14 @@ The validated ISC/VCPD profiles use the documented MapPattern target/pitch coord
 
 The ISC summary table reports finite-site Average, Median, sample Stdev, Min and Max. The paired reference reproduces the vendor summary to floating-point precision.
 
+## Analyzer valid-data filter
+
+ISC now uses the shared site-selection contract introduced by the measurement-domain architecture. The user may choose **Vcpd Dark**, **Vcpd Light** or **VSB** as the filter quantity and set lower/upper bounds. That selection creates one site-level active mask; the same mask is then applied to every displayed ISC result quantity, summary statistic, spatial map, distribution and map export. Quantity-specific availability is applied after the shared active mask.
+
+Filtering is analyzer-side presentation/analysis state and does **not** alter the reconstructed PV-2000 result values or the raw XML readings. Excluded sites retain their values and can still be inspected. Map exports include the result value, quantity availability, filter-pass state, displayed state, selected filter quantity and active lower/upper bounds.
+
+`Reset` expands the range to all available sites of the selected filter quantity. `1–99%` provides a convenience percentile range and is not a vendor algorithm or automatic validity claim.
+
 ## Visualization and export
 
 The analyzer provides:
