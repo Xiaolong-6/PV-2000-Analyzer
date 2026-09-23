@@ -74,6 +74,54 @@
     return Array.isArray(points)&&points.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y));
   }
 
+  function scheduleForPointCount(points,pointCount,{allowPartialPrefix=false}={}){
+    const scheduled=Array.isArray(points)?points:[],
+      expected=scheduled.length,
+      actual=Number.isFinite(pointCount)?Math.trunc(pointCount):null;
+    if(actual==null){
+      return{
+        points:scheduled,
+        geometryStatus:expected?'complete':'unavailable',
+        expectedPointCount:expected||NaN,
+        acquiredPointCount:expected||NaN,
+        completionFraction:expected?1:NaN,
+        coordinateCompleteness:expected?'complete':'unavailable'
+      };
+    }
+    if(actual===expected){
+      return{
+        points:scheduled,
+        geometryStatus:expected?'complete':'unavailable',
+        expectedPointCount:expected,
+        acquiredPointCount:actual,
+        completionFraction:expected?1:NaN,
+        coordinateCompleteness:expected?'complete':'unavailable'
+      };
+    }
+    if(allowPartialPrefix&&actual>0&&actual<expected){
+      return{
+        points:scheduled.slice(0,actual),
+        geometryStatus:'partial',
+        expectedPointCount:expected,
+        acquiredPointCount:actual,
+        completionFraction:actual/expected,
+        coordinateCompleteness:'prefix-inferred'
+      };
+    }
+    return{
+      points:[],
+      geometryStatus:'mismatch',
+      expectedPointCount:expected||NaN,
+      acquiredPointCount:actual,
+      completionFraction:expected&&actual>=0?actual/expected:NaN,
+      coordinateCompleteness:'unavailable'
+    };
+  }
+
+  function isIncompleteAcquisitionStatus(status){
+    return /^(terminated|aborted|interrupted|cancelled|canceled)$/i.test(String(status||'').trim());
+  }
+
   function scaleTargetRelativeCoefficients(coefficients,scaleX,scaleY,count,{circular=false}={}){
     if(!finiteCoefficients(coefficients)||
       !Number.isFinite(scaleX)||!Number.isFinite(scaleY)||!(scaleX>0)||!(scaleY>0))return[];
@@ -162,7 +210,12 @@
     sourceSpace='unknown',
     interpretation='unresolved',
     evidenceStatus='unclassified',
-    validationStatus='inferred'
+    validationStatus='inferred',
+    geometryStatus='unavailable',
+    expectedPointCount=NaN,
+    acquiredPointCount=NaN,
+    completionFraction=NaN,
+    coordinateCompleteness='unavailable'
   }={}){
     const physical=Array.from(pointsMm||points||[]);
     return{
@@ -180,7 +233,12 @@
       sourceSpace,
       interpretation,
       evidenceStatus,
-      validationStatus
+      validationStatus,
+      geometryStatus,
+      expectedPointCount,
+      acquiredPointCount,
+      completionFraction,
+      coordinateCompleteness
     };
   }
 
@@ -202,7 +260,8 @@
     regionWidth=NaN,
     regionHeight=NaN,
     nx=NaN,
-    ny=NaN
+    ny=NaN,
+    allowPartialPrefix=false
   }={}){
     const boundary=targetEnvelope({
       targetType,diameter,targetWidth,targetHeight,edgeExclusion,substrateShape,substrateRadius
@@ -212,35 +271,45 @@
       sourceSpace='none',
       interpretation='unresolved',
       evidenceStatus='unclassified',
-      acquisitionOrder='unknown';
+      acquisitionOrder='unknown',
+      scheduleMeta={
+        geometryStatus:'unavailable',
+        expectedPointCount:NaN,
+        acquiredPointCount:Number.isFinite(pointCount)?Math.trunc(pointCount):NaN,
+        completionFraction:NaN,
+        coordinateCompleteness:'unavailable'
+      };
+    const useSchedule=scheduled=>{
+      scheduleMeta=scheduleForPointCount(scheduled,pointCount,{allowPartialPrefix});
+      pointsMm=scheduleMeta.points;
+    };
 
     if(patternType==='MapPattern'){
       if(boundary.shape==='circle'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
-        pointsMm=roundGrid(boundary.scheduled.radius,pitchX,pitchY,pointCount);
+        useSchedule(roundGrid(boundary.scheduled.radius,pitchX,pitchY));
         sourceSpace='generated-target-mm';
         interpretation='target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
       }else if(boundary.shape==='rect'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
-        pointsMm=centeredRectGrid(boundary.scheduled.halfWidth,boundary.scheduled.halfHeight,pitchX,pitchY,pointCount);
+        useSchedule(centeredRectGrid(boundary.scheduled.halfWidth,boundary.scheduled.halfHeight,pitchX,pitchY));
         sourceSpace='generated-target-mm';
         interpretation='centered-target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
 
       }else if(boundary.shape==='pseudo-square'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
-        pointsMm=pseudoSquareGrid(
+        useSchedule(pseudoSquareGrid(
           boundary.scheduled.halfWidth,
           boundary.scheduled.halfHeight,
           boundary.scheduled.radius,
           pitchX,
-          pitchY,
-          pointCount
-        );
+          pitchY
+        ));
         sourceSpace='generated-target-mm';
         interpretation='pseudo-square-target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
       }
     }else if(patternType==='SquareRegionPattern'){
-      pointsMm=rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,pointCount,1);
+      useSchedule(rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,null,1));
       if(pointsMm.length){
         sourceSpace='absolute-region-mm';
         interpretation='explicit-region-grid';
@@ -284,6 +353,10 @@
       }
     }
 
+    if(pointsMm.length&&scheduleMeta.geometryStatus==='unavailable'){
+      scheduleMeta=scheduleForPointCount(pointsMm,pointCount);
+    }
+
     return envelope({
       patternType,
       targetType,
@@ -298,7 +371,8 @@
       sourceSpace,
       interpretation,
       evidenceStatus,
-      validationStatus:evidenceStatus==='inferred'?'inferred':'unclassified'
+      validationStatus:evidenceStatus==='inferred'?'inferred':'unclassified',
+      ...scheduleMeta
     });
   }
 
@@ -310,6 +384,8 @@
     bounds,
     effectiveRadius,
     effectiveHalfExtent,
+    scheduleForPointCount,
+    isIncompleteAcquisitionStatus,
     scaleTargetRelativeCoefficients,
     targetEnvelope,
     resolveMeasurementGeometry,

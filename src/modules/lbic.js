@@ -125,14 +125,14 @@
       coordinateSource='unavailable';
 
     if(patternType==='SquareRegionPattern'&&[nx,ny,regionX,regionY,width,height].every(Number.isFinite)){
-      expected=nx*ny;
-      const scheduled=GEO.rectGrid(regionX,regionY,width,height,nx,ny,null,1);
-      if(actual===expected){
-        coords=scheduled;
-        if(coords.length)coordinateSource='SquareRegionPattern Region + Dimension';
-      }else if(actual>0&&actual<expected&&scheduled.length===expected){
-        coords=scheduled.slice(0,actual);
-        coordinateSource='SquareRegionPattern acquisition prefix (partial)';
+      const scheduled=GEO.rectGrid(regionX,regionY,width,height,nx,ny,null,1),
+        matched=GEO.scheduleForPointCount(scheduled,actual,{allowPartialPrefix:true});
+      expected=matched.expectedPointCount;
+      coords=matched.points;
+      if(coords.length){
+        coordinateSource=matched.geometryStatus==='partial'
+          ?'SquareRegionPattern acquisition prefix (partial)'
+          :'SquareRegionPattern Region + Dimension';
       }
     }else if(patternType==='MapPattern'&&targetType==='PseudoSquareCell'){
       const halfWidth=effectiveHalf(targetWidth,edgeExclusion),
