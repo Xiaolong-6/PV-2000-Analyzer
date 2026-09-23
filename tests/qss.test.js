@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
-require('../src/core/stats.js');require('../src/core/geometry.js');require('../src/core/registry.js');
+require('../src/core/stats.js');require('../src/core/selection.js');require('../src/core/geometry.js');require('../src/core/registry.js');
 PV2000.xml={};PV2000.exporter={csv(){}};
 require('../src/modules/qss-upcd.js');
 const values=[10.02216008,9.403090016,9.183140694,9.034540845,8.866233804,8.90195199,8.75130022,9.172374746,12.69525316];
@@ -16,7 +16,11 @@ test('wafer-map target geometry separates nominal target and scheduled region',(
 });
 test('Smax formula',()=>{const v=PV2000.modules.qss.smax(11.658483155829508,300);assert.ok(Math.abs(v-1286.617)<0.01)});
 test('PV2000-compatible implied Voc is in reference range',()=>{const d={qssMilli:30,waferThickness:300,opticalFactor:.708,doping:1e14,temperatureC:24.494949494949495};const v=PV2000.modules.qss.impliedVoc(11.658483155829508,d);assert.ok(v>0.35&&v<0.38)});
-test('valid-data mask honors lower and upper range',()=>{const a={metrics:{lifetime:{values:[1,2,3,10]}}};assert.deepEqual(PV2000.modules.qss.validMask(a,'lifetime',1.5,3.5),[false,true,true,false])});
+test('shared valid-data filter preserves inclusive QSS range semantics',()=>{
+  const metrics={lifetime:{key:'lifetime',values:[1,2,3,10]}},
+    filter=PV2000.selection.createFilter({metrics,siteCount:4,metricKey:'lifetime'});
+  assert.deepEqual(filter.apply(1.5,3.5).selection.activeMask,[false,true,true,false]);
+});
 test('smooth map leaves filtered site regions uncolored',()=>{const coords=[{x:-5,y:0},{x:0,y:0},{x:5,y:0},{x:0,y:5}],values=[10,100,20,15],mask=[true,false,true,true],sample=PV2000.modules.qss.smoothValueAt;assert.ok(Number.isNaN(sample(0,0,coords,values,mask,11)));assert.ok(Number.isNaN(sample(0,1,coords,values,mask,11)));assert.ok(Number.isFinite(sample(-5,0,coords,values,mask,11)));assert.ok(Number.isFinite(sample(0,5,coords,values,mask,11)));assert.ok(Number.isNaN(sample(30,0,coords,values,mask,11)))});
 
 test('HighDensityPattern maps explicit normalized 35 x 35 coefficients to the EdgeExclusion-adjusted SquareCell',()=>{
@@ -71,13 +75,21 @@ test('HighDensityPattern RoundWafer selects the strict unit-circle subset before
 
 test('SquareRegionPattern reference raster reproduces the 35 x 30 vendor coordinate order',()=>{const p=PV2000.geometry.rectGrid(-40,-30,70,60,35,30,1050,1);assert.equal(p.length,1050);assert.deepEqual(p[0],{x:-40,y:-30,row:0,col:0});assert.ok(Math.abs(p[34].x-30)<1e-12&&Math.abs(p[34].y+30)<1e-12);assert.ok(Math.abs(p[35].x+40)<1e-12&&Math.abs(p[35].y-(-30+60/29))<1e-12);assert.ok(Math.abs(p.at(-1).x-30)<1e-12&&Math.abs(p.at(-1).y-30)<1e-12)});
 test('SquareRegion target geometry uses the explicit measured rectangle',()=>{const g=PV2000.modules.qss.targetGeometry({patternType:'SquareRegionPattern',targetType:'SquareCell',targetWidth:100,targetHeight:100,regionX:-40,regionY:-30,regionWidth:70,regionHeight:60,mapHalfWidth:47,mapHalfHeight:47});assert.deepEqual(g.scheduled,{xMin:-40,xMax:30,yMin:-30,yMax:30});assert.equal(PV2000.modules.qss.insideScheduled(g,-40,-30),true);assert.equal(PV2000.modules.qss.insideScheduled(g,31,0),false)});
-test('valid-data histogram counts are determined only by the validity mask',()=>{const a={metrics:{lifetime:{values:[1,2,3,4,100]}}},mask=PV2000.modules.qss.validMask(a,'lifetime',2,4),bins=PV2000.modules.qss.histogram(a.metrics.lifetime.values,mask,5);assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2)});
+test('valid-data histogram counts are determined only by the shared active mask',()=>{
+  const values=[1,2,3,4,100],metrics={lifetime:{key:'lifetime',values}},
+    filter=PV2000.selection.createFilter({metrics,siteCount:values.length,metricKey:'lifetime'}),
+    mask=filter.apply(2,4).selection.activeMask,
+    bins=PV2000.modules.qss.histogram(values,mask,5);
+  assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);
+  assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2);
+});
 
 test('valid filter bounds are inclusive while excluded counts remain separate diagnostics',()=>{
-  const a={metrics:{lifetime:{values:[1,2,3,4,5]}}};
-  const mask=PV2000.modules.qss.validMask(a,'lifetime',2,4);
+  const values=[1,2,3,4,5],metrics={lifetime:{key:'lifetime',values}},
+    filter=PV2000.selection.createFilter({metrics,siteCount:values.length,metricKey:'lifetime'}),
+    mask=filter.apply(2,4).selection.activeMask;
   assert.deepEqual(mask,[false,true,true,true,false]);
-  const bins=PV2000.modules.qss.histogram(a.metrics.lifetime.values,mask,5);
+  const bins=PV2000.modules.qss.histogram(values,mask,5);
   assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);
   assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2);
 });
@@ -96,10 +108,11 @@ test('PV-2000 -1 lifetime sentinel is preserved raw but can be excluded from ana
   assert.equal(Q.smax(-1,190),-9500);
   const support=Q.intrinsicLifetimeMask([-1,50,100],true);
   assert.deepEqual(support,[false,true,true]);
-  const a={metrics:{smax:{values:[-9500,190,95]}}};
-  const mask=Q.validMask(a,'smax',90,200,support);
+  const values=[-9500,190,95],metrics={smax:{key:'smax',values}},
+    filter=PV2000.selection.createFilter({metrics,siteCount:values.length,intrinsicMask:support,metricKey:'smax'}),
+    mask=filter.apply(90,200).selection.activeMask;
   assert.deepEqual(mask,[false,true,true]);
-  const bins=Q.histogram(a.metrics.smax.values,mask,5,support);
+  const bins=Q.histogram(values,mask,5,support);
   assert.equal(bins.reduce((n,b)=>n+b.valid+b.invalid,0),2);
 });
 
@@ -131,4 +144,45 @@ test('physical Ge implied Voc is separate from the PV-2000 compatibility path',(
   assert.ok(Number.isFinite(vendor)&&Number.isFinite(ge)&&Number.isFinite(si));
   assert.ok(ge<si);
   assert.ok(si>ge+0.2);
+});
+
+test('QSS default shared filter exactly preserves pre-migration intrinsic-support population',()=>{
+  const Q=PV2000.modules.qss,values=[-1,50,100,NaN],
+    support=Q.intrinsicLifetimeMask(values,true),
+    metrics={lifetime:{key:'lifetime',values}},
+    filter=PV2000.selection.createFilter({metrics,siteCount:values.length,intrinsicMask:support,metricKey:'lifetime'}),
+    state=filter.snapshot();
+  assert.deepEqual(support,[false,true,true,false]);
+  assert.equal(state.lower,50);
+  assert.equal(state.upper,100);
+  assert.deepEqual(state.selection.intrinsicMask,support);
+  assert.deepEqual(state.selection.activeMask,[false,true,true,false]);
+  assert.deepEqual(state.selection.supportMask,[false,true,true,false]);
+});
+
+test('QSS Raw/PV-2000 style remains distinct from user filtering',()=>{
+  const Q=PV2000.modules.qss,values=[-1,50,100],
+    support=Q.intrinsicLifetimeMask(values,false),
+    metrics={lifetime:{key:'lifetime',values}},
+    filter=PV2000.selection.createFilter({metrics,siteCount:values.length,intrinsicMask:support,metricKey:'lifetime'});
+  assert.deepEqual(support,[true,true,true]);
+  assert.deepEqual(filter.snapshot().selection.activeMask,[true,true,true]);
+  const state=filter.apply(0,100);
+  assert.deepEqual(state.selection.intrinsicMask,[true,true,true]);
+  assert.deepEqual(state.selection.filterMask,[false,true,true]);
+  assert.deepEqual(state.selection.activeMask,[false,true,true]);
+});
+
+test('QSS source uses shared filter controller/UI while keeping intrinsic support separate',()=>{
+  const fs=require('node:fs'),src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/Sel\.createFilter\(\{/);
+  assert.match(src,/intrinsicMask:supportMask/);
+  assert.match(src,/PV\.ui\.validDataFilterMarkup/);
+  assert.match(src,/PV\.ui\.bindValidDataFilter/);
+  assert.match(src,/filterState\.selection\.activeMask/);
+  assert.match(src,/drawHist\([^;]*supportMask/);
+  assert.match(src,/drawMap\([^;]*supportMask/);
+  assert.match(src,/drawProfile\([^;]*supportMask/);
+  assert.match(src,/downloadMetric\(d,a,metricKey,mask,supportMask\)/);
+  assert.doesNotMatch(src,/function validMask|function metricRange|function supportedValues|function quantile/);
 });
