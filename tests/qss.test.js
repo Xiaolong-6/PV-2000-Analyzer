@@ -62,3 +62,54 @@ test('valid filter bounds are inclusive while excluded counts remain separate di
   assert.equal(bins.reduce((n,b)=>n+b.valid,0),3);
   assert.equal(bins.reduce((n,b)=>n+b.invalid,0),2);
 });
+
+
+test('125 mm RoundWafer with 5 mm pitch reconstructs the 489-site corpus geometry',()=>{
+  const p=PV2000.geometry.roundGrid(62.5,5,5,489);
+  assert.equal(p.length,489);
+  assert.deepEqual(p[0],{x:-15,y:-60});
+  assert.deepEqual(p.at(-1),{x:15,y:60});
+  assert.ok(p.every(({x,y})=>x*x+y*y<62.5*62.5));
+});
+
+test('PV-2000 -1 lifetime sentinel is preserved raw but can be excluded from analysis support',()=>{
+  const Q=PV2000.modules.qss;
+  assert.equal(Q.smax(-1,190),-9500);
+  const support=Q.intrinsicLifetimeMask([-1,50,100],true);
+  assert.deepEqual(support,[false,true,true]);
+  const a={metrics:{smax:{values:[-9500,190,95]}}};
+  const mask=Q.validMask(a,'smax',90,200,support);
+  assert.deepEqual(mask,[false,true,true]);
+  const bins=Q.histogram(a.metrics.smax.values,mask,5,support);
+  assert.equal(bins.reduce((n,b)=>n+b.valid+b.invalid,0),2);
+});
+
+test('SRV conversion supports planar and textured/black formulas with optional bulk lifetime',()=>{
+  const Q=PV2000.modules.qss;
+  assert.ok(Math.abs(Q.surfaceRecombinationVelocity(100,190,{mode:'planar'})-95)<1e-12);
+  assert.ok(Math.abs(Q.surfaceRecombinationVelocity(100,190,{mode:'textured',planarSrv:5})-185)<1e-12);
+  assert.ok(Math.abs(Q.surfaceRecombinationVelocity(100,190,{mode:'planar',bulkLifetimeUs:1000})-85.5)<1e-12);
+  assert.ok(Number.isNaN(Q.surfaceRecombinationVelocity(-1,190,{mode:'planar'})));
+  assert.ok(Number.isNaN(Q.surfaceRecombinationVelocity(100,190,{mode:'planar',minLifetimeUs:600})));
+});
+
+test('QSS analysis exposes SRV and keeps raw sentinel accounting',()=>{
+  const Q=PV2000.modules.qss,d={
+    values:[-1,100,200],qssMilli:30,waferThickness:190,opticalFactor:.708,
+    doping:1e14,temperatureC:24.5
+  };
+  const a=Q.analyze(d);
+  assert.equal(a.audit.invalidLifetimeCount,1);
+  assert.deepEqual(Object.keys(a.metrics),['lifetime','smax','voc','srv']);
+  assert.equal(a.metrics.smax.values[0],-9500);
+  assert.ok(Number.isNaN(a.metrics.srv.values[0]));
+  assert.ok(Math.abs(a.metrics.srv.values[1]-185)<1e-12);
+});
+
+test('physical Ge implied Voc is separate from the PV-2000 compatibility path',()=>{
+  const Q=PV2000.modules.qss,d={qssMilli:30,waferThickness:290,opticalFactor:.708,doping:1e14,temperatureC:24.5};
+  const vendor=Q.impliedVoc(100,d),ge=Q.impliedVocPhysical(100,d,'Ge'),si=Q.impliedVocPhysical(100,d,'Si');
+  assert.ok(Number.isFinite(vendor)&&Number.isFinite(ge)&&Number.isFinite(si));
+  assert.ok(ge<si);
+  assert.ok(si>ge+0.2);
+});
