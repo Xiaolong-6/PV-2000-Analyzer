@@ -329,7 +329,7 @@ test('Dit numeric line plots expose manual X and Y limits',()=>{
   assert.match(dit,/axisControls\('ditVsbAxes'\)/);
   assert.match(dit,/axisControls\('ditDitAxes'\)/);
   assert.match(dit,/axisControls\('ditMapAxes'\)/);
-  assert.match(dit,/analysisOpen=true,resultsOpen=true/);
+  assert.match(dit,/analysisOpen=true,[\s\S]*resultsOpen=true/);
   assert.match(dit,/id="ditResultsSummary" class="panel results-summary-panel" \$\{resultsOpen\?'open':''\}/);
   assert.match(dit,/bindAxisControls\(host,'ditDitAxes'[^]*\{yLog:true\}/);
 });

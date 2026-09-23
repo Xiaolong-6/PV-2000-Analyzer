@@ -3,6 +3,7 @@
     X=PV.xml,
     S=PV.stats,
     GEO=PV.geometry,
+    Sel=PV.selection,
     q=1.60218e-19,
     k=1.38e-23,
     T=300;
@@ -375,8 +376,45 @@
     return{kind:Number.isFinite(nominalRadius)?'round':'points',onePoint:d?.patternType==='OnePointPattern'&&coords.length<=1,radius,innerRadius,coordRadius,geometrySource:Number.isFinite(targetRadius)?'target':Number.isFinite(substrateRadius)?'substrate':'points'};
   }
 
+  function filterMetrics(analysis){
+    const specs={
+      Qtot:['Qtot','Qtot','cm⁻²'],
+      Dit:['Dit','Minimum Dit (PV2000-style)','cm⁻² eV⁻¹'],
+      MidgapDit:['MidgapDit','Midgap Dit (PCHIP)','cm⁻² eV⁻¹'],
+      EOT:['eot','EOT (SiO₂ eq.)','nm'],
+      Cox:['Cox','Cox','F/cm²'],
+      Qsc:['Qsc','Qsc','cm⁻²'],
+      InitialQc:['InitialQc','Initial Qc','cm⁻²'],
+      MaxVsb:['MaxVsb','Max |Vsb|','V']
+    };
+    return Object.fromEntries(Object.entries(specs)
+      .filter(([key])=>key!=='MidgapDit'||analysis.options?.pchipEnabled!==false)
+      .map(([key,[siteKey,label,unit]])=>[
+        key,{key,label,short:label,unit,values:analysis.sites.map(site=>site[siteKey])}
+      ]));
+  }
+
   function render(host,d,baseAnalysis){
-    let analysis=baseAnalysis,site=Math.max(0,analysis.sites.findIndex(x=>x.valid)),mapKey='Qtot',analysisOpen=true,resultsOpen=true,zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
+    let analysis=baseAnalysis,
+      site=Math.max(0,analysis.sites.findIndex(x=>x.valid)),
+      mapKey='Qtot',
+      analysisOpen=true,
+      resultsOpen=true,
+      filterController=null,
+      metrics=null,
+      zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
+    const rebuildFilter=(preferredKey='Qtot')=>{
+      metrics=filterMetrics(analysis);
+      const key=metrics[preferredKey]?preferredKey:'Qtot';
+      filterController=Sel.createFilter({
+        metrics,
+        siteCount:analysis.sites.length,
+        intrinsicMask:analysis.sites.map(x=>!!x.valid),
+        metricKey:key
+      });
+      return filterController;
+    };
+    rebuildFilter();
     const controlNum=(id,fallback)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return NaN;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const controlOptionalNum=(id,fallback=Infinity)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return Infinity;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const rebuild=()=>{analysisOpen=true;
@@ -393,12 +431,21 @@
       cocosIIMinVsb=controlNum('#ditCocosMin',analysis.options.cocosIIMinVsb),
       cocosIIMaxVsb=controlNum('#ditCocosMax',analysis.options.cocosIIMaxVsb),
       backSurfaceShift=analysis.options.backSurfaceShift;
+      const previousFilter=filterController?.snapshot?.().metricKey||'Qtot';
       analysis=analyze(d,{material,accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode,cocosIIEOT_A,cocosIIMinVsb,cocosIIMaxVsb,backSurfaceShift});
+      rebuildFilter(previousFilter);
       zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
       if(site>=analysis.sites.length)site=0;
       renderShell()};
       
-    const statText=(key)=>{const st=analysis.stats[key];return st&&Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)}`:'—'};
+    const statText=(key)=>{
+      const metricKey=key==='eot'?'EOT':key,
+        m=metrics?.[metricKey];
+      if(!m)return'—';
+      const mask=filterController.metricMask(m),
+        st=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
+      return Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)}`:'—'
+    };
     const resultHelp={
       Qtot:'Total dielectric/interface charge obtained from the horizontal charge separation between the natural initial condition and the flatband point on the dark V–Q characteristic.',
       Dit:'PV-2000-style minimum interface-state density: the minimum accepted discrete variation-method Dit point. It does not use PCHIP interpolation.',
@@ -462,12 +509,22 @@
       if(!analysis.options.pchipEnabled&&mapKey==='MidgapDit')mapKey='Dit';
       const s=analysis.sites[site],
         coord=s.coord||{x:0,y:0},
+        filterState=filterController.snapshot(),
+        siteSupport=filterState.selection.supportMask[site],
+        siteActive=filterState.selection.activeMask[site],
+        siteFilterState=!s.valid?'ALGORITHM INVALID':siteSupport?(siteActive?'VALID':'FILTERED'):'UNAVAILABLE',
         rows=[['Qtot','Qtot'],['Minimum Dit (PV2000-style)','Dit'],['Midgap Dit (PCHIP)','MidgapDit'],['EOT (SiO₂ eq.)','eot'],['Cox','Cox'],['Qsc','Qsc'],['Initial Qc','InitialQc'],['Max |Vsb|','MaxVsb']];
         
       host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
-        <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML except the semiconductor Material selected in Analysis controls.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(analysis.options.material)} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div></section>
+        <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML except the semiconductor Material selected in Analysis controls.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(analysis.options.material)} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³ · ${esc(siteFilterState)}</div><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div></section>
         ${analysisControls()}
-        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Valid-site mean uses only sites with a usable surface-barrier sweep. Current-site values correspond to the selected site above.')}</summary><div class="result-list">${rows.map(([n,k])=>{const v=metric(s,k),sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean</span><strong>${statText(sk)}</strong></div><div><span class="result-label">Current site</span><strong>${fmt(v)}</strong></div></div>${k==='MidgapDit'&&midgapCoverageText(s)?`<div class="note">${esc(midgapCoverageText(s))}</div>`:''}</div>`}).join('')}</div></details>
+        ${PV.ui.validDataFilterMarkup({
+          prefix:'ditFilter',
+          metrics,
+          state:filterState,
+          helpText:'Choose a calculated DIT/COCOS site quantity and numeric range. Algorithm-invalid sites remain intrinsically excluded; the user range only narrows the active site population used by Results summary, wafer-map display and map export. Current-site Vcpd/Vsb/Dit curves are never recalculated or truncated by this filter.'
+        })}
+        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Mean and sample standard deviation use sites that pass intrinsic algorithm validity, the active Valid-data filter and the displayed quantity\'s finite-value availability. Current-site values remain available even when that site is FILTERED.')}</summary><div class="result-list">${rows.map(([n,k])=>{const v=metric(s,k),sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean</span><strong>${statText(sk)}</strong></div><div><span class="result-label">Current site</span><strong>${fmt(v)}</strong></div></div>${k==='MidgapDit'&&midgapCoverageText(s)?`<div class="note">${esc(midgapCoverageText(s))}</div>`:''}</div>`}).join('')}</div></details>
         <details class="panel"><summary>Measurement metadata ${help('Detailed recipe, substrate, timing and COCOS settings parsed directly from the imported XML.')}</summary><dl class="meta meta-detail">${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}${md('Substrate ID',esc(d.substrateId||'—'),metaHelp.substrate)}${md('Lot ID',esc(d.lotId||'—'),metaHelp.lot)}${md('Status',esc(d.status||'—'),metaHelp.status)}${md('Start',esc(d.start||'—'),metaHelp.start)}${md('End',esc(d.end||'—'),metaHelp.end)}${md('Elapsed',esc(d.elapsed||'—'),metaHelp.elapsed)}${md('Pattern',`${esc(d.patternName||d.patternType||'—')} · ${analysis.sites.length} sites`,metaHelp.pattern)}${md('Data points / Vcpd',fmt(d.numberOfDataPoints,0),metaHelp.points)}${md('Measurement interval',`${fmt(d.measurementInterval,4)} s`,metaHelp.interval)}${md('Vcpd offset',`${fmt(d.offset,6)} V`,metaHelp.offset)}${md('Vsb factor',fmt(d.factor,3),metaHelp.factor)}${md('Qit barrier range',`${fmt(d.qitMin,3)} to ${fmt(d.qitMax,3)} V`,metaHelp.qitRange)}${md('Use COCOS-II',d.useCocosII?'True':'False',metaHelp.c2)}${md('COCOS-II EOT raw',fmt(d.cocosIIEOT,3),metaHelp.c2eot)}${md('COCOS-II Min/Max Vsb',`${fmt(d.cocosIIMinVsb,3)} to ${fmt(d.cocosIIMaxVsb,3)} V`,'Vendor COCOS-II Vsb limits when available in XML; otherwise the reverse-engineered defaults are -0.10 and 0.65 V.')}${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this Boolean adjustment. Its effect was not identified in the supplied tests, so the reverse-engineered method records but does not apply it.')}</dl></details>
         <details class="panel"><summary>Recipe charge sequence ${help('Corona charge increments, target ranges and loop limits controlling barrier adjustment and the main COCOS sweep.')}</summary><dl class="meta meta-detail">${md('PreProcess ΔQc',`${sci(d.pre.charge,3)} cm⁻²`,metaHelp.preCharge)}${md('PreProcess target',`${esc(d.pre.targetMin)} to ${esc(d.pre.targetMax)}`,metaHelp.preTarget)}${md('Pre attempts / extra',`${fmt(d.pre.attempts,0)} / ${fmt(d.pre.extra,0)}`,metaHelp.preAttempts)}${md('Process ΔQc',`${sci(d.process.charge,3)} cm⁻²`,metaHelp.processCharge)}${md('Process target',`${esc(d.process.targetMin)} to ${esc(d.process.targetMax)}`,metaHelp.processTarget)}${md('Process attempts / extra',`${fmt(d.process.attempts,0)} / ${fmt(d.process.extra,0)}`,metaHelp.processAttempts)}</dl></details>
         <details class="panel"><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV2000 inferred mode uses the flatband anchor, EOT in Å, signed Vsb, and Min/Max Vsb for reported-minimum Dit acceptance. Back Surface Shift remains unresolved and is not applied.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
@@ -476,7 +533,7 @@
         <div class="panel chart"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
       </section><section class="plots">
         <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 620 285" preserveAspectRatio="none"></svg></div></div>
-        <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export the selected wafer-map quantity for every site.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 620 315"></svg></div></div>
+        <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 620 315"></svg></div></div>
       </section></div>`;
       host.querySelector('#ditMapMetric').value=mapKey;
         host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;
@@ -488,6 +545,14 @@
         if(analysisPanel)analysisPanel.ontoggle=()=>{analysisOpen=analysisPanel.open};
         const resultsPanel=host.querySelector('#ditResultsSummary');
         if(resultsPanel)resultsPanel.ontoggle=()=>{resultsOpen=resultsPanel.open};
+        PV.ui.bindValidDataFilter(host,{
+          prefix:'ditFilter',
+          controller:filterController,
+          onChange:()=>{
+            zoom.map={x:null,y:null};
+            renderShell();
+          }
+        });
         const markDirty=()=>{
         if(applyBtn){applyBtn.classList.add('dirty');
           applyBtn.textContent='Apply analysis settings •'}};
@@ -560,8 +625,23 @@
         
       host.querySelector('#e3').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vsb.csv`,['Qc','Raw standard Vsb',analysis.options.effectiveCocosMode==='pv2000-re'?'Analysis signed Vsb':'Analysis Vsb'],s.rows.map((r,i)=>[r.Qc,r.Vsb,s.analysisVsb[i]]));
         host.querySelector('#e4').onclick=()=>{
-        const [label,unit]=mapSpec(mapKey);
-        PV.exporter.csv(`Dit_wafer_${mapKey}.csv`,['Site','x','y',label,unit,'Valid'],analysis.sites.map((x,i)=>[i+1,x.coord?.x??'',x.coord?.y??'',metric(x,mapKey),unit,x.valid?'YES':'NO']))};
+        const [label,unit]=mapSpec(mapKey),
+          filterState=filterController.snapshot(),
+          displayMask=filterController.metricMask(metrics[mapKey]);
+        PV.exporter.csv(
+          `Dit_wafer_${mapKey}.csv`,
+          ['Site','x','y',label,unit,'Algorithm valid','Metric available','Pass valid-data filter','Displayed','Filter metric','Filter lower','Filter upper'],
+          analysis.sites.map((x,i)=>[
+            i+1,x.coord?.x??'',x.coord?.y??'',metric(x,mapKey),unit,
+            x.valid?'YES':'NO',
+            Number.isFinite(metric(x,mapKey))?'YES':'NO',
+            filterState.selection.activeMask[i]?'YES':'NO',
+            displayMask[i]?'YES':'NO',
+            metrics[filterState.metricKey]?.short||filterState.metricKey,
+            filterState.lower,
+            filterState.upper
+          ])
+        )};
         drawAll();
         
     }
@@ -666,7 +746,8 @@
       const svg=host.querySelector('#d4'),
       [label,unit,log]=mapSpec(mapKey),
       vals=analysis.sites.map(x=>metric(x,mapKey)),
-      vv=vals.filter(Number.isFinite).map(v=>log&&v>0?Math.log10(v):v),
+      displayMask=filterController.metricMask(metrics[mapKey]),
+      vv=vals.filter((v,i)=>displayMask[i]&&Number.isFinite(v)).map(v=>log&&v>0?Math.log10(v):v),
       lo=vv.length?Math.min(...vv):0,
       hi=vv.length?Math.max(...vv):1,
       W=620,
@@ -708,7 +789,19 @@
         col=Number.isFinite(z)?mapColor(t):'#666',
         x=X(p.x||0),
         y=Y(p.y||0),
-        txt=mapValue(v,mapKey);if(x<m.l||x>W-m.r||y<m.t||y>H-m.b)return;out+=`<g data-site="${i}" class="map-site"><title>Site ${i+1}: ${txt} ${unit}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title><circle cx="${x}" cy="${y}" r="12" fill="${col}" stroke="${i===site?'var(--text)':s.valid?'var(--border)':'var(--bad)'}" stroke-width="${i===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">${i+1}</text></g>`});
+        active=!!displayMask[i],
+        txt=mapValue(v,mapKey);
+        if(x<m.l||x>W-m.r||y<m.t||y>H-m.b)return;
+        const fill=active?col:'transparent',
+          stroke=i===site?'var(--text)':!s.valid?'var(--bad)':active?'var(--border)':'var(--muted)',
+          state=!s.valid?'ALGORITHM INVALID':active?'DISPLAYED':'FILTERED / UNAVAILABLE',
+          textFill=active?'#fff':'var(--muted)';
+        out+=`<g data-site="${i}" class="map-site">
+          <title>Site ${i+1}: ${txt} ${unit}; ${state}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title>
+          <circle cx="${x}" cy="${y}" r="${active?12:8}" fill="${fill}" stroke="${stroke}" stroke-width="${i===site?3:1.4}"/>
+          <text x="${x}" y="${y+3}" text-anchor="middle" fill="${textFill}" font-size="8" font-weight="700">${i+1}</text>
+        </g>`;
+      });
       svg.innerHTML=out;
       svg.querySelectorAll('[data-site]').forEach(g=>g.onclick=()=>{site=+g.dataset.site;renderShell()});
       PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.map=n;drawMap()},onReset:()=>{zoom.map={x:null,y:null};drawMap()}});
@@ -716,5 +809,28 @@
     function drawAll(){drawVcpd();drawVsb();drawDit();drawMap()}
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)drawAll()});renderShell();
   }
-  PV.modules=PV.modules||{};PV.modules.dit={types:['DITMeasurement'],parse,analyze,render,qsc,flat,cocosIIReverse,cocosRecommendation,windowedMin,variation,makeCurve,medianBinnedXY,midgapTargetV,materialProfile,materials:MATERIALS,standardVsb,spatialEnvelope};PV.registry.register(PV.modules.dit);
+  PV.modules=PV.modules||{};
+  PV.modules.dit={
+    familyId:'dit',
+    capabilities:{map:true,validDataFilter:true},
+    types:['DITMeasurement'],
+    parse,
+    analyze,
+    render,
+    filterMetrics,
+    qsc,
+    flat,
+    cocosIIReverse,
+    cocosRecommendation,
+    windowedMin,
+    variation,
+    makeCurve,
+    medianBinnedXY,
+    midgapTargetV,
+    materialProfile,
+    materials:MATERIALS,
+    standardVsb,
+    spatialEnvelope
+  };
+  PV.registry.register(PV.modules.dit);
 })(typeof window!=='undefined'?window:globalThis);

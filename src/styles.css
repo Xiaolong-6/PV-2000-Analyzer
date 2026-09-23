@@ -78,6 +78,7 @@
 .isc-module .side .filter-grid label,.isc-module .side .filter-actions{font-size:inherit}
 .jzero-module .side .filter-grid label,.jzero-module .side .filter-actions{font-size:inherit}
 .lbic-module .side .filter-grid label,.lbic-module .side .filter-actions{font-size:inherit}
+.dit-module .side .filter-grid label,.dit-module .side .filter-actions{font-size:inherit}
 .qss-module .qss-analysis-grid{grid-template-columns:1fr 1fr}
 .qss-module .qss-analysis-grid label:first-child{grid-column:auto}
 .qss-module .qss-result-list{display:flex;flex-direction:column}
