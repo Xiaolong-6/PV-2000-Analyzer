@@ -1,8 +1,8 @@
 # Measurement architecture refactor plan
 
-Status: **Phase A implementation in progress** on `refactor/measurement-domain-core`.
+Status: **Phase A merged in `v20260923.11`; Phase B completed in `v20260923.12`.**
 
-The initial implementation preserves runtime numerical/UI behavior while introducing domain metadata.
+Phase A introduced domain/quantity/selection/profile/geometry primitives without broad UI behavior changes. Phase B activates the shared selection lifecycle in ISC/VCPD and adds a reusable Valid-data filter controller/UI contract while preserving reconstructed result values and raw XML readings.
 
 ## 1. Goal
 

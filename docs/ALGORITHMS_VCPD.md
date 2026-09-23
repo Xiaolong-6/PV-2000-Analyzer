@@ -93,6 +93,8 @@ The values reproduce the vendor summary to floating-point precision.
 
 VCPD selected-site inspection shows the direct XML `Readings` values. It does not display ISC-only VSB correction controls or illuminated results.
 
+VCPD also uses the shared **Valid-data filter**. Because the current VCPD profile exposes only Vcpd Dark, that is the filter quantity. Lower/upper bounds create a site-level active mask used consistently by summary statistics, map rendering, distribution counts and map export. Raw XML `Readings` are never removed or rewritten by filtering, and excluded sites remain available for selected-site inspection. `Reset` restores the full available Vcpd Dark range; `1–99%` is an analyzer convenience range rather than PV-2000 processing.
+
 ## Validation boundary
 
 The current validated VCPD family is narrowly defined by the paired reference:

@@ -209,3 +209,16 @@ test('explicit coefficient geometry does not inherit the validated ISC profile',
   assert.equal(d.domain.profile,null);
   assert.equal(d.domain.geometry.validationStatus,'inferred');
 });
+
+
+test('ISC and VCPD render through the shared valid-data filter contract',()=>{
+  const fs=require('node:fs');
+  const src=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  assert.match(src,/Sel\.createFilter\(\{metrics:a\.metrics,siteCount:d\.sites\.length,metricKey:'dark'\}\)/);
+  assert.match(src,/PV\.ui\.validDataFilterMarkup/);
+  assert.match(src,/PV\.ui\.bindValidDataFilter/);
+  assert.match(src,/filterController\.metricMask\(a\.metrics\[metricKey\]\)/);
+  assert.match(src,/m\.values\.filter\(\(value,index\)=>mask\[index\]&&Number\.isFinite\(value\)\)/);
+  assert.match(src,/Metric available','Pass valid-data filter','Displayed'/);
+  assert.match(src,/validDataFilter:true/);
+});
