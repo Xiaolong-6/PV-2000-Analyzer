@@ -51,30 +51,33 @@ The new valid-range UI is an analyzer feature rather than a vendor-output replic
 
 ## Dual QSS injection sweep — paired raw XML/CSV regression
 
-The supplied private corpus contains **72 `DualQssMeasurement` XML files**. **57** have matching PV-2000 raw CSV exports, yielding **1003 paired injection points**.
+The supplied private corpus contains **330 `DualQssMeasurement` XML files**. **273** have exact-basename PV-2000 raw CSV exports, yielding **5833 paired injection points**. The other 57 XMLs are kept as structure/runtime coverage; 10 CSVs without an exact-basename XML are not auto-paired.
 
 Regression results:
 
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
-| XML/CSV paired files | 57 | validated evidence set |
-| paired injection rows | 1003 | exact count match |
+| XML corpus | 330 files | established current structure |
+| exact XML/CSV pairs | 273 | validated evidence set |
+| paired injection rows | 5833 | exact count match |
 | QSS intensity | max abs error 0 mSun | validated raw path |
 | laser power vector | max abs error 0 | validated raw path |
-| XML `Values` vs CSV raw `LifeTime [μs]` | max abs error ≈ 0.0050414 µs | validated to export rounding |
-| XML transient samples | 2000 per current transient | established XML structure |
+| `TransientInfo@LifeTime` vs CSV raw `LifeTime [μs]` | max abs error **0 µs** | validated raw path |
+| XML `Values` vs `TransientInfo@LifeTime` | max abs difference **0.020593307 µs**; one paired point >0.006 µs | distinct diagnostic XML field |
+| XML transient samples | 2000 per supplied transient | established XML structure |
 | CSV raw transient samples | first 1999 samples | vendor export behavior |
-| paired raw Time/Voltage samples | 2,004,997 compared; max abs error 0 at export precision | validated raw path |
-| vendor result-table Lifetime | 775 positive / 228 zero | observed, transformation unresolved |
-| vendor `dn` given positive vendor Lifetime | generation formula matches within <0.5% relative at rounded CSV precision | validated downstream step |
-| Implied Voc / J0 | output path not yet reproduced | inferred / unsupported |
+| paired raw Time/Voltage samples | **11,660,167** compared; max abs error 0 at export precision | validated raw path |
+| vendor result-table Lifetime | **4628 positive / 1205 zero** | observed, transformation unresolved |
+| vendor `dn` given positive vendor Lifetime | generation formula max relative discrepancy ≈ **0.509%** at rounded CSV precision | validated downstream step |
+| Implied Voc / J0 | output path not reproduced | inferred / unsupported |
 
-A critical semantic distinction is now locked in: **XML `Values` / `TransientInfo@LifeTime` are the raw transient-lifetime path, while CSV top-table `Lifetime[us]` is a different post-processed result.** The runtime therefore labels its curve as XML/transient lifetime and does not claim to reproduce the vendor result-table Lifetime.
+The expanded corpus resolves an earlier ambiguity: **CSV raw `LifeTime` corresponds to `TransientInfo@LifeTime`, while XML `Values` is a separate closely related lifetime vector.** The analyzer defaults to `TransientInfo@LifeTime`, exposes `XML Values` as a diagnostic curve source, and exports both explicitly.
 
-The analyzer remains XML-only at runtime. Paired CSVs are regression evidence and are not loaded by users.
+The CSV top-table `Lifetime[us]` remains a third, post-processed quantity. It is not synthesized at runtime until its transformation and validity rule are reproduced point-by-point.
+
+The analyzer remains XML-only at runtime. Paired CSVs are private regression evidence and are not runtime inputs.
 
 See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
-
 
 ## Emitter J0 map — paired XML/CSV regression
 

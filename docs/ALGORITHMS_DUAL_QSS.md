@@ -2,17 +2,16 @@
 
 ## Scope
 
-`DualQssMeasurement` is a separate result family from the spatial `QssUpcdMeasurement` map analyzer. Runtime remains XML-only. Matching PV-2000 raw CSV exports are used only for regression and for determining which quantities are already established versus still unresolved.
+`DualQssMeasurement` is a separate result family from the spatial `QssUpcdMeasurement` map analyzer. Runtime remains XML-only. Matching PV-2000 raw CSV exports are private regression evidence only.
 
-The supplied private corpus contains **72 XML files**. **57** of them have same-basename PV-2000 raw CSV exports, giving **1003 paired injection points**. The remaining 15 XML files still exercise the same observed raw schema but have no paired CSV.
+The expanded private corpus contains **330 XML files**. **273** have exact-basename PV-2000 raw CSV exports, giving **5833 paired injection points**. The remaining 57 XML files have no exact-basename CSV in this corpus; 10 CSV files likewise have no exact-basename XML and are not auto-paired by filename guesswork.
 
 ## XML data model
-
-The current family is:
 
 ```text
 DualQssMeasurement
   Pattern: OnePointPattern
+  Target: RoundWafer
   MeasurementData / IterationData / Iteration / Data
     DataItem xsi:type="QssDataItem"
       Values
@@ -37,73 +36,68 @@ DualQssMeasurement
             SmallPoint @X @Y
 ```
 
-The analyzer aligns `Values`, `Intensity`, `Power` and `TransientInfo` by vector index.
+All 330 supplied XMLs use this same observed structure. `Values`, `Intensity`, `Power` and `TransientInfo` counts align in every file, and every stored transient contains 2000 `SmallPoint` samples.
 
-## What the paired raw CSV establishes
+## Validated raw lifetime semantics
 
-Across all 57 XML+CSV pairs:
+The expanded corpus establishes that two lifetime fields in the XML must remain distinct:
 
-- top-table QSS intensity equals the XML `Intensity` vector exactly;
-- top-table laser power equals the XML `Power` vector exactly;
-- the CSV raw-data `LifeTime [μs]` row matches XML `Values` / `TransientInfo@LifeTime` to export rounding, with maximum absolute difference about **0.0050414 µs**;
-- each XML transient stores 2000 `SmallPoint` samples;
-- the raw CSV exports the first 1999 samples of each transient (0 through 9990 µs in the current 5 µs-step examples), omitting the final XML sample;
-- all **2,004,997** paired CSV transient Time/Voltage samples checked against XML match exactly at exported precision;
-- non-positive raw XML lifetimes can occur and are retained for diagnosis.
+- **PV-2000 raw `LifeTime`** is `TransientInfo@LifeTime`. Across all 273 exact pairs / 5833 points, the CSV raw-data `LifeTime [μs]` row matches `TransientInfo@LifeTime` exactly at exported precision (maximum absolute error **0 µs**).
+- **XML `Values` lifetime** is a separate XML vector. It is usually very close to `TransientInfo@LifeTime`, but it is not guaranteed identical. Across the paired corpus the maximum observed absolute difference is **0.020593307 µs**, with one point above 0.006 µs.
 
-Therefore the runtime plot is explicitly a **raw/XML transient-lifetime** plot.
+The analyzer therefore defaults the injection curve and positive-lifetime summary to the validated PV-2000 raw `LifeTime` source (`TransientInfo@LifeTime`) and offers **XML Values** as a diagnostic curve source. Both fields remain exported. Neither is the vendor result-table `Lifetime[us]` described below.
 
-## Important distinction: vendor result-table Lifetime
+Other raw-path regression results:
 
-The top result table in the same CSVs contains:
+- top-table QSS intensity equals XML `Intensity` exactly;
+- top-table laser power equals XML `Power` exactly;
+- each XML transient stores 2000 samples;
+- every paired raw CSV contains the first 1999 samples and omits the final XML sample;
+- **11,660,167** paired Time/Voltage samples match XML exactly at exported precision;
+- non-positive raw lifetimes are retained for diagnosis.
+
+## Vendor result-table Lifetime remains separate
+
+The same CSVs contain:
 
 ```text
 QSS Intensity[mSun], Laser Power e11[], Lifetime[us], dn[cm-3], Implied Voc[V], QDC
 ```
 
-That `Lifetime[us]` is **not** the same quantity as XML `Values` / raw `LifeTime [μs]`. Across the paired corpus the two can differ materially, and the vendor result table also blanks/zeros some Lifetime and dn rows even while a finite raw transient lifetime is stored.
+That top-table `Lifetime[us]` is a post-processed quantity and is not the raw `TransientInfo@LifeTime` or XML `Values` field. Across the 5833 paired result rows, **4628** have positive vendor result-table Lifetime and **1205** are zero.
 
-Current paired counts:
-
-- **1003** vendor result rows;
-- **775** rows with positive vendor result-table Lifetime;
-- **228** rows with result-table Lifetime = 0.
-
-The transformation from raw transient lifetime to vendor result-table Lifetime is not yet reproduced, so the analyzer must not label its XML curve simply as the PV-2000 result-table Lifetime.
+The expanded corpus strongly constrains the behavior, but it still does not reproduce the vendor raw-lifetime → result-table-Lifetime transformation or its acceptance/zeroing rule point-by-point. The runtime therefore does not synthesize this quantity.
 
 ## Established Δn relation, conditional on vendor Lifetime
 
-For rows where the vendor result-table Lifetime is positive, the exported `dn` follows the existing PV-2000 generation relation to CSV rounding:
+For rows where the vendor result-table Lifetime is positive, exported `dn` follows:
 
 ```text
 G = 2.38e17 * I[suns] / W[cm] * OpticalFactor
 dn = G * Lifetime
 ```
 
-Using XML wafer thickness and optical factor, the maximum relative difference against the rounded CSV `dn` values in the current 57-pair corpus is below about **0.5%**. This validates the Lifetime→dn step once the vendor Lifetime is known; it does **not** establish how vendor Lifetime is obtained from the raw transient path.
+Using XML wafer thickness and optical factor, the maximum relative discrepancy against rounded CSV `dn` values is about **0.509%** across the 273 exact pairs. This validates the Lifetime→dn step once vendor Lifetime is known; it does not establish how vendor Lifetime is derived.
 
-`Implied Voc` also remains outside the current runtime path because the paired exports show vendor validity/processing behavior that cannot be inferred safely from the raw XML lifetime alone.
-
-The QDC column in these supplied result tables is textual `QDC`, not a numeric per-row value.
+`Implied Voc` remains outside the validated runtime path because its vendor validity/processing behavior has not been reproduced from XML alone. The QDC column in this corpus is textual `QDC`, not a numeric per-row value.
 
 ## Runtime behavior
 
-Every finite stored XML lifetime remains visible and exportable. For summary statistics, the analyzer currently treats finite positive raw lifetimes as valid and retains non-positive points as diagnostics. This is an analyzer convention for the raw XML viewer, not a claim about the vendor result-table acceptance rule.
+The default curve source is **PV-2000 raw** (`TransientInfo@LifeTime`). Users can switch the curve to **XML Values** for diagnostics. The selected-point panel shows both values, and CSV export names both sources explicitly.
 
-The main plot uses QSS intensity on X and raw/XML transient lifetime on Y. Logarithmic X is the default because the supplied schedules span orders of magnitude. Clicking a curve point opens the corresponding stored transient and marks `TimeCursor`.
-
-Additional `DualQssMeasurement` XML files can be loaded locally for LP/HP or repeat-measurement overlay. Overlay is an analyzer feature; no automatic vendor-style stitching rule is claimed.
+Logarithmic X is the default because the supplied schedules span orders of magnitude. Clicking a curve point opens the corresponding stored transient and marks `TimeCursor`. Additional `DualQssMeasurement` XMLs can be loaded locally for LP/HP or repeat overlays; this overlay is an analyzer feature, not a claimed vendor stitching algorithm.
 
 ## J0 and unresolved post-processing
 
-The XML exposes fields including `CalculateJZeroParams`, `IncludeKSJ0`, `UseAugerCorrection`, `DeltaTauLimitForJ0Calc`, `DefaultDeltaN` and `DefaultDeltaNRangeInPercentage`. These fields are preserved as metadata.
+The XML exposes `CalculateJZeroParams`, `IncludeKSJ0`, `UseAugerCorrection`, `DeltaTauLimitForJ0Calc`, `DefaultDeltaN` and `DefaultDeltaNRangeInPercentage`. These remain metadata.
 
-The current paired CSVs establish the existence and output layout of the post-processed Lifetime/dn/Implied-Voc path, but do not yet establish:
+Still unsupported as vendor-compatible derived results:
 
-- the raw-transient → result-table Lifetime transformation;
-- the vendor zero/blank acceptance rule;
+- raw lifetime → result-table Lifetime transformation;
+- result-table Lifetime zero/blank acceptance rule;
+- Implied Voc processing;
 - Basore-Hansen J0;
 - Kane-Swanson J0;
-- LP/HP stitching semantics, if any.
+- vendor LP/HP stitching semantics, if any.
 
-Do not inherit the spatial QSS-map lifetime or implied-Voc path automatically. Reproduce the paired result-table Lifetime first, then validate downstream quantities point-by-point.
+Do not substitute the spatial QSS-map formulas or a plausible integration approximation for these result-table quantities without pointwise regression.

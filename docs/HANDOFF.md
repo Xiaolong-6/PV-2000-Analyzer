@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-22 — main v20260922.17
+# Agent handoff — 2026-09-23 — feat/dual-qss-inj-corpus v20260922.17.2
 
 ## Goal
 
@@ -72,22 +72,23 @@ Do not remove this behavior during refactors.
 
 ## Dual QSS injection status
 
-A dedicated `DualQssMeasurement` module now handles the raw injection-sweep path separately from the spatial `qss-upcd.js` map analyzer.
+A dedicated `DualQssMeasurement` module handles the single-point injection sweep separately from the spatial `qss-upcd.js` map analyzer.
 
-Current private evidence:
+Expanded private evidence:
 
-- **72 XML files** total;
-- **57 matching raw CSV exports** with **1003 paired injection rows**;
-- all current files use `OnePointPattern + RoundWafer` and one `QssDataItem`;
-- XML `Intensity` / `Power` match the CSV result-table intensity / laser-power columns exactly;
-- XML `Values` / `TransientInfo@LifeTime` match the CSV raw-data `LifeTime [μs]` row to export rounding (max abs error ≈ **0.0050414 µs**);
-- each current XML transient stores **2000** samples; the CSV raw export contains the first **1999** samples, and **2,004,997** paired Time/Voltage samples match XML exactly at exported precision;
-- the CSV top-table `Lifetime[us]` is a **different post-processed quantity** from the XML/raw lifetime. Across the current paired corpus, 775 result rows have positive vendor Lifetime and 228 are zero;
-- once vendor result-table Lifetime is known, exported `dn` follows `G = 2.38e17 * I / W * OpticalFactor` and `dn = G * Lifetime` to rounded CSV precision (<0.5% maximum relative difference in the current corpus).
+- **330 XML files** total;
+- **273 exact-basename raw CSV pairs** with **5833 paired injection rows**;
+- all 330 current XMLs use `OnePointPattern + RoundWafer`, one `QssDataItem`, aligned `Values` / `Intensity` / `Power` / `TransientInfo`, and 2000-point stored transients;
+- XML `Intensity` / `Power` match vendor CSV intensity / laser-power columns exactly;
+- CSV raw-data `LifeTime [μs]` matches **`TransientInfo@LifeTime` exactly** across all 5833 paired points;
+- XML `Values` is a separate lifetime vector and can differ from `TransientInfo@LifeTime`; expanded-corpus max |Δ| is **0.020593307 µs**;
+- the CSV raw export contains the first **1999** samples of each stored transient; **11,660,167** paired Time/Voltage samples match exactly at exported precision;
+- the CSV top-table `Lifetime[us]` remains a different post-processed quantity: **4628 positive / 1205 zero** rows in the exact-pair corpus;
+- given positive vendor result-table Lifetime, exported `dn` follows the documented generation relation with maximum rounded-CSV relative discrepancy about **0.509%**.
 
-The runtime therefore labels the displayed curve as **XML transient lifetime**, not generic/vendor Lifetime. It supports click-through stored transients, TimeCursor, raw metadata, manual axes, CSV export and local LP/HP/repeat overlays.
+Runtime behavior follows that evidence: the main curve and raw summary default to **PV-2000 raw LifeTime** (`TransientInfo@LifeTime`); a curve-source selector exposes **XML Values** for diagnostics; selected-point and CSV export keep both fields explicit.
 
-Still unresolved: raw-transient → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
+Still unresolved: raw-lifetime → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
 
 See `docs/ALGORITHMS_DUAL_QSS.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
@@ -315,6 +316,6 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
 
 ## Next scientific validation step
 
-Obtain at least one matching PV-2000 export for a current `DualQssMeasurement` XML and regress the final injection-result rows point-by-point. Use that evidence to establish Δn/QDC/implied-Voc/J0 equations, validity windows and any LP/HP stitching or blanking behavior. Keep this work in the dedicated `dual-qss.js` family rather than `qss-upcd.js`.
+Use the expanded 273-pair Dual QSS result-table corpus to establish the exact raw-lifetime → vendor `Lifetime[us]` transformation and zero/blank rule before implementing vendor Δn/Implied-Voc/J0 output. The conditional Lifetime→Δn relation is already constrained; do not promote an approximate integration/stitching model without pointwise parity. Keep this work in the dedicated `dual-qss.js` family rather than `qss-upcd.js`.
 
 UI placement: QSS Current dataset belongs in the left sidebar. Dit Analysis controls and Results summary both start expanded; Results summary remains user-collapsible.

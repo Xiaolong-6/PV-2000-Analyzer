@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260922.17.2 — 2026-09-23
+
+- Documented the expanded QSS-INJ-001 envelope: 330 XMLs, 273 exact XML/CSV pairs, 5833 paired points and 11,660,167 exact raw Time/Voltage samples.
+- Locked the three-lifetime distinction across README, validation, algorithm notes, reference profiles and handoff: TransientInfo raw LifeTime, XML Values diagnostic lifetime, and unresolved vendor result-table Lifetime.
+- Recorded the expanded vendor result-table evidence (4628 positive / 1205 zero Lifetime rows) while keeping vendor Lifetime/Implied-Voc/J0 processing unsupported until pointwise parity is established.
+
 ## v20260922.17.1 — 2026-09-23
 
 - Expanded Dual QSS regression to 273 exact XML/CSV pairs from a 330-XML injection corpus, covering 5833 injection points and 11,660,167 paired raw Time/Voltage samples.
