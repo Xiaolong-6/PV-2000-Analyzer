@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260923.18.2 — 2026-09-23 (CET feature branch)
+
+- Changed the default CET Valid-data filter metric from EOT to R². R² remains numeric for the legacy undefined-fit site, so the unfiltered default Results summary reproduces the vendor population: EOT/Cd omit only their unavailable site while R² retains the vendor zero.
+- Kept EOT as the default map quantity; user-selected filter metrics still create one shared site-level active mask.
+
 ## v20260923.18.1 — 2026-09-23 (CET feature branch)
 
 - Added a dedicated `CETMeasurement` analyzer on the shared measurement-domain architecture with EOT, Cd and R² quantities, shared Valid-data filtering, canonical map geometry, Distribution, current-site Vcpd-light/Qc fit and CSV exports.
