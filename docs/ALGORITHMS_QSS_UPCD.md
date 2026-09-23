@@ -78,7 +78,13 @@ For a textured / black surface with a separately known planar-reference SRV:
 SRV = W * (1/tau_eff - 1/tau_bulk) - SRV_planar_reference
 ```
 
-The UI exposes geometry mode, optional bulk lifetime (blank = infinity), planar-reference SRV and an optional minimum lifetime threshold. Non-positive lifetime is unavailable. Negative calculated SRV is clamped to zero rather than displayed as a physical negative recombination velocity. This derived SRV must remain clearly distinguished from PV-2000 `Smax`.
+SRV is exposed as a separate **Additional SRV analysis** section because it is Analyzer-only post-processing, not a PV-2000 recipe setting or vendor result. It is disabled by default. When enabled, the default geometry is **Planar**; **Textured / black** must be chosen explicitly. Bulk lifetime is optional (blank = infinity). The planar-reference SRV field is shown only for the Textured / black model, where that correction is actually used. An optional minimum lifetime threshold remains available. Non-positive lifetime is unavailable, and negative calculated SRV is clamped to zero rather than displayed as a physical negative recombination velocity.
+
+## QSS control provenance
+
+The sidebar deliberately separates PV-2000/XML metadata from Analyzer controls. PV-2000-origin settings such as QSS intensity, laser power, averaging/evaluation mode, wafer thickness, doping, optical factor, probe/bias and QSS range are displayed under Measurement / Full metadata and are read from XML.
+
+The **Analysis controls** panel contains Analyzer interpretation choices: scientific lifetime handling versus raw vendor values, plus the Implied-Voc calculation model. `PV-2000 compatible` is the vendor-comparison path; `Physical Si` and `Physical Ge` are Analyzer-only estimates. The count of raw non-positive lifetime sentinels is dataset audit information and belongs under Current dataset rather than beside editable controls.
 
 ## Interpretation
 

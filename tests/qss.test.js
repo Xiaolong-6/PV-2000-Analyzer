@@ -125,7 +125,7 @@ test('SRV conversion supports planar and textured/black formulas with optional b
   assert.ok(Number.isNaN(Q.surfaceRecombinationVelocity(100,190,{mode:'planar',minLifetimeUs:600})));
 });
 
-test('QSS analysis exposes SRV and keeps raw sentinel accounting',()=>{
+test('QSS keeps SRV analyzer-only, disabled by default, and planar when enabled',()=>{
   const Q=PV2000.modules.qss,d={
     values:[-1,100,200],qssMilli:30,waferThickness:190,opticalFactor:.708,
     doping:1e14,temperatureC:24.5
@@ -134,8 +134,14 @@ test('QSS analysis exposes SRV and keeps raw sentinel accounting',()=>{
   assert.equal(a.audit.invalidLifetimeCount,1);
   assert.deepEqual(Object.keys(a.metrics),['lifetime','smax','voc','srv']);
   assert.equal(a.metrics.smax.values[0],-9500);
+  assert.equal(a.options.srvEnabled,false);
+  assert.equal(a.options.surfaceMode,'planar');
+  assert.ok(a.metrics.srv.values.every(Number.isNaN));
+  Q.applyAnalysisOptions(d,a,{srvEnabled:true});
+  assert.equal(a.options.srvEnabled,true);
+  assert.equal(a.options.surfaceMode,'planar');
   assert.ok(Number.isNaN(a.metrics.srv.values[0]));
-  assert.ok(Math.abs(a.metrics.srv.values[1]-185)<1e-12);
+  assert.ok(Math.abs(a.metrics.srv.values[1]-95)<1e-12);
 });
 
 test('physical Ge implied Voc is separate from the PV-2000 compatibility path',()=>{
@@ -185,4 +191,31 @@ test('QSS source uses shared filter controller/UI while keeping intrinsic suppor
   assert.match(src,/drawProfile\([^;]*supportMask/);
   assert.match(src,/downloadMetric\(d,a,metricKey,mask,supportMask\)/);
   assert.doesNotMatch(src,/function validMask|function metricRange|function supportedValues|function quantile/);
+});
+
+
+test('QSS textured SRV remains explicit analyzer-only opt-in',()=>{
+  const Q=PV2000.modules.qss,d={
+    values:[100],qssMilli:30,waferThickness:190,opticalFactor:.708,
+    doping:1e14,temperatureC:24.5
+  };
+  const a=Q.analyze(d,{srvEnabled:true,surfaceMode:'textured',planarSrv:5});
+  assert.equal(a.options.srvEnabled,true);
+  assert.equal(a.options.surfaceMode,'textured');
+  assert.ok(Math.abs(a.metrics.srv.values[0]-185)<1e-12);
+});
+
+test('QSS UI clearly separates Analyzer controls from optional SRV analysis',()=>{
+  const src=require('node:fs').readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/Lifetime handling/);
+  assert.match(src,/Scientific — exclude τ ≤ 0/);
+  assert.match(src,/Raw vendor values/);
+  assert.match(src,/Physical Si · Analyzer/);
+  assert.match(src,/Additional SRV analysis/);
+  assert.match(src,/Calculate SRV/);
+  assert.match(src,/Surface geometry/);
+  assert.match(src,/<option value="planar"/);
+  assert.match(src,/Planar-reference SRV/);
+  assert.match(src,/analysisOptions\.srvEnabled\?'<option value="srv">SRV<\/option>':''/);
+  assert.doesNotMatch(src,/filter-actions"><span><b>\$\{a\.audit\.invalidLifetimeCount\}<\/b> raw τ ≤ 0 sites/);
 });

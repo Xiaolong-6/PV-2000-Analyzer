@@ -193,7 +193,8 @@
   function applyAnalysisOptions(d,a,options={}){
     const opts={
       vocModel:options.vocModel||'pv2000',
-      surfaceMode:options.surfaceMode==='planar'?'planar':'textured',
+      srvEnabled:options.srvEnabled===true,
+      surfaceMode:options.surfaceMode==='textured'?'textured':'planar',
       bulkLifetimeUs:Number.isFinite(options.bulkLifetimeUs)&&options.bulkLifetimeUs>0?options.bulkLifetimeUs:Infinity,
       planarSrv:Number.isFinite(options.planarSrv)?options.planarSrv:5,
       minLifetimeUs:Number.isFinite(options.minLifetimeUs)&&options.minLifetimeUs>0?options.minLifetimeUs:0
@@ -205,9 +206,11 @@
     a.metrics.voc.help=physical
       ?`Physical ${vocMaterial} estimate using a material-specific intrinsic-carrier model; this path is not PV-2000-regressed.`
       :'PV-2000-compatible implied Voc derived from Δn = Gτ and the temperature-dependent silicon-style compatibility model.';
-    a.metrics.srv.values=lifetime.map(v=>surfaceRecombinationVelocity(v,d.waferThickness,{
-      mode:opts.surfaceMode,bulkLifetimeUs:opts.bulkLifetimeUs,planarSrv:opts.planarSrv,minLifetimeUs:opts.minLifetimeUs
-    }));
+    a.metrics.srv.values=opts.srvEnabled
+      ?lifetime.map(v=>surfaceRecombinationVelocity(v,d.waferThickness,{
+        mode:opts.surfaceMode,bulkLifetimeUs:opts.bulkLifetimeUs,planarSrv:opts.planarSrv,minLifetimeUs:opts.minLifetimeUs
+      }))
+      :lifetime.map(()=>NaN);
     a.metrics.srv.help=opts.surfaceMode==='planar'
       ?'Planar SRV = W/2 × (1/τeff − 1/τbulk). Blank bulk lifetime means ∞.'
       :'Textured/black-surface SRV = W × (1/τeff − 1/τbulk) − planar-reference SRV, clamped at zero. Blank bulk lifetime means ∞.';
@@ -641,7 +644,7 @@
       m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',d.values[i],v,supportMask[i]?'YES':'NO',mask[i]?'YES':'NO'])
     )}
   function render(host,d,a){
-    let analysisOptions={vocModel:'pv2000',surfaceMode:'textured',bulkLifetimeUs:Infinity,planarSrv:5,minLifetimeUs:0},
+    let analysisOptions={vocModel:'pv2000',srvEnabled:false,surfaceMode:'planar',bulkLifetimeUs:Infinity,planarSrv:5,minLifetimeUs:0},
       excludeInvalid=true,
       metricKey='lifetime',
       histSwapped=true,
@@ -649,9 +652,12 @@
       mapMode='smooth',
       zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
     a=applyAnalysisOptions(d,a,analysisOptions);
+    const visibleMetrics=()=>Object.fromEntries(
+      Object.entries(a.metrics).filter(([key])=>key!=='srv'||analysisOptions.srvEnabled)
+    );
     let supportMask=intrinsicLifetimeMask(d.values,excludeInvalid),
       filterController=Sel.createFilter({
-        metrics:a.metrics,
+        metrics:visibleMetrics(),
         siteCount:d.values.length,
         intrinsicMask:supportMask,
         metricKey:'lifetime'
@@ -668,7 +674,7 @@
     };
     function summaryCards(){
       const fields=[['Average','mean'],['Median','median'],['Stdev','stdev'],['Min','min'],['Max','max']];
-      return Object.values(a.metrics).map(m=>{
+      return Object.values(visibleMetrics()).map(m=>{
         const st=statsFor(m.key);
         return`<div class="qss-result-card" title="${esc(m.help)}"><div class="qss-result-head"><span><b>${esc(m.short)}</b> ${help(m.help)}</span><span>${esc(m.unit)}</span></div><div class="qss-result-values">${fields.map(([label,key])=>`<div><span>${label}</span><strong>${fmt(st[key])}</strong></div>`).join('')}</div></div>`;
       }).join('');
@@ -681,31 +687,40 @@
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and effective X/Y site pitch. MapPattern uses target/pitch geometry; SquareRegionPattern uses Region + Dimension in X-fast, ascending-Y acquisition order; HighDensityPattern uses the explicit normalized Coefficients in XML order. SquareCell uses the full coefficient grid; RoundWafer keeps only coefficient sites with x²+y²<1, then scales them by the EdgeExclusion-adjusted radius.')}${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer MapPattern and SquareCell SquareRegionPattern coordinate paths have paired vendor regression references. HighDensityPattern and centered SquareCell MapPattern remain inferred until matching vendor X/Y exports are supplied.')}${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
         </dl></section>
-        <section class="panel"><h3>Analysis controls ${help('PV-2000 raw lifetime values are never altered. By default, non-positive lifetime sentinels such as -1 µs are unavailable for scientific analysis while remaining preserved in exports. SRV controls reproduce the supplied lifetime-to-SRV workflow; material-specific Implied Voc is an optional physical estimate and is separate from the default PV-2000 compatibility path.')}</h3>
+        <section class="panel"><h3>Analysis controls ${help('These are Analyzer interpretation controls, not PV-2000 recipe parameters. Lifetime handling changes only scientific availability; raw XML lifetime values remain preserved. PV-2000 compatible is the vendor-comparison path for Implied Voc, while Physical Si/Ge are optional Analyzer estimates.')}</h3>
           <div class="filter-grid qss-analysis-grid">
-            <label>Lifetime validity<select id="qInvalidMode"><option value="exclude"${excludeInvalid?' selected':''}>Exclude τ ≤ 0</option><option value="raw"${excludeInvalid?'':' selected'}>Raw / PV-2000 style</option></select></label>
-            <label>Implied Voc model<select id="qVocModel"><option value="pv2000"${analysisOptions.vocModel==='pv2000'?' selected':''}>PV-2000 compatible</option><option value="physical-si"${analysisOptions.vocModel==='physical-si'?' selected':''}>Physical Si</option><option value="physical-ge"${analysisOptions.vocModel==='physical-ge'?' selected':''}>Physical Ge</option></select></label>
-            <label>SRV geometry<select id="qSrvMode"><option value="textured"${analysisOptions.surfaceMode==='textured'?' selected':''}>Textured / black</option><option value="planar"${analysisOptions.surfaceMode==='planar'?' selected':''}>Planar</option></select></label>
-            <label>Bulk lifetime [µs]<input id="qSrvBulk" type="number" min="0" step="any" placeholder="∞" value="${Number.isFinite(analysisOptions.bulkLifetimeUs)?analysisOptions.bulkLifetimeUs:''}"></label>
-            <label>Planar ref. SRV [cm/s]<input id="qSrvPlanar" type="number" min="0" step="any" value="${analysisOptions.planarSrv}"></label>
-            <label>Minimum τ for SRV [µs]<input id="qSrvMinTau" type="number" min="0" step="any" value="${analysisOptions.minLifetimeUs||''}" placeholder="0"></label>
+            <label>Lifetime handling<select id="qInvalidMode"><option value="exclude"${excludeInvalid?' selected':''}>Scientific — exclude τ ≤ 0</option><option value="raw"${excludeInvalid?'':' selected'}>Raw vendor values</option></select></label>
+            <label>Implied Voc model<select id="qVocModel"><option value="pv2000"${analysisOptions.vocModel==='pv2000'?' selected':''}>PV-2000 compatible</option><option value="physical-si"${analysisOptions.vocModel==='physical-si'?' selected':''}>Physical Si · Analyzer</option><option value="physical-ge"${analysisOptions.vocModel==='physical-ge'?' selected':''}>Physical Ge · Analyzer</option></select></label>
           </div>
-          <div class="filter-actions"><span><b>${a.audit.invalidLifetimeCount}</b> raw τ ≤ 0 sites</span><span class="grow"></span><button id="qApplyAnalysis">Apply analysis</button></div>
+          <div class="filter-actions"><span class="grow"></span><button id="qApplyAnalysis">Apply analysis</button></div>
         </section>
+        <details class="panel qss-srv-panel">
+          <summary>Additional SRV analysis ${help('Analyzer-only lifetime-to-SRV post-processing. It is not a PV-2000 result or recipe parameter. SRV is disabled by default and must be enabled explicitly.')}</summary>
+          <div class="qss-srv-body">
+            <label class="check-row"><input id="qSrvEnabled" type="checkbox"${analysisOptions.srvEnabled?' checked':''}> Calculate SRV</label>
+            <div class="filter-grid qss-analysis-grid">
+              <label>Surface geometry<select id="qSrvMode"><option value="planar"${analysisOptions.surfaceMode==='planar'?' selected':''}>Planar</option><option value="textured"${analysisOptions.surfaceMode==='textured'?' selected':''}>Textured / black</option></select></label>
+              <label>Bulk lifetime [µs]<input id="qSrvBulk" type="number" min="0" step="any" placeholder="∞" value="${Number.isFinite(analysisOptions.bulkLifetimeUs)?analysisOptions.bulkLifetimeUs:''}"></label>
+              <label id="qSrvPlanarWrap" style="display:${analysisOptions.surfaceMode==='textured'?'':'none'}">Planar-reference SRV [cm/s]<input id="qSrvPlanar" type="number" min="0" step="any" value="${analysisOptions.planarSrv}"></label>
+              <label>Minimum lifetime for SRV [µs]<input id="qSrvMinTau" type="number" min="0" step="any" value="${analysisOptions.minLifetimeUs||''}" placeholder="0"></label>
+            </div>
+            <div class="filter-actions"><span class="grow"></span><button id="qApplySrv">Apply SRV analysis</button></div>
+          </div>
+        </details>
         ${PV.ui.validDataFilterMarkup({
           prefix:'qFilter',
-          metrics:a.metrics,
+          metrics:visibleMetrics(),
           state:filterState,
           helpText:'Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.',
           centralTitle:'Set limits to the 1st–99th percentile of the selected filter metric. This is only a convenience starting point; inspect the distribution before accepting it.',
           resetTitle:'Reset the range to include every point available under the current lifetime-validity mode.',
           applyTitle:'Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.'
         })}
-        <section class="panel qss-results-panel"><h3>Results summary ${help('Statistics use the active lifetime-validity mode plus the Valid-data filter. Stdev uses N−1, matching the PV-2000 convention. Default scientific mode excludes non-positive lifetime sentinels; Raw / PV-2000 style can retain them for vendor-parity inspection.')}</h3><div class="qss-result-list">${summaryCards()}</div></section>
+        <section class="panel qss-results-panel"><h3>Results summary ${help('Statistics use the active lifetime-handling mode plus the Valid-data filter. Stdev uses N−1, matching the PV-2000 convention. SRV appears only when Additional SRV analysis is explicitly enabled.')}</h3><div class="qss-result-list">${summaryCards()}</div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
       </aside><section class="plots">
-        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option><option value="srv">SRV</option></select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option>${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}</select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
         <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
       </section><section class="plots">
         <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
@@ -728,35 +743,46 @@
             :message
         )
       });
-      host.querySelector('#qApplyAnalysis').onclick=()=>{
-        const bulkText=host.querySelector('#qSrvBulk').value.trim(),
+      const srvMode=host.querySelector('#qSrvMode'),
+        srvPlanarWrap=host.querySelector('#qSrvPlanarWrap');
+      srvMode.onchange=()=>{srvPlanarWrap.style.display=srvMode.value==='textured'?'':'none'};
+      const applyControls=()=>{
+        const srvEnabled=host.querySelector('#qSrvEnabled').checked,
+          bulkText=host.querySelector('#qSrvBulk').value.trim(),
           bulk=bulkText===''?Infinity:Number(bulkText),
           planarSrv=Number(host.querySelector('#qSrvPlanar').value),
           minTauText=host.querySelector('#qSrvMinTau').value.trim(),
-          minTau=minTauText===''?0:Number(minTauText);
-        if((Number.isFinite(bulk)&&bulk<=0)||(!Number.isFinite(bulk)&&bulk!==Infinity))return alert('Bulk lifetime must be positive or blank for infinity.');
-        if(!Number.isFinite(planarSrv)||planarSrv<0)return alert('Planar reference SRV must be a finite non-negative value.');
-        if(!Number.isFinite(minTau)||minTau<0)return alert('Minimum lifetime must be a finite non-negative value.');
+          minTau=minTauText===''?0:Number(minTauText),
+          surfaceMode=srvMode.value;
+        if(srvEnabled&&(Number.isFinite(bulk)&&bulk<=0||!Number.isFinite(bulk)&&bulk!==Infinity))return alert('Bulk lifetime must be positive or blank for infinity.');
+        if(srvEnabled&&surfaceMode==='textured'&&(!Number.isFinite(planarSrv)||planarSrv<0))return alert('Planar-reference SRV must be a finite non-negative value.');
+        if(srvEnabled&&(!Number.isFinite(minTau)||minTau<0))return alert('Minimum lifetime must be a finite non-negative value.');
         excludeInvalid=host.querySelector('#qInvalidMode').value!=='raw';
         analysisOptions={
           vocModel:host.querySelector('#qVocModel').value,
-          surfaceMode:host.querySelector('#qSrvMode').value,
+          srvEnabled,
+          surfaceMode,
           bulkLifetimeUs:bulk,
           planarSrv,
           minLifetimeUs:minTau
         };
-        const filterMetric=filterController.snapshot().metricKey;
+        const previousFilterMetric=filterController.snapshot().metricKey;
         a=applyAnalysisOptions(d,a,analysisOptions);
         supportMask=intrinsicLifetimeMask(d.values,excludeInvalid);
+        const nextMetrics=visibleMetrics(),
+          nextFilterMetric=nextMetrics[previousFilterMetric]?previousFilterMetric:'lifetime';
+        if(!nextMetrics[metricKey])metricKey='lifetime';
         filterController=Sel.createFilter({
-          metrics:a.metrics,
+          metrics:nextMetrics,
           siteCount:d.values.length,
           intrinsicMask:supportMask,
-          metricKey:filterMetric
+          metricKey:nextFilterMetric
         });
         zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
         renderShell();
       };
+      host.querySelector('#qApplyAnalysis').onclick=applyControls;
+      host.querySelector('#qApplySrv').onclick=applyControls;
       redraw();
     }
     function redraw(){
