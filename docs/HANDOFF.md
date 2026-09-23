@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — main v20260923.1
+# Agent handoff — 2026-09-23 — main v20260923.2
 
 ## Goal
 
@@ -17,7 +17,7 @@ A real-browser import sweep then opened all 62 XMLs in the built analyzer. Each 
 - modular source + generated single-file `dist/index.html` build; `dist/` is ignored and rebuilt by CI/Pages rather than tracked;
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
-- `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
+- `QssUpcdMeasurement` analyzer with raw-lifetime preservation, sentinel-aware scientific validity, lifetime/Smax/PV-2000-compatible Implied-Voc maps, explicit Physical Si/Ge estimates, configurable lifetime→SRV analysis, filtering, distributions/profiles and CSV export;
 - `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
 - `JZeroMeasurement` analyzer with two-intensity Emitter J0 maps, PseudoSquareCell geometry, Basore J0, both τeff.d/Smax/Implied-Voc channels, filtering, distributions and CSV export;
 - `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
@@ -74,7 +74,15 @@ The QSS UI has also been upgraded: proper axes/ticks/units, map colorbar, distri
 
 ### Important QSS validity behavior
 
-The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `SquareRegionPattern + SquareCell` is now a second vendor-regressed QSS coordinate family: Region + Dimension reconstruct the explicit rectangular raster in X-fast, ascending-Y order, and the supplied 35 × 30 / 1050-point XML+CSV pair matches all vendor X/Y coordinates to floating-point precision. `MapPattern + SquareCell` remains supported as a centered raster inferred from `Size/2 - EdgeExclusion` and `Pitch`; that centered MapPattern path remains **inferred** until a matching export/display is supplied. QSS wafer maps draw the XML nominal target as a solid geometry-aware outline (circle for RoundWafer, rectangle for SquareCell), the EdgeExclusion-adjusted scheduled region as a dashed inner outline, and the generic plot frame separately; default autoscaling includes the full target at equal X/Y physical scale. The QSS module exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Distribution bars now count valid points only; excluded points remain available in histogram CSV diagnostics but no longer stack into the displayed Count. Swap axes is presentation-only and cannot change the filter mask. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
+The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `SquareRegionPattern + SquareCell` is a second vendor-regressed QSS coordinate family: Region + Dimension reconstruct the explicit rectangular raster in X-fast, ascending-Y order, and the supplied 35 × 30 / 1050-point XML+CSV pair matches all vendor X/Y coordinates to floating-point precision. `MapPattern + SquareCell` remains supported as a centered raster inferred from `Size/2 - EdgeExclusion` and `Pitch`; that centered MapPattern path remains **inferred** until a matching export/display is supplied.
+
+The newer private RoundWafer corpus contains **96 QSS map XMLs**. Ninety-five are 100 mm / 305-site maps and one is a 125 mm / 489-site map; nine numeric CSV pairs reproduce X/Y and XML lifetime exactly, with Smax matching to export precision. The same compatibility Implied-Voc model that is <0.1 mV on the original reference reaches about **1.94 mV maximum absolute error** across the newer finite vendor points, so the tighter number is no longer treated as a family-wide guarantee.
+
+A major validity rule is now explicit. The corpus contains **13,649 non-positive lifetime sentinel sites** (principally `-1 µs`) across 76 of 96 files. Raw XML lifetime and raw PV-2000-style Smax remain preserved for traceability/export. Default scientific analysis marks `τ<=0` as **UNAVAILABLE** before the user range filter, while an explicit **Raw / PV-2000 style** mode retains the vendor-style numeric behavior. Tooltips distinguish UNAVAILABLE from FILTERED. This prevents sentinel values from dominating map/distribution autoscaling and smooth interpolation.
+
+QSS Analysis controls now also expose optional lifetime→**SRV** conversion with Planar / Textured-black geometry, optional bulk lifetime, planar-reference SRV and minimum-lifetime threshold. SRV is analyzer post-processing and stays distinct from Smax. Implied Voc defaults to **PV-2000 compatible**; optional **Physical Si** and **Physical Ge** estimates require explicit user selection because the XML does not encode a trustworthy material field. Material is never inferred from filenames or substrate names.
+
+QSS wafer maps draw the XML nominal target as a solid geometry-aware outline, the EdgeExclusion-adjusted scheduled region as a dashed inner outline, and the generic plot frame separately; default autoscaling includes the full target at equal X/Y physical scale. The valid-data filter is applied after intrinsic availability and consistently affects summaries, maps, distributions and exports. Distribution Count contains valid available sites only. Swap axes is presentation-only, and smooth interpolation remains distance-limited so it does not extrapolate unsupported regions.
 
 Do not remove this behavior during refactors.
 
@@ -311,10 +319,11 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - For LBIC-MULTI-002, verify the pseudo-square outline/exclusion boundary, 984/952/855/656 nm beam switching, Current / Reflectivity / IQE defaults, coordinate-based X/Y profiles and export.
    - Confirm ordinary numeric wavelength/power/FluxCache/raster-size changes stay inside the appropriate validated family; categorical path changes must report **NEW PROFILE**.
 
-4. **QSS regression smoke**
-   - Run `npm run validate:qss` with private references present.
-   - Import the reference XML and verify valid-range filtering, smooth-map masking, Distribution axis swap and CSV export still behave correctly after layout changes.
-   - Exercise map / Distribution / acquisition-profile wheel zoom, axis-only zoom and double-click auto-scale.
+4. **QSS expanded-corpus smoke — completed on this branch**
+   - CI quality gates / validator launcher / build are green.
+   - The CI-built single-file analyzer was loaded headlessly and all **96 supplied QSS XML files** were imported one-by-one: 96/96 dispatched to the QSS analyzer, produced coordinate-complete maps, finite default filter bounds and live map/Distribution/acquisition-profile canvases with no browser/page errors.
+   - Representative normal, sentinel-heavy and 125 mm / 489-site cases were visually inspected. SRV and Physical Ge controls were exercised after import.
+   - CSV export was checked on a sentinel-heavy case: raw `-1 µs` values remain present; default scientific mode marks them unavailable/filter-invalid; Raw / PV-2000 style marks them available/valid under the full raw lifetime range.
 
 5. **Landing / fallback / theme**
    - Verify the welcome tags render correctly in light and dark mode.
