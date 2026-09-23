@@ -345,10 +345,11 @@
     return{X,Y};
   }
 
-  function drawMap(canvas,d,a,key,selected,zoom,onZoom,onSelect){
+  function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect){
     const ctx=canvas.getContext('2d'),
       metric=a.metrics[key],
       values=metric.values,
+      activeValues=values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
       W=canvas.width=760,
       H=canvas.height=420,
       p={l:58,r:78,t:26,b:48};
@@ -386,7 +387,7 @@
       axes=drawAxes(ctx,W,H,p,xr,yr,'X [mm]','Y [mm]'),
       X=axes.X,
       Y=axes.Y,
-      vr=finiteRange(values,0),
+      vr=finiteRange(activeValues,0),
       lo=vr[0],
       hi=vr[1];
 
@@ -415,7 +416,7 @@
     }
     d.coords.forEach((pt,i)=>{
       const v=values[i];
-      if(!Number.isFinite(v))return;
+      if(!mask?.[i]||!Number.isFinite(v))return;
       const cx=X(pt.x),
         cy=Y(pt.y),
         halfW=dx>0?Math.abs(X(pt.x+dx/2)-cx):5,
@@ -488,7 +489,7 @@
         PV.ui.showTooltip(
           tip,
           e,
-          `<b>Point ${best+1}</b><br>X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm<br>${esc(metric.short)} = ${fmt(v,5)} V`
+          `<b>Point ${best+1}</b><br>X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm<br>${esc(metric.short)} = ${fmt(v,5)} V<br>${mask?.[best]?'VALID':'EXCLUDED'}`
         );
       }else PV.ui.hideTooltip(tip);
     };
@@ -514,10 +515,11 @@
     });
   }
 
-  function drawHist(canvas,a,key,binCount=30,swapped=true,zoom,onZoom){
+  function drawHist(canvas,a,key,mask,binCount=30,swapped=true,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       metric=a.metrics[key],
-      bins=S.histogram(metric.values,binCount),
+      activeValues=metric.values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
+      bins=S.histogram(activeValues,binCount),
       W=canvas.width=760,
       H=canvas.height=300,
       p={l:58,r:18,t:24,b:48};
@@ -542,7 +544,7 @@
         swapped?'Count':`${metric.short} [${metric.unit}]`,
         swapped?`${metric.short} [${metric.unit}]`:'Count'
       ),
-      vr=finiteRange(metric.values,0),
+      vr=finiteRange(activeValues,0),
       lo=vr[0],
       hi=vr[1];
 
@@ -662,16 +664,28 @@
     });
   }
 
-  function downloadMap(d,a,key){
-    const m=a.metrics[key];
+  function downloadMap(d,a,key,filterState,displayMask){
+    const m=a.metrics[key],
+      selection=filterState.selection,
+      filterMetric=a.metrics[filterState.metricKey];
     PV.exporter.csv(
       `${safe(d.resultName)}_${key}.csv`,
-      ['Point','X [mm]','Y [mm]',`${m.short} [${m.unit}]`],
+      [
+        'Point','X [mm]','Y [mm]',`${m.short} [${m.unit}]`,
+        'Metric available','Pass valid-data filter','Displayed',
+        'Filter metric','Filter lower','Filter upper'
+      ],
       d.sites.map((site,i)=>[
         i+1,
         site.coord?.x??'',
         site.coord?.y??'',
-        m.values[i]
+        m.values[i],
+        m.availability?.[i]?.available??Number.isFinite(m.values[i]),
+        !!selection.activeMask[i],
+        !!displayMask[i],
+        filterMetric?.short||filterState.metricKey,
+        filterState.lower,
+        filterState.upper
       ])
     );
   }
@@ -722,6 +736,7 @@
         :'Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.',
       metricOptions=Object.values(a.metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.short)}</option>`).join('');
     let metricKey='dark',
+      filterController=Sel.createFilter({metrics:a.metrics,siteCount:d.sites.length,metricKey:'dark'}),
       histSwapped=true,
       histBins=30,
       selected=0,
@@ -737,16 +752,22 @@
 
     function statRows(){
       return Object.values(a.metrics).map(m=>{
-        const s=a.summaries[m.key];
+        const mask=filterController.metricMask(m),
+          s=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
         return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(s.mean)}</td><td>${fmt(s.median)}</td><td>${fmt(s.stdev)}</td><td>${fmt(s.min)}</td><td>${fmt(s.max)}</td></tr>`;
       }).join('');
     }
 
     function selectedHtml(){
       const s=d.sites[selected]||{},
-        p=s.coord;
+        p=s.coord,
+        filterState=filterController.snapshot(),
+        support=filterState.selection.supportMask[selected],
+        active=filterState.selection.activeMask[selected],
+        state=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';
       return`<dl class="meta">
         ${metaRow('Point',String(selected+1))}
+        ${metaRow('Valid-data state',state,'UNAVAILABLE means the selected filter quantity is not available at this site. FILTERED means it is available but outside the active numeric range.')}
         ${metaRow('Coordinate',p?`X ${fmt(p.x,2)} mm · Y ${fmt(p.y,2)} mm`:'—')}
         ${metaRow('Vcpd Dark',`${fmt(s.dark,6)} V`)}
         ${isVcpd?'':metaRow('Vcpd Light',`${fmt(s.light,6)} V`)}
@@ -773,7 +794,15 @@
         ${isVcpd?'':metaRow('VSB factor',fmt(d.factor,5),'Applied to the dark-minus-light raw mean difference before VSB and reported Vcpd Light are formed.')}
         ${metaRow('Coordinates',d.coordinateSource)}
       </dl></section>
-      <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max are calculated over finite sites. Stdev is the sample standard deviation, matching the current paired PV-2000 reference export.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statRows()}</tbody></table></div></section>
+      ${PV.ui.validDataFilterMarkup({
+        prefix:'iFilter',
+        metrics:a.metrics,
+        state:filterController.snapshot(),
+        helpText:isVcpd
+          ?'Filter Vcpd Dark by a numeric range. Raw XML readings are preserved; the same site mask is applied to summary statistics, map, distribution and exports.'
+          :'Choose Vcpd Dark, Vcpd Light or VSB as the filter quantity. One shared site mask is then applied across all ISC result quantities, summaries, maps, distributions and exports.'
+      })}
+      <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max use only sites passing the active Valid-data filter and availability mask. Stdev is the sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="iSummaryBody">${statRows()}</tbody></table></div></section>
       <section class="panel"><h3>Selected site ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <details class="panel"><summary>Acquisition metadata</summary><dl class="meta">
         ${metaRow('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}
@@ -784,14 +813,25 @@
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
     </aside><section class="plots">
-      <div class="panel chart"><header><b>${moduleLabel} map</b>${help(mapHelp)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
-      <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
+      <div class="panel chart"><header><b>${moduleLabel} map</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
+      <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
     </section><section class="plots">
       <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
     </section></div>`;
 
     const metricSelect=host.querySelector('#iMetric');
     metricSelect.value=metricKey;
+    PV.ui.bindValidDataFilter(host,{
+      prefix:'iFilter',
+      controller:filterController,
+      onChange:()=>{
+        zoom.map={x:null,y:null};
+        zoom.hist={x:null,y:null};
+        host.querySelector('#iSummaryBody').innerHTML=statRows();
+        host.querySelector('#iSelected').innerHTML=selectedHtml();
+        redraw();
+      }
+    });
     metricSelect.onchange=e=>{
       metricKey=e.target.value;
       zoom.map={x:null,y:null};
@@ -799,7 +839,9 @@
       redraw();
     };
     function redraw(){
-      const bins=drawHist(host.querySelector('#iHist'),a,metricKey,histBins,histSwapped,zoom.hist,n=>{
+      const filterState=filterController.snapshot(),
+        displayMask=filterController.metricMask(a.metrics[metricKey]),
+        bins=drawHist(host.querySelector('#iHist'),a,metricKey,displayMask,histBins,histSwapped,zoom.hist,n=>{
         zoom.hist=n;
         redraw();
       });
@@ -808,6 +850,7 @@
         d,
         a,
         metricKey,
+        displayMask,
         selected,
         zoom.map,
         n=>{
@@ -843,13 +886,13 @@
         redraw();
       });
 
-      host.querySelector('#iExportMap').onclick=()=>downloadMap(d,a,metricKey);
+      host.querySelector('#iExportMap').onclick=()=>downloadMap(d,a,metricKey,filterState,displayMask);
       host.querySelector('#iExportHist').onclick=()=>{
         const m=a.metrics[metricKey];
         PV.exporter.csv(
           `${safe(d.resultName)}_${metricKey}_histogram.csv`,
-          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count'],
-          bins.map(b=>[b.lo,b.hi,b.count])
+          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],
+          bins.map(b=>[b.lo,b.hi,b.count,a.metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
         );
       };
       host.querySelector('#iExportRaw').onclick=()=>downloadRaw(d,selected);
@@ -864,7 +907,7 @@
   PV.modules=PV.modules||{};
   PV.modules.isc={
     familyId:'kelvin-probe',
-    capabilities:{map:true,distribution:true,rawReadings:true},
+    capabilities:{map:true,distribution:true,rawReadings:true,validDataFilter:true},
     types:['ISCMeasurement','VcpdMeasurement'],
     parse,
     analyze,
