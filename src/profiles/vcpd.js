@@ -11,6 +11,8 @@
       data.iterationCount===1&&
       data.patternType==='MapPattern'&&
       data.targetType==='RoundWafer'&&
+      data.coordinateSource==='MapPattern + RoundWafer'&&
+      data.coords?.length===data.sites?.length&&
       data.lightOn==='false'&&
       Number.isFinite(data.offset)&&
       Math.abs(data.offset)<=1e-12&&

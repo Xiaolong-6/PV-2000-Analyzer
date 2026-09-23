@@ -11,6 +11,8 @@
       data.iterationCount===1&&
       data.patternType==='MapPattern'&&
       data.targetType==='SquareCell'&&
+      data.coordinateSource==='MapPattern + SquareCell'&&
+      data.coords?.length===data.sites?.length&&
       Number.isFinite(data.offset)&&
       Number.isFinite(data.factor)&&
       Array.isArray(data.sites)&&

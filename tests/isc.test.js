@@ -177,3 +177,34 @@ test('registry exposes migrated module metadata while preserving type resolution
   assert.equal(meta.capabilities.map,true);
   assert.equal(PV2000.registry.resolve('VcpdMeasurement'),ISC);
 });
+
+
+test('explicit coefficient geometry does not inherit the validated ISC profile',()=>{
+  const d={
+    type:'ISCMeasurement',
+    measurementKind:'isc',
+    name:'n',
+    resultName:'r',
+    substrateId:'s',
+    lotId:'',
+    iterationCount:1,
+    sites:[{darkRaw:[1],lightRaw:[.5],coord:{x:0,y:0}}],
+    coords:[{x:0,y:0}],
+    offset:0,
+    factor:1,
+    coordinateSource:'XML coefficients',
+    patternType:'MapPattern',
+    targetType:'SquareCell',
+    targetWidth:100,
+    targetHeight:100,
+    edgeExclusion:30,
+    readingsPerSite:1,
+    measurementInterval:.02,
+    lightOn:'',
+    temperatureC:23
+  };
+  ISC.attachDomain(d);
+  assert.equal(d.profile,null);
+  assert.equal(d.domain.profile,null);
+  assert.equal(d.domain.geometry.validationStatus,'inferred');
+});
