@@ -182,3 +182,43 @@ test('quantity presentation tier is independent from provenance and validation',
   assert.equal(q.validation,'inferred');
   assert.deepEqual(q.evidence,{xmlStored:true,vendorExported:false,vendorDisplayed:false});
 });
+
+
+test('shared valid-data filter controller keeps one site mask across result metrics',()=>{
+  const Q=PV2000.quantity,V=PV2000.validity;
+  const metrics={
+    dark:Q.create({id:'dark',key:'dark',short:'Vcpd Dark',values:[1,2,3,4]}),
+    vsb:Q.create({
+      id:'vsb',key:'vsb',short:'VSB',values:[10,20,30,40],
+      availability:[V.state(10),V.state(20),V.state(30,{available:false,reason:V.REASONS.NOT_COMPUTABLE}),V.state(40)]
+    })
+  };
+  const filter=PV2000.selection.createFilter({metrics,siteCount:4,metricKey:'dark'});
+  assert.deepEqual(filter.snapshot().selection.activeMask,[true,true,true,true]);
+  let state=filter.apply(1.5,3.5);
+  assert.deepEqual(state.selection.activeMask,[false,true,true,false]);
+  assert.deepEqual(filter.metricMask('vsb'),[false,true,false,false]);
+  state=filter.setMetric('vsb');
+  assert.equal(state.metricKey,'vsb');
+  assert.equal(state.lower,10);
+  assert.equal(state.upper,40);
+  assert.deepEqual(state.selection.activeMask,[true,true,false,true]);
+  state=filter.apply(15,35);
+  assert.deepEqual(state.selection.activeMask,[false,true,false,false]);
+  state=filter.reset();
+  assert.deepEqual(state.selection.activeMask,[true,true,false,true]);
+});
+
+test('shared valid-data filter normalizes reversed limits and supports percentile convenience range',()=>{
+  const Q=PV2000.quantity;
+  const metric=Q.create({id:'x',key:'x',values:[0,10,20,30,40]});
+  const filter=PV2000.selection.createFilter({metrics:{x:metric},metricKey:'x'});
+  let state=filter.apply(30,10);
+  assert.equal(state.lower,10);
+  assert.equal(state.upper,30);
+  assert.deepEqual(state.selection.activeMask,[false,true,true,true,false]);
+  state=filter.central(0,1);
+  assert.equal(state.lower,0);
+  assert.equal(state.upper,40);
+  assert.deepEqual(state.selection.activeMask,[true,true,true,true,true]);
+});
