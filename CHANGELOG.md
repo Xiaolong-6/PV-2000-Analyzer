@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260923.15.1 — 2026-09-23 (QSS shared Valid-data filter migration branch)
+## v20260923.16 — 2026-09-23
 
 - Migrated QssUpcdMeasurement from its module-local range-filter state to the shared selection controller and shared Valid-data filter UI contract.
 - Preserved the independent intrinsic lifetime support/sentinel mask and the existing distinction between UNAVAILABLE and user-FILTERED sites.
