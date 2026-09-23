@@ -22,6 +22,21 @@ The calculation path is determined by the JZero measurement schema: two lifetime
 
 The supplied paired reference validates one geometry instance, but that geometry does not define the JZero calculation itself.
 
+## SquareRegion and incomplete-acquisition runtime support
+
+JZero now also accepts resolver-supported `SquareRegionPattern` geometry from the structured `Region` + `Dimension` fields. Pattern/Name remains display metadata and is not used to infer grid size. A 1 × 1 SquareRegion therefore renders as a single measurement position; larger regions use the explicit row-major schedule reconstructed from Region origin/size and Dimension.
+
+Incomplete acquisition is treated separately from calculation validity. If the XML job status explicitly indicates an interrupted run (for example `Terminated`) and fewer spatial sites than the full schedule were saved, the shared geometry layer may map available DataItems to the leading X-fast / ascending-Y schedule prefix. Such coordinates are labelled **partial / inferred** and do not extend the validated geometry profile.
+
+The calculation layer now preserves available first-intensity data when the second JZero lifetime iteration is missing or shorter. All seven result arrays remain aligned to one common site index space:
+
+- first-iteration τeff.d, Smax and Implied Voc remain available where their inputs are finite;
+- second-iteration quantities are unavailable where that iteration was not acquired;
+- Basore J0 is available only at sites with both lifetime values;
+- missing quantities are represented as unavailable values rather than shifting or dropping site indices.
+
+A complete, non-interrupted two-iteration acquisition continues to use the existing `JZERO-CALC-001` validated path unchanged. Incomplete runs are runtime-supported but are not promoted to vendor-validated calculation parity without matching PV-2000 output.
+
 ## Reference geometry
 
 The paired reference uses:
@@ -136,7 +151,7 @@ Across all 5017 sites, both Implied Voc maps reproduce the vendor export within 
 
 The dedicated JZero analyzer provides:
 
-- Basore J0 as the default map;
+- Basore J0 as the default map when paired two-intensity data are available; otherwise the first τeff.d channel becomes the default view;
 - all seven vendor result quantities in the map selector;
 - geometry-aware PseudoSquareCell nominal and EdgeExclusion outlines;
 - equal physical X/Y scale in the automatic map view;
@@ -153,7 +168,7 @@ The filled map uses the measured lattice cells directly rather than an expensive
 
 ## Valid-data filter semantics
 
-JZero now uses the shared `PV2000.selection.createFilter()` and shared Valid-data filter UI contract introduced in `v20260923.12`. Any of the seven JZero result quantities may be selected as the filter metric. Lower/upper limits create one **paired-site active mask** in the common site index space shared by both lifetime iterations and every derived result.
+JZero now uses the shared `PV2000.selection.createFilter()` and shared Valid-data filter UI contract introduced in `v20260923.12`. Any of the seven JZero result quantities may be selected as the filter metric. Lower/upper limits create one **site-level active mask** in the common site index space shared by both lifetime iterations and every derived result.
 
 For a displayed result quantity, the renderer combines that shared active mask with the displayed quantity's own finite/support mask. This matters when a site passes a lifetime-based filter but a derived J0, Smax or Implied Voc value is not computable at that site: the paired site remains active, while the unavailable displayed value is omitted from that quantity's summary, map and distribution.
 

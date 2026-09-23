@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260923.18 — 2026-09-23
+
+- Added JZero `SquareRegionPattern` geometry support from structured Region + Dimension fields, including 1 × 1 single-position rendering and inferred row-major schedules.
+- Added explicit terminated/incomplete JZero degradation: available first-intensity τeff.d/Smax/Implied-Voc remain usable while missing second-intensity quantities and Basore J0 are unavailable without shifting site indices.
+- Reused the shared partial-acquisition geometry prefix for terminated SquareRegion schedules; normal completed point-count mismatches remain rejected.
+- Kept the established complete two-iteration JZERO-CALC-001 and pseudo-square validated paths numerically unchanged, with new SquareRegion/incomplete cases documented as inferred runtime support.
+- Added regression coverage for the supplied completed 1 × 1 case and terminated 5 / 9, 1 / 2-iteration case.
+
 ## v20260923.17 — 2026-09-23
 
 - Added the shared site-level Valid-data filter to DIT while keeping existing DIT algorithm validity as the intrinsic mask.
