@@ -132,6 +132,11 @@
     return selected.map(point=>({x:point.x*scaleX,y:point.y*scaleY}));
   }
 
+  function absolutePointSchedule(points,count){
+    if(!finiteCoefficients(points))return[];
+    return count==null||points.length===count?points.map(point=>({x:point.x,y:point.y})):[];
+  }
+
   function targetEnvelope({
     targetType='',
     diameter=NaN,
@@ -246,6 +251,7 @@
     patternType='',
     targetType='',
     rawCoefficients=[],
+    absolutePoints=[],
     pointCount=null,
     diameter=NaN,
     targetWidth=NaN,
@@ -295,7 +301,6 @@
         sourceSpace='generated-target-mm';
         interpretation='centered-target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
-
       }else if(boundary.shape==='pseudo-square'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
         useSchedule(pseudoSquareGrid(
           boundary.scheduled.halfWidth,
@@ -317,6 +322,14 @@
         if(boundary.shape==='rect'&&[regionX,regionY,regionWidth,regionHeight].every(Number.isFinite)){
           resolvedScheduled={xMin:regionX,xMax:regionX+regionWidth,yMin:regionY,yMax:regionY+regionHeight};
         }
+      }
+    }else if(patternType==='FixedPointsPattern'){
+      pointsMm=absolutePointSchedule(absolutePoints,pointCount);
+      if(pointsMm.length){
+        sourceSpace='absolute-point-mm';
+        interpretation='explicit-fixed-points';
+        evidenceStatus='inferred';
+        acquisitionOrder='xml point order';
       }
     }else if(patternType==='HighDensityPattern'&&boundary.scheduled&&(boundary.shape==='circle'||boundary.shape==='rect')){
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
@@ -387,6 +400,7 @@
     scheduleForPointCount,
     isIncompleteAcquisitionStatus,
     scaleTargetRelativeCoefficients,
+    absolutePointSchedule,
     targetEnvelope,
     resolveMeasurementGeometry,
     envelope

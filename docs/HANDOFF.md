@@ -1,5 +1,17 @@
 # Agent handoff — 2026-09-23 — v20260923.18
 
+## CETMeasurement implementation branch
+
+`feat/cet-measurement` adds a dedicated CET analyzer on the shared measurement-domain architecture.
+
+The first paired profile is `CET-9PT-SQUARE-001`: one 9-site `NinePointPattern + SquareCell` XML/vendor CSV pair validates target-relative fixed-point geometry plus EOT, Cd and R² point-by-point and at summary-statistics level. The pair establishes `q = 1.602e-19 C` as the compatibility constant for this legacy CET arithmetic. One undefined site is represented as unavailable EOT/Cd with R² = 0.
+
+CET reuses `PV2000.quantity`, `PV2000.selection`, `PV2000.measurement`, `PV2000.profiles` and canonical `pointsMm`. The geometry core also gains `FixedPointsPattern/PointValues` as explicit absolute-mm geometry. Other observed CET OnePoint/FixedPoints/RoundWafer/SquareRegion inputs remain inferred until paired output extends the profile envelope.
+
+The exact private XML/CSV pair and a short case README are stored under `reference-data/paired-test-data/CETMeasurement/cet-9pt-square-20160406/` in the separate private-reference repository. Public runtime remains XML-only.
+
+Acceptance before merge: normal `npm run check`, `npm run build`, `npm run validate:cet` against the private pair, import-smoke representative XMLs from the supplied CET corpus, and a visual check of map / Distribution / current-site fit / filter behavior.
+
 ## JZero SquareRegion / incomplete acquisition support
 
 JZero now reads structured `SquareRegionPattern/Region + Dimension` geometry through the shared geometry resolver. A completed 1 × 1 SquareRegion can render as a single measurement position even when Pattern/Name contains stale display text. Explicitly terminated SquareRegion runs can reuse the shared partial-prefix schedule semantics and remain geometry-inferred.

@@ -18,12 +18,14 @@ const files=[
   'src/core/registry.js',
   'src/profiles/isc.js',
   'src/profiles/vcpd.js',
+  'src/profiles/cet.js',
   'src/modules/dit.js',
   'src/modules/qss-upcd.js',
   'src/modules/dual-qss.js',
   'src/modules/jzero.js',
   'src/modules/isc.js',
   'src/modules/lbic.js',
+  'src/modules/cet.js',
   'src/modules/generic.js',
   'src/app.js'
 ];

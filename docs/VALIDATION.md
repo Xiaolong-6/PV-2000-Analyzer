@@ -9,6 +9,38 @@ The central registry of validated reference envelopes is `docs/REFERENCE_PROFILE
 
 Public reference data do not change the runtime contract: the analyzer still consumes XML only. CSV/XPS/screenshots are test and reverse-engineering evidence. A public dataset also does not by itself prove the PV-2000 internal algorithm; the validation label applies only to the observed input→output envelope.
 
+## CET — paired NinePointPattern / SquareCell regression
+
+One private `CETMeasurement` XML + matching PV-2000 numeric CSV export establishes `CET-9PT-SQUARE-001`.
+
+The pair contains 9 sites and validates both the fixed-point geometry and the derived result path.
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| point count | 9 XML = 9 export | validated |
+| NinePointPattern X/Y | max abs error ≈ 2.1e-14 mm | validated |
+| EOT | max abs error ≈ 3.2e-12 Å on finite sites | validated |
+| Cd | max abs error ≈ 6.2e-13 nF/cm² on finite sites | validated |
+| R² | max abs error ≈ 1.2e-13 | validated |
+| Average / Median / sample Stdev / Min / Max | reproduced at floating-point precision | validated |
+| undefined one-point fit | EOT/Cd unavailable; R² = 0 | validated semantic handling |
+
+The 156 × 156 mm SquareCell has 4 mm EdgeExclusion, so the scheduled half-width/height is 74 mm. The standard coefficient magnitude `0.6324555320336759` maps to **46.801709370492 mm**, confirming that the fixed-point coefficients are target-relative rather than physical millimetres.
+
+The paired result also fixes the historical compatibility constant used by the current path at `q = 1.602e-19 C`. Using a higher-precision modern electron-charge constant changes the displayed Cd/EOT enough to break exact compatibility and is therefore not substituted silently.
+
+Run:
+
+```bash
+npm run validate:cet
+```
+
+The validator expects same-basename private XML/CSV pairs under `private/reference/cet/` by default. The curated pair is also stored in the separate private-reference repository for development testing; neither location is a runtime dependency.
+
+The larger unpaired CET XML corpus exercises OnePoint, FixedPoints, RoundWafer NinePoint and SquareRegion structures. These are import/structure evidence only unless a matching vendor output is supplied.
+
+See `docs/ALGORITHMS_CET.md` and profile `CET-9PT-SQUARE-001` in `docs/REFERENCE_PROFILES.md`.
+
 ## QSS-µPCD map — XML + raw PV-2000 export
 
 Private references:

@@ -44,7 +44,7 @@ A scientific model describes the underlying semiconductor, optical or electrical
 
 A compatibility model describes a calculation used to reproduce a defined reference-output family.
 
-A quantity can have both descriptions. Validation applies to the stated input-to-output profile and is recorded separately from physical plausibility.
+A quantity can have both descriptions. Validation applies to the stated input-to-output profile and is recorded separately from physical plausibility. Current paired examples include the `CET-9PT-SQUARE-001` contactless EOT/capacitance profile.
 
 ## Project links
 

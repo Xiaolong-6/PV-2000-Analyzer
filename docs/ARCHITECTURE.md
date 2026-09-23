@@ -176,7 +176,7 @@ Exact evidence and validation boundaries remain authoritative in `docs/REFERENCE
 
 ### Canonical measurement geometry
 
-`src/core/geometry.js` owns Pattern/Target-to-physical-coordinate interpretation for migrated coordinate paths. Raw XML coefficients are preserved separately from physical millimetre coordinates.
+`src/core/geometry.js` owns Pattern/Target-to-physical-coordinate interpretation for migrated coordinate paths. Raw XML coefficients are preserved separately from physical millimetre coordinates. CET extends the same contract to `FixedPointsPattern/PointValues`: those explicit point values are treated as absolute millimetre coordinates, while fixed 5/9-point `Coefficients` remain target-relative and are scaled by the scheduled target extent.
 
 The geometry resolver returns:
 
