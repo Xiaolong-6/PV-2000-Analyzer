@@ -3,6 +3,7 @@
   const q=1.602176634e-19,k=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI300_PV2000_COMPAT=1.517791063348261e10;
   const NI300_MANUAL=1.02e10;
+  const NI300_GE=2e13;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
@@ -158,18 +159,92 @@
     if(![tauUs,I,W,OF,Nd,TK].every(Number.isFinite)||tauUs<=0||I<=0||W<=0||Nd<=0)return NaN;
     const dn=generation(I,W,OF)*tauUs*1e-6;return k*TK/q*Math.log(dn*(Nd+dn)/(NI300_MANUAL*NI300_MANUAL));
   }
-  function analyze(d){
-    const lifetime=d.values.slice(),smaxVals=lifetime.map(v=>smax(v,d.waferThickness)),voc=lifetime.map(v=>impliedVoc(v,d)),vocManual=lifetime.map(v=>impliedVocManual(v,d));
-    return{metrics:{
-      lifetime:{key:'lifetime',label:`τeff.d (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'τeff.d',unit:'µs',values:lifetime,help:'Small-perturbation (differential) carrier lifetime measured under the selected steady-state illumination.'},
-      smax:{key:'smax',label:`Smax (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Smax',unit:'cm/s',values:smaxVals,help:'Maximum surface recombination velocity estimate Smax = W/(2τ). It is an upper bound when bulk recombination is neglected.'},
-      voc:{key:'voc',label:`Implied Voc (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Implied Voc',unit:'V',values:voc,help:'Implied open-circuit voltage derived from injection level Δn = Gτ and the semiconductor carrier-density relation.'}},
-      audit:{vocManualStats:S.summary(vocManual),ni300Compat:NI300_PV2000_COMPAT,ni300Manual:NI300_MANUAL}};
+  function egGe(T){return 0.7437-4.774e-4*T*T/(T+235)}
+  function niFromModel(ni300,eg,T){
+    const ref=300,ratio=(T/ref)**1.5*Math.exp(-eg(T)/(2*KB_EV*T)+eg(ref)/(2*KB_EV*ref));
+    return ni300*ratio;
+  }
+  function niPhysical(material,T){
+    return material==='Ge'?niFromModel(NI300_GE,egGe,T):niFromModel(NI300_MANUAL,egSi,T);
+  }
+  function impliedVocPhysical(tauUs,d,material='Si'){
+    const I=(d.qssMilli||0)/1000,W=d.waferThickness,OF=d.opticalFactor,Nd=d.doping,TK=Number.isFinite(d.temperatureC)?d.temperatureC+273.15:300;
+    if(![tauUs,I,W,OF,Nd,TK].every(Number.isFinite)||tauUs<=0||I<=0||W<=0||Nd<=0)return NaN;
+    const dn=generation(I,W,OF)*tauUs*1e-6,ni=niPhysical(material,TK);
+    return k*TK/q*Math.log(dn*(Nd+dn)/(ni*ni));
+  }
+  function surfaceRecombinationVelocity(tauUs,Wum,options={}){
+    const mode=options.mode==='planar'?'planar':'textured',
+      bulkLifetimeUs=Number.isFinite(options.bulkLifetimeUs)&&options.bulkLifetimeUs>0?options.bulkLifetimeUs:Infinity,
+      planarSrv=Number.isFinite(options.planarSrv)?options.planarSrv:5,
+      minLifetimeUs=Number.isFinite(options.minLifetimeUs)&&options.minLifetimeUs>0?options.minLifetimeUs:0;
+    if(!Number.isFinite(tauUs)||!Number.isFinite(Wum)||tauUs<=0||Wum<=0||tauUs<minLifetimeUs)return NaN;
+    const tau=tauUs*1e-6,W=Wum*1e-4,bulkTerm=Number.isFinite(bulkLifetimeUs)?1/(bulkLifetimeUs*1e-6):0,
+      raw=(mode==='planar'?W/2:W)*(1/tau-bulkTerm)-(mode==='planar'?0:planarSrv);
+    if(!Number.isFinite(raw))return NaN;
+    return Math.max(0,raw);
+  }
+  function intrinsicLifetimeMask(values,excludeInvalid=true){
+    return values.map(v=>Number.isFinite(v)&&(!excludeInvalid||v>0));
+  }
+  function applyAnalysisOptions(d,a,options={}){
+    const opts={
+      vocModel:options.vocModel||'pv2000',
+      surfaceMode:options.surfaceMode==='planar'?'planar':'textured',
+      bulkLifetimeUs:Number.isFinite(options.bulkLifetimeUs)&&options.bulkLifetimeUs>0?options.bulkLifetimeUs:Infinity,
+      planarSrv:Number.isFinite(options.planarSrv)?options.planarSrv:5,
+      minLifetimeUs:Number.isFinite(options.minLifetimeUs)&&options.minLifetimeUs>0?options.minLifetimeUs:0
+    },lifetime=a.metrics.lifetime.values;
+    const vocMaterial=opts.vocModel==='physical-ge'?'Ge':'Si',
+      physical=opts.vocModel==='physical-si'||opts.vocModel==='physical-ge';
+    a.metrics.voc.values=lifetime.map(v=>physical?impliedVocPhysical(v,d,vocMaterial):impliedVoc(v,d));
+    a.metrics.voc.label=`Implied Voc (${((d.qssMilli||0)/1000).toFixed(2)} sun)`;
+    a.metrics.voc.help=physical
+      ?`Physical ${vocMaterial} estimate using a material-specific intrinsic-carrier model; this path is not PV-2000-regressed.`
+      :'PV-2000-compatible implied Voc derived from Δn = Gτ and the temperature-dependent silicon-style compatibility model.';
+    a.metrics.srv.values=lifetime.map(v=>surfaceRecombinationVelocity(v,d.waferThickness,{
+      mode:opts.surfaceMode,bulkLifetimeUs:opts.bulkLifetimeUs,planarSrv:opts.planarSrv,minLifetimeUs:opts.minLifetimeUs
+    }));
+    a.metrics.srv.help=opts.surfaceMode==='planar'
+      ?'Planar SRV = W/2 × (1/τeff − 1/τbulk). Blank bulk lifetime means ∞.'
+      :'Textured/black-surface SRV = W × (1/τeff − 1/τbulk) − planar-reference SRV, clamped at zero. Blank bulk lifetime means ∞.';
+    a.options=opts;
+    return a;
+  }
+  function analyze(d,options={}){
+    const lifetime=d.values.slice(),smaxVals=lifetime.map(v=>smax(v,d.waferThickness)),vocManual=lifetime.map(v=>impliedVocManual(v,d)),
+      a={metrics:{
+        lifetime:{key:'lifetime',label:`τeff.d (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'τeff.d',unit:'µs',values:lifetime,help:'Small-perturbation (differential) carrier lifetime measured under the selected steady-state illumination. PV-2000 may encode unavailable sites as -1 µs.'},
+        smax:{key:'smax',label:`Smax (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Smax',unit:'cm/s',values:smaxVals,help:'PV-2000-compatible Smax = W/(2τ). Raw -1 µs sentinel sites are preserved numerically for export/parity but are excluded from scientific analysis by default.'},
+        voc:{key:'voc',label:'Implied Voc',short:'Implied Voc',unit:'V',values:[],help:''},
+        srv:{key:'srv',label:'SRV',short:'SRV',unit:'cm/s',values:[],help:''}
+      },audit:{
+        vocManualStats:S.summary(vocManual.filter(Number.isFinite)),
+        rawLifetimeStats:S.summary(lifetime.filter(Number.isFinite)),
+        rawSmaxStats:S.summary(smaxVals.filter(Number.isFinite)),
+        invalidLifetimeCount:lifetime.filter(v=>Number.isFinite(v)&&v<=0).length,
+        ni300Compat:NI300_PV2000_COMPAT,ni300Manual:NI300_MANUAL,ni300Ge:NI300_GE
+      }};
+    return applyAnalysisOptions(d,a,options);
   }
   function summaryMasked(values,mask){return S.summary(values.filter((_,i)=>mask[i]&&Number.isFinite(values[i])))}
-  function quantile(a,p){const z=a.filter(Number.isFinite).slice().sort((x,y)=>x-y);if(!z.length)return NaN;const q=(z.length-1)*p,i=Math.floor(q),f=q-i;return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f}
-  function metricRange(a,key){const v=a.metrics[key].values.filter(Number.isFinite);return{min:Math.min(...v),max:Math.max(...v)}}
-  function validMask(a,key,lo,hi){const v=a.metrics[key].values;return v.map(x=>Number.isFinite(x)&&x>=lo&&x<=hi)}
+  function supportedValues(values,supportMask){
+    return values.filter((v,i)=>Number.isFinite(v)&&(!supportMask||supportMask[i]));
+  }
+  function quantile(a,p,supportMask=null){
+    const z=supportedValues(a,supportMask).slice().sort((x,y)=>x-y);
+    if(!z.length)return NaN;
+    const q=(z.length-1)*p,i=Math.floor(q),f=q-i;
+    return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f;
+  }
+  function metricRange(a,key,supportMask=null){
+    const v=supportedValues(a.metrics[key].values,supportMask);
+    return{min:v.length?Math.min(...v):NaN,max:v.length?Math.max(...v):NaN};
+  }
+  function validMask(a,key,lo,hi,supportMask=null){
+    const v=a.metrics[key].values;
+    return v.map((x,i)=>(!supportMask||supportMask[i])&&Number.isFinite(x)&&x>=lo&&x<=hi);
+  }
   function color(t){t=Math.max(0,Math.min(1,t));
     const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];
     let i=0;
