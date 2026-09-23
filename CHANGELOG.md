@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260923.13 — 2026-09-23
+
+- Added shared geometry schedule matching with explicit complete / partial-prefix / mismatch states, expected/acquired point counts and completion metadata.
+- Added terminated ISC/VCPD map recovery: incomplete `MapPattern + RoundWafer` acquisitions can map saved DataItems onto the leading canonical X-fast / ascending-Y schedule prefix while completed point-count mismatches remain unavailable.
+- Kept partial geometry outside validated profile parity and surfaced `partial acquisition · inferred` with acquired/scheduled site counts in the ISC/VCPD UI.
+- Refactored existing LBIC SquareRegion partial-acquisition handling onto the shared geometry helper without changing its established display behavior.
+- Added regression coverage for a 200 mm / 4 mm edge-exclusion / 1 mm pitch terminated ISC geometry with 10,947 acquired of 28,913 scheduled sites.
+
 ## v20260923.12 — 2026-09-23
 
 - Added a reusable shared Valid-data filter controller and UI contract on top of the Phase A selection primitives.
