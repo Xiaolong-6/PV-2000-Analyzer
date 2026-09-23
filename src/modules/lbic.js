@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Q_PV2000=1.602e-19;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Q_PV2000=1.602e-19;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2&&v!==0?v.toExponential(n):v.toFixed(n);
@@ -299,21 +299,28 @@
   const setupTooltip=canvas=>PV.ui.setupTooltip(canvas);
   const showTip=(tip,event,html)=>PV.ui.showTooltip(tip,event,html);
   const hideTip=tip=>PV.ui.hideTooltip(tip);
-  function drawMap(canvas,d,metric,selected,scaleMode,onSelect,zoom,onZoom){
+  function drawMap(canvas,d,metric,mask,selected,scaleMode,onSelect,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       W=canvas.width=760,
       H=canvas.height=430,
       p={l:64,r:82,t:28,b:52},
       coords=d.coords,
       vals=metric.values,
-      rg=range(vals,scaleMode);
+      activeVals=vals.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
+      rg=range(activeVals,scaleMode);
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
     ctx.fillRect(0,0,W,H);
     if(!coords.length||!Number.isFinite(rg.lo)){
       ctx.fillStyle=css('--muted');
       ctx.textAlign='center';
-      ctx.fillText('Raster coordinates unavailable: XML point count does not match the reconstructed geometry schedule.',W/2,H/2);
+      ctx.fillText(
+        !coords.length
+          ?'Raster coordinates unavailable: XML point count does not match the reconstructed geometry schedule.'
+          :'No sites pass the active Valid-data filter for this quantity.',
+        W/2,
+        H/2
+      );
       return rg;
     }
 
@@ -349,7 +356,7 @@
     for(let i=0;i<vals.length&&i<coords.length;i++){
       const v=vals[i],
         pt=coords[i];
-      if(!Number.isFinite(v)||!pt)continue;
+      if(!mask?.[i]||!Number.isFinite(v)||!pt)continue;
       const xa=X(pt.x-dx/2),
         xb=X(pt.x+dx/2),
         ya=Y(pt.y-dy/2),
@@ -468,7 +475,7 @@
       const pt=coords[best],
         v=vals[best],
         rc=Number.isFinite(pt.row)&&Number.isFinite(pt.col)?`<b>Row ${pt.row+1}, Col ${pt.col+1}</b><br>`:`<b>Point ${best+1}</b><br>`;
-      showTip(tip,e,`${rc}X ${fmt(pt.x,3)} mm · Y ${fmt(pt.y,3)} mm<br>${esc(metric.short)} = ${fmt(v,4)} ${esc(metric.unit)}`);
+      showTip(tip,e,`${rc}X ${fmt(pt.x,3)} mm · Y ${fmt(pt.y,3)} mm<br>${esc(metric.short)} = ${fmt(v,4)} ${esc(metric.unit)}<br>${mask?.[best]?'VALID':'EXCLUDED'}`);
     };
     canvas.onclick=e=>{
       const r=canvas.getBoundingClientRect(),
@@ -489,8 +496,10 @@
     PV.plot.bind(canvas,{W,H,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
     return rg;
   }
-  function drawHist(canvas,metric,binCount=30,swapped=true,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),bins=S.histogram(metric.values,binCount),W=canvas.width=760,H=canvas.height=430,p={l:64,r:18,t:24,b:52};
+  function drawHist(canvas,metric,mask,binCount=30,swapped=true,zoom,onZoom){
+    const ctx=canvas.getContext('2d'),
+      activeValues=metric.values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
+      bins=S.histogram(activeValues,binCount),W=canvas.width=760,H=canvas.height=430,p={l:64,r:18,t:24,b:52};
     ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!bins.length)return bins;
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
       autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
@@ -532,7 +541,7 @@
       
     PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return bins;
   }
-  function profilePoints(d,metric,selectedIndex,axis){
+  function profilePoints(d,metric,selectedIndex,axis,mask=null){
     const anchor=d.coords[selectedIndex];
     if(!anchor)return[];
     const fixed=axis==='x'?'y':'x',
@@ -540,15 +549,15 @@
       pitch=axis==='x'?d.pitchY:d.pitchX,
       tol=Number.isFinite(pitch)&&pitch>0?Math.max(1e-9,pitch*1e-6):1e-9;
     return d.coords.map((pt,i)=>({i,pos:pt?.[varying],fixed:pt?.[fixed],v:metric.values[i]}))
-      .filter(p=>Number.isFinite(p.v)&&Number.isFinite(p.pos)&&Number.isFinite(p.fixed)&&Math.abs(p.fixed-anchor[fixed])<=tol)
+      .filter(p=>(!mask||mask[p.i])&&Number.isFinite(p.v)&&Number.isFinite(p.pos)&&Number.isFinite(p.fixed)&&Math.abs(p.fixed-anchor[fixed])<=tol)
       .sort((a,b)=>a.pos-b.pos);
   }
-  function drawProfile(canvas,d,metric,selected,axis,zoom,onZoom){
+  function drawProfile(canvas,d,metric,mask,selected,axis,zoom,onZoom){
     const ctx=canvas.getContext('2d'),
       W=canvas.width=760,
       H=canvas.height=220,
       p={l:64,r:18,t:18,b:44},
-      valid=profilePoints(d,metric,selected.index,axis);
+      valid=profilePoints(d,metric,selected.index,axis,mask);
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
     ctx.fillRect(0,0,W,H);
@@ -599,6 +608,15 @@
       pen=true;
     });
     ctx.stroke();
+    ctx.fillStyle=css('--blue');
+    valid.forEach(pt=>{
+      const x=X(pt.pos),
+        y=Y(pt.v);
+      if(x<p.l||x>W-p.r||y<p.t||y>H-p.b)return;
+      ctx.beginPath();
+      ctx.arc(x,y,2,0,Math.PI*2);
+      ctx.fill();
+    });
     ctx.restore();
 
     ctx.strokeStyle=css('--soft');
@@ -623,10 +641,36 @@
       showAdvanced=false,
       histSwapped=true,
       histBins=30,
+      filterController=null,
+      filterContext='',
+      filterMetricSignature='',
       selected={index:Math.floor((d.coords.length||1)/2)},
       zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
       
     const visibleMetrics=metrics=>Object.values(metrics).filter(m=>showAdvanced||m.tier==='primary');
+    const visibleMetricMap=metrics=>Object.fromEntries(visibleMetrics(metrics).map(metric=>[metric.key,metric]));
+    function defaultMetricKey(metrics){
+      const mkeys=visibleMetrics(metrics).map(m=>m.key);
+      return mkeys.find(k=>metrics[k].concept==='current')||mkeys.find(k=>metrics[k].concept==='total')||mkeys[0]||'';
+    }
+    function ensureFilter(it,metrics){
+      const filterMetrics=visibleMetricMap(metrics),
+        keys=Object.keys(filterMetrics),
+        context=`${iterationIndex}:${beamKey}`,
+        signature=keys.join('|'),
+        previous=filterController?.snapshot?.(),
+        preserve=context===filterContext&&previous&&filterMetrics[previous.metricKey],
+        key=preserve?previous.metricKey:(filterMetrics[metricKey]?metricKey:defaultMetricKey(metrics));
+      if(!filterController||context!==filterContext||signature!==filterMetricSignature){
+        filterController=Sel.createFilter({metrics:filterMetrics,siteCount:it?.pointCount??d.coords.length,metricKey:key});
+        if(preserve&&Number.isFinite(previous.lower)&&Number.isFinite(previous.upper)){
+          try{filterController.apply(previous.lower,previous.upper)}catch(_){}
+        }
+        filterContext=context;
+        filterMetricSignature=signature;
+      }
+      return filterController;
+    }
     function current(){
       const it=a.iterations[iterationIndex]||a.iterations[0],
       keys=Object.keys(it?.beams||{});
@@ -634,15 +678,20 @@
       const beam=it?.beams?.[beamKey],
       metrics=beam?.metrics||{},
       mkeys=visibleMetrics(metrics).map(m=>m.key);
-      if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=mkeys.find(k=>metrics[k].concept==='current')||mkeys.find(k=>metrics[k].concept==='total')||mkeys[0]||'';
+      if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=defaultMetricKey(metrics);
       return{it,beam,metrics,metric:metrics[metricKey]}}
     function metricOptions(metrics){return visibleMetrics(metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.label)}${m.status==='inferred'?' · inferred':''}</option>`).join('')}
     function beamOptions(it){return Object.entries(it?.beams||{}).map(([k,b])=>{const wl=b.laser?.wavelengthNm;return`<option value="${esc(k)}">${Number.isFinite(wl)?`${fmt(wl,0)} nm`:`Beam ${esc(k)}`}</option>`}).join('')}
-    function summaryRows(metrics){
+    function summaryRows(metrics,controller){
       return visibleMetrics(metrics).map(m=>{
-        const st=S.summary(m.values);return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
+        const mask=controller.metricMask(m),
+          st=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
+        return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
     function renderShell(){const {it,beam,metrics,metric}=current(),
+      controller=ensureFilter(it,metrics),
+      filterState=controller.snapshot(),
+      filterMetrics=visibleMetricMap(metrics),
       pointOk=it&&d.coords.length===it.pointCount,
       laser=beam?.laser||{},
       pseudo=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell',
@@ -653,22 +702,42 @@
       host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
       <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}${metaRow('Pattern',patternText)}${metaRow(pseudo?'Target':'Region',regionText)}${metaRow(pseudo?'Pitch':'Step',stepText)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?(d.geometryComplete?'Point count matches the complete reconstructed geometry schedule.':'The XML is a partial acquisition. Available DataItems are mapped to the leading X-fast / ascending-Y schedule; this partial coordinate path is shown but not vendor-validated.'):'Coordinate reconstruction is unavailable for this point count / geometry combination.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl></section>
       <section class="panel"><h3>View ${help('Primary quantities follow the active XML measurement flags. Current-enabled validated scans expose Current / Reflectivity / IQE. Reflectance-only scans default to Reflectivity and do not synthesize Current, EQE or IQE from disabled placeholder fields. Advanced exposes active raw/intermediate channels. New semantic paths still require paired PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
-      <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows(metrics)}</tbody></table></div></section>
+      ${PV.ui.validDataFilterMarkup({
+        prefix:'lFilter',
+        metrics:filterMetrics,
+        state:filterState,
+        helpText:'Choose an active LBIC quantity and numeric range. One site-level mask is applied to every visible quantity for the current iteration/beam, including summary statistics, raster map, distribution and X/Y line profiles. Raw values are preserved in exports.'
+      })}
+      <section class="panel"><h3>Results summary ${help('Statistics use the active Valid-data filter plus each quantity\'s finite-value availability. Changing the displayed quantity does not change the filter quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="lSummaryBody">${summaryRows(metrics,controller)}</tbody></table></div></section>
       <section class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></section>
       <section class="panel"><h3>Channel provenance</h3><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></section>
       <details class="panel"><summary>Geometry / validation ${help('Coordinate validation is profile-specific and documented against matching PV-2000 exports. The on-screen map uses reconstructed physical X/Y coordinates.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Coordinate source',d.coordinateSource)}${metaRow('Acquisition mapping','X-fast, ascending Y where validated')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
       </aside><section class="lbic-workspace">
-        <div class="panel chart"><header><b>LBIC raster map</b>${help('Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Mouse wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('lHistBins',histBins)}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
-        <div class="panel chart lbic-profiles-panel"><header><b>X / Y line profiles</b>${help('Each profile supports wheel zoom. Wheel inside a plot zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens a floating manual X/Y range editor.') }<span class="grow"></span>${PV.plot.axisControls('lXProfileAxes',{label:'X axes'})}${PV.plot.axisControls('lYProfileAxes',{label:'Y axes'})}<button id="lExportProfile">Export</button></header><div class="lbic-profile-columns"><div class="profile-pane"><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div class="profile-pane"><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div>
+        <div class="panel chart"><header><b>LBIC raster map</b>${help('Only sites passing the active Valid-data filter and displayed-quantity availability are filled. Raw values remain preserved. Mouse wheel zooms both spatial axes inside the plot; hover the X or Y axis and wheel to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution</b>${help('Count includes only sites passing the active Valid-data filter and displayed-quantity availability. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Mouse wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('lHistBins',histBins)}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
+        <div class="panel chart lbic-profiles-panel"><header><b>X / Y line profiles</b>${help('Profiles include only sites passing the active Valid-data filter and displayed-quantity availability along the selected row/column. Each profile supports wheel zoom; double-click restores Auto. Axes opens a floating manual X/Y range editor.') }<span class="grow"></span>${PV.plot.axisControls('lXProfileAxes',{label:'X axes'})}${PV.plot.axisControls('lYProfileAxes',{label:'Y axes'})}<button id="lExportProfile">Export</button></header><div class="lbic-profile-columns"><div class="profile-pane"><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div class="profile-pane"><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div>
       </section></div>`;
       host.querySelector('#lIter').value=String(iterationIndex);host.querySelector('#lBeam').value=beamKey;host.querySelector('#lMetric').value=metricKey;host.querySelector('#lScale').value=scaleMode;
+      PV.ui.bindValidDataFilter(host,{
+        prefix:'lFilter',
+        controller,
+        onChange:()=>{
+          zoom.map={x:null,y:null};
+          zoom.hist={x:null,y:null};
+          zoom.xProfile={x:null,y:null};
+          zoom.yProfile={x:null,y:null};
+          host.querySelector('#lSummaryBody').innerHTML=summaryRows(metrics,controller);
+          redraw();
+        }
+      });
       host.querySelector('#lIter').onchange=e=>{iterationIndex=Number(e.target.value)||0;
         beamKey='';
         metricKey='';
+        filterController=null;filterContext='';filterMetricSignature='';
         renderShell()};
         host.querySelector('#lBeam').onchange=e=>{beamKey=e.target.value;
         metricKey='';
+        filterController=null;filterContext='';filterMetricSignature='';
         renderShell()};
         host.querySelector('#lMetric').onchange=e=>{metricKey=e.target.value;
         zoom.hist={x:null,y:null};
@@ -687,11 +756,14 @@
     function redraw(){
       const {it,beam,metrics,metric}=current();
       if(!metric)return;
+      const controller=ensureFilter(it,metrics),
+        filterState=controller.snapshot(),
+        displayMask=controller.metricMask(metric);
       selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));
-      const rg=drawMap(host.querySelector('#lMap'),d,metric,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
-      const bins=drawHist(host.querySelector('#lHist'),metric,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
-      xp=drawProfile(host.querySelector('#lXProfile'),d,metric,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
-      yp=drawProfile(host.querySelector('#lYProfile'),d,metric,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
+      const rg=drawMap(host.querySelector('#lMap'),d,metric,displayMask,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
+      const bins=drawHist(host.querySelector('#lHist'),metric,displayMask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
+      xp=drawProfile(host.querySelector('#lXProfile'),d,metric,displayMask,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
+      yp=drawProfile(host.querySelector('#lYProfile'),d,metric,displayMask,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
       PV.plot.bindAxisControls(host,'lMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       PV.plot.bindAxisControls(host,'lHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
         swapped:histSwapped,
@@ -703,30 +775,60 @@
       const pt=d.coords[selected.index]||{},
       row=Number.isFinite(pt.row)?pt.row:NaN,
       col=Number.isFinite(pt.col)?pt.col:NaN;
-      host.querySelector('#lPixel').innerHTML=`<dl class="meta"><dt>Index</dt><dd>${selected.index+1}</dd><dt>Row / column</dt><dd>${Number.isFinite(row)&&Number.isFinite(col)?`${row+1} / ${col+1}`:'—'}</dd><dt>X / Y</dt><dd>${fmt(pt.x,4)} / ${fmt(pt.y,4)} mm</dd>${visibleMetrics(metrics).map(m=>`<dt>${esc(m.short)}${m.status==='inferred'?' *':''}</dt><dd>${fmt(m.values[selected.index],5)} ${esc(m.unit)}</dd>`).join('')}</dl>`;
+      const filterSupport=filterState.selection.supportMask[selected.index],
+        filterActive=filterState.selection.activeMask[selected.index],
+        filterLabel=filterSupport?(filterActive?'VALID':'FILTERED'):'UNAVAILABLE';
+      host.querySelector('#lPixel').innerHTML=`<dl class="meta"><dt>Index</dt><dd>${selected.index+1}</dd><dt>Valid-data state</dt><dd>${filterLabel}</dd><dt>Row / column</dt><dd>${Number.isFinite(row)&&Number.isFinite(col)?`${row+1} / ${col+1}`:'—'}</dd><dt>X / Y</dt><dd>${fmt(pt.x,4)} / ${fmt(pt.y,4)} mm</dd>${visibleMetrics(metrics).map(m=>`<dt>${esc(m.short)}${m.status==='inferred'?' *':''}</dt><dd>${fmt(m.values[selected.index],5)} ${esc(m.unit)}</dd>`).join('')}</dl>`;
       
-      host.querySelector('#lExportMap').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}.csv`,['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`, 'Source'],metric.values.map((v,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',v,metric.source]));
+      host.querySelector('#lExportMap').onclick=()=>PV.exporter.csv(
+        `${safe(d.resultName)}_${beamKey}_${safe(metric.short)}.csv`,
+        ['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`,'Source','Metric available','Pass valid-data filter','Displayed','Filter metric','Filter lower','Filter upper'],
+        metric.values.map((v,i)=>[
+          i+1,
+          d.coords[i]?.row!=null?d.coords[i].row+1:'',
+          d.coords[i]?.col!=null?d.coords[i].col+1:'',
+          d.coords[i]?.x??'',
+          d.coords[i]?.y??'',
+          v,
+          metric.source,
+          Number.isFinite(v),
+          !!filterState.selection.activeMask[i],
+          !!displayMask[i],
+          metrics[filterState.metricKey]?.short||filterState.metricKey,
+          filterState.lower,
+          filterState.upper
+        ])
+      );
         
-      host.querySelector('#lExportHist').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count'],bins.map(b=>[b.lo,b.hi,b.count]));
+      host.querySelector('#lExportHist').onclick=()=>PV.exporter.csv(
+        `${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_histogram.csv`,
+        [`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],
+        bins.map(b=>[b.lo,b.hi,b.count,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
+      );
         
-      host.querySelector('#lExportProfile').onclick=()=>PV.exporter.csv(`${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_profiles.csv`,['Axis','Index','Position [mm]',`${metric.label} [${metric.unit}]`],[...xp.map(p=>['X',p.i+1,p.pos,p.v]),...yp.map(p=>['Y',p.i+1,p.pos,p.v])]);
+      host.querySelector('#lExportProfile').onclick=()=>PV.exporter.csv(
+        `${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_profiles.csv`,
+        ['Axis','Index','Position [mm]',`${metric.label} [${metric.unit}]`,'Filter metric','Filter lower','Filter upper'],
+        [...xp.map(p=>['X',p.i+1,p.pos,p.v,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper]),
+         ...yp.map(p=>['Y',p.i+1,p.pos,p.v,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])]
+      );
         
       host.querySelector('#lExportAll').onclick=()=>{
         const beamEntries=Object.entries(it.beams),
-        headers=['Index','Row','Column','X [mm]','Y [mm]'],
+        headers=['Index','Row','Column','X [mm]','Y [mm]','Pass active filter','Filter beam','Filter metric','Filter lower','Filter upper'],
         series=[];
         for(const [bk,b] of beamEntries)for(const m of Object.values(b.metrics)){
           const wl=Number.isFinite(b.laser?.wavelengthNm)?`${b.laser.wavelengthNm}nm`:`beam${bk}`;
           headers.push(`${wl} ${m.label}${m.unit?` [${m.unit}]`:''} (${m.status})`);
           series.push(m.values)}const n=it.pointCount,
-        rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',...series.map(v=>v[i])]);
+        rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',!!filterState.selection.activeMask[i],beamKey,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper,...series.map(v=>v[i])]);
         PV.exporter.csv(`${safe(d.resultName)}_LBIC_all.csv`,headers,rows)};
         
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.lbic={types:['LBICMeasurement'],parse,analyze,render,conceptFor,rawReflectance,totalReflectance,eqePercent,iqePercent,deriveBeam,referenceFamily,isReferenceProfile,profilePoints,range,Q_PV2000};
+    PV.modules.lbic={familyId:'lbic',capabilities:{map:true,distribution:true,lineProfiles:true,validDataFilter:true},types:['LBICMeasurement'],parse,analyze,render,conceptFor,rawReflectance,totalReflectance,eqePercent,iqePercent,deriveBeam,referenceFamily,isReferenceProfile,profilePoints,range,Q_PV2000};
     PV.registry.register(PV.modules.lbic);
     
 })(typeof window!=='undefined'?window:globalThis);
