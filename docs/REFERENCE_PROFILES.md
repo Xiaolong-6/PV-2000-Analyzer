@@ -57,7 +57,7 @@ Current COCOS-II status remains **inferred** until matching vendor pointwise out
 
 ---
 
-### QSS-MAP-001 — QSS-µPCD 305-point map
+### QSS-MAP-001 — QSS-µPCD MapPattern + RoundWafer family
 
 **Measurement type**
 
@@ -65,25 +65,34 @@ Current COCOS-II status remains **inferred** until matching vendor pointwise out
 
 **Reference material**
 
-One matching XML + PV-2000 CSV export with 305 points.
+The original paired reference contains 305 sites. A later private corpus adds **96 RoundWafer XML files**, including 100 mm / 305-site and 125 mm / 489-site maps at 5 mm pitch. **Nine** of those measurements have matching numeric PV-2000 CSV exports; **108** associated PV-2000 XPS printouts establish the observed result/display family. Private files remain regression evidence and are not runtime dependencies.
 
 **Validated / established**
 
-- point count: **305**;
-- X/Y coordinates: **exact pointwise match**;
-- effective lifetime: **exact pointwise match**;
-- Smax: matches to floating-point precision, max error approximately **5e-12 cm/s**;
-- Implied Voc: maximum pointwise error below approximately **0.1 mV** using the documented PV-2000-compatibility `ni(T)` model;
-- lifetime/Smax summary statistics reproduce the export;
-- coordinate acquisition order is validated for this map pattern.
+- coordinate rule: `MapPattern + RoundWafer`, X-fast within ascending-Y rows, with the strict circular schedule after EdgeExclusion;
+- original 305-site X/Y coordinates: exact pointwise match;
+- all nine later paired X/Y exports: exact pointwise match;
+- effective lifetime: XML → paired CSV exact for the later nine pairs;
+- Smax: `W/(2τ)` reproduces the paired exports to numeric export precision; the original reference remains at floating-point precision;
+- ordinary numeric diameter/pitch/thickness/doping/optical-factor changes stay inside this family when the same XML/result path is used;
+- PV-2000 can store **`τeff.d = -1 µs` as a raw sentinel** and can carry it numerically into raw Smax/display summaries. Raw values must therefore be preserved for parity and export rather than silently rewritten.
+
+**Implied Voc compatibility envelope**
+
+- the original 305-point reference instance remains within approximately **0.1 mV** maximum error using the documented compatibility `ni(T)` model;
+- across the later nine-pair corpus, the same model reaches approximately **1.94 mV maximum absolute error** on finite vendor Implied-Voc values;
+- therefore the <0.1 mV figure is an instance-level result, not a family-wide guarantee.
 
 **Analyzer features not claimed as vendor algorithms**
 
+- default scientific exclusion of non-positive lifetime sentinels while preserving the raw value;
 - user-controlled valid-data filtering;
+- lifetime → SRV post-processing with planar/textured controls;
+- explicit Physical Si / Physical Ge Implied-Voc estimates;
 - distance-limited smooth-map visualization;
 - histogram axis swapping and related UI behavior.
 
-Those are analyzer features and should not be described as PV-2000 replication.
+The QSS XMLs in this corpus do **not** provide a trustworthy material identifier. Material-specific analysis must be selected explicitly and must never be inferred from filenames, result names or substrate IDs. The default Implied-Voc path remains PV-2000-compatible for vendor comparison.
 
 **NEW PROFILE triggers**
 
@@ -91,11 +100,12 @@ Examples include:
 
 - a QSS map pattern or coordinate encoding outside the validated QSS-MAP-001 and QSS-MAP-002 families (ordinary numeric geometry changes inside either established coordinate rule are not automatically a new profile);
 - a new XML path for lifetime/injection data;
-- a configuration whose Smax or Implied Voc calculation fields differ;
-- different temperature/ni handling;
+- a different sentinel/blanking convention that is not the established numeric `-1 µs` behavior;
+- a configuration whose Smax or Implied Voc calculation fields differ materially;
+- a vendor path that explicitly encodes and applies semiconductor material;
 - QSS-µPCD Scan/J0 or emitter-J0 data, which are separate scientific result paths rather than automatic extensions of QSS-MAP-001.
 
-A new QSS profile must use the actual XML + matching PV-2000 export to determine whether existing coordinate and derived-quantity logic still applies.
+A new QSS profile must use the actual XML + matching PV-2000 export/display to determine whether existing coordinate, validity and derived-quantity logic still applies.
 
 ---
 
