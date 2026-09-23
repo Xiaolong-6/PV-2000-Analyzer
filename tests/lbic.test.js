@@ -223,3 +223,43 @@ test('partial SquareRegion acquisition can use the leading validated row-major s
     d={measureCurrent:'false',measureDirect:'true',measureDiffuse:'true',patternType:'SquareRegionPattern',nx:61,ny:61,regionX:-10,regionY:-50,width:60,height:60,beamCount:1,iterationCount:1,pointCount:2814,expectedPointCount:3721};
   assert.equal(L.referenceFamily(raw,laser,d),'');
 });
+
+test('LBIC line profiles honor the shared active mask without changing site indexing',()=>{
+  const d={
+    coords:[
+      {x:0,y:0},{x:1,y:0},{x:2,y:0},
+      {x:0,y:1},{x:1,y:1},{x:2,y:1}
+    ],
+    pitchX:1,
+    pitchY:1
+  };
+  const metric={values:[10,20,30,40,50,60]};
+  const mask=[true,false,true,true,true,false];
+  assert.deepEqual(
+    L.profilePoints(d,metric,1,'x',mask).map(p=>[p.i,p.pos,p.v]),
+    [[0,0,10],[2,2,30]]
+  );
+  assert.deepEqual(
+    L.profilePoints(d,metric,1,'y',mask).map(p=>[p.i,p.pos,p.v]),
+    [[4,1,50]]
+  );
+});
+
+test('LBIC renderer uses the shared Valid-data filter lifecycle across plots and exports',()=>{
+  const fs=require('node:fs');
+  const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(src,/PV\.ui\.validDataFilterMarkup/);
+  assert.match(src,/PV\.ui\.bindValidDataFilter/);
+  assert.match(src,/GEO=PV\.geometry,Sel=PV\.selection/);
+  assert.match(src,/Sel\.createFilter/);
+  assert.match(src,/controller\.metricMask\(metric\)/);
+  assert.match(src,/summaryRows\(metrics,controller\)/);
+  assert.match(src,/drawMap\(host\.querySelector\('#lMap'\),d,metric,displayMask/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,displayMask/);
+  assert.match(src,/drawProfile\(host\.querySelector\('#lXProfile'\),d,metric,displayMask/);
+  assert.match(src,/Pass valid-data filter/);
+  assert.match(src,/Pass active filter/);
+  assert.match(src,/validDataFilter:true/);
+  assert.match(src,/No sites pass the active Valid-data filter/);
+  assert.match(src,/ctx\.arc\(x,y,2,0,Math\.PI\*2\)/);
+});

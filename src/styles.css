@@ -71,12 +71,13 @@
 @media(max-width:1150px){.filter-grid{grid-template-columns:1fr 1fr}.filter-grid label:first-child{grid-column:1/-1}}
 @media(max-width:700px),(pointer:coarse) and (orientation:portrait) and (max-width:950px){.filter-grid{grid-template-columns:1fr}.filter-grid label:first-child{grid-column:auto}}
 
-/* Keep Dit and QSS sidebar content at one reading size while retaining title hierarchy. */
+/* Keep analysis sidebars at one reading size while retaining title hierarchy. */
 .module-grid .side .panel{font-size:11px;line-height:1.4}
 .module-grid .side .panel h3,.module-grid .side .panel>summary{font-size:12px;line-height:1.4}
 .qss-module .side .filter-grid label,.qss-module .side .filter-actions,.qss-module .side table,.qss-module .side th,.qss-module .side .note{font-size:inherit}
 .isc-module .side .filter-grid label,.isc-module .side .filter-actions{font-size:inherit}
 .jzero-module .side .filter-grid label,.jzero-module .side .filter-actions{font-size:inherit}
+.lbic-module .side .filter-grid label,.lbic-module .side .filter-actions{font-size:inherit}
 .qss-module .qss-analysis-grid{grid-template-columns:1fr 1fr}
 .qss-module .qss-analysis-grid label:first-child{grid-column:auto}
 .qss-module .qss-result-list{display:flex;flex-direction:column}

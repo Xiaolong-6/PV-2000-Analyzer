@@ -1,4 +1,10 @@
-# Agent handoff — 2026-09-23 — v20260923.14
+# Agent handoff — 2026-09-23 — v20260923.15
+
+## LBIC Valid-data filter rollout
+
+LBIC now reuses the shared filter controller/UI contract. Filter scope is the current iteration + beam/wavelength; visible primary quantities are candidates by default, while Advanced exposes active raw/intermediate quantities as additional candidates. One site-level active mask drives result summaries, raster map, Distribution and X/Y profiles while raw values remain intact.
+
+Changing beam or iteration creates a fresh filter context. Changing the displayed quantity does not change the selected filter quantity. Export map/all preserve excluded rows and add filter provenance; histogram/profile exports reflect the active plotted population. The shared partial-acquisition schedule helper from v20260923.13 remains in place. No LBIC channel calculation, measurement-flag rule, geometry/profile matching or vendor-validation claim changes in this rollout.
 
 ## JZero Valid-data filter rollout
 

@@ -147,7 +147,7 @@ test('LBIC Distribution defaults to Count on X and keeps Swap/Bins in header con
   assert.match(src,/binControls\('lHistBins',histBins\)/);
   assert.match(src,/onSwap:\(\)=>\{histSwapped=!histSwapped/);
   assert.match(src,/bindBinControls\(host,'lHistBins',histBins/);
-  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,histBins,histSwapped/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,displayMask,histBins,histSwapped/);
   assert.doesNotMatch(src,/id="lSwapHistAxes"/);
 });
 

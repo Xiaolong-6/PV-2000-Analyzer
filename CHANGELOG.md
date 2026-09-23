@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.15 — 2026-09-23
+
+- Reused the shared Valid-data filter controller/UI for LBIC with filter scope tied to the current iteration and beam/wavelength.
+- Applied one active site mask consistently to LBIC summaries, raster map, Distribution and X/Y line profiles while preserving raw channel/result arrays.
+- Added filter-aware map/histogram/profile/all exports, selected-pixel validity state and a distinct no-active-sites map empty state.
+- Added regression coverage for masked LBIC profiles and shared filter wiring without changing LBIC calculation/profile semantics.
+
 ## v20260923.14 — 2026-09-23
 
 - Migrated JZero's older module-local valid-data filter to the shared selection controller and shared filter UI introduced in `v20260923.12`.

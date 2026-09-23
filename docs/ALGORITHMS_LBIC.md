@@ -144,6 +144,16 @@ s = sqrt(sum((x - mean)^2) / (N - 1))
 
 Thus IQE points blanked by the vendor-compatible validity rule do not contribute to Average, Median, Stdev, Min or Max.
 
+## Analyzer valid-data filter
+
+LBIC uses the shared site-selection contract for analyzer-side range filtering. The filter is scoped to the **current iteration and beam/wavelength** because each beam can have different active quantities and numerical ranges. Within that context, the user may choose any quantity currently exposed by the View mode as the filter metric and set lower/upper bounds.
+
+The resulting site-level active mask is shared across all visible LBIC quantities for that iteration/beam. Summary statistics, raster-map fill, Distribution counts and both X/Y line profiles consume the same active mask; each displayed quantity's finite-value availability is applied after that mask. Changing only the displayed quantity does not silently change the filter quantity.
+
+Filtering never rewrites raw XML or derived result arrays. A filtered pixel remains selectable and its raw/current values remain available for inspection and export. Map export writes all sites together with metric availability, active-filter pass state, displayed state, filter metric and active limits. Histogram/profile exports contain only the plotted active population and record the filter provenance. **Export all** continues to preserve every channel value and adds the current filter context/pass state rather than deleting excluded rows.
+
+`Reset` expands to the full finite range of the selected filter quantity. `1–99%` is only a convenience percentile range in the analyzer; it is not a PV-2000 algorithm, validity criterion or validation claim. Switching iteration or beam resets the filter to that new context. Advanced mode may add raw/intermediate channels as filter candidates; hiding Advanced never promotes those channels to primary results.
+
 ## Default versus Advanced UI
 
 The default quantity selector follows the active measurement/result path instead of blindly exposing every numeric BeamData attribute.
