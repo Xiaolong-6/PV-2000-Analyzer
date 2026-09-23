@@ -74,7 +74,7 @@
 
   function attachDomain(d){
     const familyId=d.measurementKind==='vcpd'?'vcpd':'isc',
-      profile=Profiles.resolve(familyId,d),
+      profile=d.geometryStatus==='partial'?null:Profiles.resolve(familyId,d),
       target=targetGeometry(d),
       validationStatus=profile?.status||(d.coords.length===d.sites.length&&d.coords.length?'inferred':'unsupported'),
       geometryModel=GEO.envelope({
@@ -87,7 +87,12 @@
         edgeExclusion:d.edgeExclusion,
         acquisitionOrder:d.coords.length?'x-fast / ascending-y or explicit XML order':'unknown',
         provenance:d.coordinateSource,
-        validationStatus
+        validationStatus,
+        geometryStatus:d.geometryStatus,
+        expectedPointCount:d.expectedPointCount,
+        acquiredPointCount:d.sites.length,
+        completionFraction:d.completionFraction,
+        coordinateCompleteness:d.coordinateCompleteness
       }),
       profileRef=profile?{id:profile.id,status:profile.status}:null;
     d.profile=profileRef;
@@ -102,7 +107,12 @@
         iterationCount:d.iterationCount,
         readingsPerSite:d.readingsPerSite,
         measurementInterval:d.measurementInterval,
-        coordinateSource:d.coordinateSource
+        coordinateSource:d.coordinateSource,
+        geometryStatus:d.geometryStatus,
+        expectedPointCount:d.expectedPointCount,
+        acquiredPointCount:d.sites.length,
+        completionFraction:d.completionFraction,
+        coordinateCompleteness:d.coordinateCompleteness
       },
       channels:d.measurementKind==='vcpd'
         ?{darkReadings:'Readings'}
@@ -148,6 +158,7 @@
 
     const coeff=X.direct(pattern,'Coefficients'),
       rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[],
+      allowPartialPrefix=GEO.isIncompleteAcquisitionStatus(c.status),
       geometryResolved=GEO.resolveMeasurementGeometry({
         patternType,
         targetType,
@@ -160,11 +171,15 @@
         substrateShape:c.shapeType,
         substrateRadius:c.radius,
         pitchX,
-        pitchY
+        pitchY,
+        allowPartialPrefix
       }),
       coords=geometryResolved.pointsMm,
+      coordinateBase=targetType==='SquareCell'
+        ?'MapPattern + SquareCell'
+        :isVcpd?'MapPattern + RoundWafer':'MapPattern + RoundWafer (inferred)',
       coordinateSource=coords.length
-        ?(targetType==='SquareCell'?'MapPattern + SquareCell':isVcpd?'MapPattern + RoundWafer':'MapPattern + RoundWafer (inferred)')
+        ?(geometryResolved.geometryStatus==='partial'?coordinateBase+' acquisition prefix (partial)':coordinateBase)
         :'unavailable';
 
     sites.forEach((site,i)=>{site.coord=coords[i]||null});
@@ -177,6 +192,10 @@
       offset,
       factor,
       coordinateSource,
+      geometryStatus:geometryResolved.geometryStatus,
+      expectedPointCount:geometryResolved.expectedPointCount,
+      completionFraction:geometryResolved.completionFraction,
+      coordinateCompleteness:geometryResolved.coordinateCompleteness,
       patternType,
       patternName:X.text(pattern,'Name',''),
       targetType,
@@ -786,7 +805,16 @@
         ${metaRow('Pattern',`${d.patternName||d.patternType||'—'} · ${fmt(d.pitchX,2)} × ${fmt(d.pitchY,2)} mm`)}
         ${metaRow('Target',d.targetType==='SquareCell'?`${fmt(d.targetWidth,1)} × ${fmt(d.targetHeight,1)} mm ${d.targetType}`:`${fmt(d.diameter,1)} mm ${d.targetType||'—'}`)}
         ${metaRow('Edge exclusion',`${fmt(d.edgeExclusion,2)} mm`)}
-        ${metaRow('Sites',String(d.sites.length))}
+        ${metaRow(
+          'Sites',
+          d.geometryStatus==='partial'&&Number.isFinite(d.expectedPointCount)
+            ?`${d.sites.length} / ${d.expectedPointCount} (${fmt(100*d.completionFraction,1)}%)`
+            :String(d.sites.length),
+          d.geometryStatus==='partial'
+            ?'The XML ended before the full target/pitch schedule completed. Available DataItems are mapped onto the leading acquisition-order coordinate prefix; this partial coordinate interpretation is inferred, not vendor-validated.'
+            :'Number of acquired map sites.'
+        )}
+        ${d.geometryStatus==='partial'?metaRow('Geometry','partial acquisition · inferred','Partial-map coordinates preserve the canonical X-fast / ascending-Y schedule prefix and are excluded from validated profile parity.'):''}
         ${metaRow('Readings/site',fmt(d.readingsPerSite,0),isVcpd?'PV-2000 VcpdMeasurement NumberOfReadings.':'PV-2000 recipe setting for repeated VCPD readings averaged at each ISC site.')}
         ${!isVcpd&&Number.isFinite(d.measurementInterval)?metaRow('Interval',`${fmt(d.measurementInterval,4)} s`):''}
         ${isVcpd?metaRow('Illumination',d.lightOn==='true'?'On':d.lightOn==='false'?'Off':d.lightOn||'—'):''}
