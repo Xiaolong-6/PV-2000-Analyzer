@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260923.10.12 — 2026-09-23 (measurement-domain refactor branch)
+## v20260923.11 — 2026-09-23
 
 - Added an explicit PV-2000 software-version validation boundary: the current reference baseline is Semilab PV-2000 v1.3.0.5. The landing page, README and reference-profile registry distinguish this evidence boundary from schema/profile compatibility with other versions.
 - Decoupled JZero calculation semantics from spatial geometry. The established two-iteration calculation path remains available while geometry carries its own validation status; OnePointPattern + SquareCell can load as inferred geometry instead of being rejected solely for not matching the paired pseudo-square map.
