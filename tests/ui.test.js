@@ -28,3 +28,24 @@ test('single-file build loads shared UI helpers before analyzers',()=>{
   assert.ok(dit>ui);
   assert.ok(generic>ui);
 });
+
+
+test('shared UI exposes reusable valid-data filter markup and binder',()=>{
+  const UI=globalThis.PV2000.ui;
+  const state={metricKey:'dark',lower:.1,upper:.5,validCount:2,siteCount:3};
+  const html=UI.validDataFilterMarkup({
+    prefix:'tFilter',
+    metrics:{
+      dark:{key:'dark',short:'Vcpd Dark'},
+      vsb:{key:'vsb',short:'VSB'}
+    },
+    state
+  });
+  assert.match(html,/Valid-data filter/);
+  assert.match(html,/id="tFilterMetric"/);
+  assert.match(html,/Vcpd Dark/);
+  assert.match(html,/id="tFilterLo"[^>]*value="0.1"/);
+  assert.match(html,/id="tFilterHi"[^>]*value="0.5"/);
+  assert.match(html,/2<\/b> \/ 3 valid/);
+  assert.equal(typeof UI.bindValidDataFilter,'function');
+});
