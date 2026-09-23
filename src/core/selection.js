@@ -120,6 +120,84 @@
     };
   }
 
+  function createFilter({
+    metrics,
+    siteCount:explicitCount=null,
+    intrinsicMask=null,
+    metricKey=null
+  }={}){
+    const entries=metricEntries(metrics);
+    let key=metricKey||entries[0]?.[0]||null;
+    if(!key||!metrics?.[key])throw new Error(`Unknown filter metric: ${key||'none'}`);
+    let range=resetRange({metrics,metricKey:key,intrinsicMask,siteCount:explicitCount}),
+      current=evaluate({
+        metrics,
+        siteCount:explicitCount,
+        intrinsicMask,
+        filter:{metricKey:key,lower:range.min,upper:range.max}
+      });
+
+    function refresh(lower=range.min,upper=range.max){
+      range={min:lower,max:upper};
+      current=evaluate({
+        metrics,
+        siteCount:explicitCount,
+        intrinsicMask,
+        filter:{metricKey:key,lower,upper}
+      });
+      return snapshot();
+    }
+
+    function snapshot(){
+      return{
+        metricKey:key,
+        lower:range.min,
+        upper:range.max,
+        selection:current,
+        validCount:current.activeMask.filter(Boolean).length,
+        siteCount:current.siteCount
+      };
+    }
+
+    function setMetric(nextKey){
+      if(!metrics?.[nextKey])throw new Error(`Unknown filter metric: ${nextKey}`);
+      key=nextKey;
+      const next=resetRange({metrics,metricKey:key,intrinsicMask,siteCount:explicitCount});
+      return refresh(next.min,next.max);
+    }
+
+    function apply(lower,upper){
+      if(!Number.isFinite(lower)||!Number.isFinite(upper))throw new Error('Valid-data filter requires finite lower and upper bounds.');
+      if(lower>upper)[lower,upper]=[upper,lower];
+      return refresh(lower,upper);
+    }
+
+    function reset(){
+      const next=resetRange({metrics,metricKey:key,intrinsicMask,siteCount:explicitCount});
+      return refresh(next.min,next.max);
+    }
+
+    function central(lowerQuantile=.01,upperQuantile=.99){
+      const next=centralRange({
+        metrics,
+        metricKey:key,
+        lowerQuantile,
+        upperQuantile,
+        intrinsicMask,
+        siteCount:explicitCount
+      });
+      if(!Number.isFinite(next.min)||!Number.isFinite(next.max))return snapshot();
+      return refresh(next.min,next.max);
+    }
+
+    function metricMask(metricOrKey){
+      const metric=typeof metricOrKey==='string'?metrics?.[metricOrKey]:metricOrKey;
+      return maskForMetric(current,metric);
+    }
+
+    return{snapshot,setMetric,apply,reset,central,metricMask};
+  }
+
   PV.selection={
     assertAligned,
     evaluate,
@@ -127,6 +205,7 @@
     metricRange,
     quantile,
     resetRange,
-    centralRange
+    centralRange,
+    createFilter
   };
 })(typeof window!=='undefined'?window:globalThis);
