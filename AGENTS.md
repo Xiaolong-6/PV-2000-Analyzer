@@ -82,7 +82,13 @@ Do not simplify Dit below the functionality of the restored modular analyzer / `
 
 ## QSS-µPCD validity rule
 
-A QSS map can represent a full wafer, quarter wafer, coupon, or partially invalid field. Never assume every geometrically scheduled point belongs to the sample. For `MapPattern + RoundWafer`, reconstruct the scheduled radius from `Diameter/2 - EdgeExclusion` when EdgeExclusion is present before the strict circular site test; do not use nominal wafer radius alone. Keep the user-controlled validity range and apply its mask consistently to summary statistics, derived metrics, maps and exports. Smooth maps must not extrapolate invalid/unsupported regions across the whole nominal wafer.
+A QSS map can represent a full wafer, quarter wafer, coupon, or partially invalid field. Never assume every geometrically scheduled point belongs to the sample. For `MapPattern + RoundWafer`, reconstruct the scheduled radius from `Diameter/2 - EdgeExclusion` when EdgeExclusion is present before the strict circular site test; do not use nominal wafer radius alone.
+
+PV-2000 QSS maps may encode unavailable lifetime as the numeric sentinel `-1 µs`. Preserve that raw XML value and the corresponding raw Smax calculation for traceability/vendor-parity export; do not silently rewrite it. Scientific analysis must default to treating non-positive lifetime as unavailable before applying the user-controlled validity range. Keep availability and range filtering distinct in UI/tooltips/exports, and prevent unavailable sites from setting scientific histogram/map ranges or being smoothed across the sample. An explicit Raw / PV-2000 style mode may expose the vendor-style numeric behavior.
+
+The QSS XML family does not provide a trustworthy semiconductor-material identifier. Never infer Si/Ge from filenames, result names or substrate IDs. The default Implied-Voc path remains the documented PV-2000 compatibility model for vendor comparison. Physical Si/Ge estimates must require explicit user selection and remain labelled analyzer-side estimates unless matching material-specific PV-2000 output validates them.
+
+Lifetime→SRV is analyzer post-processing, not a PV-2000 result. Preserve the configurable planar/textured formulas, optional bulk lifetime, textured planar-reference SRV and minimum-lifetime threshold; keep SRV distinct from vendor-compatible Smax. Apply the active availability/filter mask consistently to summary statistics, maps and exports. Smooth maps must not extrapolate invalid/unsupported regions across the whole nominal wafer.
 
 
 ## JZero validity rule
