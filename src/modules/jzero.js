@@ -22,55 +22,173 @@
     return X.children(data).filter(e=>X.lname(e)==='DataItem').map(e=>X.num(e,'Value',NaN));
   }
   function parse(parsed){
-    const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),
+    const m=parsed.measurement,
+      c=X.common(parsed),
+      md=X.direct(m,'MeasurementData'),
+      itd=X.direct(md,'IterationData'),
       iterations=X.children(itd).filter(e=>X.lname(e)==='Iteration'),
       values=iterations.slice(0,2).map(iterationValues),
-      pattern=X.direct(m,'Pattern'),target=X.direct(m,'Target'),size=X.direct(target,'Size'),pitch=X.direct(pattern,'Pitch'),
-      patternType=X.attrType(pattern),targetType=X.attrType(target),
-      targetWidth=X.num(size,'Width',NaN),targetHeight=X.num(size,'Height',NaN),diameter=X.num(target,'Diameter',NaN),
-      edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0)),pitchX=X.num(pitch,'X',NaN),pitchY=X.num(pitch,'Y',NaN),
+      pattern=X.direct(m,'Pattern'),
+      target=X.direct(m,'Target'),
+      size=X.direct(target,'Size'),
+      pitch=X.direct(pattern,'Pitch'),
+      region=X.direct(pattern,'Region'),
+      regionLocation=X.direct(region,'Location'),
+      regionSize=X.direct(region,'Size'),
+      dimension=X.direct(pattern,'Dimension'),
+      patternType=X.attrType(pattern),
+      targetType=X.attrType(target),
+      targetWidth=X.num(size,'Width',NaN),
+      targetHeight=X.num(size,'Height',NaN),
+      diameter=X.num(target,'Diameter',NaN),
+      edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',0)),
+      rawPitchX=X.num(pitch,'X',NaN),
+      rawPitchY=X.num(pitch,'Y',NaN),
+      regionX=X.num(region,'X',X.num(regionLocation,'X',NaN)),
+      regionY=X.num(region,'Y',X.num(regionLocation,'Y',NaN)),
+      regionWidth=X.num(region,'Width',X.num(regionSize,'Width',NaN)),
+      regionHeight=X.num(region,'Height',X.num(regionSize,'Height',NaN)),
+      nx=X.num(dimension,'X',NaN),
+      ny=X.num(dimension,'Y',NaN),
+      regionPitchX=Number.isFinite(nx)&&nx>1&&Number.isFinite(regionWidth)?regionWidth/(nx-1):NaN,
+      regionPitchY=Number.isFinite(ny)&&ny>1&&Number.isFinite(regionHeight)?regionHeight/(ny-1):NaN,
+      pitchX=Number.isFinite(rawPitchX)?rawPitchX:regionPitchX,
+      pitchY=Number.isFinite(rawPitchY)?rawPitchY:regionPitchY,
       coefficientNode=X.direct(pattern,'Coefficients'),
-      rawCoefficients=coefficientNode?X.children(coefficientNode).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[],
-      count=values.length>=2&&values[0].length===values[1].length?values[0].length:0,
-      qssMilli=qssIntensities(m,c),
-      geometryModel=GEO.resolveMeasurementGeometry({
+      rawCoefficients=coefficientNode?X.children(coefficientNode).map(p=>({
+        x:X.num(p,'X',NaN),
+        y:X.num(p,'Y',NaN)
+      })):[],
+      incompleteStatus=GEO.isIncompleteAcquisitionStatus(c.status),
+      siteCount=Math.max(0,...values.map(v=>v.length)),
+      qssMilli=qssIntensities(m,c);
+
+    if(!iterations.length)throw new Error('JZeroMeasurement contains no lifetime iterations.');
+    if(iterations.length>2)throw new Error(
+      `JZeroMeasurement currently supports at most two QSS lifetime iterations; found ${iterations.length} iterations.`
+    );
+    if(!values[0]?.length)throw new Error('JZeroMeasurement first lifetime iteration contains no sites.');
+    if(iterations.length<2&&!incompleteStatus)throw new Error(
+      `JZeroMeasurement requires two lifetime iterations for a completed acquisition; found ${iterations.length}.`
+    );
+    if(values.length>=2&&values[0].length!==values[1].length&&!incompleteStatus)throw new Error(
+      'JZeroMeasurement completed lifetime iterations must contain the same number of sites.'
+    );
+    if(!Number.isFinite(qssMilli[0])||qssMilli[0]<=0)throw new Error(
+      'JZeroMeasurement requires a finite positive first QSS intensity.'
+    );
+    if(iterations.length>=2&&(!Number.isFinite(qssMilli[1])||qssMilli[1]<=0))throw new Error(
+      'JZeroMeasurement requires a finite positive second QSS intensity when the second lifetime iteration is present.'
+    );
+
+    const geometryModel=GEO.resolveMeasurementGeometry({
         patternType,
         targetType,
         rawCoefficients,
-        pointCount:count,
+        pointCount:siteCount,
         diameter,
         targetWidth,
         targetHeight,
         edgeExclusion,
         substrateShape:c.shapeType,
         substrateRadius:c.radius,
-        pitchX,
-        pitchY
+        pitchX:rawPitchX,
+        pitchY:rawPitchY,
+        regionX,
+        regionY,
+        regionWidth,
+        regionHeight,
+        nx,
+        ny,
+        allowPartialPrefix:incompleteStatus
       }),
       coords=geometryModel.pointsMm,
       mapHalfWidth=geometryModel.scheduled?.halfWidth,
       mapHalfHeight=geometryModel.scheduled?.halfHeight,
       mapRadius=geometryModel.scheduled?.radius;
-    if(iterations.length!==2)throw new Error(`JZeroMeasurement currently supports the validated two-iteration result path; found ${iterations.length} iterations.`);
-    if(values.some(v=>!v.length)||values[0].length!==values[1].length)throw new Error('JZeroMeasurement lifetime iterations must contain the same number of sites.');
-    if(qssMilli.length!==2||qssMilli.some(v=>!Number.isFinite(v)||v<=0))throw new Error('JZeroMeasurement requires two finite positive QSS intensities.');
-    if(coords.length!==count)throw new Error(
-      `JZeroMeasurement data are supported, but geometry could not resolve ${patternType||'unknown pattern'} + ${targetType||'unknown target'}: ${coords.length} coordinates for ${count} lifetime sites.`
+
+    if(coords.length!==siteCount)throw new Error(
+      `JZeroMeasurement data are supported, but geometry could not resolve ${patternType||'unknown pattern'} + ${targetType||'unknown target'}: ${coords.length} coordinates for ${siteCount} lifetime sites.`
     );
-    const avgIndex=X.num(m,'Averaging',NaN),avgValues=X.direct(m,'AveragingValues'),avgList=avgValues?X.children(avgValues).map(e=>Number(e.textContent)).filter(Number.isFinite):[],
+
+    const avgIndex=X.num(m,'Averaging',NaN),
+      avgValues=X.direct(m,'AveragingValues'),
+      avgList=avgValues?X.children(avgValues).map(e=>Number(e.textContent)).filter(Number.isFinite):[],
       avgMode=Number.isInteger(avgIndex)&&avgIndex>=0&&avgIndex<avgList.length?avgList[avgIndex]:NaN,
-      secondAvgIndex=X.num(m,'SecondAveraging',NaN),secondAvgMode=Number.isInteger(secondAvgIndex)&&secondAvgIndex>=0&&secondAvgIndex<avgList.length?avgList[secondAvgIndex]:NaN,
-      evalIndex=X.num(m,'EvalutationMode',NaN),evalNode=X.direct(m,'EvaluationModes'),evalList=evalNode?X.children(evalNode).map(e=>e.textContent.trim()):[],
-      evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'';
-    const validatedGeometry=patternType==='MapPattern'&&targetType==='PseudoSquareCell'&&geometryModel.interpretation==='pseudo-square-target-pitch-grid';
-    return{...c,values,coords,geometryModel,rawCoefficients,
-      calculationProfile:{id:'JZERO-CALC-001',status:'validated'},
-      geometryProfile:{id:validatedGeometry?'JZERO-GEOM-MAP-PSEUDOSQUARE-001':null,status:validatedGeometry?'validated':'inferred'},
-      iterations:iterations.length,patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,diameter,edgeExclusion,pitchX,pitchY,mapHalfWidth,mapHalfHeight,mapRadius,qssMilli,
-      waferThickness:X.num(m,'WaferThickness',NaN),doping:X.num(m,'Doping',NaN),dopingType:X.text(m,'DopingType',''),opticalFactor:X.num(m,'OpticalFactor',1),laserPower:X.num(m,'LaserPower',NaN),
-      avgMode,secondAvgMode,evaluationMode,probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),doRastering:X.text(m,'DoRastering',''),autoset:X.text(m,'DoAutoSetting',''),saveTransient:X.text(m,'SaveTransient',''),
-      temperatures:iterations.slice(0,2).map(it=>X.num(it,'ChuckTemperature',NaN)),measurementVelocities:iterations.slice(0,2).map(it=>X.num(it,'MeasurementVelocity',NaN)),
-      tauSteadyStateFactors:iterations.slice(0,2).map(it=>X.num(it,'TauSteadyStateFactor',NaN)),qdcValues:iterations.slice(0,2).map(it=>X.num(it,'QDCValue',NaN)),raw:parsed};
+      secondAvgIndex=X.num(m,'SecondAveraging',NaN),
+      secondAvgMode=Number.isInteger(secondAvgIndex)&&secondAvgIndex>=0&&secondAvgIndex<avgList.length?avgList[secondAvgIndex]:NaN,
+      evalIndex=X.num(m,'EvalutationMode',NaN),
+      evalNode=X.direct(m,'EvaluationModes'),
+      evalList=evalNode?X.children(evalNode).map(e=>e.textContent.trim()):[],
+      evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'',
+      completePair=values.length===2&&values[0].length>0&&values[0].length===values[1].length,
+      validatedCalculation=completePair&&!incompleteStatus,
+      validatedGeometry=patternType==='MapPattern'&&
+        targetType==='PseudoSquareCell'&&
+        geometryModel.interpretation==='pseudo-square-target-pitch-grid'&&
+        geometryModel.geometryStatus==='complete',
+      geometryStatus=validatedGeometry
+        ?'validated'
+        :geometryModel.geometryStatus==='partial'?'partial':'inferred',
+      pairedSiteCount=values.length>=2?Math.min(values[0].length,values[1].length):0;
+
+    return{
+      ...c,
+      values,
+      coords,
+      siteCount,
+      pairedSiteCount,
+      iterationSiteCounts:values.map(v=>v.length),
+      geometryModel,
+      rawCoefficients,
+      calculationProfile:{
+        id:validatedCalculation?'JZERO-CALC-001':null,
+        status:validatedCalculation?'validated':completePair?'inferred':'incomplete'
+      },
+      geometryProfile:{
+        id:validatedGeometry?'JZERO-GEOM-MAP-PSEUDOSQUARE-001':null,
+        status:geometryStatus
+      },
+      iterations:iterations.length,
+      patternType,
+      patternName:X.text(pattern,'Name',''),
+      patternDisplayName:X.text(pattern,'DisplayName',''),
+      targetType,
+      targetWidth,
+      targetHeight,
+      diameter,
+      edgeExclusion,
+      pitchX,
+      pitchY,
+      regionX,
+      regionY,
+      regionWidth,
+      regionHeight,
+      nx,
+      ny,
+      mapHalfWidth,
+      mapHalfHeight,
+      mapRadius,
+      qssMilli,
+      waferThickness:X.num(m,'WaferThickness',NaN),
+      doping:X.num(m,'Doping',NaN),
+      dopingType:X.text(m,'DopingType',''),
+      opticalFactor:X.num(m,'OpticalFactor',1),
+      laserPower:X.num(m,'LaserPower',NaN),
+      avgMode,
+      secondAvgMode,
+      evaluationMode,
+      probe:X.text(m,'ProbeSelection',''),
+      bias:X.text(m,'QssBiasSelection',''),
+      doRastering:X.text(m,'DoRastering',''),
+      autoset:X.text(m,'DoAutoSetting',''),
+      saveTransient:X.text(m,'SaveTransient',''),
+      temperatures:iterations.slice(0,2).map(it=>X.num(it,'ChuckTemperature',NaN)),
+      measurementVelocities:iterations.slice(0,2).map(it=>X.num(it,'MeasurementVelocity',NaN)),
+      tauSteadyStateFactors:iterations.slice(0,2).map(it=>X.num(it,'TauSteadyStateFactor',NaN)),
+      qdcValues:iterations.slice(0,2).map(it=>X.num(it,'QDCValue',NaN)),
+      raw:parsed
+    };
   }
   function generation(intensityMilli,Wum,OF=1){
     const I=intensityMilli/1000,W=Wum*1e-4;
@@ -95,21 +213,81 @@
     return Q*NI_BASORE_COMPAT*NI_BASORE_COMPAT*(W/4)*slope*1e15;
   }
   function analyze(d){
-    const tau1=d.values[0]||[],tau2=d.values[1]||[],n=Math.min(tau1.length,tau2.length),j0=[],sm1=[],sm2=[],v1=[],v2=[];
+    const tau1=d.values[0]||[],
+      tau2=d.values[1]||[],
+      n=Math.max(d.siteCount||0,tau1.length,tau2.length),
+      tau1Full=Array.from({length:n},(_,i)=>Number.isFinite(tau1[i])?tau1[i]:NaN),
+      tau2Full=Array.from({length:n},(_,i)=>Number.isFinite(tau2[i])?tau2[i]:NaN),
+      j0=[],
+      sm1=[],
+      sm2=[],
+      v1=[],
+      v2=[];
     for(let i=0;i<n;i++){
-      j0.push(basoreJ0(tau1[i],tau2[i],d));
-      sm1.push(smax(tau1[i],d.waferThickness));sm2.push(smax(tau2[i],d.waferThickness));
-      v1.push(impliedVoc(tau1[i],d.qssMilli[0],d,0));v2.push(impliedVoc(tau2[i],d.qssMilli[1],d,1));
+      j0.push(basoreJ0(tau1Full[i],tau2Full[i],d));
+      sm1.push(smax(tau1Full[i],d.waferThickness));
+      sm2.push(smax(tau2Full[i],d.waferThickness));
+      v1.push(impliedVoc(tau1Full[i],d.qssMilli[0],d,0));
+      v2.push(impliedVoc(tau2Full[i],d.qssMilli[1],d,1));
     }
     const sun=i=>Number.isFinite(d.qssMilli[i])?`${fmt(d.qssMilli[i]/1000,2)} sun`:`QSS ${i+1}`;
     return{metrics:{
-      j0:{key:'j0',short:'Basore J0',label:'Basore J0',unit:'fA/cm²',values:j0,help:'Emitter saturation current from the Basore–Hansen two-intensity small-perturbation-lifetime slope.'},
-      tau1:{key:'tau1',short:`τeff.d (${sun(0)})`,label:`τeff.d (${sun(0)})`,unit:'µs',values:tau1.slice(0,n),help:'Small-perturbation lifetime measured at the first QSS intensity.'},
-      tau2:{key:'tau2',short:`τeff.d (${sun(1)})`,label:`τeff.d (${sun(1)})`,unit:'µs',values:tau2.slice(0,n),help:'Small-perturbation lifetime measured at the second QSS intensity.'},
-      smax1:{key:'smax1',short:`Smax (${sun(0)})`,label:`Smax (${sun(0)})`,unit:'cm/s',values:sm1,help:'Maximum surface recombination velocity estimate W/(2τ) at the first QSS intensity.'},
-      smax2:{key:'smax2',short:`Smax (${sun(1)})`,label:`Smax (${sun(1)})`,unit:'cm/s',values:sm2,help:'Maximum surface recombination velocity estimate W/(2τ) at the second QSS intensity.'},
-      voc1:{key:'voc1',short:`Implied Voc (${sun(0)})`,label:`Implied Voc (${sun(0)})`,unit:'V',values:v1,help:'Implied open-circuit voltage derived from the first QSS lifetime using the JZero compatibility calibration.'},
-      voc2:{key:'voc2',short:`Implied Voc (${sun(1)})`,label:`Implied Voc (${sun(1)})`,unit:'V',values:v2,help:'Implied open-circuit voltage derived from the second QSS lifetime using the JZero compatibility calibration.'}
+      j0:{
+        key:'j0',
+        short:'Basore J0',
+        label:'Basore J0',
+        unit:'fA/cm²',
+        values:j0,
+        help:'Emitter saturation current requires finite lifetime values at both QSS intensities for the same site. It remains unavailable when an acquisition ends before the paired second-intensity data are stored.'
+      },
+      tau1:{
+        key:'tau1',
+        short:`τeff.d (${sun(0)})`,
+        label:`τeff.d (${sun(0)})`,
+        unit:'µs',
+        values:tau1Full,
+        help:'Small-perturbation lifetime measured at the first QSS intensity.'
+      },
+      tau2:{
+        key:'tau2',
+        short:`τeff.d (${sun(1)})`,
+        label:`τeff.d (${sun(1)})`,
+        unit:'µs',
+        values:tau2Full,
+        help:'Small-perturbation lifetime measured at the second QSS intensity; unavailable at sites that were not acquired.'
+      },
+      smax1:{
+        key:'smax1',
+        short:`Smax (${sun(0)})`,
+        label:`Smax (${sun(0)})`,
+        unit:'cm/s',
+        values:sm1,
+        help:'Maximum surface recombination velocity estimate W/(2τ) at the first QSS intensity.'
+      },
+      smax2:{
+        key:'smax2',
+        short:`Smax (${sun(1)})`,
+        label:`Smax (${sun(1)})`,
+        unit:'cm/s',
+        values:sm2,
+        help:'Maximum surface recombination velocity estimate W/(2τ) at the second QSS intensity; unavailable where second-intensity lifetime is missing.'
+      },
+      voc1:{
+        key:'voc1',
+        short:`Implied Voc (${sun(0)})`,
+        label:`Implied Voc (${sun(0)})`,
+        unit:'V',
+        values:v1,
+        help:'Implied open-circuit voltage derived from the first QSS lifetime using the JZero compatibility calibration.'
+      },
+      voc2:{
+        key:'voc2',
+        short:`Implied Voc (${sun(1)})`,
+        label:`Implied Voc (${sun(1)})`,
+        unit:'V',
+        values:v2,
+        help:'Implied open-circuit voltage derived from the second QSS lifetime using the JZero compatibility calibration; unavailable where the second iteration is missing.'
+      }
     }};
   }
   const summaryMasked=(values,mask)=>S.summary(values.filter((_,i)=>mask[i]));
@@ -211,8 +389,18 @@
     ctx.fillStyle=css('--muted');ctx.textAlign='center';for(const t of ticks(xr[0],xr[1]))ctx.fillText(axisFmt(t),Xv(t),H-28);ctx.textAlign='right';for(const t of ticks(yr[0],yr[1]))ctx.fillText(axisFmt(t),p.l-8,Yv(t)+4);const m=a.metrics[key];ctx.textAlign='center';ctx.fillText(swapped?'Count':`${m.short} [${m.unit}]`,p.l+(W-p.l-p.r)/2,H-5);ctx.save();ctx.translate(14,p.t+(H-p.t-p.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText(swapped?`${m.short} [${m.unit}]`:'Count',0,0);ctx.restore();PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});return rows;
   }
   function render(host,d,a){
-    const onePoint=d.patternType==='OnePointPattern'&&d.coords.length===1;
-    let metricKey='j0',histBins=30,histSwapped=true,pointsMode=onePoint,zoom={map:{x:null,y:null},hist:{x:null,y:null}},filterController=Sel.createFilter({metrics:a.metrics,siteCount:a.metrics.j0.values.length,metricKey:'j0'});
+    const onePoint=d.coords.length===1,
+      defaultMetric=a.metrics.j0.values.some(Number.isFinite)?'j0':'tau1';
+    let metricKey=defaultMetric,
+      histBins=30,
+      histSwapped=true,
+      pointsMode=onePoint,
+      zoom={map:{x:null,y:null},hist:{x:null,y:null}},
+      filterController=Sel.createFilter({
+        metrics:a.metrics,
+        siteCount:a.metrics[defaultMetric].values.length,
+        metricKey:defaultMetric
+      });
     const options=()=>Object.values(a.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
     const meta=(k,v,h='')=>`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
     const target=()=>{
@@ -221,15 +409,41 @@
       if(d.targetType==='RoundWafer')return `Ø${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm`;
       return d.targetType||'—';
     };
-    const pattern=()=>[d.patternName||d.patternType,Number.isFinite(d.pitchX)&&Number.isFinite(d.pitchY)?`${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`:null].filter(Boolean).join(' · ');
+    const pattern=()=>{
+      if(d.patternType==='SquareRegionPattern'){
+        return[
+          d.patternDisplayName||'Square Region',
+          Number.isFinite(d.nx)&&Number.isFinite(d.ny)?`${fmt(d.nx,0)} × ${fmt(d.ny,0)} schedule`:null,
+          Number.isFinite(d.pitchX)&&Number.isFinite(d.pitchY)?`${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm step`:null
+        ].filter(Boolean).join(' · ');
+      }
+      return[
+        d.patternName||d.patternType,
+        Number.isFinite(d.pitchX)&&Number.isFinite(d.pitchY)?`${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`:null
+      ].filter(Boolean).join(' · ');
+    };
     const statsRows=()=>Object.values(a.metrics).map(m=>{const st=summaryMasked(m.values,filterController.metricMask(m));return`<tr><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
     function shell(){
-      const filterState=filterController.snapshot(),validN=filterState.validCount,n=filterState.siteCount;
+      const filterState=filterController.snapshot(),
+        validN=filterState.validCount,
+        n=filterState.siteCount,
+        expected=d.geometryModel.expectedPointCount,
+        geometryText=[
+          d.geometryProfile.status,
+          d.geometryProfile.id||null,
+          d.geometryProfile.status==='partial'&&Number.isFinite(expected)?`${d.coords.length} / ${expected} sites`:null
+        ].filter(Boolean).join(' · '),
+        calcText=[
+          d.calculationProfile.status,
+          d.calculationProfile.id||null,
+          `${d.pairedSiteCount} paired sites`
+        ].filter(Boolean).join(' · '),
+        qssText=[0,1].map(i=>Number.isFinite(d.qssMilli[i])?`${fmt(d.qssMilli[i]/1000,2)} sun`:'—').join(' / ');
       host.innerHTML=`<div class="module-grid jzero-module"><aside class="side">
-        <section class="panel"><h3>Emitter J0 map ${help('JZeroMeasurement combines two QSS-µPCD lifetime maps measured at the first and second QSS intensities. Basore J0 is derived site-by-site from the two small-perturbation lifetimes.')}</h3><dl class="meta">${meta('Result',d.resultName)}${meta('Recipe',d.name)}${meta('Substrate',d.substrateId)}${meta('Status',d.status)}${meta('Pattern',pattern())}${meta('Target',target())}${meta('Geometry',`${d.geometryProfile.status}${d.geometryProfile.id?` · ${d.geometryProfile.id}`:''}`,'Calculation and geometry validation are tracked separately. The current paired JZero geometry is MapPattern + PseudoSquareCell; other resolver-supported geometries remain inferred until paired X/Y evidence is supplied.')}${meta('QSS intensities',`${fmt(d.qssMilli[0]/1000,2)} / ${fmt(d.qssMilli[1]/1000,2)} sun`)}${meta('Wafer thickness',`${fmt(d.waferThickness)} µm`)}${meta('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`)}${meta('Optical factor',fmt(d.opticalFactor))}${meta('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`)}</dl></section>
-        ${PV.ui.validDataFilterMarkup({prefix:'jFilter',metrics:a.metrics,state:filterState,helpText:'Choose any JZero result quantity as the filter metric. One paired-site mask is then shared across all seven result quantities, summaries, maps, distributions and exports; quantity-specific non-finite values remain excluded from that displayed quantity.'})}
+        <section class="panel"><h3>Emitter J0 map ${help('JZeroMeasurement stores one or two QSS-µPCD lifetime iterations. Basore J0 is available only where both intensities were acquired for the same site; incomplete runs still retain their available lifetime, Smax and implied-Voc results.')}</h3><dl class="meta">${meta('Result',d.resultName)}${meta('Recipe',d.name)}${meta('Substrate',d.substrateId)}${meta('Status',d.status)}${meta('Pattern',pattern())}${meta('Target',target())}${meta('Geometry',geometryText,'Calculation and geometry validation are tracked separately. SquareRegionPattern uses its structured Region + Dimension fields; incomplete terminated schedules are prefix-inferred and not vendor-validated.')}${meta('Calculation',calcText,'Validated Basore J0 requires the complete established two-intensity path. If the second iteration is missing or shorter, available first-iteration quantities remain usable while J0 is unavailable at unpaired sites.')}${meta('QSS intensities',qssText)}${meta('Wafer thickness',`${fmt(d.waferThickness)} µm`)}${meta('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`)}${meta('Optical factor',fmt(d.opticalFactor))}${meta('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`)}</dl></section>
+        ${PV.ui.validDataFilterMarkup({prefix:'jFilter',metrics:a.metrics,state:filterState,helpText:'Choose any available JZero result quantity as the filter metric. One site-level mask is shared across all seven result quantities, summaries, maps, distributions and exports; missing second-iteration/J0 values remain unavailable rather than shifting site indices.'})}
         <section class="panel"><h3>Results summary ${help('Statistics use only points that pass the active valid-data filter. Stdev is sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
-        <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${n}</b><span>paired XML sites</span></div><div><b>${d.coords.length} / ${n}</b><span>coordinates generated</span></div><div><b>${validN} / ${n}</b><span>pass filter</span></div><div><b>${d.iterations}</b><span>iterations</span></div></div></section>
+        <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${n}</b><span>XML sites</span></div><div><b>${d.pairedSiteCount} / ${n}</b><span>paired QSS sites</span></div><div><b>${d.coords.length} / ${Number.isFinite(expected)?expected:n}</b><span>coordinates / schedule</span></div><div><b>${d.iterations} / 2</b><span>iterations acquired</span></div><div><b>${validN} / ${n}</b><span>pass filter</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${meta('Result time',d.end)}${meta('Elapsed',d.elapsed)}${meta('Laser power',fmt(d.laserPower))}${meta('uPCD averaging 1 / 2',`${fmt(d.avgMode,0)} / ${fmt(d.secondAvgMode,0)}`)}${meta('Evaluation mode',d.evaluationMode||'—')}${meta('Chuck temperature 1 / 2',`${fmt(d.temperatures[0])} / ${fmt(d.temperatures[1])} °C`)}${meta('Measurement velocity 1 / 2',`${fmt(d.measurementVelocities[0])} / ${fmt(d.measurementVelocities[1])}`)}${meta('Tau steady-state factor 1 / 2',`${fmt(d.tauSteadyStateFactors[0],6)} / ${fmt(d.tauSteadyStateFactors[1],6)}`)}${meta('QDC 1 / 2',`${fmt(d.qdcValues[0],6)} / ${fmt(d.qdcValues[1],6)}`)}${meta('Autosetting',d.autoset||'—')}${meta('Rastering',d.doRastering||'—')}${meta('Save transient',d.saveTransient||'—')}</dl></details>
       </aside><section class="plots"><div class="panel chart"><header><b>${onePoint?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="jMetric">${options()}</select>${onePoint?'':`<select id="jMapMode"><option value="filled">Filled</option><option value="points">Points</option></select>`}${PV.plot.axisControls('jMapAxes')}<button id="jExportMap">Export</button></header><div class="canvas-wrap"><canvas id="jMap"></canvas></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('jHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('jHistBins',histBins)}<button id="jExportHist">Export</button></header><div class="canvas-wrap"><canvas id="jHist"></canvas></div></div></section></div>`;
       host.querySelector('#jMetric').value=metricKey;if(!onePoint)host.querySelector('#jMapMode').value=pointsMode?'points':'filled';

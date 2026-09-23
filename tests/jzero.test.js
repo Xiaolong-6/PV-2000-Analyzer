@@ -21,6 +21,71 @@ test('pseudo-square JZero reference geometry reconstructs 5017 sites',()=>{
   assert.deepEqual({x:pts.at(-1).x,y:pts.at(-1).y},{x:64,y:70});
 });
 
+test('JZero SquareRegion geometry uses structured Region + Dimension fields',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'SquareRegionPattern',
+    targetType:'RoundWafer',
+    pointCount:1,
+    diameter:100,
+    edgeExclusion:7,
+    regionX:0,
+    regionY:0,
+    regionWidth:10,
+    regionHeight:10,
+    nx:1,
+    ny:1
+  });
+  assert.equal(g.geometryStatus,'complete');
+  assert.equal(g.expectedPointCount,1);
+  assert.deepEqual(g.pointsMm,[{x:0,y:0,row:0,col:0}]);
+  assert.equal(g.interpretation,'explicit-region-grid');
+});
+
+test('terminated JZero SquareRegion can preserve a 5-of-9 leading schedule prefix',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'SquareRegionPattern',
+    targetType:'RoundWafer',
+    pointCount:5,
+    diameter:100,
+    edgeExclusion:7,
+    regionX:-10,
+    regionY:-10,
+    regionWidth:10,
+    regionHeight:10,
+    nx:3,
+    ny:3,
+    allowPartialPrefix:true
+  });
+  assert.equal(g.geometryStatus,'partial');
+  assert.equal(g.expectedPointCount,9);
+  assert.equal(g.acquiredPointCount,5);
+  assert.equal(g.coordinateCompleteness,'prefix-inferred');
+  assert.deepEqual(g.pointsMm.map(({x,y})=>({x,y})),[
+    {x:-10,y:-10},{x:-5,y:-10},{x:0,y:-10},{x:-10,y:-5},{x:-5,y:-5}
+  ]);
+});
+
+test('incomplete JZero preserves first-intensity quantities and blanks unpaired results',()=>{
+  const d={
+    values:[[14.6675916,14.87557039,14.87483182,14.92398295,14.47964071]],
+    siteCount:5,
+    qssMilli:[1000,3000],
+    waferThickness:400,
+    opticalFactor:0.7,
+    doping:5e15,
+    temperatures:[23.570554025099479]
+  };
+  const a=PV2000.modules.jzero.analyze(d);
+  assert.equal(a.metrics.tau1.values.length,5);
+  assert.deepEqual(a.metrics.tau1.values,d.values[0]);
+  assert.ok(a.metrics.smax1.values.every(Number.isFinite));
+  assert.ok(a.metrics.voc1.values.every(Number.isFinite));
+  assert.ok(a.metrics.tau2.values.every(Number.isNaN));
+  assert.ok(a.metrics.smax2.values.every(Number.isNaN));
+  assert.ok(a.metrics.voc2.values.every(Number.isNaN));
+  assert.ok(a.metrics.j0.values.every(Number.isNaN));
+});
+
 test('JZero Basore, Smax and implied-Voc compatibility reproduce reference point',()=>{
   const d={
     values:[[200.31474788960881],[125.68686517442578]],
@@ -111,3 +176,14 @@ test('JZero shared filter keeps one paired-site mask and adds displayed-metric s
   state=filter.setMetric('j0');
   assert.deepEqual(state.selection.activeMask,[true,false,true]);
 });
+
+test('JZero parser wires SquareRegion fields and permits explicit incomplete acquisition state',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/jzero.js'),'utf8');
+  for(const token of ['regionX','regionY','regionWidth','regionHeight','nx','ny','allowPartialPrefix'])assert.match(src,new RegExp(token));
+  assert.match(src,/isIncompleteAcquisitionStatus/);
+  assert.match(src,/iterations\.length<2&&!incompleteStatus/);
+  assert.doesNotMatch(src,/iterations\.length!==2/);
+  assert.match(src,/defaultMetric=a\.metrics\.j0\.values\.some\(Number\.isFinite\)\?'j0':'tau1'/);
+  assert.match(src,/paired QSS sites/);
+});
+

@@ -1,4 +1,11 @@
-# Agent handoff — 2026-09-23 — v20260923.17
+# Agent handoff — 2026-09-23 — v20260923.18
+
+## JZero SquareRegion / incomplete acquisition support
+
+JZero now reads structured `SquareRegionPattern/Region + Dimension` geometry through the shared geometry resolver. A completed 1 × 1 SquareRegion can render as a single measurement position even when Pattern/Name contains stale display text. Explicitly terminated SquareRegion runs can reuse the shared partial-prefix schedule semantics and remain geometry-inferred.
+
+Incomplete two-intensity acquisition no longer makes the whole JZero measurement unsupported. The first lifetime iteration remains usable for τeff.d, Smax and Implied Voc; missing second-iteration values and Basore J0 stay unavailable in the same site index space. Complete two-iteration JZERO-CALC-001 behavior and numerical formulas are unchanged. The two supplied AG13 XML-only cases are runtime regressions only and do not expand vendor-validation claims.
+
 
 ## DIT Valid-data filter rollout
 

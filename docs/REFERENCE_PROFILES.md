@@ -260,6 +260,15 @@ The Basore and Implied-Voc compatibility constants are reverse-engineered from t
 
 Different two-QSS intensity values, pitch, pseudo-square dimensions, EdgeExclusion, wafer thickness, doping or optical factor stay inside this family when the same two-iteration schema, coordinate rule and result formulas apply. Numeric changes should still be sanity-checked, but they do not automatically create a new profile.
 
+**Runtime-supported inferred cases**
+
+Two supplied XML-only cases use `SquareRegionPattern + RoundWafer` and remain outside JZERO-MAP-001 vendor parity:
+
+- a completed 1 × 1 SquareRegion with two one-site lifetime iterations; the structured Region + Dimension fields resolve a single measurement position at (0, 0) mm;
+- a terminated 3 × 3 SquareRegion where only five first-intensity sites were stored and no second lifetime iteration was acquired. The analyzer maps the five sites to the leading 5 / 9 row-major schedule prefix, preserves first-intensity τeff.d/Smax/Implied-Voc, and leaves second-intensity results and Basore J0 unavailable.
+
+These cases establish runtime compatibility only. They do not validate SquareRegion coordinates against vendor X/Y export, incomplete-scan ordering against PV-2000, or one-iteration Basore-result semantics.
+
 **NEW PROFILE triggers**
 
 Examples include another pattern/target encoding, more or fewer than two lifetime iterations, a different iteration/result ordering, a different raw data item schema, additional vendor outputs, or evidence that the derived-result formulas/validity behavior change.
