@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260922.17.2 — 2026-09-23 (documentation planning branch)
+
+- Added `docs/DOCUMENTATION_WIKI_PLAN.md` defining the canonical repo-docs vs GitHub Wiki split, public wording/content boundaries, proposed measurement-family documentation, Wiki page tree, ownership mapping and phased rollout.
+- This branch is documentation-only: no analyzer runtime, calculation, validation-envelope or UI behavior changes are planned here.
+
 ## v20260922.17 — 2026-09-22
 
 - Added validated `LBIC-REFLECTANCE-003` handling for reflectance-only `LBICMeasurement` XMLs where `MeasureCurrent=false` but BeamData still carry zero-valued Current placeholders. Disabled Current is no longer exposed or used to synthesize EQE/IQE; Reflectivity becomes the default result.
