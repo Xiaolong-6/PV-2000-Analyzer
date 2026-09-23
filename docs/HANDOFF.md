@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — v20260923.21
+# Agent handoff — 2026-09-23 — v20260923.22
 
 ## Analyzer index + sidebar consistency audit
 
@@ -22,9 +22,9 @@ QSS now separates Analyzer interpretation controls from PV-2000/XML metadata. An
 
 SRV moved into a collapsed Additional SRV analysis section. It is Analyzer-only, disabled by default, and defaults to Planar when enabled. Textured / black is explicit; planar-reference SRV is shown/validated only for that model. When SRV is disabled it is removed from Results summary, map metric choices and shared Valid-data filter candidates. Existing lifetime, Smax and Implied-Voc calculations and vendor-validation profiles are unchanged.
 
-## CETMeasurement implementation branch
+## CETMeasurement implementation
 
-`feat/cet-measurement` adds a dedicated CET analyzer on the shared measurement-domain architecture.
+`CETMeasurement` is now merged on `main` as a dedicated analyzer on the shared measurement-domain architecture.
 
 The first paired profile is `CET-9PT-SQUARE-001`: one 9-site `NinePointPattern + SquareCell` XML/vendor CSV pair validates target-relative fixed-point geometry plus EOT, Cd and R² point-by-point and at summary-statistics level. The pair establishes `q = 1.602e-19 C` as the compatibility constant for this legacy CET arithmetic. One undefined site is represented as unavailable EOT/Cd with R² = 0.
 
@@ -32,7 +32,7 @@ CET reuses `PV2000.quantity`, `PV2000.selection`, `PV2000.measurement`, `PV2000.
 
 The exact private XML/CSV pair and a short case README are stored under `reference-data/paired-test-data/CETMeasurement/cet-9pt-square-20160406/` in the separate private-reference repository. Public runtime remains XML-only.
 
-Acceptance before merge: normal `npm run check`, `npm run build`, `npm run validate:cet` against the private pair, import-smoke representative XMLs from the supplied CET corpus, and a visual check of map / Distribution / current-site fit / filter behavior.
+Acceptance for future CET changes remains: normal `npm run check`, `npm run build`, `npm run validate:cet` against the private pair, representative XML import smoke tests, and visual checks of map / Distribution / current-site fit / filter behavior.
 
 ## JZero SquareRegion / incomplete acquisition support
 
@@ -84,7 +84,7 @@ The larger private OnePoint collection contains 176 row-aligned XML/raw-CSV pair
 
 The inspected historical backup, software data archive and Ge/COCOS collection have no `DITMeasurement` XML with `UseCocosII=true`; COCOS-II remains inferred. A further ten exact-name XML/vendor-summary CSV candidates were located but their summary/result calculations have **not** been regressed. Next work should either obtain a real `UseCocosII=true` XML plus matching output, or examine the specific extra reprocessing state behind the corrected-light export without guessing an XML-only formula.
 
-The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. The first implementation branch should add shared domain primitives and migrate ISC/VCPD as the pilot without numerical, validation-label or UI changes.
+The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. Phase A and the shared-filter migration phases are complete; ISC/VCPD served as the pilot and CET is the first formerly unsupported family implemented directly on the new architecture.
 
 Scientific Wiki source pages are tracked under `wiki/`; `docs/DOCUMENTATION_WIKI_PLAN.md` defines their role and `docs/WIKI_HANDOFF.md` documents Wiki synchronization. Wiki prose is maintained as the current scientific reference, while validation/profile evidence remains in repository docs.
 
@@ -137,7 +137,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - modular source + generated single-file `dist/index.html` build; `dist/` is ignored and rebuilt by CI/Pages rather than tracked;
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
-- `QssUpcdMeasurement` analyzer with raw-lifetime preservation, sentinel-aware scientific validity, lifetime/Smax/PV-2000-compatible Implied-Voc maps, explicit Physical Si/Ge estimates, configurable lifetime→SRV analysis, filtering, distributions/profiles and CSV export;
+- `QssUpcdMeasurement` analyzer with raw-lifetime preservation, sentinel-aware scientific validity, lifetime/Smax/PV-2000-compatible Implied-Voc maps, explicit Physical Si/Ge estimates, opt-in Analyzer lifetime→SRV analysis, filtering, distributions/profiles and CSV export;
 - `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
 - `JZeroMeasurement` analyzer with two-intensity Emitter J0 maps, PseudoSquareCell geometry, Basore J0, both τeff.d/Smax/Implied-Voc channels, filtering, distributions and CSV export;
 - `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export; explicitly terminated maps can render an inferred leading schedule prefix while completed point-count mismatches remain unavailable;
@@ -147,7 +147,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - per-chart CSV exports and extensive hover explanations;
 - shared `src/core/ui.js` helpers for HTML escaping, help markup, CSS-variable access and plot tooltips; measurement modules reuse the shared helpers instead of carrying duplicate copies;
 - ESLint plus a source-density quality gate run in CI to prevent hand-minified executable code from returning;
-- landing-page support tags for Dit / COCOS, QSS-µPCD, QSS Injection, Emitter J0, ISC, LBIC and Generic XML inspector;
+- landing-page analyzer tags for Dit / COCOS, QSS-µPCD, QSS Injection, Emitter J0, ISC / VCPD, CET / EOT and LBIC, with Generic XML Inspector and the PV-2000 validation boundary shown separately;
 - shared plot zoom on every scientific plot: wheel inside = X+Y, wheel on an axis = that axis only, double-click = auto scale; applicable numeric plots expose manual X/Y lower/upper limits from a header Axes popover placed immediately before Export. Distribution plots default to Count on X, keep Swap axes beside Auto/Apply inside that Axes action row, and expose a separate Bins header control (5–200 bins) for histogram spacing; Axes popovers are allowed to overflow chart panels so adjacent plots do not clip them, and canvas wrappers no longer force a 300 px minimum height;
 - spatial maps use equal physical X/Y scale at auto/default view and follow the applicable XML target geometry: circular, rectangular or pseudo-square outlines are kept distinct from the plot frame and EdgeExclusion-adjusted scheduled boundary;
 - LBIC right workspace uses Map + Distribution side-by-side with equal top-row chart sizing and X/Y profiles side-by-side below; Selected pixel and Channel provenance are in the left sidebar. Distribution retains axis swap and numeric ticks;

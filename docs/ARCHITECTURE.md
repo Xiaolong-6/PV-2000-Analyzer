@@ -17,11 +17,11 @@ Open XML
       -> semantic reference-profile resolution
   -> module.analyze()
       -> Quantity objects for migrated families
-      -> existing analysis objects for families not yet migrated
+      -> family-specific analysis objects where a normalized Quantity layer is not used
   -> module.render()
 ```
 
-The domain layer is being introduced incrementally. ISC/VCPD are the pilot family. DIT, QSS-uPCD, Dual QSS, JZero and LBIC retain their established module interfaces until their own migration phases.
+The shared domain layer is now established and used directly by ISC/VCPD and CET. QSS-uPCD, JZero, LBIC and DIT also reuse shared selection/geometry services where migrated while retaining their family-specific parser/analyzer interfaces; Dual QSS retains its dedicated injection-sweep model.
 
 A PV-2000 CSV/XPS export is never a runtime input.
 
@@ -128,7 +128,7 @@ All site-aligned arrays share one immutable site index space. Coordinates, Quant
 
 The selection layer also owns reset-range and percentile helpers. Valid-data UI controls consume this model; they do not define intrinsic validity themselves.
 
-QSS-uPCD remains the behavioral reference for the existing Valid-data filter until its later migration. JZero's local mask helpers are scheduled to migrate after the domain-core PR.
+QSS-uPCD remains the behavioral reference for Valid-data filtering semantics. QSS, JZero, ISC/VCPD, LBIC, DIT and CET now use the shared site-selection/filter contract where applicable; family-specific intrinsic validity and quantity availability remain separate from user filtering.
 
 ### Normalized measurement
 
@@ -167,10 +167,11 @@ Profile matching uses categorical measurement semantics such as:
 
 It must not use filenames, sample names or arbitrary numeric identity values.
 
-Current migrated profile metadata:
+Current profile metadata registered in the shared profile layer includes:
 
 - `ISC-MAP-001`
 - `VCPD-MAP-001`
+- `CET-9PT-SQUARE-001`
 
 Exact evidence and validation boundaries remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
@@ -215,9 +216,9 @@ The existing grid helpers remain available, and the normalized geometry envelope
 
 Nominal sample shape, scheduled measurement boundary and actual acquired points stay distinct.
 
-## ISC / VCPD pilot
+## Migrated domain families
 
-`src/modules/isc.js` is the first migrated family.
+`src/modules/isc.js` was the first migrated family; `src/modules/cet.js` was implemented directly on the shared domain architecture.
 
 The parser still exposes the same fields used by the established UI and exports, and additionally attaches:
 
@@ -237,7 +238,7 @@ This allows provenance and validation metadata to become explicit without changi
 - exports;
 - UI labels/layout.
 
-Untouched modules continue to register and resolve through the same registry API.
+Other modules continue to register and resolve through the same registry API even when only selected shared services have been adopted.
 
 ## Source layout
 
@@ -261,8 +262,9 @@ Untouched modules continue to register and resolve through the same registry API
 
 - `src/profiles/isc.js` — ISC-MAP-001 semantic envelope.
 - `src/profiles/vcpd.js` — VCPD-MAP-001 semantic envelope.
+- `src/profiles/cet.js` — CET-9PT-SQUARE-001 semantic envelope.
 
-Additional families should gain profile metadata only when they are migrated and their existing reference envelope is understood.
+Additional families should gain shared profile metadata only when their reference envelope is understood.
 
 ### Measurement modules
 
@@ -270,8 +272,9 @@ Additional families should gain profile metadata only when they are migrated and
 - `src/modules/qss-upcd.js` — QSS-uPCD map parser, calculations and UI.
 - `src/modules/dual-qss.js` — Dual QSS injection sweep and stored-transient viewer.
 - `src/modules/jzero.js` — Emitter J0 map analyzer.
-- `src/modules/isc.js` — ISC/VCPD pilot on the domain core.
+- `src/modules/isc.js` — ISC/VCPD analyzer on the shared domain core.
 - `src/modules/lbic.js` — LBIC raster analyzer.
+- `src/modules/cet.js` — contactless capacitance / EOT analyzer.
 - `src/modules/generic.js` — unknown-type fallback.
 - `src/app.js` — file opening, dispatch and shared shell.
 

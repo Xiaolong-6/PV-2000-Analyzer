@@ -1,6 +1,6 @@
 # Wiki handoff
 
-Branch: **docs/reference-knowledge-wiki-plan**
+Source status: **tracked on `main` under `wiki/`**.
 
 Purpose: maintain the published GitHub Wiki from version-controlled Markdown sources while feature work continues separately.
 
@@ -8,7 +8,7 @@ Purpose: maintain the published GitHub Wiki from version-controlled Markdown sou
 
 Files under **wiki/** are written as publishable Wiki pages, using GitHub Wiki page slugs as filenames.
 
-Published set (Wiki revision `a30f367`, 2026-09-23):
+Tracked source set (initial Wiki publication 2026-09-23):
 
 - Home.md
 - _Sidebar.md

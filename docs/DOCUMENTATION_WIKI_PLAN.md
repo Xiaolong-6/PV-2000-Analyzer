@@ -1,6 +1,6 @@
 # Documentation and Wiki information-architecture plan
 
-Status: **documentation-only branch; initial scientific Wiki published on 2026-09-23**. This branch must not change analyzer runtime behavior, calculation code, UI behavior, validation labels, or existing reference envelopes. The eight source files in `wiki/` were synchronized to the [GitHub Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki); this plan remains the guide for subsequent pages.
+Status: **information architecture adopted; initial scientific Wiki published on 2026-09-23**. The tracked `wiki/` directory remains the editable source for public scientific pages. Documentation-only updates must not change analyzer runtime behavior, calculation code, validation labels or reference envelopes.
 
 ## 1. Goal
 
@@ -93,7 +93,7 @@ Repository docs own:
 | Topic | Canonical repository location |
 |---|---|
 | Runtime/module structure | `docs/ARCHITECTURE.md` |
-| Supported XML measurement families | `docs/MEASUREMENT_TYPES.md` / future family index |
+| Supported XML measurement families | `docs/MEASUREMENT_TYPES.md` and `wiki/Measurement-Families.md` |
 | XML-field → implementation mapping | family implementation notes / current `ALGORITHMS_*.md` |
 | Validation envelope / profile IDs | `docs/REFERENCE_PROFILES.md` |
 | Detailed regression evidence | `docs/VALIDATION.md` |

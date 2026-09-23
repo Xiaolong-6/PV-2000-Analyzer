@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260923.22 — 2026-09-23
+
+- Audited repository documentation and tracked Wiki sources against current `main` after the analyzer/sidebar cleanup.
+- Removed stale architecture/refactor statements that still described ISC/VCPD as pending migration or CET as unsupported, and added CET to current shared-profile/module inventories.
+- Updated HANDOFF, QSS, Wiki planning/sync and contributor guidance to current analyzer, SRV and validation state.
+- Added the opt-in Analyzer SRV model to the QSS scientific Wiki page.
+- Corrected two literal `\\n` formatting artifacts in the LBIC algorithm documentation.
+- Historical CHANGELOG entries and evidence-boundary statements were intentionally preserved.
+
 ## v20260923.21 — 2026-09-23
 
 - Updated the landing-page analyzer inventory to include ISC / VCPD and CET / EOT, and separated dedicated analyzers from the Generic XML Inspector fallback and the PV-2000 v1.3.0.5 validation boundary.

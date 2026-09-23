@@ -85,7 +85,8 @@ Status: **raw XML when active; pointwise reproduced by the supplied current-enab
 For the validated profile, PV-2000 `Reflectivity [%]` is reproduced point-by-point by:
 
 ```
-Rraw[%] = DirectReflection[%] + ScatteredReflection[%]\nReflectivity_display[%] = clamp(Rraw, 0, 100)
+Rraw[%] = DirectReflection[%] + ScatteredReflection[%]
+Reflectivity_display[%] = clamp(Rraw, 0, 100)
 ```
 
 The browser therefore presents **Reflectivity** as the primary quantity and keeps the two component channels under Advanced raw/intermediate channels.
@@ -130,7 +131,9 @@ else:
 
 Using `q_PV2000 = 1.602e-19 C`, the finite IQE values reproduce the vendor exports to approximately 1e-12 percentage-point scale. Exported blank IQE points are also reproduced by the >100%/non-computable rule.
 
-In `LBIC-MULTI-002`, the vendor's displayed Reflectivity is clamped to 0–100%, but IQE still uses the **unclamped raw optical sum** `Rraw` in the denominator. This distinction is required by four 656 nm points where `Rraw < 0`: PV-2000 displays Reflectivity = 0% while its IQE matches the negative raw sum.\n\nStatus: **validated for the recorded Current / raw-optical-sum → IQE families**. The multi-beam reference reproduces finite IQE values to approximately 1e-13 percentage-point scale; vendor `Ud.` cells correspond to unavailable/non-retained IQE values.
+In `LBIC-MULTI-002`, the vendor's displayed Reflectivity is clamped to 0–100%, but IQE still uses the **unclamped raw optical sum** `Rraw` in the denominator. This distinction is required by four 656 nm points where `Rraw < 0`: PV-2000 displays Reflectivity = 0% while its IQE matches the negative raw sum.
+
+Status: **validated for the recorded Current / raw-optical-sum → IQE families**. The multi-beam reference reproduces finite IQE values to approximately 1e-13 percentage-point scale; vendor `Ud.` cells correspond to unavailable/non-retained IQE values.
 
 The behavior exactly at a mathematically calculated IQE of 100.000...% is not separately represented by a boundary reference point; the implementation accepts values `<= 100%`. IQE is not synthesized for `LBIC-REFLECTANCE-003` because current measurement is disabled.
 
