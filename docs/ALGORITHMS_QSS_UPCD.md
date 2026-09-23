@@ -22,7 +22,7 @@ The user can then choose a filter metric and lower/upper limits after inspecting
 
 ### Shared filter architecture
 
-As of the `v20260923.15.1` migration branch, QSS uses the same `PV2000.selection.createFilter()` and shared filter UI contract as ISC/VCPD, JZero and LBIC. This is an architecture migration only: the QSS filter metric, default lifetime filter, full-range initialization, inclusive lower/upper bounds, `1–99%`, Reset and Apply behavior are preserved.
+QSS uses `PV2000.selection.createFilter()` and the shared filter UI contract used across the migrated site-level analyzers. This is an architecture migration only: the QSS filter metric, default lifetime filter, full-range initialization, inclusive lower/upper bounds, `1–99%`, Reset and Apply behavior are preserved.
 
 The scientific/intrinsic lifetime support mask remains a separate concept. In the default mode, finite `τ <= 0` sentinel values are excluded by `intrinsicLifetimeMask()` before the shared user filter is evaluated. In **Raw / PV-2000 style**, finite non-positive values can remain intrinsically supported. The shared controller receives this mask as `intrinsicMask`; user range filtering cannot convert an intrinsically unavailable point into an available one. Conversely, a finite supported point outside the user range is **FILTERED**, not invalid or unavailable.
 
