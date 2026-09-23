@@ -81,7 +81,13 @@ C_d[{\rm nF/cm^2}]
 1000\,C_d^{*}.
 ```
 
-This is a compatibility relation tied to the historical charge-axis and unit conventions.
+For the paired CET compatibility profile, the historical charge constant is
+
+```math
+q = 1.602\times 10^{-19}\;{\rm C}.
+```
+
+This is a compatibility relation tied to the historical charge-axis and unit conventions. A different modern constant precision is not substituted when reproducing that reference profile.
 
 ## 5. Equivalent oxide thickness
 
@@ -119,7 +125,29 @@ CET reports:
 
 The capacitance should be interpreted as an effective contactless corona/Kelvin-probe result for the selected process path.
 
-## 8. Template dependence
+## 8. Undefined-fit behavior
+
+A linear fit requires at least two usable process points. In the validated CET reference, one site contains only one usable process point. The corresponding vendor result is undefined for EOT and Cd while R² is reported as 0.
+
+The project therefore treats availability per quantity: EOT and Cd can be unavailable at a site where the compatibility R² field is still 0.
+
+## 9. Fixed-point geometry
+
+Standard fixed-point pattern coefficients are target-relative coordinates.
+
+For the validated `NinePointPattern + SquareCell` profile,
+
+```math
+x_{\rm mm}=c_x\left(\frac{W}{2}-E\right),
+\qquad
+y_{\rm mm}=c_y\left(\frac{H}{2}-E\right),
+```
+
+where $c_x,c_y$ are the XML coefficients, $W,H$ are target dimensions and $E$ is EdgeExclusion.
+
+For the paired 156 × 156 mm target with 4 mm edge exclusion, the coefficient magnitude 0.632455532... becomes 46.801709370492 mm. This establishes that the coefficient itself is not a millimetre coordinate.
+
+## 10. Template dependence
 
 Historical template generations can use different:
 
@@ -130,8 +158,17 @@ Historical template generations can use different:
 
 These settings change the acquisition trajectory. Scientific pages should state the active profile when a template-specific value matters.
 
-## 9. Validation status
+## 11. Validation status
 
-The managed calculation path and unit arithmetic are documented. A real CET XML with matching vendor EOT/Cd/R² output is still required for paired-output validation of this family.
+`CET-9PT-SQUARE-001` is validated against one matching 9-site PV-2000 XML/numeric-export pair for:
+
+- target-relative NinePointPattern coordinates on a SquareCell;
+- EOT;
+- Cd;
+- R²;
+- summary statistics;
+- the undefined EOT/Cd + R² = 0 site behavior.
+
+The paired numerical differences are at floating-point precision. Other observed CET pattern/target geometries remain inferred until matching vendor coordinate/result evidence extends the profile envelope.
 
 The base CV acquisition semantics are documented independently from CET's derived-result path.

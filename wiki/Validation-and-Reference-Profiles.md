@@ -74,13 +74,17 @@ A physically correct equation can differ numerically from a historical software 
 
 The project records both the scientific relation and the compatibility status.
 
-## 6. Public and private reference data
+## 6. Example: CET fixed-point profile
+
+`CET-9PT-SQUARE-001` is a useful example of path-scoped validation. One paired `NinePointPattern + SquareCell` reference validates target-relative fixed-point geometry together with EOT, Cd, R² and the legacy undefined-fit behavior. Other CET geometries can still be importable while remaining inferred until paired output extends the evidence envelope.
+
+## 7. Public and private reference data
 
 The browser application remains XML-only at runtime.
 
 Reference CSVs, reports and screenshots are development evidence. Public contribution cases can be tracked when publication rights are clear. Confidential or uncleared material remains outside public tracked content.
 
-## 7. Authoritative project records
+## 8. Authoritative project records
 
 Exact profile IDs and validation claims live in:
 

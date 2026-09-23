@@ -12,7 +12,7 @@ This index summarizes the scientific role and result provenance of the known mea
 | VCPD | contact potential difference | averaged stored Kelvin-probe readings | implemented; current profile validated |
 | LBIC | photocurrent, reflectivity, EQE/IQE; diffusion length in some vendor results | mixed raw channels and derived quantities | current/reflectivity/IQE paths validated by profile; calculated diffusion length unsupported |
 | CV | corona/Kelvin-probe acquisition history and feedback | acquisition/process state | measurement semantics documented |
-| CET | capacitance, EOT and fit quality | derived from corona charge and light-CPD sweep | scientific calculation documented; paired validation pending |
+| CET | capacitance, EOT and fit quality | derived from corona charge and light-CPD sweep | implemented; `CET-9PT-SQUARE-001` validates the current NinePointPattern + SquareCell path |
 | SPV / Diffusion Length | minority-carrier diffusion length and derived lifetime | wavelength-dependent SPV plus optical corrections | scientific calculation documented; paired validation pending |
 | Fe / LID | activation-induced defect concentration indicators | derived from before/after states | scientific calculation documented; paired validation pending |
 | Surface Passivation | passivation-related response | corrected stored channels and ratios | scientific semantics documented; paired validation pending |

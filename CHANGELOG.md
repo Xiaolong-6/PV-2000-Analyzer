@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.18.1 — 2026-09-23 (CET feature branch)
+
+- Added a dedicated `CETMeasurement` analyzer on the shared measurement-domain architecture with EOT, Cd and R² quantities, shared Valid-data filtering, canonical map geometry, Distribution, current-site Vcpd-light/Qc fit and CSV exports.
+- Added paired profile `CET-9PT-SQUARE-001`: a 9-site `NinePointPattern + SquareCell` XML/vendor-export pair validates target-relative fixed-point coordinates plus EOT/Cd/R² point-by-point and summary statistics. The compatibility path uses `q = 1.602e-19 C`; the paired undefined fit keeps EOT/Cd unavailable and R² = 0.
+- Extended canonical geometry with explicit-mm `FixedPointsPattern/PointValues`, added the private CET validator and stored the paired evidence in the separate private-reference repository.
+- Updated CET documentation and tracked Wiki source pages; other observed CET geometries remain inferred until paired vendor output extends the profile envelope.
+
 ## v20260923.18 — 2026-09-23
 
 - Added JZero `SquareRegionPattern` geometry support from structured Region + Dimension fields, including 1 × 1 single-position rendering and inferred row-major schedules.

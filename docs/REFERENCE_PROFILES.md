@@ -23,6 +23,44 @@ This is a validation boundary, not an exact-version runtime whitelist. XML from 
 
 ## Profile registry
 
+### CET-9PT-SQUARE-001 — CET NinePointPattern + SquareCell
+
+**Measurement type**
+
+`CETMeasurement`
+
+**Reference material**
+
+One private paired XML + PV-2000 numeric CSV export with **9 sites**. The pair uses `NinePointPattern + SquareCell` and exposes EOT, Cd and R² together with exported X/Y coordinates.
+
+**Validated / established**
+
+- the nine XML coefficients are target-relative, not millimetres;
+- for the paired 156 × 156 mm SquareCell with 4 mm EdgeExclusion, the scheduled half-width/height is 74 mm and coefficient magnitude `0.6324555320336759` resolves to **46.801709370492 mm**;
+- all nine X/Y coordinates reproduce the vendor export to floating-point precision;
+- process charge axis: `Qc[i] = i * Process.CoronaCharge`;
+- illuminated CPD input: vector mean minus `VcpdOffsett`;
+- compatibility constant: `q = 1.602e-19 C`;
+- `Cd_internal = (1/m) * q * 1e6`;
+- reported `Cd = Cd_internal * 1000` [nF/cm²];
+- `EOT = 34.5 / Cd_internal` [Å];
+- R² is the linear-fit coefficient of determination;
+- one undefined one-point fit is exported as EOT/Cd `Ud.` and R² = 0; the analyzer preserves that quantity-specific validity behavior.
+
+The private pointwise validator currently reports maximum differences of approximately **2.1e-14 mm** for coordinates, **3.2e-12 Å** for EOT, **6.2e-13 nF/cm²** for Cd and **1.2e-13** for R². Average / median / sample-stdev / min / max summaries also reproduce the vendor CSV at floating-point precision.
+
+**Supported but not validated by this profile**
+
+The supplied CET XML corpus also contains OnePoint, FixedPoints, RoundWafer NinePoint and one-point SquareRegion examples. These can use the shared canonical geometry/runtime parser where their XML structure is sufficient, but they remain **inferred** until paired vendor output establishes the same coordinate/result semantics.
+
+**NEW PROFILE triggers**
+
+Treat a CET case as a new profile or explicit profile extension when it changes the pattern/target coordinate encoding, process/result branch, unit convention, undefined-value rule or EOT/Cd arithmetic.
+
+See `docs/ALGORITHMS_CET.md`.
+
+---
+
 ### DIT-STD-001 — Standard COCOS / Dit reference
 
 **Measurement type**
