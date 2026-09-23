@@ -331,7 +331,7 @@
         point=current.coord?`X ${fmt(current.coord.x,2)} mm · Y ${fmt(current.coord.y,2)} mm`:'coordinate unavailable',
         profile=data.profile?`${data.profile.status} · ${data.profile.id}`:'inferred';
       host.innerHTML=`<div class="module-grid cet-module"><aside class="side">
-        <section class="panel"><h3>CET measurement ${help('CET fits illuminated Kelvin-probe CPD against the configured corona-charge sequence and reports effective Cd, equivalent SiO₂ thickness and linear-fit R².')}</h3><dl class="meta">
+        <section class="panel"><h3>Measurement ${help('CET fits illuminated Kelvin-probe CPD against the configured corona-charge sequence and reports effective Cd, equivalent SiO₂ thickness and linear-fit R².')}</h3><dl class="meta">
           ${meta('Result',data.resultName)}
           ${meta('Recipe',data.name)}
           ${meta('Substrate',data.substrateId)}
