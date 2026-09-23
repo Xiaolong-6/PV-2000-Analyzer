@@ -45,5 +45,30 @@
     return count==null||pts.length===count?pts:[];
   }
   function bounds(points){const xs=points.map(p=>p.x).filter(Number.isFinite),ys=points.map(p=>p.y).filter(Number.isFinite);return{xmin:Math.min(...xs),xmax:Math.max(...xs),ymin:Math.min(...ys),ymax:Math.max(...ys)}}
-  PV.geometry={roundGrid,rectGrid,centeredRectGrid,pseudoSquareGrid,bounds};
+  function envelope({
+    patternType='',
+    targetType='',
+    shape='unknown',
+    nominal=null,
+    scheduled=null,
+    points=[],
+    edgeExclusion=NaN,
+    acquisitionOrder='unknown',
+    provenance='unavailable',
+    validationStatus='inferred'
+  }={}){
+    return{
+      patternType,
+      targetType,
+      shape,
+      nominal,
+      scheduled,
+      points:Array.from(points||[]),
+      edgeExclusion,
+      acquisitionOrder,
+      provenance,
+      validationStatus
+    };
+  }
+  PV.geometry={roundGrid,rectGrid,centeredRectGrid,pseudoSquareGrid,bounds,envelope};
 })(typeof window!=='undefined'?window:globalThis);

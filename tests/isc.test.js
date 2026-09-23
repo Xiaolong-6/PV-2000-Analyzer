@@ -3,7 +3,13 @@ const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
 require('../src/core/stats.js');
 require('../src/core/geometry.js');
+require('../src/core/validity.js');
+require('../src/core/quantity.js');
+require('../src/core/measurement.js');
+require('../src/core/profiles.js');
 require('../src/core/registry.js');
+require('../src/profiles/isc.js');
+require('../src/profiles/vcpd.js');
 require('../src/modules/isc.js');
 
 const ISC=PV2000.modules.isc;
@@ -111,4 +117,63 @@ test('ISC analysis exposes the three manual-defined result quantities with sampl
   assert.equal(a.summaries.dark.stdev,1);
   assert.equal(a.summaries.vsb.min,0.5);
   assert.equal(a.summaries.vsb.max,1);
+});
+
+
+test('ISC quantities expose provenance and profile metadata without changing values',()=>{
+  const d={
+    measurementKind:'isc',
+    profile:{id:'ISC-MAP-001',status:'validated'},
+    sites:[
+      {dark:1,light:.5,vsb:.5},
+      {dark:2,light:1.25,vsb:.75}
+    ]
+  };
+  const a=ISC.analyze(d);
+  assert.equal(a.metrics.dark.provenance,PV2000.quantity.PROVENANCE.CORRECTED);
+  assert.equal(a.metrics.light.provenance,PV2000.quantity.PROVENANCE.DERIVED_COMPATIBILITY);
+  assert.equal(a.metrics.vsb.profileId,'ISC-MAP-001');
+  assert.equal(a.metrics.vsb.validation,'validated');
+  assert.deepEqual(a.metrics.vsb.values,[.5,.75]);
+  assert.deepEqual(PV2000.validity.mask(a.metrics.vsb.availability),[true,true]);
+});
+
+test('ISC domain attachment preserves geometry and resolves the validated profile envelope',()=>{
+  const d={
+    type:'ISCMeasurement',
+    measurementKind:'isc',
+    name:'n',
+    resultName:'r',
+    substrateId:'s',
+    lotId:'',
+    iterationCount:1,
+    sites:[{darkRaw:[1],lightRaw:[.5],coord:{x:0,y:0}}],
+    coords:[{x:0,y:0}],
+    offset:0,
+    factor:1,
+    coordinateSource:'MapPattern + SquareCell',
+    patternType:'MapPattern',
+    targetType:'SquareCell',
+    targetWidth:100,
+    targetHeight:100,
+    edgeExclusion:30,
+    readingsPerSite:1,
+    measurementInterval:.02,
+    lightOn:'',
+    temperatureC:23
+  };
+  ISC.attachDomain(d);
+  assert.equal(d.profile.id,'ISC-MAP-001');
+  assert.equal(d.domain.familyId,'isc');
+  assert.equal(d.domain.profile.status,'validated');
+  assert.equal(d.domain.geometry.shape,'rect');
+  assert.equal(d.domain.geometry.validationStatus,'validated');
+  assert.deepEqual(d.domain.geometry.points,[{x:0,y:0}]);
+});
+
+test('registry exposes migrated module metadata while preserving type resolution',()=>{
+  const meta=PV2000.registry.describe('ISCMeasurement');
+  assert.equal(meta.familyId,'kelvin-probe');
+  assert.equal(meta.capabilities.map,true);
+  assert.equal(PV2000.registry.resolve('VcpdMeasurement'),ISC);
 });

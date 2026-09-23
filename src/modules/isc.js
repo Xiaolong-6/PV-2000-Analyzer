@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Q=PV.quantity,M=PV.measurement,Profiles=PV.profiles;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const esc=value=>PV.ui.escapeHtml(value);
   const help=text=>PV.ui.help(text);
@@ -69,6 +69,48 @@
     return null;
   }
 
+  function attachDomain(d){
+    const familyId=d.measurementKind==='vcpd'?'vcpd':'isc',
+      profile=Profiles.resolve(familyId,d),
+      target=targetGeometry(d),
+      validationStatus=profile?.status||(d.coords.length===d.sites.length&&d.coords.length?'inferred':'unsupported'),
+      geometryModel=GEO.envelope({
+        patternType:d.patternType,
+        targetType:d.targetType,
+        shape:target?.shape||'unknown',
+        nominal:target?.nominal||null,
+        scheduled:target?.scheduled||null,
+        points:d.coords,
+        edgeExclusion:d.edgeExclusion,
+        acquisitionOrder:d.coords.length?'x-fast / ascending-y or explicit XML order':'unknown',
+        provenance:d.coordinateSource,
+        validationStatus
+      }),
+      profileRef=profile?{id:profile.id,status:profile.status}:null;
+    d.profile=profileRef;
+    d.geometryModel=geometryModel;
+    d.domain=M.create({
+      type:d.type,
+      familyId,
+      identity:{name:d.name,resultName:d.resultName,substrateId:d.substrateId,lotId:d.lotId},
+      environment:{temperatureC:d.temperatureC},
+      geometry:geometryModel,
+      acquisition:{
+        iterationCount:d.iterationCount,
+        readingsPerSite:d.readingsPerSite,
+        measurementInterval:d.measurementInterval,
+        coordinateSource:d.coordinateSource
+      },
+      channels:d.measurementKind==='vcpd'
+        ?{darkReadings:'Readings'}
+        :{darkReadings:'VcpdDark',lightReadings:'VcpdLight'},
+      settings:{offset:d.offset,factor:d.factor,lightOn:d.lightOn},
+      familyData:{siteCount:d.sites.length},
+      profile:profileRef
+    });
+    return d;
+  }
+
   function parse(parsed){
     const m=parsed.measurement,
       c=X.common(parsed),
@@ -132,11 +174,12 @@
     }
 
     sites.forEach((site,i)=>{site.coord=coords[i]||null});
-    return{
+    const out={
       ...c,
       sites,
       coords,
       measurementKind:isVcpd?'vcpd':'isc',
+      iterationCount:itd?X.children(itd).filter(e=>X.lname(e)==='Iteration').length:0,
       offset,
       factor,
       coordinateSource,
@@ -159,43 +202,61 @@
       measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),
       raw:parsed
     };
+    return attachDomain(out);
   }
 
   function analyze(d){
     const isVcpd=d.measurementKind==='vcpd',
+      profileId=d.profile?.id||null,
+      validation=d.profile?.status||Q.VALIDATION.INFERRED,
       metrics={
-        dark:{
+        dark:Q.create({
+          id:isVcpd?'vcpd-dark':'isc-vcpd-dark',
           key:'dark',
           label:'Vcpd Dark',
           short:'Vcpd Dark',
           unit:'V',
           values:d.sites.map(s=>s.dark),
+          provenance:isVcpd?Q.PROVENANCE.DERIVED_COMPATIBILITY:Q.PROVENANCE.CORRECTED,
+          modelId:isVcpd?'vcpd-reading-mean-v1':'isc-offset-correction-v1',
+          profileId,
+          validation,
           help:isVcpd
             ?'PV-2000 Vcpd Dark result. In the validated VcpdMeasurement reference this equals the mean of XML Readings; the reference has one reading per site and VcpdOffset = 0.'
             :'PV-2000 dark contact-potential result: mean dark reading minus the XML Vcpd offset.'
-        }
+        })
       };
     if(!isVcpd){
-      metrics.light={
+      metrics.light=Q.create({
+        id:'isc-vcpd-light',
         key:'light',
         label:'Vcpd Light',
         short:'Vcpd Light',
         unit:'V',
         values:d.sites.map(s=>s.light),
+        provenance:Q.PROVENANCE.DERIVED_COMPATIBILITY,
+        modelId:'isc-light-reconstruction-v1',
+        profileId,
+        validation,
         help:'PV-2000 illuminated contact-potential result reconstructed as Vcpd Dark − VSB, including the XML VsbCorrectionFactor.'
-      };
-      metrics.vsb={
+      });
+      metrics.vsb=Q.create({
+        id:'isc-vsb',
         key:'vsb',
         label:'VSB',
         short:'VSB',
         unit:'V',
         values:d.sites.map(s=>s.vsb),
+        provenance:Q.PROVENANCE.DERIVED_COMPATIBILITY,
+        modelId:'isc-vsb-correction-v1',
+        profileId,
+        validation,
         help:'Surface barrier reconstructed as VsbCorrectionFactor × (mean dark raw Vcpd − mean illuminated raw Vcpd).'
-      };
+      });
     }
     const summaries={};
-    for(const [key,metric] of Object.entries(metrics))summaries[key]=S.summary(metric.values);
-    return{metrics,summaries};
+    for(const [key,metric] of Object.entries(metrics))summaries[key]=Q.summary(metric);
+    return{metrics,summaries,profile:d.profile||null};
   }
 
   function color(t){
@@ -805,6 +866,8 @@
 
   PV.modules=PV.modules||{};
   PV.modules.isc={
+    familyId:'kelvin-probe',
+    capabilities:{map:true,distribution:true,rawReadings:true},
     types:['ISCMeasurement','VcpdMeasurement'],
     parse,
     analyze,
@@ -812,7 +875,8 @@
     reconstructSite,
     reconstructVcpdSite,
     effectiveHalf,
-    targetGeometry
+    targetGeometry,
+    attachDomain
   };
   PV.registry.register(PV.modules.isc);
 })(typeof window!=='undefined'?window:globalThis);
