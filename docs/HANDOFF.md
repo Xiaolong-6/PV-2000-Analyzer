@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — main v20260923.10
+# Agent handoff — 2026-09-23 — refactor/measurement-domain-core v20260923.10.3
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
@@ -9,6 +9,23 @@ The inspected historical backup, software data archive and Ge/COCOS collection h
 The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. The first implementation branch should add shared domain primitives and migrate ISC/VCPD as the pilot without numerical, validation-label or UI changes.
 
 Scientific Wiki source pages are tracked under `wiki/`; `docs/DOCUMENTATION_WIKI_PLAN.md` defines their role and `docs/WIKI_HANDOFF.md` documents Wiki synchronization. Wiki prose is maintained as the current scientific reference, while validation/profile evidence remains in repository docs.
+
+## Measurement-domain Phase A
+
+This branch introduces the new domain core and migrates ISC/VCPD only.
+
+New primitives:
+
+- `src/core/validity.js`
+- `src/core/quantity.js`
+- `src/core/measurement.js`
+- `src/core/profiles.js`
+- normalized geometry envelopes in `src/core/geometry.js`
+- semantic profile definitions under `src/profiles/`.
+
+ISC/VCPD keep the existing parser-result fields, renderer and CSV behavior while also exposing domain/profile/provenance metadata. DIT/QSS/Dual QSS/JZero/LBIC are intentionally untouched by this migration.
+
+Before merge, require normal CI plus private `validate:isc` and `validate:vcpd` when the paired files are locally available. Any numerical change is a stop condition for this branch.
 
 ## Goal
 

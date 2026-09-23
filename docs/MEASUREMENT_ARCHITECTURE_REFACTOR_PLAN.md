@@ -1,10 +1,8 @@
 # Measurement architecture refactor plan
 
-Status: **planning only**. This branch does not change runtime behavior.
+Status: **Phase A implementation in progress** on `refactor/measurement-domain-core`.
 
-Recommended implementation branch after this plan is accepted:
-
-`refactor/measurement-domain-core`
+The initial implementation preserves runtime numerical/UI behavior while introducing domain metadata.
 
 ## 1. Goal
 
@@ -671,6 +669,22 @@ Out of scope for this first branch:
 - UI redesign;
 - formula changes;
 - validation-envelope expansion.
+
+### Phase A implementation status
+
+Implemented on the current refactor branch:
+
+- quantity/provenance model;
+- availability/reason primitives;
+- normalized measurement envelope;
+- semantic profile registry;
+- normalized geometry envelope;
+- backwards-compatible registry metadata;
+- ISC-MAP-001 and VCPD-MAP-001 profile definitions;
+- ISC/VCPD pilot migration with unchanged renderer/export interfaces;
+- domain/profile/provenance regression tests.
+
+Private ISC/VCPD paired validators remain the numerical acceptance gate before merge.
 
 ### Phase B
 

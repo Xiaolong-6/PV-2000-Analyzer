@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260923.10.3 — 2026-09-23 (measurement-domain refactor branch)
+
+- Added the first measurement-domain core: explicit Quantity provenance/availability, normalized measurement and geometry envelopes, semantic profile registry, and backwards-compatible registry metadata.
+- Migrated ISC/VCPD internally as the pilot family. Existing result arrays, summaries, render/export contracts and reference-profile boundaries are preserved while ISC-MAP-001 / VCPD-MAP-001 metadata become explicit.
+- Added domain-core, profile-resolution, build-order and ISC/VCPD provenance regressions. DIT/QSS/Dual QSS/JZero/LBIC remain on their existing module paths in this phase.
+
 ## v20260923.10 — 2026-09-23
 
 - Fixed Dual QSS initial rendering: Lifetime vs QSS intensity and Stored transient now draw immediately after XML import instead of waiting for a Log/Linear or source-control change event.
