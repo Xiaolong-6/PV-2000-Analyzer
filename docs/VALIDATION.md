@@ -37,6 +37,42 @@ npm run validate:qss
 
 The validator also verifies coordinate acquisition order. The current QSS reference remains private and ignored. Future explicitly publishable cases may be added under `reference_data/`; neither private nor public vendor exports are required by the shipped browser application.
 
+### Expanded RoundWafer corpus
+
+A later private corpus adds **96 `QssUpcdMeasurement + MapPattern + RoundWafer` XML files**. The geometry remains inside QSS-MAP-001:
+
+- 95 files use 100 mm RoundWafer geometry with 5 mm pitch and 305 XML lifetime values;
+- one file uses 125 mm RoundWafer geometry with 5 mm pitch and 489 XML lifetime values;
+- nine files have same-measurement numeric PV-2000 CSV exports;
+- 108 associated XPS printouts show the same τeff.d / Smax / Implied-Voc result family.
+
+Pointwise regression on the nine numeric pairs establishes:
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| paired CSV cases | 9 | expanded evidence set |
+| X/Y coordinates | max abs error 0 mm | validated |
+| XML τeff.d vs CSV | max abs error 0 µs | validated |
+| Smax from `W/(2τ)` | max abs error ~5e-8 cm/s | validated to CSV numeric precision |
+| finite Implied Voc, existing compatibility model | max abs error ~1.94 mV | compatibility close, not vendor-exact |
+
+The original 305-point reference remains the tighter <0.1 mV Implied-Voc instance. The expanded corpus demonstrates that this tighter figure must not be generalized to all RoundWafer files.
+
+The corpus also establishes an important raw-value convention: **76 of the 96 XML files contain `τeff.d = -1 µs` sentinel sites**. Across the corpus this occurs at **13,649 of 29,464 XML sites**. Matching vendor output preserves the raw sentinel and can carry it into negative Smax values. Runtime therefore preserves raw XML/Smax values for parity/export, while default scientific analysis marks non-positive lifetime unavailable before user filtering. Users can explicitly select Raw / PV-2000 style when inspecting vendor-style raw behavior.
+
+### QSS analyzer-derived SRV and material modes
+
+The QSS analyzer now exposes lifetime → SRV as optional post-processing:
+
+```text
+planar:   S = W/2 * (1/tau_eff - 1/tau_bulk)
+textured: S = W   * (1/tau_eff - 1/tau_bulk) - S_planar_reference
+```
+
+Bulk lifetime is optional (blank = infinity), textured mode exposes the planar-reference SRV, and an optional minimum-lifetime threshold can reject low-lifetime points. Negative calculated SRV is clamped to zero. This is **analyzer-derived**, not a PV-2000 vendor-result validation claim.
+
+Implied Voc remains **PV-2000 compatible by default**. Optional Physical Si / Physical Ge modes are explicit user-selected estimates. The QSS XML family does not provide a trustworthy material identifier, so the analyzer never infers material from filenames, result names or substrate IDs.
+
 ### HighDensityPattern compatibility
 
 Status: **inferred coordinate reconstruction**, not vendor-validated.
@@ -47,7 +83,7 @@ For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle.
 
 ### Valid-data filtering
 
-The new valid-range UI is an analyzer feature rather than a vendor-output replication. Tests verify range masking; users must choose limits appropriate to the sample geometry/data distribution. This is especially important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
+The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw / PV-2000 style can retain the sentinel for parity inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
 
 ## Dual QSS injection sweep — paired raw XML/CSV regression
 
@@ -236,6 +272,10 @@ The current-enabled set contains five paired XML/CSV references: four 51×51/101
 
 The reflectance-only corpus contains **62 XML files**. All 62 use `MeasureCurrent=false`, `MeasureDirectReflectance=true`, `MeasureScatteredReflectance=true`; their BeamData still include `Current`, but every supplied Current value is exactly zero. **44** of those XMLs have **60 matching PV-2000 XPS result printouts** because several measurements were printed at more than one display color scale.
 
+The full-corpus inventory check reports **44 PASS** with matching XPS summaries, **17 UNPAIRED** complete XMLs without a matching vendor printout, **1 INFERRED** partial acquisition (2814/3721 points), and **0 FAIL**. `UNPAIRED` confirms the XML fits the known structural path but does not claim result parity for that instance. The validator is strict by default; `--allow-unpaired` is for a mixed corpus inventory and never labels missing vendor evidence as `PASS`.
+
+A browser smoke sweep of the built analyzer imported **all 62 XMLs**. For every file, the selected quantity was Reflectivity (marked inferred for the partial acquisition), Results summary and Selected pixel contained Reflectivity values, and raster map, distribution, X profile and Y profile canvases all had plotted pixels. There were no import dialogs or runtime exceptions. Visual inspection of a complete file and the partial file confirmed the expected map shapes. This verifies display operation, not vendor parity for the 17 unpaired files or the partial coordinate schedule.
+
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
 | `LBICMeasurement` dispatch | unit tested | tested |
@@ -269,6 +309,8 @@ npm run validate:lbic
 ```
 
 Current-enabled private references use same-basename XML/CSV pairs under `private/reference/lbic/`. Reflectance-only cases may use matching Reflectivity XPS printouts; the validator matches them by normalized XML-result-name prefix and checks the five vendor summary statistics at display precision.
+
+For a private reflectance folder inventory, pass `--allow-unpaired` followed by its XML paths to `scripts/validate_lbic_reference.py` through the Node Python wrapper. Omit the option when every supplied XML must have a matching vendor result.
 
 Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch and, within `LBIC-MULTI-002`, the number of independent beam keys do not by themselves create a new profile. A different coordinate encoding, target scheduling rule, active measurement-flag combination, raw channel set, unit convention, coupled cross-beam calculation, iteration path, or vendor result/validity behavior remains **NEW PROFILE**. Incomplete acquisition ordering is not promoted to validated parity without matching vendor coordinate evidence.
 
