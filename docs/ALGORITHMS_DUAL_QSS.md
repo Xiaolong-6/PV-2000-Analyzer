@@ -45,7 +45,7 @@ The expanded corpus establishes that two lifetime fields in the XML must remain 
 - **PV-2000 raw `LifeTime`** is `TransientInfo@LifeTime`. Across all 273 exact pairs / 5833 points, the CSV raw-data `LifeTime [μs]` row matches `TransientInfo@LifeTime` exactly at exported precision (maximum absolute error **0 µs**).
 - **XML `Values` lifetime** is a separate XML vector. It is usually very close to `TransientInfo@LifeTime`, but it is not guaranteed identical. Across the paired corpus the maximum observed absolute difference is **0.020593307 µs**, with one point above 0.006 µs.
 
-The analyzer therefore defaults the injection curve and positive-lifetime summary to the validated PV-2000 raw `LifeTime` source (`TransientInfo@LifeTime`) and offers **XML Values** as a diagnostic curve source. Both fields remain exported. Neither is the vendor result-table `Lifetime[us]` described below.
+The runtime uses `TransientInfo@LifeTime` as the canonical XML lifetime, falling back to XML `Values` only when that field is unavailable. The two XML fields remain distinguishable in development validation/export diagnostics, while the user-facing curve has one Lifetime source. PV-2000 CSV/raw exports are development evidence only and are never runtime inputs. Neither XML field is the vendor result-table `Lifetime[us]` described below.
 
 Other raw-path regression results:
 

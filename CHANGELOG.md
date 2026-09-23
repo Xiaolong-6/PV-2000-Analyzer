@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260923.9.1 — 2026-09-23 (Dual QSS render fix branch)
+
+- Fixed Dual QSS initial rendering: Lifetime vs QSS intensity and Stored transient now draw immediately after XML import instead of waiting for a Log/Linear or source-control change event.
+- Removed the runtime lifetime-source selector and PV-2000 raw wording. Dual QSS uses the imported XML `TransientInfo@LifeTime` value, falling back to XML `Values` only when necessary; CSV/raw exports remain development-validation evidence only.
+
 ## v20260923.9 — 2026-09-23
 
 - Merged the scientific Wiki source set and documentation/Wiki information-architecture plan into the main repository for continued maintenance.

@@ -13,12 +13,12 @@ test('Dual QSS range classification separates supplied low/high schedules',()=>{
   assert.equal(PV2000.modules.dualQss.classifyRange([30,33,46,3162]),'High-range injection');
 });
 
-test('Dual QSS defaults to TransientInfo LifeTime for the PV-2000 raw lifetime path',()=>{
+test('Dual QSS canonical lifetime comes from XML TransientInfo with Values fallback',()=>{
   const p={lifetime:1.479406693,transient:{lifetime:1.5}};
   assert.equal(PV2000.modules.dualQss.lifetimeValue(p),1.5);
   assert.equal(PV2000.modules.dualQss.lifetimeValue(p,'transient'),1.5);
   assert.equal(PV2000.modules.dualQss.lifetimeValue(p,'values'),1.479406693);
-  assert.equal(PV2000.modules.dualQss.lifetimeLabel('transient'),'PV-2000 raw LifeTime');
+  assert.equal(PV2000.modules.dualQss.lifetimeLabel('transient'),'Lifetime');
   assert.equal(PV2000.modules.dualQss.lifetimeLabel('values'),'XML Values lifetime');
 });
 
@@ -39,7 +39,6 @@ test('Dual QSS analysis preserves invalid points and audits Values versus Transi
   assert.equal(raw.invalidCount,1);
   assert.ok(Math.abs(raw.summary.mean-75.001)<1e-12);
   assert.ok(Math.abs(raw.maxTransientDelta-.004)<1e-12);
-  assert.equal(PV2000.modules.dualQss.analyze(d,'values').summary.mean,75);
 });
 
 test('Dual QSS export rows retain both XML lifetime fields and transient metadata',()=>{

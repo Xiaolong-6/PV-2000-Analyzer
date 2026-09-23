@@ -203,9 +203,8 @@ The result-table Lifetime transformation, zero/blank acceptance rule, Implied-Vo
 
 **Analyzer behavior**
 
-- default curve/summary lifetime: validated PV-2000 raw `LifeTime` from `TransientInfo@LifeTime`;
-- optional curve source: XML `Values` for diagnostics;
-- selected-point inspection shows both lifetime fields;
+- runtime curve/summary lifetime: `TransientInfo@LifeTime` from the imported XML, with XML `Values` used only as a fallback when needed;
+- raw CSV comparison and the distinction between the two XML lifetime fields remain development-validation concerns rather than runtime source controls;
 - stored transient inspection, local multi-XML overlay, log/linear X and XML-only CSV export are analyzer features, not claimed vendor post-processing.
 
 **NEW PROFILE triggers**

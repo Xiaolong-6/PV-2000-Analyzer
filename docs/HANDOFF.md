@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — main v20260923.9
+# Agent handoff — 2026-09-23 — fix/dual-qss-initial-lifetime-render v20260923.9.1
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
@@ -116,7 +116,7 @@ Expanded private evidence:
 - the CSV top-table `Lifetime[us]` remains a different post-processed quantity: **4628 positive / 1205 zero** rows in the exact-pair corpus;
 - given positive vendor result-table Lifetime, exported `dn` follows the documented generation relation with maximum rounded-CSV relative discrepancy about **0.509%**.
 
-Runtime behavior follows that evidence: the main curve and raw summary default to **PV-2000 raw LifeTime** (`TransientInfo@LifeTime`); a curve-source selector exposes **XML Values** for diagnostics; selected-point and CSV export keep both fields explicit.
+Runtime behavior is XML-only: the main curve and summary use `TransientInfo@LifeTime`, falling back to XML `Values` only when needed. The UI exposes one Lifetime curve; raw CSV comparison and XML-field diagnostics remain development-validation concerns.
 
 Still unresolved: raw-lifetime → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
 
