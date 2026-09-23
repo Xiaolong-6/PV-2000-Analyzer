@@ -307,6 +307,12 @@ The current reference instance has 169 sites, 24 readings/site, a 100 × 100 mm 
 - Vsb pointwise maximum absolute error ≈ **7.49e-16 V**;
 - Average / Median / sample Stdev / Min / Max reproduce the vendor summary to ≈ **3.33e-15** maximum absolute error.
 
+**Partial acquisitions — inferred**
+
+One supplied terminated ISC XML uses `MapPattern + RoundWafer` with a 200 mm target, 4 mm EdgeExclusion and 1 × 1 mm pitch. The complete strict-circle schedule contains **28,913** sites, while the saved XML contains **10,947** DataItems. Runtime support maps those DataItems to the leading X-fast / ascending-Y schedule prefix so the partial wafer remains viewable. This coordinate interpretation is labelled **partial / inferred** and is excluded from `ISC-MAP-001` profile parity until matching vendor X/Y output confirms incomplete-scan ordering.
+
+Completed/normal acquisitions with mismatched point counts remain unsupported instead of using prefix truncation.
+
 **Analyzer features not claimed as vendor algorithms**
 
 - browser raster color interpolation/palette;
