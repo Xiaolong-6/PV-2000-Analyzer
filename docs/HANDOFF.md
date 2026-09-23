@@ -1,6 +1,6 @@
-# Agent handoff — 2026-09-23 — codex/dit-ge-paired-validation v20260923.6.1
+# Agent handoff — 2026-09-23 — main v20260923.7
 
-This branch adds only a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations or touch `main`. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
+The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
 The larger private OnePoint collection contains 176 row-aligned XML/raw-CSV pairs with 11,575 exact Qc schedule points. Dark-channel parity is narrow rather than universal: 168 pairs are within 2 mV maximum error; eight diverge, while exported light/Vsb generally differs from measured-light XML. The optional strict validator gate passes an eight-pair/520-row subset and rejects a mixed collection with unmatched or divergent cases. Do not infer a vendor Ge material mode or implement the missing corrected-light path from these exports.
 

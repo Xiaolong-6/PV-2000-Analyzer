@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260923.6.1 — 2026-09-23 (DIT reference audit branch)
+## v20260923.7 — 2026-09-23
 
 - Added a generic, read-only DIT XML/raw-CSV diagnostic and optional strict dark-channel regression gate; private file paths and data remain outside the repository.
 - Audited a larger private Standard COCOS OnePoint corpus: 176 paired row-aligned cases / 11,575 process rows reproduce the Qc schedule exactly, while eight cases exceed 2 mV dark-channel error and the exported light/Vsb branches are not generally derivable from saved measured-light XML.
