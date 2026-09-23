@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — v20260923.12
+# Agent handoff — 2026-09-23 — v20260923.13
 
 ## Phase B — ISC/VCPD Valid-data filter
 
@@ -70,7 +70,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 - `QssUpcdMeasurement` analyzer with raw-lifetime preservation, sentinel-aware scientific validity, lifetime/Smax/PV-2000-compatible Implied-Voc maps, explicit Physical Si/Ge estimates, configurable lifetime→SRV analysis, filtering, distributions/profiles and CSV export;
 - `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
 - `JZeroMeasurement` analyzer with two-intensity Emitter J0 maps, PseudoSquareCell geometry, Basore J0, both τeff.d/Smax/Implied-Voc channels, filtering, distributions and CSV export;
-- `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
+- `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export; explicitly terminated maps can render an inferred leading schedule prefix while completed point-count mismatches remain unavailable;
 - `LBICMeasurement` analyzer with dynamic beam/channel raster maps, line profiles, pixel inspection and CSV export;
 - system light/dark theme + explicit theme toggle;
 - global legacy Settings button removed; controls are module-specific;
