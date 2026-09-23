@@ -1,5 +1,9 @@
 # Agent handoff — 2026-09-23 — v20260923.22
 
+## Paired-evidence gate for new analysis
+
+Project rule: before adding any new scientific analyzer, derived result quantity or calculation path, obtain at least one real PV-2000 XML and the matching numeric PV-2000 CSV export. XML-only material may support parsing/raw inspection, but is not sufficient evidence for a new calculated result. Current Dual QSS result-parity work therefore starts from the real paired HighPower/LowPower XML+CSV cases in the private-reference repository and keeps unresolved result-table quantities out of runtime until regression is established.
+
 ## Analyzer index + sidebar consistency audit
 
 The landing page now distinguishes three concepts explicitly: dedicated supported analyzers, the Generic XML Inspector fallback, and the PV-2000 v1.3.0.5 validation boundary. The supported-analyzer row is Dit / COCOS, QSS-µPCD, QSS Injection, Emitter J0, ISC / VCPD, CET / EOT and LBIC.
