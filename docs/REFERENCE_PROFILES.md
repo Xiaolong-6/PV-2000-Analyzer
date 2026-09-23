@@ -257,6 +257,41 @@ Treat multiple iterations, another DataItem/transient layout, another pattern/ta
 
 See `docs/ALGORITHMS_DUAL_QSS.md`.
 
+### QSS-INJ-RESULT-001 — Dual QSS paired numeric result scalar
+
+**Measurement type**
+
+`DualQssMeasurement`
+
+**Reference material**
+
+Two private **real XML + matching numeric PV-2000 result CSV** pairs. Both use `OnePointPattern + RoundWafer`, `ProbeSelection=Back` and `QssBiasSelection=Back`. One acquired sweep includes 1000 mSun explicitly; the other terminates below 1000 mSun.
+
+**Validated / established**
+
+- final-result `teff.d (1 Sun)` uses the XML `Values` vector rather than rounded `TransientInfo@LifeTime`;
+- exact-1000 case: XML `Values` at 1000 mSun matches the vendor scalar with **0 µs error**;
+- below-target case: when acquisition ends at 681 mSun, PV-2000 returns the final acquired XML `Values` element as `teff.d (1 Sun)`, again with **0 µs error**;
+- no interior interpolation rule is generalized from these pairs; a sweep spanning 1000 mSun without an exact 1000 mSun point remains unsupported for this scalar until paired evidence exists;
+- vendor `Smax (1 Sun)` equals `50 * W_um / teff.SS_1sun_us` in both pairs (maximum observed absolute regression error approximately **1.1e-13 cm/s**);
+- vendor maximum-lifetime `Smax` equals `50 * W_um / teff.SS_max_us` in both pairs (maximum observed absolute regression error approximately **3.9e-14 cm/s**);
+- in the finite-Δn pair, `Δn (1 Sun) = 2.38e12 * 1000 * OpticalFactor * teff.SS / W_um` agrees with the numeric export to approximately **1.1e-15 relative error**;
+- the second pair exports Basore J0 and Δn as undefined while K-S J0 and Implied Voc remain defined, establishing one concrete availability example without yet establishing the browser-side algorithms.
+
+**Runtime boundary**
+
+Only the paired-validated `teff.d (1 Sun)` scalar is added to runtime Results summary, and only for the validated exact-1000 / below-target endpoint cases. Runtime does not synthesize teff.SS, teff.SS Max, Implied Voc, Basore J0, K-S J0 or a general Δn result from these two pairs.
+
+**NEW PROFILE triggers / evidence extensions**
+
+A different pattern/target/source-selection path, multi-iteration schema, or different result-table algorithm is a new profile. An interior 1000-mSun interpolation case can extend this profile only after a real XML + matching numeric PV-2000 CSV establishes the rule.
+
+Run `npm run validate:dual-qss-results` against the private paired case directories.
+
+See `docs/ALGORITHMS_DUAL_QSS.md`.
+
+---
+
 ### JZERO-MAP-001 — two-intensity Emitter J0 pseudo-square map
 
 **Measurement type**
