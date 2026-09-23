@@ -1,4 +1,12 @@
-# Agent handoff — 2026-09-23 — v20260923.15
+# Agent handoff — 2026-09-23 — refactor/qss-shared-valid-data-filter v20260923.15.1
+
+## QSS shared Valid-data filter migration
+
+QssUpcdMeasurement now migrates its mature module-local range-filter state onto `PV2000.selection.createFilter()` plus the shared `validDataFilterMarkup()` / `bindValidDataFilter()` UI contract. This is intentionally behavior-preserving.
+
+QSS keeps `intrinsicLifetimeMask()` as a separate scientific/support layer. The controller receives that support as `intrinsicMask`; the resulting `activeMask` is the existing user-filter population. Default `Exclude τ ≤ 0`, Raw/PV-2000 style, filter metric order, full-range defaults, inclusive bounds, `1–99%`, Reset and Apply semantics are preserved. Apply analysis rebuilds the controller with the current filter metric and resets its range to the full newly supported metric range, matching previous behavior.
+
+Summary, map, Distribution, acquisition profile and CSV validity flags all consume the same active population. Map/profile/histogram still receive the separate support mask so UNAVAILABLE and FILTERED remain distinct. Raw XML lifetime values, QSS algorithms, Smax, Implied Voc modes, Si/Ge estimates, SRV post-processing and validation profiles are unchanged.
 
 ## LBIC Valid-data filter rollout
 
