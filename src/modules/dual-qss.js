@@ -13,6 +13,12 @@
   function logTicks(lo,hi){const o=[];for(let p=Math.floor(Math.log10(lo));p<=Math.ceil(Math.log10(hi));p++)for(const m of[1,2,5]){const v=m*10**p;if(v>=lo&&v<=hi)o.push(v)}return o}
   function afmt(v){const a=Math.abs(v);return a>=1e4||a>0&&a<1e-2?v.toExponential(1):Number(v.toPrecision(4)).toString()}
   function classifyRange(a){const z=a.filter(v=>v>0&&Number.isFinite(v));if(!z.length)return'Unknown';const lo=Math.min(...z),hi=Math.max(...z);if(lo<=3&&hi<=10000)return'Low-range injection';if(lo>=20)return'High-range injection';return'Broad-range injection'}
+  function lifetimeValue(p,source='transient'){
+    if(source==='values')return p?.lifetime;
+    const raw=p?.transient?.lifetime;
+    return Number.isFinite(raw)?raw:p?.lifetime;
+  }
+  function lifetimeLabel(source){return source==='values'?'XML Values lifetime':'PV-2000 raw LifeTime'}
   function parseTransient(t){
     const tr=X.direct(t,'Transient'),
       points=tr?X.children(tr).map(p=>({
@@ -43,7 +49,12 @@
     const points=Array.from({length:n},(_,i)=>({intensityMilli:intensity[i],intensitySun:Number.isFinite(intensity[i])?intensity[i]/1000:NaN,lifetime:values[i],power:power[i],transient:transients[i]||null}));
     return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),targetType:X.attrType(target),diameter:X.num(target,'Diameter'),edgeExclusion:X.num(target,'EdgeExclusion'),waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity')};
   }
-  function analyze(d){const life=d.points.map(p=>p.lifetime),valid=life.map(v=>v>0&&Number.isFinite(v)),dv=d.points.map(p=>p.transient&&Number.isFinite(p.lifetime)?p.lifetime-p.transient.lifetime:NaN);return{valid,validCount:valid.filter(Boolean).length,invalidCount:valid.filter(v=>!v).length,summary:S.summary(life.filter((v,i)=>valid[i])),maxTransientDelta:Math.max(0,...dv.filter(Number.isFinite).map(Math.abs))}}
+  function analyze(d,source='transient'){
+    const life=d.points.map(p=>lifetimeValue(p,source)),
+      valid=life.map(v=>v>0&&Number.isFinite(v)),
+      dv=d.points.map(p=>Number.isFinite(p.lifetime)&&Number.isFinite(p.transient?.lifetime)?p.lifetime-p.transient.lifetime:NaN);
+    return{source,valid,validCount:valid.filter(Boolean).length,invalidCount:valid.filter(v=>!v).length,summary:S.summary(life.filter((v,i)=>valid[i])),maxTransientDelta:Math.max(0,...dv.filter(Number.isFinite).map(Math.abs))};
+  }
   function axes(ctx,W,H,p,xr,yr,xLabel,yLabel,logX=false){
     const X=x=>logX
       ?p.l+(Math.log(x)-Math.log(xr[0]))/(Math.log(xr[1])-Math.log(xr[0]))*(W-p.l-p.r)
@@ -82,20 +93,21 @@
     return{X,Y};
   }
   const colors=['--blue','--red','--green','--purple','--yellow','--soft'];
-  function drawCurve(canvas,sets,selSet,selPoint,logX,zoom,onZoom,onSelect){
+  function drawCurve(canvas,sets,selSet,selPoint,logX,lifetimeSource,zoom,onZoom,onSelect){
     const ctx=canvas.getContext('2d'),
       W=canvas.width=820,
       H=canvas.height=390,
       p={l:68,r:20,t:28,b:52},
+      life=q=>lifetimeValue(q,lifetimeSource),
       xs=sets.flatMap(s=>s.data.points.map(q=>q.intensityMilli)),
-      ys=sets.flatMap(s=>s.data.points.map(q=>q.lifetime)),
+      ys=sets.flatMap(s=>s.data.points.map(q=>life(q))),
       autoX=logX?posRange(xs):range(xs),
       autoY=range(ys,.08),
       xr=PV.plot.resolve(autoX,zoom.x),
       yr=PV.plot.resolve(autoY,zoom.y);
     ctx.fillStyle=css('--chart-bg');
     ctx.fillRect(0,0,W,H);
-    const {X,Y}=axes(ctx,W,H,p,xr,yr,'QSS intensity [mSun]','Transient lifetime [µs]',logX);
+    const {X,Y}=axes(ctx,W,H,p,xr,yr,'QSS intensity [mSun]',`${lifetimeLabel(lifetimeSource)} [µs]`,logX);
     ctx.save();
     ctx.beginPath();
     ctx.rect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
@@ -107,20 +119,20 @@
       ctx.beginPath();
       let started=false;
       s.data.points.forEach(q=>{
-        if(!(q.intensityMilli>0)||!Number.isFinite(q.lifetime)||q.lifetime<=0){
+        if(!(q.intensityMilli>0)||!Number.isFinite(life(q))||life(q)<=0){
           started=false;
           return;
         }
-        const x=X(q.intensityMilli),y=Y(q.lifetime);
+        const x=X(q.intensityMilli),y=Y(life(q));
         if(started)ctx.lineTo(x,y);
         else{ctx.moveTo(x,y);started=true}
       });
       ctx.stroke();
       s.data.points.forEach((q,pi)=>{
-        if(!(q.intensityMilli>0)||!Number.isFinite(q.lifetime))return;
+        if(!(q.intensityMilli>0)||!Number.isFinite(life(q)))return;
         ctx.beginPath();
-        ctx.arc(X(q.intensityMilli),Y(q.lifetime),si===selSet&&pi===selPoint?5:3,0,2*Math.PI);
-        ctx.fillStyle=q.lifetime>0?col:css('--bad');
+        ctx.arc(X(q.intensityMilli),Y(life(q)),si===selSet&&pi===selPoint?5:3,0,2*Math.PI);
+        ctx.fillStyle=life(q)>0?col:css('--bad');
         ctx.fill();
         if(si===selSet&&pi===selPoint){
           ctx.strokeStyle=css('--text');
@@ -129,7 +141,7 @@
       });
     });
     ctx.restore();
-    const nearest=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;let b=null,d=Infinity;sets.forEach((s,si)=>s.data.points.forEach((q,pi)=>{if(!(q.intensityMilli>0)||!Number.isFinite(q.lifetime))return;const z=(mx-X(q.intensityMilli))**2+(my-Y(q.lifetime))**2;if(z<d){d=z;b={si,pi,q,s}}}));return d<180?b:null},tip=PV.ui.setupTooltip(canvas);canvas.onmouseleave=()=>PV.ui.hideTooltip(tip);canvas.onmousemove=e=>{const b=nearest(e);b?PV.ui.showTooltip(tip,e,`<b>${esc(b.s.label)}</b><br>${fmt(b.q.intensityMilli)} mSun · ${fmt(b.q.lifetime)} µs`):PV.ui.hideTooltip(tip)};canvas.onclick=e=>{const b=nearest(e);if(b)onSelect(b.si,b.pi)};PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},xLog:logX,onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
+    const nearest=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;let b=null,d=Infinity;sets.forEach((s,si)=>s.data.points.forEach((q,pi)=>{if(!(q.intensityMilli>0)||!Number.isFinite(life(q)))return;const z=(mx-X(q.intensityMilli))**2+(my-Y(life(q)))**2;if(z<d){d=z;b={si,pi,q,s}}}));return d<180?b:null},tip=PV.ui.setupTooltip(canvas);canvas.onmouseleave=()=>PV.ui.hideTooltip(tip);canvas.onmousemove=e=>{const b=nearest(e);b?PV.ui.showTooltip(tip,e,`<b>${esc(b.s.label)}</b><br>${fmt(b.q.intensityMilli)} mSun · ${fmt(life(b.q))} µs`):PV.ui.hideTooltip(tip)};canvas.onclick=e=>{const b=nearest(e);if(b)onSelect(b.si,b.pi)};PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},xLog:logX,onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
   }
   function drawTransient(canvas,pnt,zoom,onZoom){
     const pts=pnt?.transient?.points||[],
@@ -177,11 +189,11 @@
     });
   }
   function pointRows(d){return d.points.map((p,i)=>[i+1,p.intensityMilli,p.intensitySun,p.lifetime,p.power,p.transient?.lifetime??'',p.transient?.evaluation??'',p.transient?.delta??'',p.transient?.preTrigger??'',p.transient?.autoCursor??'',p.transient?.timeCursor??'',p.transient?.average??'',p.transient?.amplitude??'',p.transient?.microwave??'',p.transient?.laserPower??'',p.transient?.voltage??'',p.transient?.offset??'',p.transient?.timeBase??'',p.transient?.points?.length??0])}
-  function exportCurve(d){PV.exporter.csv(`${safe(d.resultName||d.name)}_dual_qss.csv`,['Point','QSS intensity [mSun]','QSS intensity [Sun]','XML lifetime [us]','Laser power vector','Transient lifetime [us]','Evaluation','Delta [ns]','PreTrigger [us]','AutoCursor','TimeCursor [us]','Average','Amplitude [mV]','Microwave [GHz]','Transient LaserPower','Voltage range [mV]','Offset [mV]','TimeBase [us]','Transient samples'],pointRows(d))}
+  function exportCurve(d){PV.exporter.csv(`${safe(d.resultName||d.name)}_dual_qss.csv`,['Point','QSS intensity [mSun]','QSS intensity [Sun]','XML Values lifetime [us]','Laser power vector','PV-2000 raw LifeTime / TransientInfo [us]','Evaluation','Delta [ns]','PreTrigger [us]','AutoCursor','TimeCursor [us]','Average','Amplitude [mV]','Microwave [GHz]','Transient LaserPower','Voltage range [mV]','Offset [mV]','TimeBase [us]','Transient samples'],pointRows(d))}
   function exportTransient(d,i){const p=d.points[i];PV.exporter.csv(`${safe(d.resultName||d.name)}_point_${i+1}_transient.csv`,['Time [us]','Voltage [mV]'],(p?.transient?.points||[]).map(q=>[q.x,q.y]))}
   function row(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`}
-  function render(host,d,a){let sets=[{label:d.resultName||d.name||'Current XML',data:d,fileName:''}],selSet=0,selPoint=0,logX=true,zoom={curve:{x:null,y:null},transient:{x:null,y:null}};const current=()=>sets[selSet]?.data.points[selPoint];
-    function selectedHtml(){const p=current(),t=p?.transient;if(!p)return'—';return`<dl class="meta">${row('Dataset',sets[selSet].label)}${row('Point',selPoint+1)}${row('Intensity',`${fmt(p.intensityMilli)} mSun`)}${row('XML Values lifetime',`${fmt(p.lifetime,4)} µs`)}${row('TransientInfo lifetime',`${fmt(t?.lifetime,4)} µs`)}${row('Evaluation',t?.evaluation||'—')}${row('Delta',`${fmt(t?.delta,3)} ns`)}${row('Pre-trigger',`${fmt(t?.preTrigger,3)} µs`)}${row('Auto cursor',fmt(t?.autoCursor,0))}${row('Time cursor',`${fmt(t?.timeCursor,3)} µs`)}${row('Average',fmt(t?.average,0))}${row('Amplitude',`${fmt(t?.amplitude,3)} mV`)}${row('Microwave',`${fmt(t?.microwave,4)} GHz`)}${row('Transient laser power',fmt(t?.laserPower,4))}${row('Voltage range',`${fmt(t?.voltage,3)} mV`)}${row('Offset',`${fmt(t?.offset,4)} mV`)}${row('Time base',`${fmt(t?.timeBase,3)} µs`)}${row('Samples',t?.points?.length||0)}</dl>`}
+  function render(host,d,a){let sets=[{label:d.resultName||d.name||'Current XML',data:d,fileName:''}],selSet=0,selPoint=0,logX=true,lifetimeSource='transient',zoom={curve:{x:null,y:null},transient:{x:null,y:null}};const current=()=>sets[selSet]?.data.points[selPoint];
+    function selectedHtml(){const p=current(),t=p?.transient;if(!p)return'—';return`<dl class="meta">${row('Dataset',sets[selSet].label)}${row('Point',selPoint+1)}${row('Intensity',`${fmt(p.intensityMilli)} mSun`)}${row('PV-2000 raw LifeTime',`${fmt(t?.lifetime,4)} µs`,'Validated against the raw CSV LifeTime row; source is TransientInfo@LifeTime.')}${row('XML Values lifetime',`${fmt(p.lifetime,4)} µs`,'Separate XML diagnostic; it can differ from TransientInfo@LifeTime.')}${row('Evaluation',t?.evaluation||'—')}${row('Delta',`${fmt(t?.delta,3)} ns`)}${row('Pre-trigger',`${fmt(t?.preTrigger,3)} µs`)}${row('Auto cursor',fmt(t?.autoCursor,0))}${row('Time cursor',`${fmt(t?.timeCursor,3)} µs`)}${row('Average',fmt(t?.average,0))}${row('Amplitude',`${fmt(t?.amplitude,3)} mV`)}${row('Microwave',`${fmt(t?.microwave,4)} GHz`)}${row('Transient laser power',fmt(t?.laserPower,4))}${row('Voltage range',`${fmt(t?.voltage,3)} mV`)}${row('Offset',`${fmt(t?.offset,4)} mV`)}${row('Time base',`${fmt(t?.timeBase,3)} µs`)}${row('Samples',t?.points?.length||0)}</dl>`}
     function legendHtml(){
       const visible=sets.slice(0,4).map((s,i)=>{
         const range=s.data.rangeClass.replace('-range injection','').replace(' injection','');
@@ -190,8 +202,8 @@
       return visible+(sets.length>4?`<span class="dual-qss-legend-more">+${sets.length-4}</span>`:'');
     }
     function comparisonHtml(){return sets.length===1?'<span class="note">Add another Dual QSS XML to overlay LP/HP or repeat measurements.</span>':sets.map((s,i)=>`<div class="comparison-row"><span class="comparison-swatch" style="background:var(${colors[i%colors.length]})"></span><span>${esc(s.label)}</span>${i?`<button data-remove="${i}">×</button>`:''}</div>`).join('')}
-    host.innerHTML=`<div class="module-grid dual-qss-module"><aside class="side"><section class="panel"><h3>Dual QSS injection sweep ${help('Reads the raw DualQssMeasurement injection-intensity, transient-lifetime and stored waveform path. Paired PV-2000 exports confirm this raw path, but the vendor result-table Lifetime is a separate post-processed quantity and is not yet reconstructed.')}</h3><dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive raw lifetime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Target',`${fmt(d.diameter,1)} mm ${d.targetType||'—'}`)}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl></section><section class="panel"><h3>XML transient lifetime summary</h3><dl class="meta">${row('Average',`${fmt(a.summary.mean)} µs`)}${row('Median',`${fmt(a.summary.median)} µs`)}${row('Stdev',`${fmt(a.summary.stdev)} µs`)}${row('Min',`${fmt(a.summary.min)} µs`)}${row('Max',`${fmt(a.summary.max)} µs`)}${row('Invalid / ≤0',a.invalidCount)}${row('Raw lifetime max |Δ|',`${fmt(a.maxTransientDelta,5)} µs`)}</dl></section><section class="panel"><h3>Selected injection point</h3><div id="dqSelected">${selectedHtml()}</div></section><section class="panel"><h3>Comparison overlay</h3><div id="dqComparisons" class="comparison-list">${comparisonHtml()}</div><label class="btn comparison-open">Add XML<input id="dqAdd" type="file" accept=".xml,text/xml,application/xml" multiple></label></section><details class="panel"><summary>Acquisition / J0 settings</summary><dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag only; the paired exports establish the output columns but not yet the vendor J0/post-processing algorithm.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl></details></aside><section class="plots"><div class="panel chart"><header><b>XML transient lifetime vs QSS intensity</b>${help('This plot uses the raw XML Values/TransientInfo lifetime path, which matches the raw section of paired PV-2000 exports. It is not the post-processed vendor result-table Lifetime[us]. Log X is the default; click a point to inspect its stored transient.')}<span id="dqCurveLegend" class="dual-qss-inline-legend"></span><span class="grow"></span><select id="dqScale"><option value="log">Log X</option><option value="linear">Linear X</option></select>${PV.plot.axisControls('dqCurveAxes')}<button id="dqExportCurve">Export</button></header><div class="canvas-wrap"><canvas id="dqCurve"></canvas></div></div></section><section class="plots"><div class="panel chart"><header><b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow"></span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button></header><div class="canvas-wrap"><canvas id="dqTransient"></canvas></div></div></section></div>`;
-    host.querySelector('#dqScale').onchange=e=>{logX=e.target.value==='log';zoom.curve={x:null,y:null};redraw()};host.querySelector('#dqAdd').onchange=async e=>{for(const f of e.target.files||[]){try{const p=PV.xml.parse(await f.text());if(p.type!=='DualQssMeasurement')throw new Error(`${f.name}: not DualQssMeasurement.`);const z=parse(p);sets.push({label:z.resultName||z.name||f.name,data:z,fileName:f.name})}catch(err){alert(err.message)}}e.target.value='';zoom.curve={x:null,y:null};redraw()};
+    host.innerHTML=`<div class="module-grid dual-qss-module"><aside class="side"><section class="panel"><h3>Dual QSS injection sweep ${help('Reads the raw DualQssMeasurement injection-intensity, transient-lifetime and stored waveform path. Paired PV-2000 exports confirm this raw path, but the vendor result-table Lifetime is a separate post-processed quantity and is not yet reconstructed.')}</h3><dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive PV-2000 raw LifeTime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Target',`${fmt(d.diameter,1)} mm ${d.targetType||'—'}`)}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl></section><section class="panel"><h3>PV-2000 raw LifeTime summary</h3><dl class="meta">${row('Average',`${fmt(a.summary.mean)} µs`)}${row('Median',`${fmt(a.summary.median)} µs`)}${row('Stdev',`${fmt(a.summary.stdev)} µs`)}${row('Min',`${fmt(a.summary.min)} µs`)}${row('Max',`${fmt(a.summary.max)} µs`)}${row('Invalid / ≤0',a.invalidCount)}${row('Values ↔ TransientInfo max |Δ|',`${fmt(a.maxTransientDelta,5)} µs`,'Internal XML consistency diagnostic; not a vendor result-table error.')}</dl></section><section class="panel"><h3>Selected injection point</h3><div id="dqSelected">${selectedHtml()}</div></section><section class="panel"><h3>Comparison overlay</h3><div id="dqComparisons" class="comparison-list">${comparisonHtml()}</div><label class="btn comparison-open">Add XML<input id="dqAdd" type="file" accept=".xml,text/xml,application/xml" multiple></label></section><details class="panel"><summary>Acquisition / J0 settings</summary><dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag only; the paired exports establish the output columns but not yet the vendor J0/post-processing algorithm.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl></details></aside><section class="plots"><div class="panel chart"><header><b>Raw lifetime vs QSS intensity</b>${help('PV-2000 raw is the validated raw CSV LifeTime quantity and comes from TransientInfo@LifeTime. XML Values is retained as a diagnostic alternative because the two XML lifetime fields can differ. Neither option is the post-processed vendor result-table Lifetime[us].')}<span id="dqCurveLegend" class="dual-qss-inline-legend"></span><span class="grow"></span><select id="dqLifetimeSource" title="Lifetime source"><option value="transient">PV-2000 raw</option><option value="values">XML Values</option></select><select id="dqScale"><option value="log">Log X</option><option value="linear">Linear X</option></select>${PV.plot.axisControls('dqCurveAxes')}<button id="dqExportCurve">Export</button></header><div class="canvas-wrap"><canvas id="dqCurve"></canvas></div></div></section><section class="plots"><div class="panel chart"><header><b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow"></span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button></header><div class="canvas-wrap"><canvas id="dqTransient"></canvas></div></div></section></div>`;
+    host.querySelector('#dqLifetimeSource').onchange=e=>{lifetimeSource=e.target.value;zoom.curve={x:null,y:null};redraw()};host.querySelector('#dqScale').onchange=e=>{logX=e.target.value==='log';zoom.curve={x:null,y:null};redraw()};host.querySelector('#dqAdd').onchange=async e=>{for(const f of e.target.files||[]){try{const p=PV.xml.parse(await f.text());if(p.type!=='DualQssMeasurement')throw new Error(`${f.name}: not DualQssMeasurement.`);const z=parse(p);sets.push({label:z.resultName||z.name||f.name,data:z,fileName:f.name})}catch(err){alert(err.message)}}e.target.value='';zoom.curve={x:null,y:null};redraw()};
     function redraw(){
       if(selSet>=sets.length){selSet=0;selPoint=0}
       if(selPoint>=sets[selSet].data.points.length)selPoint=0;
@@ -206,7 +218,7 @@
         redraw();
       });
       drawCurve(
-        host.querySelector('#dqCurve'),sets,selSet,selPoint,logX,zoom.curve,
+        host.querySelector('#dqCurve'),sets,selSet,selPoint,logX,lifetimeSource,zoom.curve,
         n=>{zoom.curve=n;redraw()},
         (si,pi)=>{selSet=si;selPoint=pi;zoom.transient={x:null,y:null};redraw()}
       );
@@ -226,5 +238,5 @@
       host.querySelector('#dqExportTransient').onclick=()=>exportTransient(sets[selSet].data,selPoint);
     }
   }
-  PV.modules=PV.modules||{};PV.modules.dualQss={types:['DualQssMeasurement'],parse,analyze,render,parseTransient,classifyRange,pointRows};PV.registry.register(PV.modules.dualQss);
+  PV.modules=PV.modules||{};PV.modules.dualQss={types:['DualQssMeasurement'],parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,pointRows};PV.registry.register(PV.modules.dualQss);
 })(typeof window!=='undefined'?window:globalThis);

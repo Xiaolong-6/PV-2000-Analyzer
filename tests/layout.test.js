@@ -30,14 +30,15 @@ test('single-file build includes Dual QSS before generic fallback',()=>{
 test('Dual QSS exposes raw-lifetime semantics, transient voltage units and inline overlay legend',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
   assert.match(src,/types:\['DualQssMeasurement'\]/);
-  assert.match(src,/XML transient lifetime vs QSS intensity/);
-  assert.match(src,/Transient lifetime \[µs\]/);
+  assert.match(src,/Raw lifetime vs QSS intensity/);
+  assert.match(src,/PV-2000 raw LifeTime/);
+  assert.match(src,/id="dqLifetimeSource"/);
   assert.match(src,/Voltage \[mV\]/);
   assert.match(src,/id="dqCurveLegend"/);
   assert.match(src,/axisControls\('dqCurveAxes'\)/);
   assert.match(src,/axisControls\('dqTransientAxes'\)/);
   assert.doesNotMatch(src,/Raw signal \[XML units\]/);
-  assert.match(src,/q\.lifetime<=0\)\{[^}]*started=false/);
+  assert.match(src,/life\(q\)<=0\)\{[^}]*started=false/);
 });
 
 test('Dit results summary is card-based and does not depend on a wide three-column table',()=>{

@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.3 — 2026-09-23
+
+- Documented the expanded QSS-INJ-001 envelope: 330 XMLs, 273 exact XML/CSV pairs, 5833 paired points and 11,660,167 exact raw Time/Voltage samples.
+- Locked the three-lifetime distinction across README, validation, algorithm notes, reference profiles and handoff: TransientInfo raw LifeTime, XML Values diagnostic lifetime, and unresolved vendor result-table Lifetime.
+- Recorded the expanded vendor result-table evidence (4628 positive / 1205 zero Lifetime rows) while keeping vendor Lifetime/Implied-Voc/J0 processing unsupported until pointwise parity is established.
+
+
 ## v20260923.2 — 2026-09-23
 
 - Expanded `QSS-MAP-001` with a private **96-XML `QssUpcdMeasurement + MapPattern + RoundWafer` corpus**: 95 × 100 mm / 305-site maps plus one 125 mm / 489-site map. All 96 reconstruct the exact XML point count; all nine matching numeric PV-2000 CSV pairs reproduce X/Y and lifetime exactly, with Smax agreeing to CSV numeric precision.
