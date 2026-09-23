@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.15.1 — 2026-09-23 (QSS shared Valid-data filter migration branch)
+
+- Migrated QssUpcdMeasurement from its module-local range-filter state to the shared selection controller and shared Valid-data filter UI contract.
+- Preserved the independent intrinsic lifetime support/sentinel mask and the existing distinction between UNAVAILABLE and user-FILTERED sites.
+- Kept the existing QSS default lifetime filter, metric choices, full-range defaults, inclusive bounds, 1–99%, Reset/Apply behavior, histogram excluded-count diagnostics and CSV layout.
+- Routed the same shared active population through Results summary, map, Distribution, acquisition profile and CSV validity flags without changing QSS calculations or validation profiles.
+
 ## v20260923.15 — 2026-09-23
 
 - Reused the shared Valid-data filter controller/UI for LBIC with filter scope tied to the current iteration and beam/wavelength.
