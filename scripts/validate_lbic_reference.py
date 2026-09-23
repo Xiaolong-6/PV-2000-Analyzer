@@ -212,6 +212,12 @@ def parse_xml(path: Path):
     measure_direct = flag_state(text(m, "MeasureDirectReflectance", ""))
     measure_diffuse = flag_state(text(m, "MeasureScatteredReflectance", ""))
     reflectance_only = measure_current is False and measure_direct is True and measure_diffuse is True
+    current_and_optical = measure_current is True and measure_direct is True and measure_diffuse is True
+    if not (reflectance_only or current_and_optical):
+        raise AssertionError(
+            "NEW PROFILE: active measurement flags="
+            f"{measure_current!r}/{measure_direct!r}/{measure_diffuse!r}"
+        )
 
     for key in beam_keys:
         if key not in lasers:
@@ -272,6 +278,10 @@ def parse_xml(path: Path):
     beams = {}
     for key in sorted(beam_keys):
         current = [row[key]["Current"] for row in point_beams]
+        if reflectance_only and any(value != 0 for value in current):
+            raise AssertionError(
+                f"NEW PROFILE: inactive Current placeholders are nonzero for beam {key}"
+            )
         direct = [row[key]["DirectReflection"] for row in point_beams]
         scattered = [row[key]["ScatteredReflection"] for row in point_beams]
         optical = [a + b for a, b in zip(direct, scattered)]
@@ -479,12 +489,16 @@ def validate_pair(xml_path: Path, csv_path: Path):
 
 
 def main():
-    raw = [Path(p) for p in (sys.argv[1:] or sorted(glob.glob("private/reference/lbic/*.xml")))]
+    args = sys.argv[1:]
+    allow_unpaired = "--allow-unpaired" in args
+    paths = [p for p in args if p != "--allow-unpaired"]
+    raw = [Path(p) for p in (paths or sorted(glob.glob("private/reference/lbic/*.xml")))]
     if not raw:
         print("LBIC paired validator: SKIP (no private/reference/lbic/*.xml)")
         return 0
 
     ok = True
+    counts = {"PASS": 0, "UNPAIRED": 0, "INFERRED": 0, "FAIL": 0}
     for xml_path in raw:
         try:
             parsed = parse_xml(xml_path)
@@ -493,10 +507,18 @@ def main():
                     f"INFERRED {xml_path.name}: partial SquareRegion acquisition; "
                     f"points={len(parsed['coords'])}; vendor coordinate parity not claimed"
                 )
+                counts["INFERRED"] += 1
                 continue
             if parsed["profile"] == "LBIC-REFLECTANCE-003":
                 xps_paths = matching_xps_files(xml_path)
                 if not xps_paths:
+                    if allow_unpaired:
+                        print(
+                            f"UNPAIRED {xml_path.name}: {parsed['profile']}; "
+                            f"points={len(parsed['coords'])}; no matching vendor XPS"
+                        )
+                        counts["UNPAIRED"] += 1
+                        continue
                     raise AssertionError("matching PV-2000 Reflectivity XPS missing")
                 msg = validate_reflectance_xps(xml_path, xps_paths)
             else:
@@ -507,9 +529,12 @@ def main():
         except Exception as exc:
             label = "NEW PROFILE" if "NEW PROFILE:" in str(exc) else "FAIL"
             print(f"{label} {xml_path.name}: {type(exc).__name__}: {exc}")
+            counts["FAIL"] += 1
             ok = False
         else:
             print("PASS " + msg)
+            counts["PASS"] += 1
+    print("Summary: " + ", ".join(f"{label}={count}" for label, count in counts.items()))
     return 0 if ok else 1
 
 

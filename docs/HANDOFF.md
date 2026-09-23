@@ -1,15 +1,23 @@
-# Agent handoff — 2026-09-22 — main v20260922.17
+# Agent handoff — 2026-09-23 — main v20260923.4
 
 ## Goal
 
 Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the app reads `Measurement/@xsi:type`, and the corresponding analyzer handles parsing, calculations, plots and exports. CSV/XPS/manuals are development references only; the runtime remains XML-only.
+
+## Current branch update
+
+The shared reflectance folder was rechecked locally against the LBIC parser and private XPS validator. All 62 XMLs use `LBICMeasurement`, one beam, `SquareRegionPattern`, explicit `MeasureCurrent=false` plus active Direct/Scattered flags, and µA metadata. The raster inventory is 60 complete 61×61 scans, one complete 61×71 scan and one 2814/3721-point partial scan. The mixed-corpus validator reports 44 XMLs / 60 XPS printouts as `PASS`, 17 complete XMLs as `UNPAIRED`, one partial scan as `INFERRED`, and zero structural/calculation failures. The local copies remain under ignored `private/reference/reflectance/` and are not publishable project files.
+
+The branch narrows the validated LBIC profile gate to explicit XML flags, known µA units for current-enabled calculations, and zero-valued disabled Current placeholders for reflectance-only data. Files outside those conditions remain inspectable with inferred calculations. `--allow-unpaired` provides an honest whole-folder inventory; the validator's default still fails when an expected matching vendor output is absent.
+
+A real-browser import sweep then opened all 62 XMLs in the built analyzer. Each showed LBIC Reflectivity analysis and nonblank raster map, distribution and X/Y profile canvases; no XML import dialog or runtime error occurred. A complete scan and the 2814-point partial scan were also inspected visually. The partial map shows only acquired rows; its sidebar now explicitly reports `partial acquisition · inferred`. This is a display smoke check, while numerical parity remains limited to the 44 XMLs with matching XPS output.
 
 ## Current implementation
 
 - modular source + generated single-file `dist/index.html` build; `dist/` is ignored and rebuilt by CI/Pages rather than tracked;
 - automatic measurement registry and Generic Inspector fallback;
 - `DITMeasurement` analyzer with restored full Dit UI/functionality;
-- `QssUpcdMeasurement` analyzer with lifetime/Smax/Implied-Voc maps;
+- `QssUpcdMeasurement` analyzer with raw-lifetime preservation, sentinel-aware scientific validity, lifetime/Smax/PV-2000-compatible Implied-Voc maps, explicit Physical Si/Ge estimates, configurable lifetime→SRV analysis, filtering, distributions/profiles and CSV export;
 - `DualQssMeasurement` analyzer with injection-intensity lifetime curves, per-point stored transient inspection, local LP/HP/repeat overlays and XML-value CSV export;
 - `JZeroMeasurement` analyzer with two-intensity Emitter J0 maps, PseudoSquareCell geometry, Basore J0, both τeff.d/Smax/Implied-Voc channels, filtering, distributions and CSV export;
 - `ISCMeasurement` analyzer with vendor-regressed Vcpd Dark / Vcpd Light / VSB maps, distributions, point inspection and raw-reading export;
@@ -55,11 +63,11 @@ This does not weaken the reference-profile rule: numeric parameter changes insid
 
 ## Dit one-point / Standard COCOS update
 
-A private 9-pair DIT reference family exercises center-only `OnePointPattern` on a nominal 100 mm circular substrate. In these files the geometry is stored under `Substrate/SubstrateShape` (`Circle`, radius 50 mm) with measurement-level 4 mm edge exclusion rather than a dedicated target node. The runtime now uses that nominal geometry for spatial context and labels the center-only view **Measurement position** instead of deriving a tiny pseudo-wafer from the single coordinate.
+A private 9-pair DIT reference family exercises center-only `OnePointPattern` on a nominal 100 mm circular substrate. The geometry is stored under `Substrate/SubstrateShape` (`Circle`, radius 50 mm) with measurement-level 4 mm edge exclusion. The runtime uses that nominal geometry for spatial context and labels the center-only view **Measurement position**.
 
-Standard measured-light Vsb now preserves the doping-aware vendor sign convention rather than applying `abs()`. The same private exports also expose a separate nearly straight corrected `Vcpd Light` export branch that is not equal to the measured XML light values even with `UseCocosII=false`. That post-processing state is not uniquely encoded in the saved XML, so do not auto-enable or guess it in the XML-only runtime.
+Standard measured-light Vsb preserves the doping-aware signed convention. The same private exports expose a separate nearly straight corrected `Vcpd Light` export branch that is not equal to the measured XML light values even with `UseCocosII=false`; the saved XML does not uniquely identify the extra processing state, so the XML-only runtime keeps the measured branch.
 
-The Material selector remains an Analyzer feature. Ge-sample reference files do not imply that PV-2000 has a Ge material mode.
+The Material selector is an Analyzer model choice. Ge-sample reference files do not imply a PV-2000 Ge material mode.
 
 ## QSS-µPCD: reference export now available
 
@@ -74,30 +82,37 @@ The QSS UI has also been upgraded: proper axes/ticks/units, map colorbar, distri
 
 ### Important QSS validity behavior
 
-The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `SquareRegionPattern + SquareCell` is now a second vendor-regressed QSS coordinate family: Region + Dimension reconstruct the explicit rectangular raster in X-fast, ascending-Y order, and the supplied 35 × 30 / 1050-point XML+CSV pair matches all vendor X/Y coordinates to floating-point precision. `MapPattern + SquareCell` remains supported as a centered raster inferred from `Size/2 - EdgeExclusion` and `Pitch`; that centered MapPattern path remains **inferred** until a matching export/display is supplied. QSS wafer maps draw the XML nominal target as a solid geometry-aware outline (circle for RoundWafer, rectangle for SquareCell), the EdgeExclusion-adjusted scheduled region as a dashed inner outline, and the generic plot frame separately; default autoscaling includes the full target at equal X/Y physical scale. The QSS module exposes a user-controlled valid-data filter (metric + lower/upper limits). The resulting mask is applied consistently to every summary statistic and derived metric. Distribution bars now count valid points only; excluded points remain available in histogram CSV diagnostics but no longer stack into the displayed Count. Swap axes is presentation-only and cannot change the filter mask. Excluded points are visually retained for diagnosis, and smooth interpolation is distance-limited so it does not extrapolate a small sample across the whole nominal wafer.
+The nominal map can cover more area than the physical sample. A quarter wafer/coupon can therefore contain many meaningless scheduled points. For `MapPattern + RoundWafer`, coordinate reconstruction uses the effective radius `Diameter/2 - EdgeExclusion` before the strict circular site test. `SquareRegionPattern + SquareCell` is a second vendor-regressed QSS coordinate family: Region + Dimension reconstruct the explicit rectangular raster in X-fast, ascending-Y order, and the supplied 35 × 30 / 1050-point XML+CSV pair matches all vendor X/Y coordinates to floating-point precision. `MapPattern + SquareCell` remains supported as a centered raster inferred from `Size/2 - EdgeExclusion` and `Pitch`; that centered MapPattern path remains **inferred** until a matching export/display is supplied.
+
+The newer private RoundWafer corpus contains **96 QSS map XMLs**. Ninety-five are 100 mm / 305-site maps and one is a 125 mm / 489-site map; nine numeric CSV pairs reproduce X/Y and XML lifetime exactly, with Smax matching to export precision. The same compatibility Implied-Voc model that is <0.1 mV on the original reference reaches about **1.94 mV maximum absolute error** across the newer finite vendor points, so the tighter number is no longer treated as a family-wide guarantee.
+
+A major validity rule is now explicit. The corpus contains **13,649 non-positive lifetime sentinel sites** (principally `-1 µs`) across 76 of 96 files. Raw XML lifetime and raw PV-2000-style Smax remain preserved for traceability/export. Default scientific analysis marks `τ<=0` as **UNAVAILABLE** before the user range filter, while an explicit **Raw / PV-2000 style** mode retains the vendor-style numeric behavior. Tooltips distinguish UNAVAILABLE from FILTERED. This prevents sentinel values from dominating map/distribution autoscaling and smooth interpolation.
+
+QSS Analysis controls now also expose optional lifetime→**SRV** conversion with Planar / Textured-black geometry, optional bulk lifetime, planar-reference SRV and minimum-lifetime threshold. SRV is analyzer post-processing and stays distinct from Smax. Implied Voc defaults to **PV-2000 compatible**; optional **Physical Si** and **Physical Ge** estimates require explicit user selection because the XML does not encode a trustworthy material field. Material is never inferred from filenames or substrate names.
+
+QSS wafer maps draw the XML nominal target as a solid geometry-aware outline, the EdgeExclusion-adjusted scheduled region as a dashed inner outline, and the generic plot frame separately; default autoscaling includes the full target at equal X/Y physical scale. The valid-data filter is applied after intrinsic availability and consistently affects summaries, maps, distributions and exports. Distribution Count contains valid available sites only. Swap axes is presentation-only, and smooth interpolation remains distance-limited so it does not extrapolate unsupported regions.
 
 Do not remove this behavior during refactors.
 
 ## Dual QSS injection status
 
-A dedicated `DualQssMeasurement` module now handles the raw injection-sweep path separately from the spatial `qss-upcd.js` map analyzer.
+A dedicated `DualQssMeasurement` module handles the single-point injection sweep separately from the spatial `qss-upcd.js` map analyzer.
 
-Current private evidence:
+Expanded private evidence:
 
-- **72 XML files** total;
-- **57 matching raw CSV exports** with **1003 paired injection rows**;
-- all current files use `OnePointPattern + RoundWafer` and one `QssDataItem`;
-- XML `Intensity` / `Power` match the CSV result-table intensity / laser-power columns exactly;
-- XML `Values` / `TransientInfo@LifeTime` match the CSV raw-data `LifeTime [μs]` row to export rounding (max abs error ≈ **0.0050414 µs**);
-- each current XML transient stores **2000** samples; the CSV raw export contains the first **1999** samples, and **2,004,997** paired Time/Voltage samples match XML exactly at exported precision;
-- the CSV top-table `Lifetime[us]` is a **different post-processed quantity** from the XML/raw lifetime. Across the current paired corpus, 775 result rows have positive vendor Lifetime and 228 are zero;
-- once vendor result-table Lifetime is known, exported `dn` follows `G = 2.38e17 * I / W * OpticalFactor` and `dn = G * Lifetime` to rounded CSV precision (<0.5% maximum relative difference in the current corpus).
+- **330 XML files** total;
+- **273 exact-basename raw CSV pairs** with **5833 paired injection rows**;
+- all 330 current XMLs use `OnePointPattern + RoundWafer`, one `QssDataItem`, aligned `Values` / `Intensity` / `Power` / `TransientInfo`, and 2000-point stored transients;
+- XML `Intensity` / `Power` match vendor CSV intensity / laser-power columns exactly;
+- CSV raw-data `LifeTime [μs]` matches **`TransientInfo@LifeTime` exactly** across all 5833 paired points;
+- XML `Values` is a separate lifetime vector and can differ from `TransientInfo@LifeTime`; expanded-corpus max |Δ| is **0.020593307 µs**;
+- the CSV raw export contains the first **1999** samples of each stored transient; **11,660,167** paired Time/Voltage samples match exactly at exported precision;
+- the CSV top-table `Lifetime[us]` remains a different post-processed quantity: **4628 positive / 1205 zero** rows in the exact-pair corpus;
+- given positive vendor result-table Lifetime, exported `dn` follows the documented generation relation with maximum rounded-CSV relative discrepancy about **0.509%**.
 
-The runtime therefore labels the displayed curve as **XML transient lifetime**, not generic/vendor Lifetime. It supports click-through stored transients, TimeCursor, raw metadata, manual axes, CSV export and local LP/HP/repeat overlays. For `OnePointPattern`, it also shows a nominal measurement-position schematic; circular geometry falls back to `Substrate/SubstrateShape` plus measurement-level `EdgeExclusion` when no dedicated target node exists.
+Runtime behavior follows that evidence: the main curve and raw summary default to **PV-2000 raw LifeTime** (`TransientInfo@LifeTime`); a curve-source selector exposes **XML Values** for diagnostics; selected-point and CSV export keep both fields explicit.
 
-Six supplemental high-range XMLs use a 50 mm circular substrate radius, 7 mm edge exclusion and center coordinate `(0,0)` while requesting `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They have no matching result-table CSV, so they expand runtime/metadata coverage only and do not validate J0 or processed Lifetime/Δn/Implied-Voc outputs.
-
-Still unresolved: raw-transient → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
+Still unresolved: raw-lifetime → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
 
 See `docs/ALGORITHMS_DUAL_QSS.md`, `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
@@ -313,10 +328,11 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
    - For LBIC-MULTI-002, verify the pseudo-square outline/exclusion boundary, 984/952/855/656 nm beam switching, Current / Reflectivity / IQE defaults, coordinate-based X/Y profiles and export.
    - Confirm ordinary numeric wavelength/power/FluxCache/raster-size changes stay inside the appropriate validated family; categorical path changes must report **NEW PROFILE**.
 
-4. **QSS regression smoke**
-   - Run `npm run validate:qss` with private references present.
-   - Import the reference XML and verify valid-range filtering, smooth-map masking, Distribution axis swap and CSV export still behave correctly after layout changes.
-   - Exercise map / Distribution / acquisition-profile wheel zoom, axis-only zoom and double-click auto-scale.
+4. **QSS expanded-corpus smoke — completed on this branch**
+   - CI quality gates / validator launcher / build are green.
+   - The CI-built single-file analyzer was loaded headlessly and all **96 supplied QSS XML files** were imported one-by-one: 96/96 dispatched to the QSS analyzer, produced coordinate-complete maps, finite default filter bounds and live map/Distribution/acquisition-profile canvases with no browser/page errors.
+   - Representative normal, sentinel-heavy and 125 mm / 489-site cases were visually inspected. SRV and Physical Ge controls were exercised after import.
+   - CSV export was checked on a sentinel-heavy case: raw `-1 µs` values remain present; default scientific mode marks them unavailable/filter-invalid; Raw / PV-2000 style marks them available/valid under the full raw lifetime range.
 
 5. **Landing / fallback / theme**
    - Verify the welcome tags render correctly in light and dark mode.
@@ -325,6 +341,6 @@ Automated/private numerical regressions and the synthetic Chromium sidebar test 
 
 ## Next scientific validation step
 
-Obtain at least one matching PV-2000 export for a current `DualQssMeasurement` XML and regress the final injection-result rows point-by-point. Use that evidence to establish Δn/QDC/implied-Voc/J0 equations, validity windows and any LP/HP stitching or blanking behavior. Keep this work in the dedicated `dual-qss.js` family rather than `qss-upcd.js`.
+Use the expanded 273-pair Dual QSS result-table corpus to establish the exact raw-lifetime → vendor `Lifetime[us]` transformation and zero/blank rule before implementing vendor Δn/Implied-Voc/J0 output. The conditional Lifetime→Δn relation is already constrained; do not promote an approximate integration/stitching model without pointwise parity. Keep this work in the dedicated `dual-qss.js` family rather than `qss-upcd.js`.
 
 UI placement: QSS Current dataset belongs in the left sidebar. Dit Analysis controls and Results summary both start expanded; Results summary remains user-collapsible.

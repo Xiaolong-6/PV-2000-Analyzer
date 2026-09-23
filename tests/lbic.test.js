@@ -5,6 +5,7 @@ PV2000.xml={};PV2000.exporter={csv(){}};
 require('../src/modules/lbic.js');
 const L=PV2000.modules.lbic;
 const FLUX=1708439235302983;
+const CURRENT_FLAGS={measureCurrent:'true',measureDirect:'true',measureDiffuse:'true'};
 
 test('rect grid reproduces PV-2000 X-fast row-major coordinates with increasing Y',()=>{
   const p=PV2000.geometry.rectGrid(-37,42,5,5,51,51,2601,1);
@@ -81,7 +82,7 @@ test('PV-2000-compatible IQE blanks calculated values above 100 percent',()=>{
 
 test('validated LBIC family is defined by measurement/result path, not exact numeric settings',()=>{
   const raw={key:0,channels:{Current:[11.0936],DirectReflection:[33.2],ScatteredReflection:[4.9]}};
-  const d={currentUnit:'μA',patternType:'SquareRegionPattern',nx:51,ny:51,regionX:-37,regionY:42,width:5,height:5,beamCount:1,iterationCount:1};
+  const d={...CURRENT_FLAGS,currentUnit:'μA',patternType:'SquareRegionPattern',nx:51,ny:51,regionX:-37,regionY:42,width:5,height:5,beamCount:1,iterationCount:1};
   assert.equal(L.isReferenceProfile(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},d),true);
   assert.equal(L.isReferenceProfile(raw,{index:0,wavelengthNm:1064,power:0.25,photonFlux:FLUX*0.83},d),true);
   assert.equal(L.isReferenceProfile(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX+1},{...d,nx:4,ny:5,regionX:-2,regionY:3,width:1.5,height:2}),true);
@@ -91,9 +92,24 @@ test('validated LBIC family is defined by measurement/result path, not exact num
   assert.equal(L.isReferenceProfile(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},{...d,patternType:'OtherPattern'}),false);
 });
 
+test('current-enabled parity requires explicit active flags and a known current unit',()=>{
+  const raw={key:0,channels:{Current:[11],DirectReflection:[30],ScatteredReflection:[10]}},
+    laser={index:0,photonFlux:FLUX},
+    d={...CURRENT_FLAGS,currentUnit:'μA',patternType:'SquareRegionPattern',nx:2,ny:2,regionX:0,regionY:0,width:1,height:1};
+  assert.equal(L.referenceFamily(raw,laser,d),'LBIC-SINGLE-001');
+  for(const field of Object.keys(CURRENT_FLAGS)){
+    assert.equal(L.referenceFamily(raw,laser,{...d,[field]:''}),'');
+    assert.equal(L.referenceFamily(raw,laser,{...d,[field]:'false'}),'');
+  }
+  assert.equal(L.referenceFamily(raw,laser,{...d,currentUnit:''}),'');
+  const unknownUnit=L.deriveBeam(raw,laser,{...d,currentUnit:''});
+  assert.equal(Object.values(unknownUnit.metrics).some(m=>m.concept==='eqe'||m.concept==='iqe'),false);
+  assert.equal(Object.values(unknownUnit.metrics).find(m=>m.concept==='current').unit,'');
+});
+
 test('reference profile exposes Current Reflectivity IQE as primary and diagnostics as advanced',()=>{
   const raw={key:0,channels:{Current:[11.0936],DirectReflection:[33.2321503717211],ScatteredReflection:[4.95641556511122]}};
-  const b=L.deriveBeam(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},{currentUnit:'μA',patternType:'SquareRegionPattern',nx:51,ny:51,regionX:-37,regionY:42,width:5,height:5});
+  const b=L.deriveBeam(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},{...CURRENT_FLAGS,currentUnit:'μA',patternType:'SquareRegionPattern',nx:51,ny:51,regionX:-37,regionY:42,width:5,height:5});
   const vals=Object.values(b.metrics);
   assert.equal(b.referenceProfile,true);
   assert.deepEqual(vals.filter(m=>m.tier==='primary').map(m=>m.concept),['current','total','iqe']);
@@ -105,14 +121,14 @@ test('reference profile exposes Current Reflectivity IQE as primary and diagnost
 
 test('numeric wavelength power flux and raster size changes stay in the validated algorithm family',()=>{
   const raw={key:0,channels:{Current:[11],DirectReflection:[30],ScatteredReflection:[10]}};
-  const b=L.deriveBeam(raw,{index:0,wavelengthNm:1064,power:0.25,photonFlux:FLUX*0.83},{currentUnit:'μA',patternType:'SquareRegionPattern',nx:4,ny:5,regionX:-2,regionY:3,width:1.5,height:2,beamCount:1,iterationCount:1});
+  const b=L.deriveBeam(raw,{index:0,wavelengthNm:1064,power:0.25,photonFlux:FLUX*0.83},{...CURRENT_FLAGS,currentUnit:'μA',patternType:'SquareRegionPattern',nx:4,ny:5,regionX:-2,regionY:3,width:1.5,height:2,beamCount:1,iterationCount:1});
   assert.equal(b.referenceProfile,true);
   for(const c of ['total','iqe'])assert.equal(Object.values(b.metrics).find(m=>m.concept===c).status,'validated');
 });
 
 test('raw Reflectivity EQE IQE channels take precedence over calculated candidates',()=>{
   const raw={key:0,channels:{Current:[100],DirectReflection:[30],ScatteredReflection:[10],TotalReflectance:[41],EQE:[35],IQE:[60]}};
-  const b=L.deriveBeam(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},{currentUnit:'μA',patternType:'SquareRegionPattern',nx:51,ny:51,regionX:-37,regionY:42,width:5,height:5}),vals=Object.values(b.metrics);
+  const b=L.deriveBeam(raw,{index:0,wavelengthNm:984,power:0.6,photonFlux:FLUX},{...CURRENT_FLAGS,currentUnit:'μA',patternType:'SquareRegionPattern',nx:51,ny:51,regionX:-37,regionY:42,width:5,height:5}),vals=Object.values(b.metrics);
   for(const c of ['total','eqe','iqe']){
     const ms=vals.filter(m=>m.concept===c);
     assert.equal(ms.length,1);
@@ -124,7 +140,7 @@ test('raw Reflectivity EQE IQE channels take precedence over calculated candidat
 test('multi-beam MapPattern + PseudoSquareCell is a validated LBIC family',()=>{
   const raw={key:3,channels:{Current:[346.805782580645],DirectReflection:[0],ScatteredReflection:[-21.0514365493424]}},
     laser={index:3,wavelengthNm:656,power:1,photonFlux:Number('2209056601073362.2')},
-    d={currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1};
+    d={...CURRENT_FLAGS,currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1};
   assert.equal(L.referenceFamily(raw,laser,d),'LBIC-MULTI-002');
   assert.equal(L.isReferenceProfile(raw,laser,d),true);
   assert.equal(L.isReferenceProfile(raw,laser,{...d,beamCount:1}),false);
@@ -133,7 +149,7 @@ test('multi-beam MapPattern + PseudoSquareCell is a validated LBIC family',()=>{
 test('PseudoSquare multi-beam Reflectivity display clamps negative raw optical sum but IQE uses the raw sum',()=>{
   const raw={key:3,channels:{Current:[346.805782580645],DirectReflection:[0],ScatteredReflection:[-21.0514365493424]}},
     laser={index:3,wavelengthNm:656,power:1,photonFlux:Number('2209056601073362.2')},
-    d={currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1},
+    d={...CURRENT_FLAGS,currentUnit:'μA',patternType:'MapPattern',targetType:'PseudoSquareCell',targetWidth:125,targetHeight:125,diameter:150,edgeExclusion:3,pitchX:0.5,pitchY:0.5,beamCount:4,iterationCount:1},
     b=L.deriveBeam(raw,laser,d),
     metrics=Object.values(b.metrics),
     refl=metrics.find(m=>m.concept==='total'),
@@ -171,6 +187,16 @@ test('reflectance-only LBIC suppresses placeholder Current and does not synthesi
   assert.deepEqual(metrics.filter(m=>m.tier==='primary').map(m=>m.concept),['total']);
 });
 
+test('nonzero disabled Current values stay hidden but do not inherit reflectance parity',()=>{
+  const raw={key:0,channels:{Current:[1],DirectReflection:[2],ScatteredReflection:[3]}},
+    d={measureCurrent:'false',measureDirect:'true',measureDiffuse:'true',patternType:'SquareRegionPattern',nx:1,ny:1,regionX:0,regionY:0,width:1,height:1},
+    beam=L.deriveBeam(raw,{index:0},d),
+    metrics=Object.values(beam.metrics);
+  assert.equal(beam.referenceProfile,false);
+  assert.equal(metrics.some(m=>m.concept==='current'||m.concept==='eqe'||m.concept==='iqe'),false);
+  assert.equal(metrics.find(m=>m.concept==='total').status,'inferred');
+});
+
 test('active-channel filtering follows disabled optical measurement flags too',()=>{
   const raw={key:0,channels:{Current:[2],DirectReflection:[7],ScatteredReflection:[9]}},
     b=L.deriveBeam(raw,{index:0,photonFlux:FLUX},{measureCurrent:'true',measureDirect:'false',measureDiffuse:'true',currentUnit:'μA',patternType:'SquareRegionPattern',nx:2,ny:2,regionX:0,regionY:0,width:1,height:1}),
@@ -180,6 +206,7 @@ test('active-channel filtering follows disabled optical measurement flags too',(
   assert.equal(concepts.includes('current'),true);
   assert.equal(concepts.includes('eqe'),true);
   assert.equal(concepts.includes('iqe'),false);
+  assert.equal(b.referenceProfile,false);
 });
 
 

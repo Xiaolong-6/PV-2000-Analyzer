@@ -32,7 +32,7 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 - Standard COCOS remains the established measured dark/light reference family.
 - The historical validation record, obtained before the intrinsic-carrier-concentration cleanup, reported about **2.6% mean error** for Qtot and minimum Dit.
 - The default Analyzer Si model uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc, with `εr = 11.68`; Qsc previously used the rounded `1.00e10 cm^-3`.
-- The optional Ge choice is an **Analyzer-only legacy-MATLAB model** using `ni = 2e13 cm^-3` and `εr = 16.2`. PV-2000 itself has no Si/Ge material selector, so a Ge-sample export must not be described as a PV-2000 Ge algorithm/profile.
+- The optional Ge choice is an **Analyzer-only legacy-MATLAB model** using `ni = 2e13 cm^-3` and `εr = 16.2`. PV-2000 itself has no Si/Ge material selector, so a Ge-sample export is not evidence for a PV-2000 Ge algorithm/profile.
 - Re-run the private DIT-STD-001 Si-sample regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
 
 **Not validated by this profile**
@@ -50,45 +50,14 @@ Treat as a new profile when a real dataset introduces a materially different Dit
 - a case where Back Surface Shift changes vendor results;
 - new COCOS-II acceptance/window behavior;
 - a different pointwise Dit/Vsb export structure;
-- materially different flatband/extraction fields that require new parser or calculation assumptions.
-
-Changing the physical semiconductor sample alone is not a vendor-profile trigger because PV-2000 does not receive an Analyzer-style Si/Ge material selection.
+- materially different flatband/extraction fields that require new parser or calculation assumptions;
+- a new semiconductor material reference (including the first PV-2000 Ge reference) that establishes material-specific vendor parity.
 
 Current COCOS-II status remains **inferred** until matching vendor pointwise output validates it.
 
 ---
 
-### DIT-ONEPOINT-002 — OnePointPattern / circular-substrate raw-export reference
-
-**Measurement type**
-
-`DITMeasurement`
-
-**Reference material**
-
-A private corpus of **9 XML + 9 matching PV-2000 Raw COCOS CSV exports** from germanium samples. The sample material is descriptive only; PV-2000 has no Si/Ge material selector.
-
-**Established**
-
-- all nine XMLs use `OnePointPattern` with one center coordinate; nominal geometry is stored as `Substrate/SubstrateShape xsi:type="Circle"` with **50 mm radius** and measurement-level **4 mm EdgeExclusion**;
-- the runtime must therefore show a single measurement position on the nominal circular substrate/target, not infer wafer size from the lone `(0,0)` coordinate and not present the result as a spatial heatmap;
-- across **275 exported process rows**, XML `mean(VcpdDark) - VcpdOffsett` reproduces exported `Vcpd Dark` with approximately **0.310 mV mean absolute error** and **1.11 mV maximum absolute error**, consistent with the rounded export precision;
-- the matching Raw COCOS CSV `Vcpd Light` branches are nearly straight within each file (maximum residual from a per-file straight-line fit about **0.531 mV**) and do **not** equal the measured XML light means, despite `UseCocosII=false`;
-- because the saved XML does not uniquely identify the activation/state of that additional corrected-light reprocessing, the XML-only runtime does not auto-invent it. This processed export branch remains distinct from the measured Standard COCOS XML path.
-
-**Implementation consequence**
-
-Standard measured-light Vsb remains doping-aware and signed. For N-type the displayed/storage sign is the reverse of `F*(VDark-VLight)`; for P-type it retains that direct sign. The previous unconditional absolute value is not compatible with the vendor sign semantics.
-
-**Not claimed**
-
-- no PV-2000 Ge material mode or Ge-specific vendor algorithm is implied;
-- no 2D coordinate reconstruction is validated by this one-point family;
-- the additional straight corrected-light export transformation is not claimed as reconstructed until its activation and transformation can be determined from saved result state.
-
-
-
-### QSS-MAP-001 — QSS-µPCD 305-point map
+### QSS-MAP-001 — QSS-µPCD MapPattern + RoundWafer family
 
 **Measurement type**
 
@@ -96,25 +65,34 @@ Standard measured-light Vsb remains doping-aware and signed. For N-type the disp
 
 **Reference material**
 
-One matching XML + PV-2000 CSV export with 305 points.
+The original paired reference contains 305 sites. A later private corpus adds **96 RoundWafer XML files**, including 100 mm / 305-site and 125 mm / 489-site maps at 5 mm pitch. **Nine** of those measurements have matching numeric PV-2000 CSV exports; **108** associated PV-2000 XPS printouts establish the observed result/display family. Private files remain regression evidence and are not runtime dependencies.
 
 **Validated / established**
 
-- point count: **305**;
-- X/Y coordinates: **exact pointwise match**;
-- effective lifetime: **exact pointwise match**;
-- Smax: matches to floating-point precision, max error approximately **5e-12 cm/s**;
-- Implied Voc: maximum pointwise error below approximately **0.1 mV** using the documented PV-2000-compatibility `ni(T)` model;
-- lifetime/Smax summary statistics reproduce the export;
-- coordinate acquisition order is validated for this map pattern.
+- coordinate rule: `MapPattern + RoundWafer`, X-fast within ascending-Y rows, with the strict circular schedule after EdgeExclusion;
+- original 305-site X/Y coordinates: exact pointwise match;
+- all nine later paired X/Y exports: exact pointwise match;
+- effective lifetime: XML → paired CSV exact for the later nine pairs;
+- Smax: `W/(2τ)` reproduces the paired exports to numeric export precision; the original reference remains at floating-point precision;
+- ordinary numeric diameter/pitch/thickness/doping/optical-factor changes stay inside this family when the same XML/result path is used;
+- PV-2000 can store **`τeff.d = -1 µs` as a raw sentinel** and can carry it numerically into raw Smax/display summaries. Raw values must therefore be preserved for parity and export rather than silently rewritten.
+
+**Implied Voc compatibility envelope**
+
+- the original 305-point reference instance remains within approximately **0.1 mV** maximum error using the documented compatibility `ni(T)` model;
+- across the later nine-pair corpus, the same model reaches approximately **1.94 mV maximum absolute error** on finite vendor Implied-Voc values;
+- therefore the <0.1 mV figure is an instance-level result, not a family-wide guarantee.
 
 **Analyzer features not claimed as vendor algorithms**
 
+- default scientific exclusion of non-positive lifetime sentinels while preserving the raw value;
 - user-controlled valid-data filtering;
+- lifetime → SRV post-processing with planar/textured controls;
+- explicit Physical Si / Physical Ge Implied-Voc estimates;
 - distance-limited smooth-map visualization;
 - histogram axis swapping and related UI behavior.
 
-Those are analyzer features and should not be described as PV-2000 replication.
+The QSS XMLs in this corpus do **not** provide a trustworthy material identifier. Material-specific analysis must be selected explicitly and must never be inferred from filenames, result names or substrate IDs. The default Implied-Voc path remains PV-2000-compatible for vendor comparison.
 
 **NEW PROFILE triggers**
 
@@ -122,11 +100,12 @@ Examples include:
 
 - a QSS map pattern or coordinate encoding outside the validated QSS-MAP-001 and QSS-MAP-002 families (ordinary numeric geometry changes inside either established coordinate rule are not automatically a new profile);
 - a new XML path for lifetime/injection data;
-- a configuration whose Smax or Implied Voc calculation fields differ;
-- different temperature/ni handling;
+- a different sentinel/blanking convention that is not the established numeric `-1 µs` behavior;
+- a configuration whose Smax or Implied Voc calculation fields differ materially;
+- a vendor path that explicitly encodes and applies semiconductor material;
 - QSS-µPCD Scan/J0 or emitter-J0 data, which are separate scientific result paths rather than automatic extensions of QSS-MAP-001.
 
-A new QSS profile must use the actual XML + matching PV-2000 export to determine whether existing coordinate and derived-quantity logic still applies.
+A new QSS profile must use the actual XML + matching PV-2000 export/display to determine whether existing coordinate, validity and derived-quantity logic still applies.
 
 ---
 
@@ -186,27 +165,29 @@ This path is **inferred**, not a new validated profile, because no matching PV-2
 
 **Reference material**
 
-A private corpus of **72 XML files**, of which **57** have matching same-basename PV-2000 raw CSV exports. The 57 paired files contain **1003 injection points**.
+A private corpus of **330 XML files**. **273** have exact-basename PV-2000 raw CSV exports, containing **5833 paired injection points**. Another 57 XMLs have no exact-basename CSV in the corpus; 10 CSVs have no exact-basename XML and are not automatically paired.
 
 **Validated / established raw path**
 
-- current XML family: `OnePointPattern`, one `QssDataItem` per measurement; circular spatial context may be stored either in an explicit target or in `Substrate/SubstrateShape`;
-- XML `Intensity` and `Power` vectors match the vendor CSV top-table QSS intensity and laser-power columns exactly;
-- XML `Values` / `TransientInfo@LifeTime` match the CSV raw-data `LifeTime [μs]` values to export rounding, maximum absolute difference about **0.0050414 µs**;
-- each current XML `TransientInfo` stores **2000** `SmallPoint` samples;
-- the CSV raw export contains the first **1999** samples of each current transient and omits the final XML sample;
-- **2,004,997** paired raw Time/Voltage samples compare exactly at exported precision;
-- ordinary numeric changes in intensity schedule, wafer thickness, doping, optical factor or laser-power setting remain inside this raw schema family when the same structure is retained.
+- current XML family: `OnePointPattern`, one `QssDataItem` per measurement; circular spatial context may be stored in an explicit target or in `Substrate/SubstrateShape`;
+- all 330 XMLs have aligned `Values`, `Intensity`, `Power` and `TransientInfo` counts;
+- XML `Intensity` and `Power` match the vendor CSV top-table QSS intensity and laser-power columns exactly;
+- CSV raw-data `LifeTime [μs]` matches **`TransientInfo@LifeTime` exactly** across all 5833 paired points;
+- XML `Values` is retained as a distinct diagnostic lifetime vector; it can differ from `TransientInfo@LifeTime` (observed max |Δ| **0.020593307 µs**);
+- each supplied `TransientInfo` stores **2000** `SmallPoint` samples;
+- each paired CSV raw export contains the first **1999** samples and omits the final XML sample;
+- **11,660,167** paired raw Time/Voltage samples compare exactly at exported precision;
+- ordinary numeric changes in injection schedule, wafer thickness, doping, optical factor or laser-power setting remain inside this raw schema family when the same structure is retained.
 
 **Supplemental one-point geometry / J0-request examples**
 
-Six additional XML-only examples use `SubstrateShape=Circle` with **50 mm radius**, **7 mm EdgeExclusion**, a single `(0,0)` coefficient, and high-range injection schedules. All six request `CalculateJZeroParams=true`; they also set `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`.
+Six additional XML-only examples use `SubstrateShape=Circle` with **50 mm radius**, **7 mm EdgeExclusion**, a single `(0,0)` coefficient, and high-range injection schedules. All request `CalculateJZeroParams=true`; they also set `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`.
 
-These files expand runtime coverage for one-point geometry and stored recipe metadata only. Because they do not include matching vendor result-table exports, they do not validate J0, processed Lifetime, Δn or Implied Voc.
+These files expand runtime coverage for one-point geometry and stored recipe metadata only. Without matching vendor result-table exports, they do not validate J0, processed Lifetime, Δn or Implied Voc.
 
 **Vendor result-table path observed but not yet reproduced**
 
-The same CSVs expose `Lifetime[us]`, `dn[cm-3]`, `Implied Voc[V]` and `QDC` in the result table. Vendor `Lifetime[us]` is not the raw XML lifetime. Across the current 1003 paired rows, 775 have positive result-table Lifetime and 228 are zero.
+The same CSVs expose `Lifetime[us]`, `dn[cm-3]`, `Implied Voc[V]` and textual `QDC` in the result table. Vendor `Lifetime[us]` is not either raw XML lifetime field. Across the 5833 paired rows, **4628** have positive result-table Lifetime and **1205** are zero.
 
 For positive result-table Lifetime rows, `dn` is consistent with:
 
@@ -215,25 +196,22 @@ G = 2.38e17 * I[suns] / W[cm] * OpticalFactor
 dn = G * Lifetime
 ```
 
-to the precision of the rounded CSV values (maximum relative difference below about 0.5% in the current corpus). This establishes the Lifetime→dn step, not the raw→vendor-Lifetime transformation.
+to rounded CSV precision, with maximum relative discrepancy about **0.509%** in the expanded corpus. This establishes the Lifetime→dn step, not the raw→vendor-Lifetime transformation.
 
-The result-table Lifetime transformation, zero/blank acceptance rule, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any LP/HP stitching remain **inferred/unsupported** until reproduced point-by-point.
+The result-table Lifetime transformation, zero/blank acceptance rule, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any vendor LP/HP stitching remain **inferred/unsupported** until reproduced point-by-point.
 
-**Analyzer features not claimed as PV-2000 algorithms**
+**Analyzer behavior**
 
-- log/linear presentation;
-- positive-raw-lifetime summary filtering;
-- selected transient inspection;
-- local multi-XML LP/HP/repeat overlay;
-- CSV export of parsed XML quantities.
+- default curve/summary lifetime: validated PV-2000 raw `LifeTime` from `TransientInfo@LifeTime`;
+- optional curve source: XML `Values` for diagnostics;
+- selected-point inspection shows both lifetime fields;
+- stored transient inspection, local multi-XML overlay, log/linear X and XML-only CSV export are analyzer features, not claimed vendor post-processing.
 
 **NEW PROFILE triggers**
 
-Treat multiple iterations, another DataItem/transient layout, another pattern semantic or another unit convention as a new structural profile. A future implementation of the vendor result-table post-processing extends this profile only after the existing 57 paired exports are regressed point-by-point.
+Treat multiple iterations, another DataItem/transient layout, another pattern/target semantic, another unit convention, or a different vendor result-table path as a new semantic profile. Ordinary numeric parameter changes inside the established raw path do not create a new profile.
 
 See `docs/ALGORITHMS_DUAL_QSS.md`.
-
----
 
 ### JZERO-MAP-001 — two-intensity Emitter J0 pseudo-square map
 
@@ -631,6 +609,8 @@ Semantic input/output path:
 - every supplied reflectance-only XML has `Current=0` at every site, so this field is an inactive placeholder rather than a measured current result;
 - vendor result shown in the paired XPS printouts is **Reflectivity [%]**.
 
+The validated label requires these flags explicitly and the zero-valued inactive Current placeholder. If an XML has a different or missing flag state, or nonzero inactive Current data, the active raw channels remain inspectable but the derived Reflectivity is labelled **inferred** pending a matching vendor result. Current-enabled LBIC profiles likewise require explicit active Current/Direct/Scattered flags and an explicit µA unit; absent unit metadata cannot justify calculated EQE/IQE.
+
 The supplied corpus spans 656, 855 and 984 nm lasers plus ordinary numeric Region/grid changes. Those numeric settings are evidence values, not runtime whitelist keys.
 
 **Validated / established**
@@ -661,6 +641,8 @@ Runtime semantics for this family therefore are:
 **Partial acquisitions**
 
 One supplied 61 × 61 recipe contains only **2814 of 3721** scheduled DataItems. The analyzer maps those available points to the leading X-fast / ascending-Y SquareRegionPattern schedule so the partial map remains usable, but this incomplete-prefix coordinate interpretation is labelled **partial / inferred** and is not claimed as `LBIC-REFLECTANCE-003` vendor parity until a matching vendor coordinate export confirms the incomplete-scan behavior.
+
+The UI exposes this status as `partial acquisition · inferred` in Reference parity, alongside the measured/expected point count.
 
 **NEW PROFILE triggers**
 
