@@ -1,8 +1,10 @@
-# Agent handoff — 2026-09-23 — fix/measurement-position-layout v20260923.6
+# Agent handoff — 2026-09-23 — main v20260923.7
 
-The landing-page Guide shortcut now targets the project Wiki, and README exposes the same Guide/Wiki entry point. Scientific/user-facing reference material should preferentially link there while repo docs retain implementation/validation records.
+The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
-Measurement-position visuals belong in the right visualization area, alongside maps/plots. The left sidebar is reserved for controls, metadata, summaries and selected-point details. Dual QSS now follows the same placement principle already used by DIT.
+The larger private OnePoint collection contains 176 row-aligned XML/raw-CSV pairs with 11,575 exact Qc schedule points. Dark-channel parity is narrow rather than universal: 168 pairs are within 2 mV maximum error; eight diverge, while exported light/Vsb generally differs from measured-light XML. The optional strict validator gate passes an eight-pair/520-row subset and rejects a mixed collection with unmatched or divergent cases. Do not infer a vendor Ge material mode or implement the missing corrected-light path from these exports.
+
+The inspected historical backup, software data archive and Ge/COCOS collection have no `DITMeasurement` XML with `UseCocosII=true`; COCOS-II remains inferred. A further ten exact-name XML/vendor-summary CSV candidates were located but their summary/result calculations have **not** been regressed. Next work should either obtain a real `UseCocosII=true` XML plus matching output, or examine the specific extra reprocessing state behind the corrected-light export without guessing an XML-only formula.
 
 ## Goal
 
@@ -10,11 +12,7 @@ Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the
 
 ## Current branch update
 
-The shared reflectance folder was rechecked locally against the LBIC parser and private XPS validator. All 62 XMLs use `LBICMeasurement`, one beam, `SquareRegionPattern`, explicit `MeasureCurrent=false` plus active Direct/Scattered flags, and µA metadata. The raster inventory is 60 complete 61×61 scans, one complete 61×71 scan and one 2814/3721-point partial scan. The mixed-corpus validator reports 44 XMLs / 60 XPS printouts as `PASS`, 17 complete XMLs as `UNPAIRED`, one partial scan as `INFERRED`, and zero structural/calculation failures. The local copies remain under ignored `private/reference/reflectance/` and are not publishable project files.
-
-The branch narrows the validated LBIC profile gate to explicit XML flags, known µA units for current-enabled calculations, and zero-valued disabled Current placeholders for reflectance-only data. Files outside those conditions remain inspectable with inferred calculations. `--allow-unpaired` provides an honest whole-folder inventory; the validator's default still fails when an expected matching vendor output is absent.
-
-A real-browser import sweep then opened all 62 XMLs in the built analyzer. Each showed LBIC Reflectivity analysis and nonblank raster map, distribution and X/Y profile canvases; no XML import dialog or runtime error occurred. A complete scan and the 2814-point partial scan were also inspected visually. The partial map shows only acquired rows; its sidebar now explicitly reports `partial acquisition · inferred`. This is a display smoke check, while numerical parity remains limited to the 44 XMLs with matching XPS output.
+`npm run validate:dit -- --xml-dir ... --csv-dir ...` inventories exact-name DIT/raw-CSV candidates without embedding private paths in source. It compares XML-derived measured dark/light/Vsb and the charge schedule separately against vendor columns, preserves blank-Dit counts, and refuses to call duplicate CSVs the same unless their exported values agree. A strict `--max-dark-error-mv` gate requires all XMLs in the selected directory to pair and enforces the requested dark-channel bound; it does not assert parity for the unresolved light/Vsb/Dit branch.
 
 ## Current implementation
 

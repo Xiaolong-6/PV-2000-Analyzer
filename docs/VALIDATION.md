@@ -162,9 +162,15 @@ Nine private one-point DIT XMLs have matching PV-2000 Raw COCOS CSV exports. All
 
 Across 275 process rows, XML dark means after offset subtraction match exported `Vcpd Dark` with about **0.310 mV MAE** and **1.11 mV max absolute error**. The exported `Vcpd Light` is an almost straight processed branch and does not equal the saved measured-light means despite `UseCocosII=false`. The extra reprocessing state is not uniquely encoded in the XML and is not guessed at runtime.
 
+An expanded, read-only audit uses `scripts/validate_dit_raw_reference.py` to compare exact-name XML/raw-CSV candidates while treating comma- and semicolon-separated duplicate exports as one only when all exported numeric columns agree. Of 223 XMLs in that private collection, 178 have a matching raw CSV; 176 are row-aligned Standard COCOS OnePoint pairs, two have truncated/different row counts, and 45 XMLs are unpaired. Across the 176 aligned pairs, all **11,575 Qc positions** match the XML charge schedule exactly. **168/176** pairs keep the exported dark-channel maximum error within 2 mV; the other eight diverge, so the full collection is **not** a blanket validated profile. The median per-pair dark MAE is about 0.301 mV. Exported light/Vsb values generally differ from the saved measured-light branch, and 4,982 raw-export Dit cells are blank. No vendor Dit/Ge material parity is claimed from this audit.
+
+Run the diagnostic with `npm run validate:dit -- --xml-dir <local XML directory> --csv-dir <local raw CSV directory>`; repeat `--csv-dir` for additional locations. `--max-dark-error-mv 2` additionally requires every XML in the selected directory to pair and every dark row to stay within 2 mV. A focused eight-pair subset passes that gate (520 rows, 1.60 mV maximum dark error); the entire mixed corpus does not.
+
 ### PV2000 COCOS-II (inferred)
 
 Status: **inferred**, not vendor-exact.
+
+A read-only inventory of the supplied historical backup (5,710 XMLs, including 2,659 `DITMeasurement` files), the supplied software data archive (62 DIT XMLs), and the private Ge/COCOS measurement collection (220 DIT XMLs) found no DIT file with `UseCocosII=true`. These datasets therefore cannot upgrade the XML-driven COCOS-II path to validated, irrespective of the software-package or folder name.
 
 The current default COCOS-II path is derived from a same-raw-data adjustment series rather than a vendor algorithm disclosure. The supplied reprocessed exports established these behavioral constraints:
 
