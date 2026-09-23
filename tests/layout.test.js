@@ -118,7 +118,7 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
     let last=-1;
     for(const label of labels){
       const next=src.indexOf(label,last+1);
-      assert.ok(next>last,\`expected sidebar order item ${label}\`);
+      assert.ok(next>last,`expected sidebar order item ${label}`);
       last=next;
     }
   };
