@@ -1,6 +1,8 @@
-# Agent handoff — 2026-09-23 — main v20260923.5
+# Agent handoff — 2026-09-23 — fix/measurement-position-layout v20260923.6
 
 The landing-page Guide shortcut now targets the project Wiki, and README exposes the same Guide/Wiki entry point. Scientific/user-facing reference material should preferentially link there while repo docs retain implementation/validation records.
+
+Measurement-position visuals belong in the right visualization area, alongside maps/plots. The left sidebar is reserved for controls, metadata, summaries and selected-point details. Dual QSS now follows the same placement principle already used by DIT.
 
 ## Goal
 

@@ -218,3 +218,8 @@
 .dual-qss-legend-item i{display:inline-block;width:7px;height:7px;border-radius:50%;flex:0 0 auto}
 .dual-qss-legend-more{color:var(--muted);font-size:9px;white-space:nowrap}
 @media(max-width:1200px){.dual-qss-inline-legend{max-width:34%}}
+
+.dual-qss-position-panel .chart-stage{height:320px}
+.dual-qss-position-stage{display:grid;place-items:center;padding:8px 14px}
+.dual-qss-position-stage svg{width:min(100%,360px);height:100%;display:block}
+@media(max-width:1150px){.dual-qss-position-panel .chart-stage{height:290px}}

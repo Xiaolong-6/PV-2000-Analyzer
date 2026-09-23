@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260923.6 — 2026-09-23
+
+- Moved the Dual QSS **Measurement position** schematic out of the left metadata sidebar and into the right visualization column, matching the established DIT placement rule for OnePoint geometry.
+- Added a layout regression that prevents the Dual QSS position visualization from being rendered inside the sidebar again.
+
 ## v20260923.5 — 2026-09-23
 
 - Changed the landing-page **Guide** shortcut to the project Wiki and added a matching Guide/Wiki entry point to the README.
