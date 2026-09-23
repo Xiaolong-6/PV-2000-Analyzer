@@ -1,5 +1,26 @@
 # Changelog
 
+## v20260923.11 — 2026-09-23
+
+- Added an explicit PV-2000 software-version validation boundary: the current reference baseline is Semilab PV-2000 v1.3.0.5. The landing page, README and reference-profile registry distinguish this evidence boundary from schema/profile compatibility with other versions.
+- Decoupled JZero calculation semantics from spatial geometry. The established two-iteration calculation path remains available while geometry carries its own validation status; OnePointPattern + SquareCell can load as inferred geometry instead of being rejected solely for not matching the paired pseudo-square map.
+- Extended the shared geometry resolver with PseudoSquareCell scheduling so the existing 5017-site JZero reference is generated through the same core geometry layer.
+- Added Quantity presentation tiers (`primary`, `advanced`, `diagnostic`) and optional evidence metadata. Architecture and agent rules now require inspection of useful XML-only fields in addition to vendor CSV/UI outputs, following the LBIC Advanced-analysis precedent.
+- Fixed the JZero source-density issue reported by CI.
+
+## v20260923.10.9 — 2026-09-23 (measurement-domain refactor branch)
+
+- Added the shared site-selection contract with separate intrinsic support, user range filtering and active masks; all site-aligned arrays are required to share one index space.
+- Centralized Pattern/Target coordinate interpretation in the geometry core. Raw XML coefficients are retained separately from canonical physical `pointsMm`; unknown coefficient encodings are not assumed to be millimetres.
+- Fixed DIT NinePointPattern map geometry: target-relative ±0.632455532 coefficients on a 100 mm wafer with 4 mm EdgeExclusion resolve to approximately ±29.09 mm and remain labelled inferred pending paired X/Y validation.
+- Routed QSS HighDensity, ISC/VCPD generated map geometry, Dual QSS OnePoint context and DIT position/map rendering through the shared geometry contract while preserving established validated coordinate paths.
+
+## v20260923.10.4 — 2026-09-23 (measurement-domain refactor branch)
+
+- Added the first measurement-domain core: explicit Quantity provenance/availability, normalized measurement and geometry envelopes, semantic profile registry, and backwards-compatible registry metadata.
+- Migrated ISC/VCPD internally as the pilot family. Existing result arrays, summaries, render/export contracts and reference-profile boundaries are preserved while ISC-MAP-001 / VCPD-MAP-001 metadata become explicit.
+- Added domain-core, profile-resolution, build-order and ISC/VCPD provenance regressions. Validated ISC/VCPD profiles now require the established coordinate-reconstruction path so alternate coefficient encodings remain inferred. DIT/QSS/Dual QSS/JZero/LBIC remain on their existing module paths in this phase.
+
 ## v20260923.10 — 2026-09-23
 
 - Fixed Dual QSS initial rendering: Lifetime vs QSS intensity and Stored transient now draw immediately after XML import instead of waiting for a Log/Linear or source-control change event.

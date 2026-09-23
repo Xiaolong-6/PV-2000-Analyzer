@@ -10,17 +10,16 @@
   const help=text=>PV.ui.help(text);
   const css=name=>PV.ui.cssVar(name);
 
-  function effectiveMapRadius(diameter,edgeExclusion=0){const radius=diameter/2;
-    if(!Number.isFinite(radius)||!(radius>0))return NaN;
-    if(!Number.isFinite(edgeExclusion))edgeExclusion=0;
-    if(edgeExclusion<0||edgeExclusion>=radius)return NaN;
-    return radius-edgeExclusion}
-  function effectiveMapHalfExtent(size,edgeExclusion=0){const half=size/2;
-    if(!Number.isFinite(half)||!(half>0))return NaN;
-    if(!Number.isFinite(edgeExclusion))edgeExclusion=0;
-    if(edgeExclusion<0||edgeExclusion>=half)return NaN;
-    return half-edgeExclusion}
+  function effectiveMapRadius(diameter,edgeExclusion=0){return GEO.effectiveRadius(diameter,edgeExclusion)}
+  function effectiveMapHalfExtent(size,edgeExclusion=0){return GEO.effectiveHalfExtent(size,edgeExclusion)}
   function targetGeometry(d){
+    const resolved=d?.geometryModel;
+    if(resolved?.shape==='circle'&&resolved.nominal){
+      return{shape:'circle',nominal:resolved.nominal,scheduled:resolved.scheduled,extent:resolved.nominal.radius};
+    }
+    if(resolved?.shape==='rect'&&resolved.nominal){
+      return{shape:'rect',nominal:resolved.nominal,scheduled:resolved.scheduled,extent:Math.max(resolved.nominal.halfWidth||0,resolved.nominal.halfHeight||0)};
+    }
     if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
       const radius=d.diameter/2;
       return{
@@ -66,12 +65,7 @@
     return Number.isFinite(size)&&Number.isFinite(count)&&count>1?size/(count-1):NaN;
   }
   function highDensityCoords(coefficients,scaleX,scaleY,count,circular=false){
-    if(!Array.isArray(coefficients)||
-      !Number.isFinite(scaleX)||!Number.isFinite(scaleY)||!(scaleX>0)||!(scaleY>0))return[];
-    if(coefficients.some(point=>!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)))return[];
-    const selected=circular?coefficients.filter(point=>point.x*point.x+point.y*point.y<1):coefficients;
-    if(selected.length!==count)return[];
-    return selected.map(point=>({x:point.x*scaleX,y:point.y*scaleY}));
+    return GEO.scaleTargetRelativeCoefficients(coefficients,scaleX,scaleY,count,{circular});
   }
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),md=X.direct(m,'MeasurementData'),itd=X.direct(md,'IterationData'),iter=X.direct(itd,'Iteration'),data=X.direct(iter,'Data');
@@ -111,18 +105,27 @@
       pitchX=Number.isFinite(rawPitchX)?rawPitchX:patternType==='HighDensityPattern'?gridPitch(highDensitySpanX,highDensityDimension):gridPitch(regionWidth,nx),
       pitchY=Number.isFinite(rawPitchY)?rawPitchY:patternType==='HighDensityPattern'?gridPitch(highDensitySpanY,highDensityDimension):gridPitch(regionHeight,ny);
       
-    let coords=[];
-    if(patternType==='MapPattern'){
-      if(targetType==='RoundWafer'&&Number.isFinite(mapRadius)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
-        coords=GEO.roundGrid(mapRadius,pitchX,pitchY,values.length);
-      }else if(targetType==='SquareCell'&&Number.isFinite(mapHalfWidth)&&Number.isFinite(mapHalfHeight)&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
-        coords=GEO.centeredRectGrid(mapHalfWidth,mapHalfHeight,pitchX,pitchY,values.length);
-      }
-    }else if(patternType==='SquareRegionPattern'){
-      coords=GEO.rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,values.length,1);
-    }else if(patternType==='HighDensityPattern'){
-      coords=highDensityCoords(coefficients,highDensityScaleX,highDensityScaleY,values.length,targetType==='RoundWafer');
-    }
+    const geometryModel=GEO.resolveMeasurementGeometry({
+      patternType,
+      targetType,
+      rawCoefficients:coefficients,
+      pointCount:values.length,
+      diameter,
+      targetWidth,
+      targetHeight,
+      edgeExclusion,
+      substrateShape:c.shapeType,
+      substrateRadius:c.radius,
+      pitchX,
+      pitchY,
+      regionX,
+      regionY,
+      regionWidth,
+      regionHeight,
+      nx,
+      ny
+    }),
+      coords=geometryModel.pointsMm;
       
     const preArray=X.direct(X.direct(m,'PreProcessings'),'ArrayOfPreProcessSettings'),pre0=preArray?X.children(preArray)[0]:null;
     const avgIndex=X.num(m,'Averaging',NaN),
@@ -136,7 +139,7 @@
       evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'';
       
     const qssRange=X.direct(m,'QSSRange');
-    return{...c,values,coords,patternType,patternName:X.text(pattern,'Name',''),regionX,regionY,regionWidth,regionHeight,nx,ny,highDensityDimension,coefficientCount:coefficients.length,targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
+    return{...c,values,coords,geometryModel,rawCoefficients:coefficients,patternType,patternName:X.text(pattern,'Name',''),regionX,regionY,regionWidth,regionHeight,nx,ny,highDensityDimension,coefficientCount:coefficients.length,targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
       waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor',1),doping:X.num(m,'Doping',NaN),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower',NaN),
       avgMode,averagingIndex:avgIndex,evaluationMode,autoset:X.text(m,'DoAutoSetting',''),qssMilli:X.num(pre0,'QssLampIntensity',Number(c.header['QSS Intensity'])),temperatureC:X.num(iter,'ChuckTemperature',NaN),measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),tauSteadyStateFactor:X.num(iter,'TauSteadyStateFactor',NaN),qdcValue:X.num(iter,'QDCValue',NaN),
       probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),doRastering:X.text(m,'DoRastering',''),saveTransient:X.text(m,'SaveTransient',''),transient:c.header['Transient']||'',pointAverage:X.text(m,'DoPointAveraging',''),pointAverageCount:X.num(m,'PointAverageCount',NaN),

@@ -1,4 +1,6 @@
-# Agent handoff — 2026-09-23 — main v20260923.10
+# Agent handoff — 2026-09-23 — v20260923.11
+
+The project now records **Semilab PV-2000 v1.3.0.5** as the software-version validation baseline. This is an evidence boundary rather than an exact-version parser whitelist: other releases may remain schema/profile-compatible, but must stay version-unvalidated until paired vendor output from that release is regressed.
 
 The current main includes a generic, read-only DIT paired-reference diagnostic and evidence-boundary documentation. It does not change analyzer calculations. All vendor software, XML, CSV and private research notes stayed local or on the user-specified read-only shares.
 
@@ -9,6 +11,42 @@ The inspected historical backup, software data archive and Ge/COCOS collection h
 The staged architecture roadmap is documented in `docs/MEASUREMENT_ARCHITECTURE_REFACTOR_PLAN.md`. The first implementation branch should add shared domain primitives and migrate ISC/VCPD as the pilot without numerical, validation-label or UI changes.
 
 Scientific Wiki source pages are tracked under `wiki/`; `docs/DOCUMENTATION_WIKI_PLAN.md` defines their role and `docs/WIKI_HANDOFF.md` documents Wiki synchronization. Wiki prose is maintained as the current scientific reference, while validation/profile evidence remains in repository docs.
+
+## XML-only discovery / Advanced analysis
+
+PV-2000 UI/CSV output is not treated as the ceiling of available information. During family audits, inspect and preserve useful XML-stored/unknown numeric quantities even when they are absent from vendor exports. Presentation tier is independent from provenance/validation: extra fields may be primary, advanced or diagnostic. XML presence alone never upgrades a quantity to a validated vendor result.
+
+LBIC is the current reference implementation for this policy.
+
+## Shared site selection and canonical geometry
+
+Phase A now includes two cross-cutting contracts:
+
+- `PV2000.selection`: intrinsic support, user range filter and active mask are separate. QSS remains the existing behavioral reference; broad filter UI migration waits for the post-architecture feature branch.
+- `PV2000.geometry.resolveMeasurementGeometry`: Pattern/Target semantics produce canonical `pointsMm`, while raw coefficients remain separate.
+
+DIT NinePointPattern no longer treats ±0.632 coefficients as ±0.632 mm. On the current 100 mm / 4 mm-edge family they resolve against the 46 mm scheduled radius to about ±29.09 mm. This is marked inferred until paired vendor X/Y coordinates are available.
+
+A repository scan found coefficient-bearing runtime paths in DIT, QSS HighDensity, ISC/VCPD and Dual QSS. They now route through or preserve the shared geometry contract; LBIC/JZero do not currently contain the same direct coefficient-as-mm path.
+
+JZero calculation and geometry are now separate. The paired two-iteration post-processing path is tracked as `JZERO-CALC-001`; the paired pseudo-square map geometry is `JZERO-GEOM-MAP-PSEUDOSQUARE-001`. Resolver-supported OnePoint + SquareCell data can load with inferred geometry instead of failing the whole measurement.
+
+## Measurement-domain Phase A
+
+This branch introduces the new domain core and migrates ISC/VCPD only.
+
+New primitives:
+
+- `src/core/validity.js`
+- `src/core/quantity.js`
+- `src/core/measurement.js`
+- `src/core/profiles.js`
+- normalized geometry envelopes in `src/core/geometry.js`
+- semantic profile definitions under `src/profiles/`.
+
+ISC/VCPD keep the existing parser-result fields, renderer and CSV behavior while also exposing domain/profile/provenance metadata. DIT/QSS/Dual QSS/JZero/LBIC are intentionally untouched by this migration.
+
+Before merge, require normal CI plus private `validate:isc` and `validate:vcpd` when the paired files are locally available. Any numerical change is a stop condition for this branch.
 
 ## Goal
 

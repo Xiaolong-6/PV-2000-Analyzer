@@ -1,10 +1,8 @@
 # Measurement architecture refactor plan
 
-Status: **planning only**. This branch does not change runtime behavior.
+Status: **Phase A implementation in progress** on `refactor/measurement-domain-core`.
 
-Recommended implementation branch after this plan is accepted:
-
-`refactor/measurement-domain-core`
+The initial implementation preserves runtime numerical/UI behavior while introducing domain metadata.
 
 ## 1. Goal
 
@@ -189,6 +187,18 @@ Parsing should extract and normalize structure only.
 
 Scientific calculations should not happen inside XML parsing.
 
+## 5A. XML discovery / Advanced analysis
+
+For every measurement family, inspect the XML beyond the fields reproduced in PV-2000 CSV/UI. Preserve useful stored quantities and unknown numeric channels instead of designing the analyzer only around vendor-visible outputs.
+
+The quantity model distinguishes presentation tier from evidence:
+
+- primary;
+- advanced;
+- diagnostic.
+
+This allows XML-only information to be useful without implying vendor parity. LBIC already demonstrates the intended behavior.
+
 ## 6. First-class quantity model
 
 Introduce a shared quantity object.
@@ -205,7 +215,9 @@ Conceptually:
   availability,
   modelId,
   profileId,
-  validation
+  validation,
+  tier,
+  evidence
 }
 ```
 
@@ -672,9 +684,48 @@ Out of scope for this first branch:
 - formula changes;
 - validation-envelope expansion.
 
+### Geometry correction included in Phase A
+
+A DIT NinePointPattern family exposed a coordinate-space bug: XML coefficients near ±0.632 were being displayed as ±0.632 mm on a 100 mm wafer. The shared resolver now treats this pattern as target-relative.
+
+For a 100 mm RoundWafer with 4 mm EdgeExclusion:
+
+```text
+scheduled radius = 50 - 4 = 46 mm
+x_mm = x_coefficient * 46
+```
+
+Thus ±0.632455532 maps to approximately ±29.09 mm. This coordinate interpretation is **inferred** until paired PV-2000 X/Y output is available.
+
+The resolver preserves raw coefficients and forbids unknown coefficient encodings from becoming physical millimetres implicitly.
+
+### Phase A implementation status
+
+Implemented on the current refactor branch:
+
+- quantity/provenance model;
+- availability/reason primitives;
+- shared site-selection contract (`supportMask / filterMask / activeMask`) with one site index space;
+- canonical Pattern/Target geometry resolver with raw coefficients separated from `pointsMm`;
+- normalized measurement envelope;
+- semantic profile registry;
+- normalized geometry envelope;
+- backwards-compatible registry metadata;
+- ISC-MAP-001 and VCPD-MAP-001 profile definitions;
+- ISC/VCPD pilot migration with unchanged renderer/export interfaces;
+- domain/profile/provenance regression tests.
+
+Private ISC/VCPD paired validators remain the numerical acceptance gate before merge.
+
 ### Phase B
 
-Migrate QSS-uPCD.
+Migrate the established QSS-uPCD Valid-data filter onto the shared selection layer **without changing behavior**. QSS is the reference implementation for filter metric selection, Reset, 1–99%, map masking, Distribution counts, summary statistics, profile masking and export flags.
+
+Then migrate JZero to the same selection layer and remove its duplicate local `validMask / summaryMasked` implementation.
+
+Do not add filter UI to every family in this phase.
+
+After QSS/JZero parity is locked, use a dedicated feature branch to connect suitable families such as ISC/VCPD, LBIC, Dual QSS and site-level DIT to the shared filter capability.
 
 This validates:
 

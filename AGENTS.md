@@ -29,10 +29,10 @@ The canonical project version is the single line in root `VERSION`. Do not use s
 
 ## Development workflow
 
-1. Preserve XML-only runtime operation. PV-2000 exports are regression references, never runtime dependencies.
+1. Preserve XML-only runtime operation. PV-2000 exports are regression references, never runtime dependencies. Do not treat PV-2000 CSV/UI as the complete XML schema: inventory useful stored XML quantities and unknown numeric channels when adding/auditing a family. Preserve them where practical and expose scientifically useful extra information through Advanced/diagnostic views with explicit provenance/evidence; absence from vendor export must not be mistaken for absence from XML, and XML presence must not be described as vendor-result validation.
 2. Detect measurement type from `Measurement/@xsi:type`; never infer it from filenames.
 3. Add each new result type as an isolated module registered through `PV2000.registry`.
-4. Shared XML/statistics/geometry/theme/export/UI logic belongs in `src/core/`; do not duplicate common HTML escaping, help markup or tooltip helpers in measurement modules.
+4. Shared XML/statistics/geometry/theme/export/UI logic belongs in `src/core/`; do not duplicate common HTML escaping, help markup or tooltip helpers in measurement modules. For migrated/new scientific families, keep parsing, quantity provenance/availability, site selection, semantic profile metadata, scientific calculation and rendering as explicit layers. Use `PV2000.quantity`, `PV2000.selection`, `PV2000.measurement`, `PV2000.profiles` and the canonical geometry resolver rather than inventing module-local equivalents. All site-aligned arrays must use one shared site index space. Raw Pattern/Coefficients must remain distinct from physical `pointsMm`; modules/renderers must never assume an XML coefficient is already in millimetres.
 5. Preserve the responsive scientific-workspace layout: wide screens use sidebar + two analysis columns; at medium widths (<=1200 CSS px) keep the sidebar and stack the two analysis columns into one scrollable column; narrow/mobile layouts collapse to one column. Do not imitate the legacy PV-2000 application. Plot axis-range controls must remain compact header popovers immediately before Export rather than taking permanent chart height. LBIC uses a two-column right workspace (Map/Distribution above, X/Y profiles below), with Selected pixel and Channel provenance in the sidebar; QSS Current dataset also belongs in the sidebar.
 6. Every chart must expose a data export and shared zoom behavior: wheel in the plot zooms both axes, wheel over one axis zooms only that axis, and double-click restores auto scale.
 7. Explain scientific quantities/controls with hover text (`title`/`.help`) rather than permanent instructional clutter.
@@ -93,9 +93,9 @@ Lifetime→SRV is analyzer post-processing, not a PV-2000 result. Preserve the c
 
 ## JZero validity rule
 
-The current `JZERO-MAP-001` family is a dedicated `JZeroMeasurement` path with two `UpcdIterationData` lifetime maps, two QSS intensities, `MapPattern + PseudoSquareCell`, and seven vendor outputs: Basore J0, two τeff.d channels, two Smax channels and two Implied Voc channels. Preserve site pairing by iteration index and X-fast pseudo-square coordinate order. Basore J0 and Smax are pointwise vendor-regressed; JZero Implied Voc uses its own documented compatibility calibration and must not silently reuse the general QSS-map `ni(T)` model.
+JZero calculation semantics and spatial geometry are separate. `JZERO-CALC-001` is the two-iteration JZero calculation path; `JZERO-GEOM-MAP-PSEUDOSQUARE-001` is the currently paired geometry path. Preserve site pairing by iteration index. Basore J0 and Smax are pointwise vendor-regressed; JZero Implied Voc uses its own documented compatibility calibration and must not silently reuse the general QSS-map `ni(T)` model.
 
-Another pattern/target encoding, iteration count/order, raw data schema or result set is **NEW PROFILE** until paired vendor output is supplied. Do not map `JZeroMeasurement` to `QssUpcdMeasurement` merely because both contain `UpcdDataItem` lifetime values.
+A different resolver-supported Pattern/Target combination must not be rejected merely because it is not `MapPattern + PseudoSquareCell`. Keep calculation status and geometry status separate: the validated pseudo-square map geometry remains validated, while another geometry such as `OnePointPattern + SquareCell` can be displayed as **inferred** until paired X/Y/display evidence is supplied. A different iteration count/order, raw data schema or result set remains a new calculation profile. Do not map `JZeroMeasurement` to `QssUpcdMeasurement` merely because both contain `UpcdDataItem` lifetime values.
 
 ## ISC validity rule
 

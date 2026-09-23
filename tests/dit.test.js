@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 global.PV2000 = {};
 require('../src/core/stats.js');
+require('../src/core/geometry.js');
 require('../src/core/registry.js');
 PV2000.xml = {};
 require('../src/modules/dit.js');
@@ -91,6 +92,33 @@ test('explicit RoundWafer target geometry takes precedence when present', () => 
   assert.equal(g.radius, 50);
   assert.equal(g.innerRadius, 46);
   assert.equal(g.geometrySource, 'target');
+});
+
+test('NinePoint normalized coefficients map onto the EdgeExclusion-adjusted wafer radius', () => {
+  const c = Math.sqrt(0.4);
+  const raw = [
+    {x:0,y:0},
+    {x:-c,y:0},{x:c,y:0},{x:0,y:-c},{x:0,y:c},
+    {x:-c,y:-c},{x:c,y:-c},{x:-c,y:c},{x:c,y:c}
+  ];
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'NinePointPattern',
+    targetType:'RoundWafer',
+    rawCoefficients:raw,
+    pointCount:9,
+    diameter:100,
+    edgeExclusion:4
+  });
+  const expected=c*46;
+  assert.equal(g.sourceSpace,'normalized-target-coefficient');
+  assert.equal(g.interpretation,'target-relative-fixed-point-pattern');
+  assert.equal(g.evidenceStatus,'inferred');
+  assert.equal(g.nominal.radius,50);
+  assert.equal(g.scheduled.radius,46);
+  assert.ok(Math.abs(g.pointsMm[1].x+expected)<1e-12);
+  assert.ok(Math.abs(g.pointsMm[2].x-expected)<1e-12);
+  assert.ok(expected>29&&expected<30);
+  assert.notEqual(g.pointsMm[1].x,raw[1].x);
 });
 
 test('variation-method Dit changes with semiconductor material', () => {

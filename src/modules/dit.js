@@ -2,6 +2,7 @@
   const PV=root.PV2000=root.PV2000||{},
     X=PV.xml,
     S=PV.stats,
+    GEO=PV.geometry,
     q=1.60218e-19,
     k=1.38e-23,
     T=300;
@@ -48,9 +49,29 @@
       data=X.direct(X.direct(X.direct(md,'IterationData'),'Iteration'),'Data'),
       items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
       pattern=X.direct(m,'Pattern'),
+      patternType=X.attrType(pattern),
       target=X.direct(m,'Target'),
+      targetType=X.attrType(target),
+      targetSize=X.direct(target,'Size'),
+      targetWidth=X.num(targetSize,'Width',NaN),
+      targetHeight=X.num(targetSize,'Height',NaN),
+      diameter=X.num(target,'Diameter',Number.isFinite(c.radius)?2*c.radius:NaN),
+      edgeExclusion=firstNum([target,m],['EdgeExclusion'],NaN),
       coeff=X.direct(pattern,'Coefficients'),
-      coords=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',0),y:X.num(p,'Y',0)})):[],
+      rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[],
+      geometryModel=GEO.resolveMeasurementGeometry({
+        patternType,
+        targetType,
+        rawCoefficients,
+        pointCount:items.length,
+        diameter,
+        targetWidth,
+        targetHeight,
+        edgeExclusion,
+        substrateShape:c.shapeType,
+        substrateRadius:c.radius
+      }),
+      coords=geometryModel.pointsMm,
       sites=[];
       
     items.forEach((it,si)=>{
@@ -68,7 +89,7 @@
       const id=scalarMean(X.direct(it,'InitialVcpdDark'))-off,
         il=scalarMean(X.direct(it,'InitialVcpdLight'))-off,
         iv=standardVsb(id,il,factor,dopingType);
-      sites.push({rows,coord:coords[si]||{x:si,y:0},VDark:id,VLight:il,Vsb:iv,InitialQc:Number.isFinite(prestep)?X.children(X.direct(pred,'VcpdDark')).length*prestep:NaN});
+      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,Vsb:iv,InitialQc:Number.isFinite(prestep)?X.children(X.direct(pred,'VcpdDark')).length*prestep:NaN});
     });
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
@@ -76,7 +97,7 @@
       cocosIIMinVsb:firstNum([m,md],['CocosIIMinVsb','CocosIIMinVSB','COCOSIIMinVsb','COCOSIIMinVSB'],-0.1),
       cocosIIMaxVsb:firstNum([m,md],['CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
       backSurfaceShift:firstBool([m,md],['BackSurfaceShift'],false),
-      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),targetType:X.attrType(target),diameter:X.num(target,'Diameter',NaN),edgeExclusion:firstNum([target,m],['EdgeExclusion'],NaN),pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
+      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,diameter,edgeExclusion,coords,rawCoefficients,geometryModel,pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
         
   }
 
@@ -334,8 +355,19 @@
   function mapValue(v,k){if(!Number.isFinite(v))return'—';if(k==='EOT')return v.toFixed(2);if(k==='MaxVsb')return v.toFixed(3);const e=Math.floor(Math.log10(Math.abs(v)||1)),m=v/10**e;return`${m.toFixed(2)}e${e}`}
   function mapColor(t){t=Math.max(0,Math.min(1,t));const a=[79,124,255],b=[255,90,95];return`rgb(${Math.round(a[0]+(b[0]-a[0])*t)},${Math.round(a[1]+(b[1]-a[1])*t)},${Math.round(a[2]+(b[2]-a[2])*t)})`}
   function spatialEnvelope(d,coords=[]){
-    const coordRadius=Math.max(0,...coords.map(p=>Math.hypot(p?.x||0,p?.y||0))),
-      targetRadius=d?.targetType==='RoundWafer'&&Number.isFinite(d?.diameter)&&d.diameter>0?d.diameter/2:NaN,
+    const resolved=d?.geometryModel,
+      coordRadius=Math.max(0,...coords.map(p=>Math.hypot(p?.x||0,p?.y||0)));
+    if(resolved?.shape==='circle'&&Number.isFinite(resolved.nominal?.radius)){
+      return{
+        kind:'round',
+        onePoint:d?.patternType==='OnePointPattern'&&coords.length<=1,
+        radius:resolved.nominal.radius,
+        innerRadius:Number.isFinite(resolved.scheduled?.radius)?resolved.scheduled.radius:NaN,
+        coordRadius,
+        geometrySource:resolved.provenance||'resolver'
+      };
+    }
+    const targetRadius=d?.targetType==='RoundWafer'&&Number.isFinite(d?.diameter)&&d.diameter>0?d.diameter/2:NaN,
       substrateRadius=(d?.shapeType==='Circle'||d?.shapeType==='RoundWafer')&&Number.isFinite(d?.radius)&&d.radius>0?d.radius:NaN,
       nominalRadius=Number.isFinite(targetRadius)?targetRadius:substrateRadius,
       radius=Number.isFinite(nominalRadius)?nominalRadius:Math.max(1,coordRadius),

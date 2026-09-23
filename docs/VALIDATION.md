@@ -156,6 +156,14 @@ Status: **validated against the available W1 export to the documented approximat
 
 The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS and preserves the measured dark/light path. Standard Vsb is doping-aware and signed: P-type uses `F*(VDark-VLight)`, while N-type reverses that sign. The reference family is unchanged, but exact post-change numerical parity is pending re-run of the private W1 regression after the ni unification.
 
+### DIT NinePointPattern geometry
+
+Status: **inferred**.
+
+The XML coefficient values are dimensionless/target-relative for the current nine-site family. The shared geometry resolver scales them to the scheduled RoundWafer radius `Diameter/2 - EdgeExclusion`. For a 100 mm wafer with 4 mm EdgeExclusion, `0.632455532 × 46 ≈ 29.09 mm`.
+
+A regression test prevents these coefficients from being displayed directly as ±0.632 mm. Paired PV-2000 X/Y output is still required to validate the exact scaling convention.
+
 ### OnePointPattern / circular-substrate regression
 
 Nine private one-point DIT XMLs have matching PV-2000 Raw COCOS CSV exports. All use a center-only `OnePointPattern`; nominal geometry is stored as `Substrate/SubstrateShape xsi:type="Circle"` with 50 mm radius and measurement-level 4 mm edge exclusion. The display therefore uses the real nominal substrate and center measurement position.

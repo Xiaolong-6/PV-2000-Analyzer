@@ -70,6 +70,22 @@ The previous unconditional `abs(...)` lost real sign information and is no longe
 
 A private nine-pair one-point reference set exposes an additional export distinction: its PV-2000 Raw COCOS CSVs contain an almost straight processed `Vcpd Light` branch that does not equal the measured light means stored in the matching XMLs even though the XMLs have `UseCocosII=false`. The XML alone does not uniquely encode whether or how that extra reprocessing was applied. The browser runtime therefore preserves the measured Standard COCOS branch and does **not** guess a straight corrected-light branch merely to fit those exports.
 
+## NinePointPattern geometry
+
+`NinePointPattern/Coefficients` are treated as target-relative coordinates rather than physical millimetres. Raw coefficients are preserved for audit, while map/export geometry consumes canonical `pointsMm`.
+
+For a RoundWafer:
+
+```text
+Rscheduled = Diameter/2 - EdgeExclusion
+x_mm = x_coefficient * Rscheduled
+y_mm = y_coefficient * Rscheduled
+```
+
+The W1-style 100 mm / 4 mm-edge family therefore uses a 46 mm scheduled radius. A coefficient magnitude `0.632455532...` maps to approximately `29.09 mm`.
+
+This interpretation is **inferred** pending a matching PV-2000 X/Y export. The analyzer no longer displays these coefficients directly as millimetres.
+
 ## OnePointPattern geometry
 
 `OnePointPattern` is not a spatial map. The Analyzer still shows the measurement location in spatial context, but its outline and autoscale come from the XML target geometry rather than from the single point's coordinate extent. For `RoundWafer`, the solid outline uses `Diameter/2` and the dashed scheduled boundary uses `Diameter/2 - EdgeExclusion`. A center-only one-point measurement is labelled **Measurement position**, not presented as a heatmap.

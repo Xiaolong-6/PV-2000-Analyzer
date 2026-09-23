@@ -55,3 +55,33 @@ test('single-file build includes JZero before generic fallback',()=>{
   assert.ok(jzero>=0);
   assert.ok(generic>jzero);
 });
+
+
+test('JZero calculation semantics are independent from OnePoint SquareCell geometry',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'OnePointPattern',
+    targetType:'SquareCell',
+    rawCoefficients:[{x:0,y:0}],
+    pointCount:1,
+    targetWidth:100,
+    targetHeight:100,
+    edgeExclusion:7
+  });
+  assert.equal(g.shape,'rect');
+  assert.deepEqual(g.nominal,{halfWidth:50,halfHeight:50});
+  assert.deepEqual(g.scheduled,{halfWidth:43,halfHeight:43});
+  assert.deepEqual(g.pointsMm,[{x:0,y:0}]);
+  assert.equal(g.interpretation,'single-center-point');
+  assert.equal(g.evidenceStatus,'inferred');
+});
+
+test('JZero no longer hard-codes MapPattern + PseudoSquareCell as the only loadable geometry',()=>{
+  const fs=require('node:fs');
+  const src=fs.readFileSync(require.resolve('../src/modules/jzero.js'),'utf8');
+  assert.doesNotMatch(src,/patternType!==['"]MapPattern['"]/);
+  assert.doesNotMatch(src,/targetType!==['"]PseudoSquareCell['"]/);
+  assert.match(src,/resolveMeasurementGeometry/);
+  assert.match(src,/JZERO-CALC-001/);
+  assert.match(src,/JZERO-GEOM-MAP-PSEUDOSQUARE-001/);
+  assert.match(src,/Measurement position/);
+});

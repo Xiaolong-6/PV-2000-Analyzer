@@ -8,6 +8,19 @@ test('desktop/multicolumn sidebar has its own viewport scroll container',()=>{
   assert.match(css,/@media\(max-width:700px\),\(pointer:coarse\) and \(orientation:portrait\) and \(max-width:950px\)\{\.module-grid>\.side\{position:static/);
 });
 
+test('measurement domain primitives load before profile and module code',()=>{
+  const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
+  const validity=build.indexOf("'src/core/validity.js'");
+  const quantity=build.indexOf("'src/core/quantity.js'");
+  const selection=build.indexOf("'src/core/selection.js'");
+  const measurement=build.indexOf("'src/core/measurement.js'");
+  const profiles=build.indexOf("'src/core/profiles.js'");
+  const iscProfile=build.indexOf("'src/profiles/isc.js'");
+  const iscModule=build.indexOf("'src/modules/isc.js'");
+  assert.ok(validity>=0&&quantity>validity&&selection>quantity&&measurement>selection&&profiles>measurement);
+  assert.ok(iscProfile>profiles&&iscModule>iscProfile);
+});
+
 test('single-file build includes ISC and LBIC before generic fallback',()=>{
   const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
   const isc=build.indexOf("'src/modules/isc.js'");
@@ -81,6 +94,7 @@ test('landing page advertises supported analyzers without overclaiming generic i
   assert.match(html,/ISC/);
   assert.match(html,/LBIC/);
   assert.match(html,/Generic XML inspector/);
+  assert.match(html,/Reference: PV-2000 v1\.3\.0\.5/);
 });
 
 

@@ -8,6 +8,12 @@ A **reference instance** is one concrete XML + vendor-output pair. A **validated
 
 When new real XML + matching PV-2000 output become available, append them as evidence to an existing family when they exercise the same path. Reference material may remain private under `private/reference/` or, when a contributor explicitly has the right to publish it, be tracked as a public case under `reference_data/`. Create a NEW PROFILE only when the new data change the schema, algorithm branch, coordinate encoding, channel/result combination, unit convention, validity behavior, or other logic that could require different software behavior.
 
+## PV-2000 software-version boundary
+
+The current **version-level reference baseline is Semilab PV-2000 v1.3.0.5**. Validation claims in this registry are therefore anchored to measurement files and matching vendor outputs produced by that software release unless a profile explicitly records another source version.
+
+This is a validation boundary, not an exact-version runtime whitelist. XML from another PV-2000 release may be schema/profile-compatible and may load correctly, but it must be described as **version-unvalidated** until paired output from that release confirms the same input→output behavior. When contributor/reference data provide the originating PV-2000 software version, record it with the reference evidence.
+
 ## Status vocabulary
 
 - **validated** — numerically checked against a matching PV-2000 export/display for the stated reference envelope.
@@ -670,11 +676,12 @@ When a new real data combination arrives:
 5. compare parser structure and point count first;
 6. compare coordinates/acquisition order point-by-point where applicable;
 7. compare raw quantities point-by-point;
-8. reverse-engineer derived quantities only from the matching vendor output;
-9. check validity/blank/mask behavior and summary statistics;
-10. revise software logic if the new profile behaves differently;
-11. add or extend the appropriate validator; public reference cases should be regression-testable without becoming runtime dependencies;
-12. update this registry, `docs/VALIDATION.md`, the relevant algorithm document, HANDOFF and CHANGELOG;
-13. only then change a result from **inferred** to **validated**.
+8. inventory XML-only stored/unknown numeric quantities that the vendor UI/CSV does not expose; preserve meaningful extras and record whether they belong in Advanced/diagnostic analysis;
+9. reverse-engineer vendor-derived quantities only from matching vendor output;
+10. check validity/blank/mask behavior and summary statistics;
+11. revise software logic if the new profile behaves differently;
+12. add or extend the appropriate validator; public reference cases should be regression-testable without becoming runtime dependencies;
+13. update this registry, `docs/VALIDATION.md`, the relevant algorithm document, HANDOFF and CHANGELOG;
+14. only then change a result from **inferred** to **validated**.
 
 Do not create artificial NEW PROFILE boundaries around ordinary numeric parameter changes. At the same time, do not expand validation across a genuinely different input/output path merely because a formula is physically reasonable or the `xsi:type` is unchanged.
