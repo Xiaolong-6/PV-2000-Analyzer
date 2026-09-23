@@ -1,4 +1,12 @@
-# Agent handoff — 2026-09-23 — v20260923.14
+# Agent handoff — 2026-09-23 — v20260923.15
+
+## LBIC Valid-data filter rollout
+
+LBIC now reuses the shared `PV2000.selection.createFilter()` and shared Valid-data filter UI contract. Filter scope is the current iteration + beam/wavelength. Visible primary quantities are filter candidates by default; Advanced exposes active raw/intermediate quantities as additional candidates. One site-level active mask drives summaries, raster map, Distribution and X/Y profiles while keeping raw values intact.
+
+Changing beam or iteration creates a fresh filter context. Changing only the displayed quantity does not change the selected filter quantity. Map/all exports preserve excluded rows and add filter provenance; histogram/profile exports reflect the active plotted population. The renderer also shows isolated filtered profile points, so a narrow filter does not make a one-point line profile appear empty.
+
+No LBIC channel calculation, measurement-flag rule, geometry/profile matching or vendor-validation claim is changed. The partial SquareRegion schedule helper added in `v20260923.13` is retained.
 
 ## JZero Valid-data filter rollout
 
