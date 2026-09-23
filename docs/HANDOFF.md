@@ -1,4 +1,10 @@
-# Agent handoff — 2026-09-23 — v20260923.18
+# Agent handoff — 2026-09-23 — v20260923.20
+
+## QSS analysis-control provenance cleanup
+
+QSS now separates Analyzer interpretation controls from PV-2000/XML metadata. Analysis controls contain Lifetime handling and Implied Voc model only. Raw non-positive-lifetime count remains dataset audit information in Current dataset.
+
+SRV moved into a collapsed Additional SRV analysis section. It is Analyzer-only, disabled by default, and defaults to Planar when enabled. Textured / black is explicit; planar-reference SRV is shown/validated only for that model. When SRV is disabled it is removed from Results summary, map metric choices and shared Valid-data filter candidates. Existing lifetime, Smax and Implied-Voc calculations and vendor-validation profiles are unchanged.
 
 ## CETMeasurement implementation branch
 

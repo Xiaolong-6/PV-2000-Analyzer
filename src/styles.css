@@ -81,6 +81,11 @@
 .dit-module .side .filter-grid label,.dit-module .side .filter-actions{font-size:inherit}
 .qss-module .qss-analysis-grid{grid-template-columns:1fr 1fr}
 .qss-module .qss-analysis-grid label:first-child{grid-column:auto}
+.qss-module .qss-srv-panel{padding:0}
+.qss-module .qss-srv-panel>summary{padding:9px}
+.qss-module .qss-srv-body{padding:0 9px 9px}
+.qss-module .qss-srv-panel .check-row{display:flex;align-items:center;gap:6px;margin:8px 0;color:var(--text);font-size:inherit}
+.qss-module .qss-srv-panel .check-row input{margin:0}
 .qss-module .qss-result-list{display:flex;flex-direction:column}
 .qss-module .qss-result-card{min-width:0;padding:6px 0;border-bottom:1px solid var(--border)}
 .qss-module .qss-result-card:first-child{padding-top:1px}

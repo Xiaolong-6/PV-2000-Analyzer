@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260923.20 — 2026-09-23
+
+- Separated QSS Analyzer interpretation controls from PV-2000/XML measurement metadata.
+- Renamed lifetime handling choices to Scientific — exclude τ ≤ 0 and Raw vendor values; retained PV-2000 compatible Implied Voc as the default while marking Physical Si/Ge as Analyzer estimates.
+- Moved SRV into a collapsed Additional SRV analysis section, disabled it by default, and changed its enabled default geometry to Planar.
+- Show planar-reference SRV only for the explicit Textured / black model and hide SRV from summaries/map/filter choices while SRV analysis is disabled.
+- Kept raw τ ≤ 0 count solely as Current dataset audit information and added regression coverage for the new provenance/default semantics.
+
 ## v20260923.19 — 2026-09-23
 
 - Added a dedicated `CETMeasurement` analyzer on the shared measurement-domain architecture with EOT, Cd and R² quantities, shared Valid-data filtering, canonical map geometry, Distribution, current-site Vcpd-light/Qc fit and CSV exports.
