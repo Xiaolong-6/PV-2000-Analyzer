@@ -22,6 +22,57 @@ test('Dual QSS canonical lifetime comes from XML TransientInfo with Values fallb
   assert.equal(PV2000.modules.dualQss.lifetimeLabel('values'),'XML Values lifetime');
 });
 
+
+test('Dual QSS paired teff.d 1-sun result uses exact XML Values at 1000 mSun',()=>{
+  const d={
+    patternType:'OnePointPattern',targetType:'RoundWafer',probe:'Back',bias:'Back',
+    points:[
+      {intensityMilli:681,lifetime:216.4370125},
+      {intensityMilli:1000,lifetime:188.5463167},
+      {intensityMilli:1468,lifetime:166.8739284}
+    ]
+  };
+  const result=PV2000.modules.dualQss.pairedTeffdOneSun(d);
+  assert.equal(result.available,true);
+  assert.equal(result.validation,'validated');
+  assert.equal(result.rule,'exact-1000');
+  assert.equal(result.value,188.5463167);
+});
+
+test('Dual QSS paired teff.d 1-sun result preserves observed below-target endpoint behavior',()=>{
+  const d={
+    patternType:'OnePointPattern',targetType:'RoundWafer',probe:'Back',bias:'Back',
+    points:[
+      {intensityMilli:464,lifetime:299.8272103},
+      {intensityMilli:681,lifetime:236.991629}
+    ]
+  };
+  const result=PV2000.modules.dualQss.pairedTeffdOneSun(d);
+  assert.equal(result.available,true);
+  assert.equal(result.rule,'right-endpoint-below-1000');
+  assert.equal(result.value,236.991629);
+});
+
+test('Dual QSS does not invent unpaired interior interpolation or profile variants',()=>{
+  const base={patternType:'OnePointPattern',targetType:'RoundWafer',probe:'Back',bias:'Back'};
+  const interior=PV2000.modules.dualQss.pairedTeffdOneSun({
+    ...base,
+    points:[
+      {intensityMilli:681,lifetime:250},
+      {intensityMilli:1468,lifetime:150}
+    ]
+  });
+  assert.equal(interior.available,false);
+  assert.equal(interior.rule,'unvalidated-target-placement');
+
+  const wrongProfile=PV2000.modules.dualQss.pairedTeffdOneSun({
+    ...base,targetType:'SquareCell',
+    points:[{intensityMilli:1000,lifetime:200}]
+  });
+  assert.equal(wrongProfile.available,false);
+  assert.equal(wrongProfile.rule,'outside-paired-profile');
+});
+
 test('Dual QSS raw lifetime falls back to XML Values when TransientInfo LifeTime is missing',()=>{
   const p={lifetime:42,transient:{lifetime:NaN}};
   assert.equal(PV2000.modules.dualQss.lifetimeValue(p),42);
