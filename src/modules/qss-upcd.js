@@ -279,7 +279,7 @@
     }
     return nearestSiteValid&&nearestValidSq<=maxDist*maxDist&&den?num/den:NaN;
   }
-  function drawMap(canvas,d,a,key,mode,mask,zoom,onZoom){
+  function drawMap(canvas,d,a,key,mode,mask,zoom,onZoom,supportMask=null){
     const ctx=canvas.getContext('2d'),
       m=a.metrics[key],
       vals=m.values,
@@ -444,7 +444,9 @@
           best=i}}if(best>=0&&bd<140){
         const pt=d.coords[best],
         v=vals[best];
-        showTip(tip,e,`<b>Point ${best+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[best]?'good':'bad'}">${mask[best]?'VALID':'EXCLUDED'}</span>`)}else hideTip(tip)};
+        const available=!supportMask||supportMask[best],
+          state=available?(mask[best]?'VALID':'FILTERED'):'UNAVAILABLE';
+        showTip(tip,e,`<b>Point ${best+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[best]?'good':'bad'}">${state}</span>`)}else hideTip(tip)};
       PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
     return{lo,hi};
@@ -562,7 +564,7 @@
         return}const metricValue=swapped?mr[0]+(H-p.b-my)/plotH*(mr[1]-mr[0]):mr[0]+(mx-p.l)/plotW*(mr[1]-mr[0]),
       i=Math.max(0,Math.min(bins.length-1,Math.floor((metricValue-autoMetric[0])/(autoMetric[1]-autoMetric[0]||1)*bins.length))),
       bb=bins[i];
-      showTip(tip,e,`<b>${axisFmt(bb.lo)}–${axisFmt(bb.hi)} ${esc(m.unit)}</b><br>Valid ${bb.valid}<br>Excluded ${bb.invalid}`)};
+      showTip(tip,e,`<b>${axisFmt(bb.lo)}–${axisFmt(bb.hi)} ${esc(m.unit)}</b><br>Valid ${bb.valid}<br>Filter-excluded ${bb.invalid}`)};
       PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:swapped?cr:mr,y:swapped?mr:cr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       return bins;
       
@@ -640,7 +642,9 @@
       if(idx<0||idx>=all.length){hideTip(tip);
         return}const pt=d.coords[idx]||{},
       v=all[idx];
-      showTip(tip,e,`<b>Point ${idx+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[idx]?'good':'bad'}">${mask[idx]?'VALID':'EXCLUDED'}</span>`)};
+      const available=!supportMask||supportMask[idx],
+        state=available?(mask[idx]?'VALID':'FILTERED'):'UNAVAILABLE';
+      showTip(tip,e,`<b>Point ${idx+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[idx]?'good':'bad'}">${state}</span>`)};
       PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
   }
@@ -697,9 +701,9 @@
         </section>
         <section class="panel"><h3>Valid-data filter ${help('Use a physically meaningful distribution range to exclude locations that are not on the measured sample, for example when measuring a quarter wafer or a small coupon. The same valid-point mask is then applied to every derived parameter and all summary statistics.')}</h3>
           <div class="filter-grid"><label>Filter metric<select id="qFilterMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option><option value="srv">SRV</option></select></label><label>Lower<input id="qFilterLo" type="number" step="any" value="${filterLo}"></label><label>Upper<input id="qFilterHi" type="number" step="any" value="${filterHi}"></label></div>
-          <div class="filter-actions"><span><b>${validN}</b> / ${d.values.length} valid</span><span class="grow"></span><button id="qCentral98" title="Set limits to the 1st–99th percentile of the selected filter metric. This is only a convenience starting point; inspect the distribution before accepting it.">1–99%</button><button id="qResetFilter" title="Reset the validity range to include every finite point.">Reset</button><button id="qApplyFilter" title="Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.">Apply</button></div>
+          <div class="filter-actions"><span><b>${validN}</b> / ${d.values.length} valid</span><span class="grow"></span><button id="qCentral98" title="Set limits to the 1st–99th percentile of the selected filter metric. This is only a convenience starting point; inspect the distribution before accepting it.">1–99%</button><button id="qResetFilter" title="Reset the range to include every point available under the current lifetime-validity mode.">Reset</button><button id="qApplyFilter" title="Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.">Apply</button></div>
         </section>
-        <section class="panel"><h3>Results summary ${help('Statistics are calculated only from points that pass the Valid-data filter. Stdev is the sample standard deviation, matching the PV-2000 export convention.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
+        <section class="panel"><h3>Results summary ${help('Statistics use the active lifetime-validity mode plus the Valid-data filter. Stdev uses N−1, matching the PV-2000 convention. Default scientific mode excludes non-positive lifetime sentinels; Raw / PV-2000 style can retain them for vendor-parity inspection.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}${metaRow('Evaluation mode',d.evaluationMode||'—','Transient lifetime evaluation mode selected by the XML EvalutationMode index, e.g. SL/64 or 1/e.')}${metaRow('Do autosetting',d.autoset,'Whether PV-2000 automatic measurement setting was enabled.')}${metaRow('Rastering',d.doRastering,'Whether the PV-2000 recipe requested rastering. Coordinate reconstruction still follows the pattern/order stored by this result type.')}${metaRow('Save transient',d.saveTransient,'Whether individual transient waveforms were requested to be saved by the recipe.')}${metaRow('Point averaging',`${d.pointAverage||'—'} (${fmt(d.pointAverageCount)})`,'Whether repeated point averaging was enabled and the configured repeat count.')}${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configured QSS illumination operating range from the XML.')}${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl></details>
       </aside><section class="plots">
@@ -774,7 +778,7 @@
     }
     function redraw(){
       const bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask);
-        drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,zoom.map,n=>{zoom.map=n;redraw()});
+        drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,zoom.map,n=>{zoom.map=n;redraw()},supportMask);
         drawProfile(host.querySelector('#qProfile'),d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
         PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
         PV.plot.bindAxisControls(host,'qHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
@@ -788,7 +792,7 @@
         host.querySelector('#qExportProfile').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
         host.querySelector('#qExportHist').onclick=()=>{
         const unit=a.metrics[metricKey].unit;
-        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]))};
+        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]))};
         
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
