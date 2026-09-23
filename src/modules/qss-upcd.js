@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection;
   const q=1.602176634e-19,k=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI300_PV2000_COMPAT=1.517791063348261e10;
   const NI300_MANUAL=1.02e10;
@@ -231,23 +231,6 @@
     return applyAnalysisOptions(d,a,options);
   }
   function summaryMasked(values,mask){return S.summary(values.filter((_,i)=>mask[i]&&Number.isFinite(values[i])))}
-  function supportedValues(values,supportMask){
-    return values.filter((v,i)=>Number.isFinite(v)&&(!supportMask||supportMask[i]));
-  }
-  function quantile(a,p,supportMask=null){
-    const z=supportedValues(a,supportMask).slice().sort((x,y)=>x-y);
-    if(!z.length)return NaN;
-    const q=(z.length-1)*p,i=Math.floor(q),f=q-i;
-    return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f;
-  }
-  function metricRange(a,key,supportMask=null){
-    const v=supportedValues(a.metrics[key].values,supportMask);
-    return{min:v.length?Math.min(...v):NaN,max:v.length?Math.max(...v):NaN};
-  }
-  function validMask(a,key,lo,hi,supportMask=null){
-    const v=a.metrics[key].values;
-    return v.map((x,i)=>(!supportMask||supportMask[i])&&Number.isFinite(x)&&x>=lo&&x<=hi);
-  }
   function color(t){t=Math.max(0,Math.min(1,t));
     const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];
     let i=0;
@@ -805,7 +788,7 @@
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,validMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);
