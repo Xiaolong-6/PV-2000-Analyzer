@@ -1,6 +1,6 @@
 # Measurement architecture refactor plan
 
-Status: **Phase A merged in `v20260923.11`; Phase B completed in `v20260923.12`; JZero filter rollout completed in `v20260923.14`; LBIC filter rollout completed in `v20260923.15`; DIT filter rollout completed in `v20260923.17`.**
+Status: **Phase A merged in `v20260923.11`; shared-filter rollouts completed through DIT in `v20260923.17`; CET became the first Phase F family implemented directly on the new architecture in `v20260923.19`.**
 
 Phase A introduced domain/quantity/selection/profile/geometry primitives without broad UI behavior changes. Phase B activates the shared selection lifecycle in ISC/VCPD and adds a reusable Valid-data filter controller/UI contract while preserving reconstructed result values and raw XML readings. The JZero rollout migrates its older module-local filter onto the same shared controller/UI contract without changing the two-iteration reconstruction or vendor-regressed calculation path.
 
@@ -752,20 +752,21 @@ Migrate DIT last.
 
 ### Phase F
 
-Implement currently unsupported families directly on the new architecture.
+Implement remaining unsupported families directly on the new architecture.
 
-Recommended order:
+`CETMeasurement` / EOT was the first family completed in this phase (`v20260923.19`). CV acquisition semantics are documented, but there is still no dedicated `CVMeasurement` analyzer.
 
-1. CV/CET;
-2. SPV/Diffusion Length;
-3. Frequency Scan;
-4. Voc/Voc Mapping;
-5. Leakage;
-6. Fe/LID;
-7. Surface Passivation;
-8. Junction Lifetime;
-9. Sheet Resistance/Eddy;
-10. Height.
+Recommended remaining order:
+
+1. SPV/Diffusion Length;
+2. Frequency Scan;
+3. Voc/Voc Mapping;
+4. Leakage;
+5. Fe/LID;
+6. Surface Passivation;
+7. Junction Lifetime;
+8. Sheet Resistance/Eddy;
+9. Height.
 
 ## 16. Characterization and regression strategy
 
