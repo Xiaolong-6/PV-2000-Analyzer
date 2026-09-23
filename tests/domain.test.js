@@ -144,3 +144,25 @@ test('selection reset and percentile helpers ignore unsupported sites',()=>{
     {min:0,max:30}
   );
 });
+
+
+test('shared geometry resolver reproduces JZero pseudo-square schedule',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'MapPattern',
+    targetType:'PseudoSquareCell',
+    pointCount:5017,
+    targetWidth:156,
+    targetHeight:156,
+    diameter:205,
+    edgeExclusion:7,
+    pitchX:2,
+    pitchY:2
+  });
+  assert.equal(g.shape,'pseudo-square');
+  assert.deepEqual(g.nominal,{halfWidth:78,halfHeight:78,radius:102.5});
+  assert.deepEqual(g.scheduled,{halfWidth:71,halfHeight:71,radius:95.5});
+  assert.equal(g.pointsMm.length,5017);
+  assert.deepEqual(g.pointsMm[0],{x:-64,y:-70,row:0,col:3});
+  assert.deepEqual(g.pointsMm.at(-1),{x:64,y:70,row:70,col:67});
+  assert.equal(g.interpretation,'pseudo-square-target-pitch-grid');
+});

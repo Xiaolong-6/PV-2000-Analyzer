@@ -103,6 +103,24 @@
         scheduled:Number.isFinite(scheduledRadius)?{radius:scheduledRadius}:null
       };
     }
+    if(targetType==='PseudoSquareCell'&&
+      Number.isFinite(targetWidth)&&Number.isFinite(targetHeight)&&targetWidth>0&&targetHeight>0&&
+      Number.isFinite(diameter)&&diameter>0){
+      const halfWidth=targetWidth/2,
+        halfHeight=targetHeight/2,
+        radius=diameter/2,
+        scheduledHalfWidth=effectiveHalfExtent(targetWidth,edge),
+        scheduledHalfHeight=effectiveHalfExtent(targetHeight,edge),
+        scheduledRadius=effectiveRadius(diameter,edge);
+      return{
+        shape:'pseudo-square',
+        source:'target',
+        nominal:{halfWidth,halfHeight,radius},
+        scheduled:Number.isFinite(scheduledHalfWidth)&&Number.isFinite(scheduledHalfHeight)&&Number.isFinite(scheduledRadius)
+          ?{halfWidth:scheduledHalfWidth,halfHeight:scheduledHalfHeight,radius:scheduledRadius}
+          :null
+      };
+    }
     if(targetType==='SquareCell'&&Number.isFinite(targetWidth)&&Number.isFinite(targetHeight)&&targetWidth>0&&targetHeight>0){
       const halfWidth=targetWidth/2,
         halfHeight=targetHeight/2,
@@ -207,6 +225,19 @@
         sourceSpace='generated-target-mm';
         interpretation='centered-target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
+
+      }else if(boundary.shape==='pseudo-square'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+        pointsMm=pseudoSquareGrid(
+          boundary.scheduled.halfWidth,
+          boundary.scheduled.halfHeight,
+          boundary.scheduled.radius,
+          pitchX,
+          pitchY,
+          pointCount
+        );
+        sourceSpace='generated-target-mm';
+        interpretation='pseudo-square-target-pitch-grid';
+        acquisitionOrder='x-fast / ascending-y';
       }
     }else if(patternType==='SquareRegionPattern'){
       pointsMm=rectGrid(regionX,regionY,regionWidth,regionHeight,nx,ny,pointCount,1);
@@ -218,7 +249,7 @@
           resolvedScheduled={xMin:regionX,xMax:regionX+regionWidth,yMin:regionY,yMax:regionY+regionHeight};
         }
       }
-    }else if(patternType==='HighDensityPattern'&&boundary.scheduled){
+    }else if(patternType==='HighDensityPattern'&&boundary.scheduled&&(boundary.shape==='circle'||boundary.shape==='rect')){
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
         scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight;
       pointsMm=scaleTargetRelativeCoefficients(
@@ -230,7 +261,7 @@
         evidenceStatus='inferred';
         acquisitionOrder='xml coefficient order';
       }
-    }else if((patternType==='NinePointPattern'||patternType==='FivePointPattern')&&boundary.scheduled){
+    }else if((patternType==='NinePointPattern'||patternType==='FivePointPattern')&&boundary.scheduled&&(boundary.shape==='circle'||boundary.shape==='rect')){
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
         scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight;
       pointsMm=scaleTargetRelativeCoefficients(rawCoefficients,scaleX,scaleY,pointCount);
