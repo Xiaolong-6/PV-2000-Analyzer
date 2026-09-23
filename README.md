@@ -2,6 +2,7 @@
 
 <p align="center">
   <a href="https://xiaolong-6.github.io/PV-2000-Analyzer/"><img alt="Open live analyzer" src="https://img.shields.io/badge/OPEN-LIVE%20ANALYZER-2da44e?style=for-the-badge&logo=githubpages&logoColor=white"></a>
+  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki"><img alt="Guide" src="https://img.shields.io/badge/GUIDE-WIKI-0969da?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer"><img alt="Source" src="https://img.shields.io/badge/SOURCE-GITHUB-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md"><img alt="Contribute" src="https://img.shields.io/badge/CONTRIBUTE-GUIDE-0969da?style=for-the-badge&logo=git&logoColor=white"></a>
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml"><img alt="Share PV-2000 data" src="https://img.shields.io/badge/SHARE-PV--2000%20DATA-8250df?style=for-the-badge&logo=github&logoColor=white"></a>
@@ -20,6 +21,8 @@
 </p>
 
 Local, browser-based analysis of Semilab PV-2000 XML result files. The user imports one XML; the app detects `Measurement/@xsi:type` and dispatches it to a measurement-specific analyzer.
+
+Scientific background, measurement semantics and user guidance are maintained in the [project Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki).
 
 Current modules:
 

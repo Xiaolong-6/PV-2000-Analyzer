@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260923.5 — 2026-09-23
+
+- Changed the landing-page **Guide** shortcut to the project Wiki and added a matching Guide/Wiki entry point to the README.
+- The Wiki is the primary public reading surface for scientific background, measurement semantics and user-oriented reference material.
+
 ## v20260923.4 — 2026-09-23
 
 - Fixed DIT `OnePointPattern` spatial rendering: nominal circular geometry now falls back to `Substrate/SubstrateShape` when no dedicated target node exists, EdgeExclusion drives the inner outline, and center-only datasets are labelled **Measurement position** instead of appearing as a fictitious tiny wafer map.

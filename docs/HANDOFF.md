@@ -1,4 +1,6 @@
-# Agent handoff — 2026-09-23 — main v20260923.4
+# Agent handoff — 2026-09-23 — main v20260923.5
+
+The landing-page Guide shortcut now targets the project Wiki, and README exposes the same Guide/Wiki entry point. Scientific/user-facing reference material should preferentially link there while repo docs retain implementation/validation records.
 
 ## Goal
 
