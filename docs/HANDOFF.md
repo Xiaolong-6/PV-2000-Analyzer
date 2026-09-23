@@ -1,8 +1,14 @@
-# Agent handoff — 2026-09-22 — main v20260922.17
+# Agent handoff — 2026-09-23 — codex/reflectance-xml-iteration v20260922.17.1
 
 ## Goal
 
 Build a general **PV-2000 Analyzer**: the user drops any PV-2000 result XML, the app reads `Measurement/@xsi:type`, and the corresponding analyzer handles parsing, calculations, plots and exports. CSV/XPS/manuals are development references only; the runtime remains XML-only.
+
+## Current branch update
+
+The shared reflectance folder was rechecked locally against the LBIC parser and private XPS validator. All 62 XMLs use `LBICMeasurement`, one beam, `SquareRegionPattern`, explicit `MeasureCurrent=false` plus active Direct/Scattered flags, and µA metadata. The raster inventory is 60 complete 61×61 scans, one complete 61×71 scan and one 2814/3721-point partial scan. The mixed-corpus validator reports 44 XMLs / 60 XPS printouts as `PASS`, 17 complete XMLs as `UNPAIRED`, one partial scan as `INFERRED`, and zero structural/calculation failures. The local copies remain under ignored `private/reference/reflectance/` and are not publishable project files.
+
+The branch narrows the validated LBIC profile gate to explicit XML flags, known µA units for current-enabled calculations, and zero-valued disabled Current placeholders for reflectance-only data. Files outside those conditions remain inspectable with inferred calculations. `--allow-unpaired` provides an honest whole-folder inventory; the validator's default still fails when an expected matching vendor output is absent.
 
 ## Current implementation
 

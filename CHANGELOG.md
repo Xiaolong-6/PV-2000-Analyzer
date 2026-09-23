@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260922.17.1 — 2026-09-23 (branch)
+
+- Rechecked the private reflectance corpus: 44 complete XMLs match 60 vendor XPS summaries, 17 complete XMLs have no matching XPS, and one partial acquisition remains coordinate-inferred. The LBIC validator now reports these evidence states separately with `--allow-unpaired` while retaining strict paired validation by default.
+- Restricted validated LBIC labels to the documented XML flag paths. Current-enabled parity requires explicit Current/Direct/Scattered flags and a known µA unit; reflectance-only parity requires zero-valued inactive Current placeholders. Unknown current units no longer trigger calculated EQE/IQE.
+
 ## v20260922.17 — 2026-09-22
 
 - Added validated `LBIC-REFLECTANCE-003` handling for reflectance-only `LBICMeasurement` XMLs where `MeasureCurrent=false` but BeamData still carry zero-valued Current placeholders. Disabled Current is no longer exposed or used to synthesize EQE/IQE; Reflectivity becomes the default result.

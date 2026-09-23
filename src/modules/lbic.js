@@ -18,7 +18,7 @@
   function channelActive(concept,d){if(concept==='current')return flagState(d.measureCurrent)!==false;if(concept==='direct')return flagState(d.measureDirect)!==false;if(concept==='diffuse')return flagState(d.measureDiffuse)!==false;return true}
   function conceptFor(name){const n=norm(name);for(const [k,list] of Object.entries(aliases))if(list.includes(n))return k;return''}
   function labelFor(name){const c=conceptFor(name);return c==='current'?'Current':c==='direct'?'Direct reflectance':c==='diffuse'?'Scattered reflectance':c==='total'?'Reflectivity':c==='eqe'?'EQE':c==='iqe'?'IQE':name}
-  function unitFor(name,d){const c=conceptFor(name);if(c==='current')return d.currentUnit||'µA';if(['direct','diffuse','total','eqe','iqe'].includes(c))return'%';return''}
+  function unitFor(name,d){const c=conceptFor(name);if(c==='current')return d.currentUnit||'';if(['direct','diffuse','total','eqe','iqe'].includes(c))return'%';return''}
   function numericAttrs(el){const out={};if(!el)return out;for(const a of [...el.attributes]){if(norm(a.name)==='key')continue;const v=Number(a.value);if(Number.isFinite(v))out[a.name]=v}return out}
   function parseLasers(m){const node=X.direct(m,'LaserSettings');
     if(!node)return[];
@@ -170,7 +170,7 @@
       diameter,
       edgeExclusion,
       doRastering:X.text(m,'DoRastering',''),
-      currentUnit:X.text(m,'MicroAmps','µA'),
+      currentUnit:X.text(m,'MicroAmps',''),
       lengthUnit:'mm',
       wavelengthUnit:X.text(m,'NanoMeter','nm'),
       lasers,
@@ -192,7 +192,7 @@
     const names=Object.keys(raw?.channels||{}),
       expected=['Current','DirectReflection','ScatteredReflection'],
       exactChannels=names.length===expected.length&&expected.every(n=>names.includes(n)),
-      unit=/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,'')),
+      unit=/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,'')),
       squareGeometry=d.patternType==='SquareRegionPattern'&&[d.nx,d.ny,d.regionX,d.regionY,d.width,d.height].every(Number.isFinite)&&d.nx>=1&&d.ny>=1&&(!Number.isFinite(d.pointCount)||!Number.isFinite(d.expectedPointCount)||d.pointCount===d.expectedPointCount),
       pseudoGeometry=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell'&&[d.targetWidth,d.targetHeight,d.diameter,d.pitchX,d.pitchY,d.edgeExclusion].every(Number.isFinite)&&d.targetWidth>0&&d.targetHeight>0&&d.diameter>0&&d.pitchX>0&&d.pitchY>0,
       beamCount=d.beamCount??1,
@@ -200,8 +200,8 @@
       currentFlag=flagState(d.measureCurrent),
       directFlag=flagState(d.measureDirect),
       diffuseFlag=flagState(d.measureDiffuse),
-      currentCommon=exactChannels&&currentFlag!==false&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&iterationCount===1,
-      reflectanceOnly=exactChannels&&currentFlag===false&&directFlag===true&&diffuseFlag===true&&iterationCount===1;
+      currentCommon=exactChannels&&currentFlag===true&&directFlag===true&&diffuseFlag===true&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&iterationCount===1,
+      reflectanceOnly=exactChannels&&currentFlag===false&&directFlag===true&&diffuseFlag===true&&raw.channels.Current.every(v=>v===0)&&iterationCount===1;
     if(currentCommon&&squareGeometry&&beamCount===1)return'LBIC-SINGLE-001';
     if(currentCommon&&pseudoGeometry&&beamCount>=2)return'LBIC-MULTI-002';
     if(reflectanceOnly&&squareGeometry&&beamCount===1)return'LBIC-REFLECTANCE-003';
@@ -244,7 +244,7 @@
     let eqe=findMetric(metrics,'eqe'),
       current=findMetric(metrics,'current');
     const flux=laser?.photonFlux;
-    if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]?a$/i.test(String(d.currentUnit||'µA').replace(/\s/g,''))){
+    if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,''))){
       const key='__eqe';
       metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',concept:'eqe',tier:'advanced'};
     }

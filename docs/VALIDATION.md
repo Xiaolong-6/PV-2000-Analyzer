@@ -233,6 +233,8 @@ The current-enabled set contains five paired XML/CSV references: four 51×51/101
 
 The reflectance-only corpus contains **62 XML files**. All 62 use `MeasureCurrent=false`, `MeasureDirectReflectance=true`, `MeasureScatteredReflectance=true`; their BeamData still include `Current`, but every supplied Current value is exactly zero. **44** of those XMLs have **60 matching PV-2000 XPS result printouts** because several measurements were printed at more than one display color scale.
 
+The full-corpus inventory check reports **44 PASS** with matching XPS summaries, **17 UNPAIRED** complete XMLs without a matching vendor printout, **1 INFERRED** partial acquisition (2814/3721 points), and **0 FAIL**. `UNPAIRED` confirms the XML fits the known structural path but does not claim result parity for that instance. The validator is strict by default; `--allow-unpaired` is for a mixed corpus inventory and never labels missing vendor evidence as `PASS`.
+
 | Quantity / behavior | Regression result | Status |
 |---|---:|---|
 | `LBICMeasurement` dispatch | unit tested | tested |
@@ -266,6 +268,8 @@ npm run validate:lbic
 ```
 
 Current-enabled private references use same-basename XML/CSV pairs under `private/reference/lbic/`. Reflectance-only cases may use matching Reflectivity XPS printouts; the validator matches them by normalized XML-result-name prefix and checks the five vendor summary statistics at display precision.
+
+For a private reflectance folder inventory, pass `--allow-unpaired` followed by its XML paths to `scripts/validate_lbic_reference.py` through the Node Python wrapper. Omit the option when every supplied XML must have a matching vendor result.
 
 Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch and, within `LBIC-MULTI-002`, the number of independent beam keys do not by themselves create a new profile. A different coordinate encoding, target scheduling rule, active measurement-flag combination, raw channel set, unit convention, coupled cross-beam calculation, iteration path, or vendor result/validity behavior remains **NEW PROFILE**. Incomplete acquisition ordering is not promoted to validated parity without matching vendor coordinate evidence.
 
