@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection;
   const Q=1.602176634e-19,K=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI_BASORE_COMPAT=8.626227186463587e9;
   const NI_VOC_300=[1.1136399052670412e10,1.107764334152709e10];
@@ -112,10 +112,7 @@
       voc2:{key:'voc2',short:`Implied Voc (${sun(1)})`,label:`Implied Voc (${sun(1)})`,unit:'V',values:v2,help:'Implied open-circuit voltage derived from the second QSS lifetime using the JZero compatibility calibration.'}
     }};
   }
-  const finiteRange=v=>{const z=v.filter(Number.isFinite);return{min:z.length?Math.min(...z):NaN,max:z.length?Math.max(...z):NaN}};
-  const validMask=(values,lo,hi)=>values.map(v=>Number.isFinite(v)&&v>=lo&&v<=hi);
   const summaryMasked=(values,mask)=>S.summary(values.filter((_,i)=>mask[i]));
-  function quantile(values,p){const z=values.filter(Number.isFinite).slice().sort((a,b)=>a-b);if(!z.length)return NaN;const q=(z.length-1)*p,i=Math.floor(q),f=q-i;return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f}
   function color(t){
     t=Math.max(0,Math.min(1,t));
     const stops=[[0,[49,54,149]],[.25,[39,127,142]],[.5,[63,175,109]],[.75,[218,200,50]],[1,[220,55,55]]];
@@ -215,7 +212,7 @@
   }
   function render(host,d,a){
     const onePoint=d.patternType==='OnePointPattern'&&d.coords.length===1;
-    let metricKey='j0',filterKey='j0',histBins=30,histSwapped=true,pointsMode=onePoint,zoom={map:{x:null,y:null},hist:{x:null,y:null}},range=finiteRange(a.metrics.j0.values),filterLo=range.min,filterHi=range.max,mask=validMask(a.metrics.j0.values,filterLo,filterHi);
+    let metricKey='j0',histBins=30,histSwapped=true,pointsMode=onePoint,zoom={map:{x:null,y:null},hist:{x:null,y:null}},filterController=Sel.createFilter({metrics:a.metrics,siteCount:a.metrics.j0.values.length,metricKey:'j0'});
     const options=()=>Object.values(a.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
     const meta=(k,v,h='')=>`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
     const target=()=>{
@@ -225,45 +222,57 @@
       return d.targetType||'—';
     };
     const pattern=()=>[d.patternName||d.patternType,Number.isFinite(d.pitchX)&&Number.isFinite(d.pitchY)?`${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`:null].filter(Boolean).join(' · ');
-    const statsRows=()=>Object.values(a.metrics).map(m=>{const st=summaryMasked(m.values,mask);return`<tr><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
+    const statsRows=()=>Object.values(a.metrics).map(m=>{const st=summaryMasked(m.values,filterController.metricMask(m));return`<tr><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
     function shell(){
-      const validN=mask.filter(Boolean).length,n=a.metrics.j0.values.length;
+      const filterState=filterController.snapshot(),validN=filterState.validCount,n=filterState.siteCount;
       host.innerHTML=`<div class="module-grid jzero-module"><aside class="side">
         <section class="panel"><h3>Emitter J0 map ${help('JZeroMeasurement combines two QSS-µPCD lifetime maps measured at the first and second QSS intensities. Basore J0 is derived site-by-site from the two small-perturbation lifetimes.')}</h3><dl class="meta">${meta('Result',d.resultName)}${meta('Recipe',d.name)}${meta('Substrate',d.substrateId)}${meta('Status',d.status)}${meta('Pattern',pattern())}${meta('Target',target())}${meta('Geometry',`${d.geometryProfile.status}${d.geometryProfile.id?` · ${d.geometryProfile.id}`:''}`,'Calculation and geometry validation are tracked separately. The current paired JZero geometry is MapPattern + PseudoSquareCell; other resolver-supported geometries remain inferred until paired X/Y evidence is supplied.')}${meta('QSS intensities',`${fmt(d.qssMilli[0]/1000,2)} / ${fmt(d.qssMilli[1]/1000,2)} sun`)}${meta('Wafer thickness',`${fmt(d.waferThickness)} µm`)}${meta('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`)}${meta('Optical factor',fmt(d.opticalFactor))}${meta('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`)}</dl></section>
-        <section class="panel"><h3>Valid-data filter ${help('The selected metric defines a shared valid-point mask for the map, distribution and all summary statistics.')}</h3><div class="filter-grid"><label>Filter metric<select id="jFilterMetric">${options()}</select></label><label>Lower<input id="jFilterLo" type="number" step="any" value="${filterLo}"></label><label>Upper<input id="jFilterHi" type="number" step="any" value="${filterHi}"></label></div><div class="filter-actions"><span><b>${validN}</b> / ${n} valid</span><span class="grow"></span><button id="jCentral98">1–99%</button><button id="jResetFilter">Reset</button><button id="jApplyFilter">Apply</button></div></section>
+        ${PV.ui.validDataFilterMarkup({prefix:'jFilter',metrics:a.metrics,state:filterState,helpText:'Choose any JZero result quantity as the filter metric. One paired-site mask is then shared across all seven result quantities, summaries, maps, distributions and exports; quantity-specific non-finite values remain excluded from that displayed quantity.'})}
         <section class="panel"><h3>Results summary ${help('Statistics use only points that pass the active valid-data filter. Stdev is sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${n}</b><span>paired XML sites</span></div><div><b>${d.coords.length} / ${n}</b><span>coordinates generated</span></div><div><b>${validN} / ${n}</b><span>pass filter</span></div><div><b>${d.iterations}</b><span>iterations</span></div></div></section>
         <details class="panel"><summary>Full metadata</summary><dl class="meta meta-detail">${meta('Result time',d.end)}${meta('Elapsed',d.elapsed)}${meta('Laser power',fmt(d.laserPower))}${meta('uPCD averaging 1 / 2',`${fmt(d.avgMode,0)} / ${fmt(d.secondAvgMode,0)}`)}${meta('Evaluation mode',d.evaluationMode||'—')}${meta('Chuck temperature 1 / 2',`${fmt(d.temperatures[0])} / ${fmt(d.temperatures[1])} °C`)}${meta('Measurement velocity 1 / 2',`${fmt(d.measurementVelocities[0])} / ${fmt(d.measurementVelocities[1])}`)}${meta('Tau steady-state factor 1 / 2',`${fmt(d.tauSteadyStateFactors[0],6)} / ${fmt(d.tauSteadyStateFactors[1],6)}`)}${meta('QDC 1 / 2',`${fmt(d.qdcValues[0],6)} / ${fmt(d.qdcValues[1],6)}`)}${meta('Autosetting',d.autoset||'—')}${meta('Rastering',d.doRastering||'—')}${meta('Save transient',d.saveTransient||'—')}</dl></details>
       </aside><section class="plots"><div class="panel chart"><header><b>${onePoint?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="jMetric">${options()}</select>${onePoint?'':`<select id="jMapMode"><option value="filled">Filled</option><option value="points">Points</option></select>`}${PV.plot.axisControls('jMapAxes')}<button id="jExportMap">Export</button></header><div class="canvas-wrap"><canvas id="jMap"></canvas></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('jHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('jHistBins',histBins)}<button id="jExportHist">Export</button></header><div class="canvas-wrap"><canvas id="jHist"></canvas></div></div></section></div>`;
-      host.querySelector('#jMetric').value=metricKey;host.querySelector('#jFilterMetric').value=filterKey;if(!onePoint)host.querySelector('#jMapMode').value=pointsMode?'points':'filled';
+      host.querySelector('#jMetric').value=metricKey;if(!onePoint)host.querySelector('#jMapMode').value=pointsMode?'points':'filled';
       host.querySelector('#jMetric').onchange=e=>{metricKey=e.target.value;zoom={map:{x:null,y:null},hist:{x:null,y:null}};redraw()};
       if(!onePoint)host.querySelector('#jMapMode').onchange=e=>{pointsMode=e.target.value==='points';redraw()};
-      host.querySelector('#jFilterMetric').onchange=e=>{filterKey=e.target.value;const r=finiteRange(a.metrics[filterKey].values);filterLo=r.min;filterHi=r.max;mask=validMask(a.metrics[filterKey].values,filterLo,filterHi);shell()};
-      host.querySelector('#jApplyFilter').onclick=()=>{
-        let lo=Number(host.querySelector('#jFilterLo').value),hi=Number(host.querySelector('#jFilterHi').value);
-        if(!Number.isFinite(lo)||!Number.isFinite(hi))return alert('Enter finite lower and upper limits.');
-        if(lo>hi)[lo,hi]=[hi,lo];
-        filterLo=lo;filterHi=hi;mask=validMask(a.metrics[filterKey].values,lo,hi);shell();
-      };
-      host.querySelector('#jResetFilter').onclick=()=>{const r=finiteRange(a.metrics[filterKey].values);filterLo=r.min;filterHi=r.max;mask=validMask(a.metrics[filterKey].values,filterLo,filterHi);shell()};
-      host.querySelector('#jCentral98').onclick=()=>{const v=a.metrics[filterKey].values;filterLo=quantile(v,.01);filterHi=quantile(v,.99);mask=validMask(v,filterLo,filterHi);shell()};redraw();
+      PV.ui.bindValidDataFilter(host,{prefix:'jFilter',controller:filterController,onChange:()=>{zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});redraw();
     }
-    function exportMetric(){const m=a.metrics[metricKey];PV.exporter.csv(`${safe(d.resultName)}_${metricKey}.csv`,['Index','X [mm]','Y [mm]',`${m.label} [${m.unit}]`,'Valid'],m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',v,mask[i]?'YES':'NO']))}
+    function exportMetric(filterState,displayMask){
+      const m=a.metrics[metricKey],filterMetric=a.metrics[filterState.metricKey];
+      PV.exporter.csv(
+        `${safe(d.resultName)}_${metricKey}.csv`,
+        ['Index','X [mm]','Y [mm]',`${m.label} [${m.unit}]`,'Metric available','Pass valid-data filter','Displayed','Filter metric','Filter lower','Filter upper'],
+        m.values.map((v,i)=>[
+          i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',v,Number.isFinite(v),
+          !!filterState.selection.activeMask[i],!!displayMask[i],
+          filterMetric?.short||filterState.metricKey,filterState.lower,filterState.upper
+        ])
+      );
+    }
     function redraw(){
-      const rows=drawHist(host.querySelector('#jHist'),a,metricKey,mask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()});drawMap(host.querySelector('#jMap'),d,a,metricKey,mask,zoom.map,n=>{zoom.map=n;redraw()},pointsMode);
+      const filterState=filterController.snapshot(),
+        displayMask=filterController.metricMask(a.metrics[metricKey]),
+        rows=drawHist(
+          host.querySelector('#jHist'),a,metricKey,displayMask,histBins,histSwapped,zoom.hist,
+          next=>{zoom.hist=next;redraw()}
+        );
+      drawMap(
+        host.querySelector('#jMap'),d,a,metricKey,displayMask,zoom.map,
+        next=>{zoom.map=next;redraw()},pointsMode
+      );
       PV.plot.bindAxisControls(host,'jMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       PV.plot.bindAxisControls(host,'jHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
         swapped:histSwapped,
         onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
       });
       PV.plot.bindBinControls(host,'jHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
-      host.querySelector('#jExportMap').onclick=exportMetric;
+      host.querySelector('#jExportMap').onclick=()=>exportMetric(filterState,displayMask);
       host.querySelector('#jExportHist').onclick=()=>{
         const m=a.metrics[metricKey];
         PV.exporter.csv(
           `${safe(d.resultName)}_${metricKey}_histogram.csv`,
-          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count'],
-          rows.map(r=>[r.lo,r.hi,r.count])
+          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],
+          rows.map(r=>[r.lo,r.hi,r.count,a.metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
         );
       };
     }

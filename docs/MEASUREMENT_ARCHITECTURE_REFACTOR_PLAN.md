@@ -1,8 +1,8 @@
 # Measurement architecture refactor plan
 
-Status: **Phase A merged in `v20260923.11`; Phase B completed in `v20260923.12`.**
+Status: **Phase A merged in `v20260923.11`; Phase B completed in `v20260923.12`; JZero filter rollout completed in `v20260923.14`.**
 
-Phase A introduced domain/quantity/selection/profile/geometry primitives without broad UI behavior changes. Phase B activates the shared selection lifecycle in ISC/VCPD and adds a reusable Valid-data filter controller/UI contract while preserving reconstructed result values and raw XML readings.
+Phase A introduced domain/quantity/selection/profile/geometry primitives without broad UI behavior changes. Phase B activates the shared selection lifecycle in ISC/VCPD and adds a reusable Valid-data filter controller/UI contract while preserving reconstructed result values and raw XML readings. The JZero rollout migrates its older module-local filter onto the same shared controller/UI contract without changing the two-iteration reconstruction or vendor-regressed calculation path.
 
 ## 1. Goal
 

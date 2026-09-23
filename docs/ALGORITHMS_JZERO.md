@@ -141,7 +141,7 @@ The dedicated JZero analyzer provides:
 - geometry-aware PseudoSquareCell nominal and EdgeExclusion outlines;
 - equal physical X/Y scale in the automatic map view;
 - filled-site and point map modes;
-- valid-data filtering shared by map, distribution and summary statistics;
+- shared site-level valid-data filtering across summary, map, distribution and export;
 - Distribution with Count on X by default, Swap axes and Bins controls;
 - manual Axes controls, wheel zoom and double-click Auto;
 - pointwise CSV export for the selected metric;
@@ -149,6 +149,17 @@ The dedicated JZero analyzer provides:
 - current-dataset and acquisition metadata panels.
 
 The filled map uses the measured lattice cells directly rather than an expensive all-pixel interpolation, so dense 5017-site maps remain responsive while preserving the measured spatial resolution.
+
+
+## Valid-data filter semantics
+
+JZero now uses the shared `PV2000.selection.createFilter()` and shared Valid-data filter UI contract introduced in `v20260923.12`. Any of the seven JZero result quantities may be selected as the filter metric. Lower/upper limits create one **paired-site active mask** in the common site index space shared by both lifetime iterations and every derived result.
+
+For a displayed result quantity, the renderer combines that shared active mask with the displayed quantity's own finite/support mask. This matters when a site passes a lifetime-based filter but a derived J0, Smax or Implied Voc value is not computable at that site: the paired site remains active, while the unavailable displayed value is omitted from that quantity's summary, map and distribution.
+
+Filtering is Analyzer-side state. It does not mutate either XML lifetime iteration, change the two-iteration pairing, or alter the Basore J0 / Smax / Implied Voc equations. `Reset` restores the available range of the selected filter metric and `1–99%` is only a convenience percentile range, not a PV-2000 validity rule.
+
+Pointwise exports retain all paired sites and add filter provenance: metric availability, whether the site passes the shared filter, whether the selected output is displayed, the filter metric, and the active bounds. Histogram exports include the same filter metric/bounds metadata.
 
 ## Validated envelope
 

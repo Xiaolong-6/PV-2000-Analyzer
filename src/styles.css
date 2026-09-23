@@ -76,6 +76,7 @@
 .module-grid .side .panel h3,.module-grid .side .panel>summary{font-size:12px;line-height:1.4}
 .qss-module .side .filter-grid label,.qss-module .side .filter-actions,.qss-module .side table,.qss-module .side th,.qss-module .side .note{font-size:inherit}
 .isc-module .side .filter-grid label,.isc-module .side .filter-actions{font-size:inherit}
+.jzero-module .side .filter-grid label,.jzero-module .side .filter-actions{font-size:inherit}
 .qss-module .qss-analysis-grid{grid-template-columns:1fr 1fr}
 .qss-module .qss-analysis-grid label:first-child{grid-column:auto}
 .qss-module .qss-result-list{display:flex;flex-direction:column}
