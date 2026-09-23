@@ -41,6 +41,16 @@ test('Dual QSS exposes raw-lifetime semantics, transient voltage units and inlin
   assert.match(src,/life\(q\)<=0\)\{[^}]*started=false/);
 });
 
+test('Dual QSS measurement-position visualization stays out of the sidebar',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
+  const asideStart=src.indexOf('<aside class="side">');
+  const asideEnd=src.indexOf('</aside>',asideStart);
+  const position=src.indexOf('${positionHtml(d)}');
+  assert.ok(asideStart>=0&&asideEnd>asideStart);
+  assert.ok(position>asideEnd,'Measurement position belongs in the right plot area, not the sidebar');
+  assert.match(src,/dual-qss-position-panel/);
+});
+
 test('Dit results summary is card-based and does not depend on a wide three-column table',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
