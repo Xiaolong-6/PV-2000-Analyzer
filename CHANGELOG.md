@@ -1,15 +1,11 @@
 # Changelog
 
-## v20260923.18.2 — 2026-09-23 (CET feature branch)
-
-- Changed the default CET Valid-data filter metric from EOT to R². R² remains numeric for the legacy undefined-fit site, so the unfiltered default Results summary reproduces the vendor population: EOT/Cd omit only their unavailable site while R² retains the vendor zero.
-- Kept EOT as the default map quantity; user-selected filter metrics still create one shared site-level active mask.
-
-## v20260923.18.1 — 2026-09-23 (CET feature branch)
+## v20260923.19 — 2026-09-23
 
 - Added a dedicated `CETMeasurement` analyzer on the shared measurement-domain architecture with EOT, Cd and R² quantities, shared Valid-data filtering, canonical map geometry, Distribution, current-site Vcpd-light/Qc fit and CSV exports.
 - Added paired profile `CET-9PT-SQUARE-001`: a 9-site `NinePointPattern + SquareCell` XML/vendor-export pair validates target-relative fixed-point coordinates plus EOT/Cd/R² point-by-point and summary statistics. The compatibility path uses `q = 1.602e-19 C`; the paired undefined fit keeps EOT/Cd unavailable and R² = 0.
 - Extended canonical geometry with explicit-mm `FixedPointsPattern/PointValues`, added the private CET validator and stored the paired evidence in the separate private-reference repository.
+- Defaulted the CET Valid-data filter to R² so the unfiltered summary preserves the vendor population while EOT/Cd omit only their quantity-specific unavailable site; EOT remains the default map quantity.
 - Updated CET documentation and tracked Wiki source pages; other observed CET geometries remain inferred until paired vendor output extends the profile envelope.
 
 ## v20260923.18 — 2026-09-23
