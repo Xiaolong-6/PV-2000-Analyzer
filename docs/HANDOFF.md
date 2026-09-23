@@ -1,4 +1,13 @@
-# Agent handoff — 2026-09-23 — v20260923.16
+# Agent handoff — 2026-09-23 — v20260923.17
+
+## DIT Valid-data filter rollout
+
+DIT now uses the shared site-selection controller/UI. Existing DIT scientific validity (`site.valid`) is passed as `intrinsicMask`; user numeric filtering can only narrow it. Qtot, Minimum Dit, EOT, Cox, Qsc, Initial Qc and Max |Vsb| are filter candidates, with Midgap Dit included only while PCHIP is enabled.
+
+The active mask drives Results summary and wafer-map population/color scaling/export. Current-site Vcpd–Qc, Vsb–Qc and Dit–Vsb curves remain inspection views of the calculated site and are intentionally not truncated by the site filter. Applying Analysis controls rebuilds the filter from the newly calculated values rather than allowing stale bounds to alter computation.
+
+Private validation uses the paired `dit_w1.xml` + raw CSV + summary CSV NinePoint reference from `PV-2000-private-reference`; those private files/values are not copied into this public repository.
+
 
 ## QSS shared Valid-data filter migration
 

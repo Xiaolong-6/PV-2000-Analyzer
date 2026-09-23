@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 
 global.PV2000 = {};
 require('../src/core/stats.js');
+require('../src/core/selection.js');
 require('../src/core/geometry.js');
 require('../src/core/registry.js');
 PV2000.xml = {};
@@ -253,4 +254,57 @@ test('non-positive finite PCHIP outlier limits are surfaced', () => {
   const base = { sites: [], doping: 1e14, dopingType: 'n', useCocosII: false };
   const analysis = PV2000.modules.dit.analyze(base, { ditReject: 0 });
   assert.match(analysis.error, /PCHIP outlier limit must be greater than 0 when set/);
+});
+
+
+test('DIT shared site filter keeps intrinsic algorithm validity separate from user range', () => {
+  const analysis={
+    options:{pchipEnabled:true},
+    sites:[
+      {valid:true,Qtot:1,Dit:10,MidgapDit:11,eot:1,Cox:1,Qsc:1,InitialQc:1,MaxVsb:.2},
+      {valid:false,Qtot:2,Dit:20,MidgapDit:21,eot:2,Cox:2,Qsc:2,InitialQc:2,MaxVsb:.3},
+      {valid:true,Qtot:3,Dit:30,MidgapDit:NaN,eot:3,Cox:3,Qsc:3,InitialQc:3,MaxVsb:.4},
+      {valid:true,Qtot:4,Dit:40,MidgapDit:41,eot:4,Cox:4,Qsc:4,InitialQc:4,MaxVsb:.5}
+    ]
+  };
+  const metrics=PV2000.modules.dit.filterMetrics(analysis);
+  const filter=PV2000.selection.createFilter({
+    metrics,
+    siteCount:analysis.sites.length,
+    intrinsicMask:analysis.sites.map(site=>site.valid),
+    metricKey:'Qtot'
+  });
+  let state=filter.apply(2.5,4);
+  assert.deepEqual(state.selection.intrinsicMask,[true,false,true,true]);
+  assert.deepEqual(state.selection.activeMask,[false,false,true,true]);
+  assert.deepEqual(filter.metricMask('MidgapDit'),[false,false,false,true]);
+  assert.deepEqual(metrics.Dit.values,[10,20,30,40]);
+  state=filter.reset();
+  assert.deepEqual(state.selection.activeMask,[true,false,true,true]);
+});
+
+test('DIT filter candidates follow analysis availability without mutating calculations', () => {
+  const site={valid:true,Qtot:1,Dit:2,MidgapDit:3,eot:4,Cox:5,Qsc:6,InitialQc:7,MaxVsb:.8};
+  const withPchip=PV2000.modules.dit.filterMetrics({options:{pchipEnabled:true},sites:[site]});
+  const withoutPchip=PV2000.modules.dit.filterMetrics({options:{pchipEnabled:false},sites:[site]});
+  assert.equal(Object.keys(withPchip).length,8);
+  assert.equal(Object.keys(withoutPchip).length,7);
+  assert.ok(withPchip.MidgapDit);
+  assert.equal(withoutPchip.MidgapDit,undefined);
+  assert.equal(site.Dit,2);
+  assert.equal(site.MidgapDit,3);
+});
+
+test('DIT renderer uses the shared Valid-data filter only for site population views', () => {
+  const src=require('node:fs').readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/Sel\.createFilter/);
+  assert.match(src,/intrinsicMask:analysis\.sites\.map\(x=>!!x\.valid\)/);
+  assert.match(src,/PV\.ui\.validDataFilterMarkup/);
+  assert.match(src,/PV\.ui\.bindValidDataFilter/);
+  assert.match(src,/filterController\.metricMask\(metrics\[mapKey\]\)/);
+  assert.match(src,/Pass valid-data filter/);
+  assert.match(src,/ALGORITHM INVALID/);
+  assert.match(src,/FILTERED \/ UNAVAILABLE/);
+  assert.match(src,/validDataFilter:true/);
+  assert.doesNotMatch(src,/filterController[^\n]*variation\(/);
 });

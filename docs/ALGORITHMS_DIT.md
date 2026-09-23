@@ -18,6 +18,18 @@ The obsolete guide-only COCOS-II implementation has been removed from the runtim
 
 Controls are contextual. **Material** is selected in Analysis controls and defaults to **Silicon (Si)**. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. **Optional Midgap Dit (PCHIP)** is always visible in Analysis controls with a checkbox; it is enabled by default. When unchecked, Midgap Dit and the PCHIP curve are disabled while the discrete Minimum Dit calculation is unchanged. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
 
+## Analyzer valid-data filter
+
+DIT uses the shared site-selection controller/UI for **site-level presentation and statistics only**. The filter sits after the scientific calculation. It does not participate in flatband extraction, semiconductor Qsc, the adjacent-step variation Dit calculation, Minimum Dit selection, Midgap target calculation or PCHIP preprocessing/interpolation.
+
+The intrinsic site-support mask is the existing DIT algorithm validity (`site.valid`). A user range filter can only narrow that intrinsic population; it cannot make an algorithm-invalid site valid. The selected filter metric may be Qtot, Minimum Dit, Midgap Dit (when PCHIP is enabled), EOT, Cox, Qsc, Initial Qc or Max |Vsb|. Each displayed quantity then adds its own finite-value availability on top of the shared active mask.
+
+The active population is used by **Results summary**, wafer-map color scaling/display state and wafer-map CSV export. Current-site Vcpd–Qc, Vsb–Qc and Dit–Vsb curves remain available for inspection even when the selected site is filtered out, and their exports remain unchanged. Filtered sites stay visible as unfilled map markers so site indexing/spatial context are preserved.
+
+Changing Analysis controls can change the calculated quantities themselves, so applying new analysis settings rebuilds the filter metrics and resets the numeric range for the previously selected filter quantity when that quantity still exists. Turning PCHIP off removes Midgap Dit from the filter choices.
+
+Map export preserves every site and records algorithm validity, selected-quantity availability, filter pass/display state, filter metric and lower/upper bounds. `1–99%` and `Reset` are Analyzer conveniences and are not PV-2000 validity rules.
+
 ## Minimum Dit versus optional PCHIP Midgap Dit
 
 The primary reported Dit is labelled **Minimum Dit (PV2000-style)**. It is the minimum accepted **discrete** variation-method Dit point. PCHIP interpolation never changes this value.

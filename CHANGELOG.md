@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260923.17 — 2026-09-23
+
+- Added the shared site-level Valid-data filter to DIT while keeping existing DIT algorithm validity as the intrinsic mask.
+- Applied the active population to Results summary, wafer-map color/display state and map export without changing flatband, Qsc, Minimum Dit or Midgap/PCHIP calculations.
+- Kept filtered/invalid sites inspectable and spatially visible, and added filter provenance to DIT wafer-map export.
+- Added regression coverage for intrinsic-validity separation, quantity-specific availability and PCHIP-dependent filter candidates.
+
 ## v20260923.16 — 2026-09-23
 
 - Migrated QssUpcdMeasurement from its module-local range-filter state to the shared selection controller and shared Valid-data filter UI contract.
