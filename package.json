@@ -10,7 +10,8 @@
     "validate:jzero": "node scripts/run_python.js scripts/validate_jzero_reference.py",
     "validate:isc": "node scripts/run_python.js scripts/validate_isc_reference.py",
     "validate:vcpd": "node scripts/run_python.js scripts/validate_vcpd_reference.py",
-    "validate:lbic": "node scripts/run_python.js scripts/validate_lbic_reference.py",\n    "validate:cet": "node scripts/run_python.js scripts/validate_cet_reference.py",
+    "validate:lbic": "node scripts/run_python.js scripts/validate_lbic_reference.py",
+    "validate:cet": "node scripts/run_python.js scripts/validate_cet_reference.py",
     "lint": "eslint src scripts tests",
     "style:check": "node scripts/check-source-density.js",
     "check": "npm run lint && npm run style:check && npm test"
