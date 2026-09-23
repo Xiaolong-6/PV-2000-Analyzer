@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260923.21.1 — 2026-09-23 (documentation audit branch)
+## v20260923.22 — 2026-09-23
 
 - Audited repository documentation and tracked Wiki sources against current `main` after the analyzer/sidebar cleanup.
 - Removed stale architecture/refactor statements that still described ISC/VCPD as pending migration or CET as unsupported, and added CET to current shared-profile/module inventories.
