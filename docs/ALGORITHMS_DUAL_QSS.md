@@ -2,7 +2,7 @@
 
 ## Scope
 
-`DualQssMeasurement` is a separate result family from the spatial `QssUpcdMeasurement` map analyzer. Runtime remains XML-only. Matching PV-2000 raw CSV exports are private regression evidence only.
+`DualQssMeasurement` is a separate result family from the spatial `QssUpcdMeasurement` map analyzer. Runtime remains XML-only. Matching PV-2000 raw/final-result CSV exports are private regression evidence only. New calculated result paths are added only when a real XML and its matching numeric PV-2000 CSV establish the behavior.
 
 The expanded private corpus contains **330 XML files**. **273** have exact-basename PV-2000 raw CSV exports, giving **5833 paired injection points**. The remaining 57 XML files have no exact-basename CSV in this corpus; 10 CSV files likewise have no exact-basename XML and are not auto-paired by filename guesswork.
 
@@ -56,6 +56,42 @@ Other raw-path regression results:
 - **11,660,167** paired Time/Voltage samples match XML exactly at exported precision;
 - non-positive raw lifetimes are retained for diagnosis.
 
+## Paired numeric result profile — QSS-INJ-RESULT-001
+
+Two additional **real, matching DualQssMeasurement XML + numeric PV-2000 result CSV pairs** establish a narrow final-result path for `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back`.
+
+The final vendor scalar **teff.d (1 Sun)** is taken from the XML `Values` vector, not from the rounded `TransientInfo@LifeTime` field:
+
+- in the paired high-range case, 1000 mSun is acquired explicitly and XML `Values` at 1000 mSun reproduces the vendor scalar exactly;
+- in the paired low-range case, acquisition ends at 681 mSun and PV-2000 reports the **last acquired XML `Values` element** as teff.d (1 Sun), again exactly.
+
+These two cases validate only those target-placement rules. If an acquired sweep spans 1000 mSun without an exact 1000 mSun sample, the analyzer does **not** invent an interpolation rule; that scalar remains unavailable until another matching XML+CSV pair exercises the case. Left-side clamping is likewise not generalized.
+
+The paired numeric exports also establish the following dependent relationships:
+
+```text
+Smax (1 Sun) [cm/s] = 50 * W_um / teff.SS_1sun_us
+Smax at max teff.SS [cm/s] = 50 * W_um / teff.SS_max_us
+```
+
+Both pairs reproduce these relations to floating-point precision. In the pair where vendor Δn (1 Sun) is available,
+
+```text
+Δn = 2.38e12 * I_mSun * OpticalFactor * teff.SS_us / W_um
+```
+
+at 1000 mSun also reproduces the numeric export to floating-point precision. This confirms the **teff.SS → Smax/Δn** steps; it does not reconstruct teff.SS itself.
+
+The two CSVs additionally expose teff.SS, teff.SS Max, Implied Voc, K-S J0 and Basore J0/undefined state. A private reference-build replay reproduces those exported values and undefined flags, confirming that the files are internally paired. Browser-side reconstruction of those quantities remains unsupported until their XML→result transformations are independently reproduced point-by-point.
+
+Run the paired numeric validator with:
+
+```bash
+npm run validate:dual-qss-results -- <case-dir> [<case-dir> ...]
+```
+
+Each case directory contains `result.xml` and its matching `result.csv`. The browser never reads the CSV.
+
 ## Vendor result-table Lifetime remains separate
 
 The same CSVs contain:
@@ -83,7 +119,9 @@ Using XML wafer thickness and optical factor, the maximum relative discrepancy a
 
 ## Runtime behavior
 
-The default curve source is **PV-2000 raw** (`TransientInfo@LifeTime`). Users can switch the curve to **XML Values** for diagnostics. The selected-point panel shows both values, and CSV export names both sources explicitly.
+The injection curve uses **PV-2000 raw** `TransientInfo@LifeTime`, falling back to XML `Values` only when the transient lifetime is unavailable. CSV export preserves both XML lifetime fields explicitly.
+
+For `QSS-INJ-RESULT-001`, Results summary also shows the paired-validated **teff.d (1 Sun)** scalar when the imported XML exercises one of the two validated target-placement rules above. Other final-result quantities remain absent rather than being guessed.
 
 Logarithmic X is the default because the supplied schedules span orders of magnitude. Clicking a curve point opens the corresponding stored transient and marks `TimeCursor`. Additional `DualQssMeasurement` XMLs can be loaded locally for LP/HP or repeat overlays; this overlay is an analyzer feature, not a claimed vendor stitching algorithm.
 
@@ -91,7 +129,7 @@ Logarithmic X is the default because the supplied schedules span orders of magni
 
 Six additional `OnePointPattern` XMLs exercise high-range injection schedules with `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They confirm that these recipe requests occur on the same raw Dual QSS schema and that the one-point geometry remains meaningful context.
 
-No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only; Basore-Hansen J0, Kane-Swanson J0, result-table Lifetime, Δn and Implied Voc remain outside the validated result path.
+No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The separate two-pair `QSS-INJ-RESULT-001` evidence validates the narrow teff.d (1 Sun) scalar path described above, but does not validate browser-side Basore-Hansen J0, Kane-Swanson J0, teff.SS, Implied Voc or general Δn availability.
 
 ## J0 and unresolved post-processing
 
@@ -99,11 +137,14 @@ The XML exposes `CalculateJZeroParams`, `IncludeKSJ0`, `UseAugerCorrection`, `De
 
 Still unsupported as vendor-compatible derived results:
 
-- raw lifetime → result-table Lifetime transformation;
-- result-table Lifetime zero/blank acceptance rule;
+- XML/raw lifetime → teff.SS curve/transformation;
+- teff.SS Max reconstruction;
+- general Δn availability outside the paired finite case;
 - Implied Voc processing;
 - Basore-Hansen J0;
 - Kane-Swanson J0;
 - vendor LP/HP stitching semantics, if any.
+
+The validated teff.d (1 Sun) scalar must remain separate from these unresolved paths.
 
 Do not substitute the spatial QSS-map formulas or a plausible integration approximation for these result-table quantities without pointwise regression.
