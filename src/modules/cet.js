@@ -309,7 +309,7 @@
       filterController=Sel.createFilter({
         metrics:analysis.metrics,
         siteCount:data.sites.length,
-        metricKey:'eot'
+        metricKey:'r2'
       });
 
     const metricOptions=()=>Object.values(analysis.metrics)
