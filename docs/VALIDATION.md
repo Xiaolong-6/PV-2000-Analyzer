@@ -71,6 +71,8 @@ Regression results:
 
 A critical semantic distinction is now locked in: **XML `Values` / `TransientInfo@LifeTime` are the raw transient-lifetime path, while CSV top-table `Lifetime[us]` is a different post-processed result.** The runtime therefore labels its curve as XML/transient lifetime and does not claim to reproduce the vendor result-table Lifetime.
 
+A supplemental six-XML set confirms `OnePointPattern` center coordinates with `SubstrateShape=Circle`, radius 50 mm and 7 mm edge exclusion. Those six files also request J0-related post-processing (`CalculateJZeroParams=true`, `IncludeKSJ0=true`) but have no matching result-table export. They therefore validate no new derived quantities; they only exercise one-point geometry/metadata handling and reinforce that no spatial heatmap should be synthesized.
+
 The analyzer remains XML-only at runtime. Paired CSVs are regression evidence and are not loaded by users.
 
 See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
@@ -107,13 +109,19 @@ The validator looks for matching private pairs under `private/reference/jzero/` 
 
 Private references include W1 XML, PV-2000 summary/raw exports, group MATLAB code and COCOS documents. The pre-unification Standard COCOS regression established approximately 2.6% mean error for Qtot and minimum Dit. The default Si model uses the legacy MATLAB midgap `ni = 9.65e9 cm^-3` consistently in both the midgap target and Qsc with `εr = 11.68`, replacing the rounded `1.00e10 cm^-3` previously used only in Qsc. Because that was an intentional numerical-model change, the private W1 regression must be re-run before treating the old 2.6% figures as the exact post-change result.
 
-The Analysis controls now also expose **Material: Silicon (Si) / Germanium (Ge)**. Ge restores the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`. The material selection feeds Qsc, variation/Minimum Dit, the flatband semiconductor-capacitance criterion/Qtot, and Midgap Dit targeting. The Ge path is **implemented but unvalidated against PV-2000 Ge output**; a real Ge XML + matching vendor export/display is required before expanding the validated envelope.
+The Analysis controls expose **Material: Silicon (Si) / Germanium (Ge)** as an Analyzer-level semiconductor-model choice. Ge restores the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selection feeds Qsc, variation/Minimum Dit, the flatband semiconductor-capacitance criterion/Qtot, and Midgap Dit targeting. PV-2000 itself has no Si/Ge material selector, so Ge-sample exports are numerical comparison references rather than evidence for a PV-2000 Ge mode.
 
 ### Standard COCOS
 
 Status: **validated against the available W1 export to the documented approximate error level**.
 
-The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS and preserves the measured dark/light path. The reference family is unchanged, but exact post-change numerical parity is pending re-run of the private W1 regression after the ni unification.
+The normal Follow XML path resolves `UseCocosII=false` to Standard COCOS and preserves the measured dark/light path. Standard Vsb is doping-aware and signed: P-type uses `F*(VDark-VLight)`, while N-type reverses that sign. The reference family is unchanged, but exact post-change numerical parity is pending re-run of the private W1 regression after the ni unification.
+
+### OnePointPattern / circular-substrate regression
+
+Nine private one-point DIT XMLs have matching PV-2000 Raw COCOS CSV exports. All use a center-only `OnePointPattern`; nominal geometry is stored as `Substrate/SubstrateShape xsi:type="Circle"` with 50 mm radius and measurement-level 4 mm edge exclusion. The map regression here is therefore semantic: display the real nominal substrate and center measurement position rather than deriving a fictitious wafer radius from the lone coordinate.
+
+Across 275 process rows, XML dark means after offset subtraction match exported `Vcpd Dark` with about **0.310 mV MAE** and **1.11 mV max absolute error**. The exported `Vcpd Light` is instead an almost straight processed branch (≤ about **0.531 mV** residual from per-file straight-line fits) and does not equal the saved measured-light means despite `UseCocosII=false`. Because that extra reprocessing state is not uniquely encoded in the XML, it is documented but not guessed at runtime.
 
 ### PV2000 COCOS-II (inferred)
 

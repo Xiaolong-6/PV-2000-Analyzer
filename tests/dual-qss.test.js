@@ -47,3 +47,15 @@ test('missing transient attributes stay missing instead of becoming numeric zero
   assert.ok(Number.isNaN(parsed.timeCursor));
   assert.deepEqual(parsed.points,[]);
 });
+
+
+test('Dual QSS OnePoint geometry falls back to circular substrate metadata',()=>{
+  const g=PV2000.modules.dualQss.measurementGeometry({
+    patternType:'OnePointPattern',shapeType:'Circle',radius:50,diameter:100,edgeExclusion:7,coord:{x:0,y:0}
+  });
+  assert.equal(g.onePoint,true);
+  assert.equal(g.kind,'round');
+  assert.equal(g.radius,50);
+  assert.equal(g.innerRadius,43);
+  assert.deepEqual(g.coord,{x:0,y:0});
+});

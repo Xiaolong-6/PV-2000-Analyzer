@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260922.17.1 — 2026-09-23
+
+- Fixed DIT `OnePointPattern` spatial rendering: nominal circular geometry now falls back to `Substrate/SubstrateShape` when no dedicated target node exists, EdgeExclusion drives the inner outline, and center-only datasets are labelled **Measurement position** instead of appearing as a fictitious tiny wafer map.
+- Preserved Standard COCOS Vsb sign using the doping-aware dark/light convention rather than an unconditional absolute value, including the initial state and exported analysis columns.
+- Regressed a private 9-pair one-point DIT corpus: 275 XML dark-process rows reproduce exported Vcpd Dark to about 0.310 mV MAE / 1.11 mV max error. A separate nearly straight corrected-light export branch is documented but not guessed because its activation/state is not uniquely encoded in the saved XML.
+- Clarified throughout the Dit UI/docs that **Material: Si / Ge is an Analyzer model choice**; PV-2000 itself has no Si/Ge material selector, so Ge-sample exports do not establish a PV-2000 Ge mode.
+- Added Dual QSS one-point geometry context: `OnePointPattern` reads the stored coefficient position, circular substrate geometry and EdgeExclusion, showing a measurement-position schematic without inventing a spatial lifetime heatmap. Six supplemental J0-requesting XMLs are documented as metadata/runtime coverage only because no matching vendor result-table export was supplied.
+
 ## v20260922.17 — 2026-09-22
 
 - Added validated `LBIC-REFLECTANCE-003` handling for reflectance-only `LBICMeasurement` XMLs where `MeasureCurrent=false` but BeamData still carry zero-valued Current placeholders. Disabled Current is no longer exposed or used to synthesize EQE/IQE; Reflectivity becomes the default result.
@@ -25,7 +33,7 @@
 ## v20260922.14 — 2026-09-22
 
 - Added **Material: Silicon (Si) / Germanium (Ge)** to Dit Analysis controls, defaulting to Si without inferring material from filenames or substrate names.
-- Restored the legacy MATLAB Ge semiconductor constants (`ni = 2e13 cm^-3`, `εr = 16.2`) and applied the selected material consistently to Qsc, variation/Minimum Dit, flatband/Qtot and Midgap Dit targeting. Ge is explicitly unvalidated against PV-2000 Ge output.
+- Restored the legacy MATLAB Ge semiconductor constants (`ni = 2e13 cm^-3`, `εr = 16.2`) and applied the selected material consistently to Qsc, variation/Minimum Dit, flatband/Qtot and Midgap Dit targeting. Ge is an Analyzer-only compatibility model; PV-2000 itself has no Si/Ge material selector.
 - Added unit regressions for Ge Qsc, material-dependent midgap targeting and material-dependent variation Dit while preserving the existing Si-default path.
 
 ## v20260922.13 — 2026-09-22

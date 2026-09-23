@@ -39,6 +39,14 @@ DualQssMeasurement
 
 The analyzer aligns `Values`, `Intensity`, `Power` and `TransientInfo` by vector index.
 
+## One-point geometry
+
+`DualQssMeasurement` is an injection sweep at one scheduled XY position, not a spatial lifetime map. For `OnePointPattern`, the runtime now reads the coefficient position and uses the nominal circular substrate/target geometry only as spatial context.
+
+When a measurement has no dedicated `Target` node, circular geometry falls back to `Substrate/SubstrateShape` (`Circle/Radius`) plus measurement-level `EdgeExclusion`. The current six supplemental examples use a 50 mm substrate radius, 7 mm edge exclusion and the center point `(0, 0)`. The UI therefore shows **Measurement position** rather than inventing a heatmap.
+
+This geometry display does not imply a new Dual QSS spatial algorithm and does not turn a one-point injection sweep into `QssUpcdMeasurement`.
+
 ## What the paired raw CSV establishes
 
 Across all 57 XML+CSV pairs:
@@ -93,6 +101,12 @@ Every finite stored XML lifetime remains visible and exportable. For summary sta
 The main plot uses QSS intensity on X and raw/XML transient lifetime on Y. Logarithmic X is the default because the supplied schedules span orders of magnitude. Clicking a curve point opens the corresponding stored transient and marks `TimeCursor`.
 
 Additional `DualQssMeasurement` XML files can be loaded locally for LP/HP or repeat-measurement overlay. Overlay is an analyzer feature; no automatic vendor-style stitching rule is claimed.
+
+## Supplemental J0-requesting examples
+
+Six additional `OnePointPattern` XMLs exercise high-range injection schedules with `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They confirm that these recipe requests occur on the same raw Dual QSS schema and that the one-point geometry must remain visible.
+
+No matching PV-2000 result-table export was supplied for these six measurements. They therefore do **not** establish the vendor Basore-Hansen J0, Kane-Swanson J0, result-table Lifetime, Δn or Implied-Voc transformation. The runtime continues to expose the flags as metadata and does not synthesize those outputs.
 
 ## J0 and unresolved post-processing
 

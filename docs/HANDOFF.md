@@ -53,6 +53,14 @@ A contributor does not need to write code. A data-only PR containing raw XML + m
 
 This does not weaken the reference-profile rule: numeric parameter changes inside an established semantic path are not automatically NEW PROFILE, while genuinely new schema/algorithm/channel/result/unit/validity paths require matching vendor evidence before the validation envelope expands.
 
+## Dit one-point / Standard COCOS update
+
+A private 9-pair DIT reference family exercises center-only `OnePointPattern` on a nominal 100 mm circular substrate. In these files the geometry is stored under `Substrate/SubstrateShape` (`Circle`, radius 50 mm) with measurement-level 4 mm edge exclusion rather than a dedicated target node. The runtime now uses that nominal geometry for spatial context and labels the center-only view **Measurement position** instead of deriving a tiny pseudo-wafer from the single coordinate.
+
+Standard measured-light Vsb now preserves the doping-aware vendor sign convention rather than applying `abs()`. The same private exports also expose a separate nearly straight corrected `Vcpd Light` export branch that is not equal to the measured XML light values even with `UseCocosII=false`. That post-processing state is not uniquely encoded in the saved XML, so do not auto-enable or guess it in the XML-only runtime.
+
+The Material selector remains an Analyzer feature. Ge-sample reference files do not imply that PV-2000 has a Ge material mode.
+
 ## QSS-µPCD: reference export now available
 
 `private/reference/qss_upcd_export.csv` is the exact PV-2000 export corresponding to `qss_upcd_example.xml`. Regression status:
@@ -85,7 +93,9 @@ Current private evidence:
 - the CSV top-table `Lifetime[us]` is a **different post-processed quantity** from the XML/raw lifetime. Across the current paired corpus, 775 result rows have positive vendor Lifetime and 228 are zero;
 - once vendor result-table Lifetime is known, exported `dn` follows `G = 2.38e17 * I / W * OpticalFactor` and `dn = G * Lifetime` to rounded CSV precision (<0.5% maximum relative difference in the current corpus).
 
-The runtime therefore labels the displayed curve as **XML transient lifetime**, not generic/vendor Lifetime. It supports click-through stored transients, TimeCursor, raw metadata, manual axes, CSV export and local LP/HP/repeat overlays.
+The runtime therefore labels the displayed curve as **XML transient lifetime**, not generic/vendor Lifetime. It supports click-through stored transients, TimeCursor, raw metadata, manual axes, CSV export and local LP/HP/repeat overlays. For `OnePointPattern`, it also shows a nominal measurement-position schematic; circular geometry falls back to `Substrate/SubstrateShape` plus measurement-level `EdgeExclusion` when no dedicated target node exists.
+
+Six supplemental high-range XMLs use a 50 mm circular substrate radius, 7 mm edge exclusion and center coordinate `(0,0)` while requesting `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They have no matching result-table CSV, so they expand runtime/metadata coverage only and do not validate J0 or processed Lifetime/Δn/Implied-Voc outputs.
 
 Still unresolved: raw-transient → vendor result-table Lifetime transformation, vendor zero/blank acceptance behavior, Implied-Voc processing, Basore-Hansen J0, Kane-Swanson J0 and any vendor LP/HP stitching semantics. J0-related XML fields remain metadata only until those result paths are reproduced point-by-point.
 
@@ -123,7 +133,7 @@ The inferred PV2000 path comes from same-raw-data parameter sweeps. It interpret
 
 Dit Analysis controls are contextual and compact:
 
-- **Material** is selectable as Silicon (Si) or Germanium (Ge), with Si as the default. Ge uses the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selected material consistently feeds Qsc, variation/Minimum Dit, flatband/Qtot and the Midgap Dit target. Ge remains unvalidated against matching PV-2000 Ge output;
+- **Material** is selectable as Silicon (Si) or Germanium (Ge), with Si as the default. This is an Analyzer-only semiconductor-model choice; PV-2000 itself has no Si/Ge selector. Ge uses the legacy MATLAB compatibility constants `ni = 2e13 cm^-3` and `εr = 16.2`; the selected material consistently feeds Qsc, variation/Minimum Dit, flatband/Qtot and the Midgap Dit target;
 - inferred COCOS-II shows EOT / Min Vsb / Max Vsb on one-line label/input rows;
 - Standard COCOS hides COCOS-II-only settings;
 - shared Flatband accumulation points remain visible;

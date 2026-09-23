@@ -29,18 +29,18 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 
 **Validated / established**
 
-- Standard COCOS remains the established reference family and measured dark/light algorithm path for the current **Si** reference material.
+- Standard COCOS remains the established measured dark/light reference family.
 - The historical validation record, obtained before the intrinsic-carrier-concentration cleanup, reported about **2.6% mean error** for Qtot and minimum Dit.
-- The current Si implementation uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc, with `εr = 11.68`; Qsc previously used the rounded `1.00e10 cm^-3`.
-- The analyzer also supports a **Ge legacy-MATLAB compatibility path** using `ni = 2e13 cm^-3` and `εr = 16.2`, but no matching PV-2000 Ge export has been supplied, so Ge is not validated by DIT-STD-001.
-- Re-run the private DIT-STD-001 Si regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
+- The default Analyzer Si model uses the legacy MATLAB midgap value `ni = 9.65e9 cm^-3` consistently for both midgap targeting and Qsc, with `εr = 11.68`; Qsc previously used the rounded `1.00e10 cm^-3`.
+- The optional Ge choice is an **Analyzer-only legacy-MATLAB model** using `ni = 2e13 cm^-3` and `εr = 16.2`. PV-2000 itself has no Si/Ge material selector, so a Ge-sample export must not be described as a PV-2000 Ge algorithm/profile.
+- Re-run the private DIT-STD-001 Si-sample regression before quoting the historical 2.6% figure as the exact error of the unified-ni implementation.
 
 **Not validated by this profile**
 
 - PV2000 COCOS-II vendor algorithm.
 - Back Surface Shift behavior outside the supplied adjustment set.
-- Germanium or another semiconductor material until a matching PV-2000 material-specific reference is regressed.
 - Any new Dit XML/data path that changes the extraction behavior materially.
+- Any separately reprocessed/corrected-light export branch that is not uniquely recoverable from the saved XML.
 
 **NEW PROFILE triggers**
 
@@ -50,12 +50,43 @@ Treat as a new profile when a real dataset introduces a materially different Dit
 - a case where Back Surface Shift changes vendor results;
 - new COCOS-II acceptance/window behavior;
 - a different pointwise Dit/Vsb export structure;
-- materially different flatband/extraction fields that require new parser or calculation assumptions;
-- a new semiconductor material reference (including the first PV-2000 Ge reference) that establishes material-specific vendor parity.
+- materially different flatband/extraction fields that require new parser or calculation assumptions.
+
+Changing the physical semiconductor sample alone is not a vendor-profile trigger because PV-2000 does not receive an Analyzer-style Si/Ge material selection.
 
 Current COCOS-II status remains **inferred** until matching vendor pointwise output validates it.
 
 ---
+
+### DIT-ONEPOINT-002 — OnePointPattern / circular-substrate raw-export reference
+
+**Measurement type**
+
+`DITMeasurement`
+
+**Reference material**
+
+A private corpus of **9 XML + 9 matching PV-2000 Raw COCOS CSV exports** from germanium samples. The sample material is descriptive only; PV-2000 has no Si/Ge material selector.
+
+**Established**
+
+- all nine XMLs use `OnePointPattern` with one center coordinate; nominal geometry is stored as `Substrate/SubstrateShape xsi:type="Circle"` with **50 mm radius** and measurement-level **4 mm EdgeExclusion**;
+- the runtime must therefore show a single measurement position on the nominal circular substrate/target, not infer wafer size from the lone `(0,0)` coordinate and not present the result as a spatial heatmap;
+- across **275 exported process rows**, XML `mean(VcpdDark) - VcpdOffsett` reproduces exported `Vcpd Dark` with approximately **0.310 mV mean absolute error** and **1.11 mV maximum absolute error**, consistent with the rounded export precision;
+- the matching Raw COCOS CSV `Vcpd Light` branches are nearly straight within each file (maximum residual from a per-file straight-line fit about **0.531 mV**) and do **not** equal the measured XML light means, despite `UseCocosII=false`;
+- because the saved XML does not uniquely identify the activation/state of that additional corrected-light reprocessing, the XML-only runtime does not auto-invent it. This processed export branch remains distinct from the measured Standard COCOS XML path.
+
+**Implementation consequence**
+
+Standard measured-light Vsb remains doping-aware and signed. For N-type the displayed/storage sign is the reverse of `F*(VDark-VLight)`; for P-type it retains that direct sign. The previous unconditional absolute value is not compatible with the vendor sign semantics.
+
+**Not claimed**
+
+- no PV-2000 Ge material mode or Ge-specific vendor algorithm is implied;
+- no 2D coordinate reconstruction is validated by this one-point family;
+- the additional straight corrected-light export transformation is not claimed as reconstructed until its activation and transformation can be determined from saved result state.
+
+
 
 ### QSS-MAP-001 — QSS-µPCD 305-point map
 
@@ -159,13 +190,19 @@ A private corpus of **72 XML files**, of which **57** have matching same-basenam
 
 **Validated / established raw path**
 
-- current XML family: `OnePointPattern + RoundWafer`, one `QssDataItem` per measurement;
+- current XML family: `OnePointPattern`, one `QssDataItem` per measurement; circular spatial context may be stored either in an explicit target or in `Substrate/SubstrateShape`;
 - XML `Intensity` and `Power` vectors match the vendor CSV top-table QSS intensity and laser-power columns exactly;
 - XML `Values` / `TransientInfo@LifeTime` match the CSV raw-data `LifeTime [μs]` values to export rounding, maximum absolute difference about **0.0050414 µs**;
 - each current XML `TransientInfo` stores **2000** `SmallPoint` samples;
 - the CSV raw export contains the first **1999** samples of each current transient and omits the final XML sample;
 - **2,004,997** paired raw Time/Voltage samples compare exactly at exported precision;
 - ordinary numeric changes in intensity schedule, wafer thickness, doping, optical factor or laser-power setting remain inside this raw schema family when the same structure is retained.
+
+**Supplemental one-point geometry / J0-request examples**
+
+Six additional XML-only examples use `SubstrateShape=Circle` with **50 mm radius**, **7 mm EdgeExclusion**, a single `(0,0)` coefficient, and high-range injection schedules. All six request `CalculateJZeroParams=true`; they also set `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`.
+
+These files expand runtime coverage for one-point geometry and stored recipe metadata only. Because they do not include matching vendor result-table exports, they do not validate J0, processed Lifetime, Δn or Implied Voc.
 
 **Vendor result-table path observed but not yet reproduced**
 
