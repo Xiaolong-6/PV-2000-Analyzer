@@ -1,4 +1,20 @@
-# Agent handoff — 2026-09-23 — v20260923.20
+# Agent handoff — 2026-09-23 — v20260923.21
+
+## Analyzer index + sidebar consistency audit
+
+The landing page now distinguishes three concepts explicitly: dedicated supported analyzers, the Generic XML Inspector fallback, and the PV-2000 v1.3.0.5 validation boundary. The supported-analyzer row is Dit / COCOS, QSS-µPCD, QSS Injection, Emitter J0, ISC / VCPD, CET / EOT and LBIC.
+
+All dedicated measurement-family sidebars were audited against one information hierarchy:
+
+1. Measurement identity/context;
+2. optional Analysis controls or View controls;
+3. optional Valid-data filter;
+4. Results summary;
+5. selected site / pixel / injection point when applicable;
+6. Current dataset / audit counts when useful;
+7. collapsed detailed acquisition / validation / provenance metadata.
+
+Family-specific content is retained where it is scientifically meaningful; the audit standardizes information priority rather than forcing identical panels. DIT site selection moved out of Measurement into Selected site, Dual QSS comparison controls moved before results, JZero/CET headings were aligned, and LBIC Channel provenance became collapsed detailed metadata. QSS, ISC/VCPD and JZero already followed the target order closely and did not need structural changes beyond naming where noted. Generic XML Inspector remains exempt because it is a fallback rather than a scientific analyzer.
 
 ## QSS analysis-control provenance cleanup
 
