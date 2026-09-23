@@ -2,13 +2,13 @@
 
 Branch: **docs/reference-knowledge-wiki-plan**
 
-Purpose: provide finished Markdown sources that a local agent can push directly into the GitHub Wiki repository while feature agents continue working on the application.
+Purpose: maintain the published GitHub Wiki from version-controlled Markdown sources while feature work continues separately.
 
 ## 1. Wiki source directory
 
 Files under **wiki/** are written as publishable Wiki pages, using GitHub Wiki page slugs as filenames.
 
-Current ready-to-push set:
+Published set (Wiki revision `a30f367`, 2026-09-23):
 
 - Home.md
 - _Sidebar.md
@@ -55,20 +55,20 @@ Keep the following outside the public Wiki:
 - raw reverse-engineering logs;
 - private reference files without publication clearance.
 
-## 4. Local-agent push workflow
+## 4. Wiki synchronization workflow
 
-If the Wiki repository is already initialized:
+The Wiki repository is initialized. For future source updates:
 
     git clone https://github.com/Xiaolong-6/PV-2000-Analyzer.wiki.git
     cd PV-2000-Analyzer.wiki
     copy or sync ../PV-2000-Analyzer/wiki/*.md into this repository
-    git add .
-    git commit -m "Add scientific measurement reference"
+    git add -- Home.md _Sidebar.md Scientific-Foundations.md Measurement-Families.md Validation-and-Reference-Profiles.md DIT.md QSS-uPCD.md CV-and-CET.md
+    git commit -m "Update scientific measurement Wiki"
     git push
 
-On Windows, the copy/sync step can be performed by the local agent using PowerShell, Python or normal file operations.
+Before each push, check for private material, render equations with GitHub-compatible Markdown, and verify the live page. Use `$...$` for inline math and fenced `math` blocks for multiline display equations; standalone multiline `$$` blocks can be parsed as headings in the Wiki.
 
-If GitHub has not initialized the Wiki git repository yet, create the initial Home page once through the GitHub Wiki UI, then clone/push normally.
+The repository `wiki/` directory remains the editable source of truth. Never copy from `private/` into the Wiki Git repository.
 
 ## 5. Source-of-truth split
 

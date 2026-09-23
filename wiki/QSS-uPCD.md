@@ -8,9 +8,9 @@ On the simple QSS-uPCD map path, lifetime is already stored in the measurement d
 
 For a single stored value,
 
-\[
+```math
 \tau_{\rm eff}=\tau_{\rm stored}.
-\]
+```
 
 For repeated stored values, the map result uses their arithmetic mean.
 
@@ -20,29 +20,29 @@ The exact SL/64 through SL/1024, 1/e and 1/e² transient-evaluation algorithms b
 
 A simple reference validity interval is
 
-\[
+```math
 0<\tau_{\rm eff}\le 10000\ \mu{\rm s}.
-\]
+```
 
 Values outside the accepted interval are treated as unavailable on that path.
 
 ## 3. Maximum surface recombination velocity
 
-For wafer thickness \(W\) and effective lifetime \(\tau_{\rm eff}\),
+For wafer thickness $W$ and effective lifetime $\tau_{\rm eff}$,
 
-\[
+```math
 S_{\rm max}
 =
 \frac{W}{2\tau_{\rm eff}}.
-\]
+```
 
-With \(W\) in micrometres and \(\tau\) in microseconds,
+With $W$ in micrometres and $\tau$ in microseconds,
 
-\[
+```math
 S_{\rm max}[{\rm cm/s}]
 =
 50\frac{W_{\mu m}}{\tau_{\mu s}}.
-\]
+```
 
 This is a symmetric-surface upper-bound interpretation.
 
@@ -50,32 +50,32 @@ This is a symmetric-surface upper-bound interpretation.
 
 The current reference calculation uses
 
-\[
+```math
 \Delta n
 =
 2.38\times10^{12}
 \frac{I\,f_{\rm opt}\,\tau_{\mu s}}
 {W_{\mu m}},
-\]
+```
 
 where
 
-- \(I\) is the QSS intensity in the profile's stored convention;
-- \(f_{\rm opt}\) is the optical factor;
-- \(W_{\mu m}\) is wafer thickness;
-- \(\tau_{\mu s}\) is effective lifetime.
+- $I$ is the QSS intensity in mSun as stored in the XML (1000 mSun = 1 sun);
+- $f_{\rm opt}$ is the optical factor;
+- $W_{\mu m}$ is wafer thickness;
+- $\tau_{\mu s}$ is effective lifetime.
 
 This has the steady-state structure
 
-\[
+```math
 \Delta n=G\tau.
-\]
+```
 
 ## 5. Implied Voc
 
-For p-type material with doping \(N_A\),
+For p-type material with doping $N_A$, a physical carrier-product expression is
 
-\[
+```math
 V_{\rm oc,impl}
 =
 \frac{kT}{q}
@@ -83,39 +83,50 @@ V_{\rm oc,impl}
 1+
 \frac{\Delta n(N_A+\Delta n)}{n_i^2}
 \right].
-\]
+```
 
-Temperature and \(n_i\) are compatibility-sensitive inputs. Different historical result families can require different compatibility constants even when the physical equation has the same form.
+The currently validated QSS map compatibility path evaluates the same expression **without** the additive 1:
+
+```math
+V_{\rm oc,compat}
+=
+\frac{kT}{q}
+\ln\left[
+\frac{\Delta n(N_A+\Delta n)}{n_i^2}
+\right].
+```
+
+This distinction, temperature and the $n_i(T)$ convention are part of the reference profile; the physical expression above must not be substituted for the vendor-regressed compatibility calculation.
 
 ## 6. Intensity-scan J0
 
-An injection scan can estimate emitter \(J_0\) from the high-injection falloff of lifetime.
+An injection scan can estimate emitter $J_0$ from the high-injection falloff of lifetime.
 
 Accepted points are transformed as
 
-\[
+```math
 x=\Delta n,
 \qquad
 y=\frac{1}{\tau}.
-\]
+```
 
 A linear fit
 
-\[
+```math
 \frac{1}{\tau}
 =
 a+b\Delta n
-\]
+```
 
-gives slope \(b\).
+gives slope $b$.
 
 The emitter saturation current density is then
 
-\[
+```math
 J_0
 =
 \frac{bqWn_i^2}{2}.
-\]
+```
 
 The intensity-scan reference path reports this result in mA/cm² after the corresponding scale conversion.
 
@@ -123,7 +134,7 @@ Point selection matters. The fit is performed on a defined post-maximum-lifetime
 
 ## 7. Dual-QSS relationship
 
-Dual QSS adds steady-state correction and optional J0 methods to an injection scan.
+Dual QSS can add steady-state correction and optional J0 methods to an injection scan. The current viewer validates the stored raw injection/transient path; vendor result-table post-processing for corrected lifetime, injection, implied Voc and J0 has not yet been established.
 
 Its scientific elements include:
 
@@ -154,11 +165,11 @@ Geometry validation is tracked separately from lifetime/Smax/Voc validation beca
 
 The three primary simple-map quantities answer different questions:
 
-**\(\tau_{\rm eff}\)** — how long excess carriers persist under the measured condition.
+**$\tau_{\rm eff}$** — how long excess carriers persist under the measured condition.
 
-**\(S_{\rm max}\)** — an upper-bound surface-recombination interpretation if the measured effective lifetime were limited by symmetric surfaces.
+**$S_{\rm max}$** — an upper-bound surface-recombination interpretation if the measured effective lifetime were limited by symmetric surfaces.
 
-**Implied \(V_{\rm oc}\)** — the quasi-Fermi-level splitting implied by doping, injection and temperature.
+**Implied $V_{\rm oc}$** — the quasi-Fermi-level splitting implied by doping, injection and temperature.
 
 They share the same lifetime input while depending on different physical assumptions.
 

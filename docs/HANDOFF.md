@@ -1,4 +1,4 @@
-# Agent handoff — 2026-09-23 — docs/reference-knowledge-wiki-plan v20260922.17.6
+# Agent handoff — 2026-09-23 — docs/reference-knowledge-wiki-plan v20260922.17.7
 
 ## Documentation/Wiki planning branch
 
@@ -6,7 +6,7 @@ This branch is intentionally documentation-only while other agents continue feat
 
 The proposed policy is now deliberately asymmetric: the GitHub Wiki is the primary public reading surface for physics, equations, derivations, units, assumptions and scientific interpretation; repository docs remain authoritative for XML/implementation mapping, validation profile IDs, regression evidence, tests and development constraints. Public material should describe independently stated scientific/reference behavior without publishing vendor binaries, debug metadata, proprietary source fragments, internal build paths or local research notes.
 
-Wiki source pages are now staged under `wiki/`. See `docs/WIKI_HANDOFF.md` for direct `.wiki.git` synchronization instructions and the next-page queue. Wiki prose is maintained as the current scientific reference rather than as chronological correction notes.
+The initial eight `wiki/` files are published at [the GitHub Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki), through Wiki revision `a30f367`. See `docs/WIKI_HANDOFF.md` for future `.wiki.git` synchronization and the next-page queue. GitHub Wiki display equations use fenced `math` blocks; the live QSS page was checked after publication. Wiki prose is maintained as the current scientific reference rather than as chronological correction notes.
 
 ## Goal
 

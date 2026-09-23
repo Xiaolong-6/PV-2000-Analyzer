@@ -1,6 +1,6 @@
 # Documentation and Wiki information-architecture plan
 
-Status: **planning only**. This branch must not change analyzer runtime behavior, calculation code, UI behavior, validation labels, or existing reference envelopes.
+Status: **documentation-only branch; initial scientific Wiki published on 2026-09-23**. This branch must not change analyzer runtime behavior, calculation code, UI behavior, validation labels, or existing reference envelopes. The eight source files in `wiki/` were synchronized to the [GitHub Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki); this plan remains the guide for subsequent pages.
 
 ## 1. Goal
 

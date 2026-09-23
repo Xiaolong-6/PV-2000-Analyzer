@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260922.17.7 — 2026-09-23 (documentation and Wiki publication)
+
+- Published the eight `wiki/` source files to the GitHub Wiki (Wiki revision `a30f367`), including Home and the custom sidebar.
+- Changed Wiki equations to GitHub-rendered inline math and fenced display-math blocks, verified against the live Wiki.
+- Clarified QSS mSun units and the difference between the physical and vendor-compatible implied-Voc expressions; made unresolved Dual-QSS, LBIC diffusion-length and DIT Back Surface Shift boundaries explicit.
+- Updated Wiki sync instructions and branch handoff; no analyzer runtime, reference envelope or private data changed.
+
 ## v20260922.17.6 — 2026-09-23 (documentation planning branch)
 
 - Added `docs/DOCUMENTATION_WIKI_PLAN.md` defining the repo-docs/Wiki split, public wording/content boundaries, proposed measurement-family documentation, Wiki page tree, ownership mapping and phased rollout.

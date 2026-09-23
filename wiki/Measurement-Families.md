@@ -6,11 +6,11 @@ This index summarizes the scientific role and result provenance of the known mea
 |---|---|---|---|
 | DIT | surface band bending, interface-state density, flat-band and interface charge | analyzer-derived from Kelvin-probe/corona data | implemented; profile-dependent validation |
 | QSS-uPCD | effective lifetime, Smax, implied Voc | lifetime stored/controller-derived; Smax and Voc derived | implemented; current map profiles validated |
-| Dual QSS | injection-dependent lifetime and J0-related quantities | stored lifetime/transients plus derived steady-state/J0 paths | raw path validated; several derived paths remain profile-dependent |
+| Dual QSS | injection-dependent lifetime and J0-related quantities | stored lifetime/transients; proposed derived steady-state/J0 paths | raw path validated; vendor result-table post-processing unresolved |
 | Emitter J0 | emitter saturation current density | two lifetime states plus derived J0/Smax/Voc | implemented; current two-intensity map profile validated |
 | ISC | dark/light Vcpd and surface band bending | corrected and derived from repeated Kelvin-probe readings | implemented; current profile validated |
 | VCPD | contact potential difference | averaged stored Kelvin-probe readings | implemented; current profile validated |
-| LBIC | photocurrent, reflectivity, EQE/IQE, optional diffusion-length path | mixed raw channels and derived quantities | several current/reflectivity/IQE profiles validated |
+| LBIC | photocurrent, reflectivity, EQE/IQE; diffusion length in some vendor results | mixed raw channels and derived quantities | current/reflectivity/IQE paths validated by profile; calculated diffusion length unsupported |
 | CV | corona/Kelvin-probe acquisition history and feedback | acquisition/process state | measurement semantics documented |
 | CET | capacitance, EOT and fit quality | derived from corona charge and light-CPD sweep | scientific calculation documented; paired validation pending |
 | SPV / Diffusion Length | minority-carrier diffusion length and derived lifetime | wavelength-dependent SPV plus optical corrections | scientific calculation documented; paired validation pending |
