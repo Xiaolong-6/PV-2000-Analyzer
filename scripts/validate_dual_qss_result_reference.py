@@ -156,15 +156,19 @@ def read_rows(path: Path):
 
 
 def norm(text):
-    return " ".join((text or "").replace("μ", "u").replace("µ", "u").split()).lower()
+    return " ".join(
+        (text or "")
+        .replace("μ", "u")
+        .replace("µ", "u")
+        .replace("Δ", "delta")
+        .replace("δ", "delta")
+        .split()
+    ).lower()
 
 
-def find_col(header, *terms):
+def find_col(header, predicate):
     normalized = [norm(value) for value in header]
-    for index, value in enumerate(normalized):
-        if all(term.lower() in value for term in terms):
-            return index
-    return None
+    return next((index for index, value in enumerate(normalized) if predicate(value)), None)
 
 
 def parse_vendor_csv(path: Path):
@@ -187,20 +191,22 @@ def parse_vendor_csv(path: Path):
     if data_row is None:
         raise AssertionError(f"{path.name}: point-result row not found")
 
-    def value(*terms):
-        index = find_col(header, *terms)
+    def value(predicate):
+        index = find_col(header, predicate)
         return parse_number(data_row[index]) if index is not None and index < len(data_row) else math.nan
 
     return {
-        "teffd_1sun": value("teff.d", "1 sun"),
-        "teffss_1sun": value("teff.ss", "1 sun"),
-        "teffss_max": value("teff.ss max"),
-        "basore_j0": value("basore", "j0"),
-        "dn_1sun": value("n", "1 sun"),
-        "smax_1sun": value("smax", "1 sun"),
-        "smax_max": value("smax"),
-        "voc_1sun": value("implied voc", "1 sun"),
-        "ks_j0": value("k-s", "j0"),
+        "teffd_1sun": value(lambda s: s.startswith("teff.d") and "1 sun" in s),
+        "teffss_1sun": value(
+            lambda s: s.startswith("teff.ss") and "1 sun" in s and "max" not in s
+        ),
+        "teffss_max": value(lambda s: s.startswith("teff.ss max")),
+        "basore_j0": value(lambda s: s.startswith("basore") and "j0" in s),
+        "dn_1sun": value(lambda s: s.startswith("deltan") and "1 sun" in s),
+        "smax_1sun": value(lambda s: s.startswith("smax") and "1 sun" in s),
+        "smax_max": value(lambda s: s.startswith("smax") and "1 sun" not in s),
+        "voc_1sun": value(lambda s: s.startswith("implied voc") and "1 sun" in s),
+        "ks_j0": value(lambda s: s.startswith("k-s") and "j0" in s),
         "header": header,
     }
 
