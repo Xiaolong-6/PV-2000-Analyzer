@@ -46,7 +46,43 @@ S_{\rm max}[{\rm cm/s}]
 
 This is a symmetric-surface upper-bound interpretation.
 
-## 4. Illumination to excess carrier density
+## 4. Optional Analyzer SRV
+
+The analyzer also provides an optional lifetime-to-surface-recombination-velocity post-processing path. This is **Analyzer-side analysis**, not a PV-2000 stored result or recipe parameter, and it is disabled by default.
+
+For a planar sample,
+
+```math
+S
+=
+\frac{W}{2}
+\left(
+\frac{1}{\tau_{\rm eff}}
+-
+\frac{1}{\tau_{\rm bulk}}
+\right).
+```
+
+If bulk lifetime is left blank, the analysis uses the infinite-bulk-lifetime limit.
+
+For the explicit **Textured / black** model with a separately known planar-reference SRV,
+
+```math
+S_{\rm textured}
+=
+W
+\left(
+\frac{1}{\tau_{\rm eff}}
+-
+\frac{1}{\tau_{\rm bulk}}
+\right)
+-
+S_{\rm planar,ref}.
+```
+
+The planar-reference term is only applicable to that textured model. Non-positive lifetime is unavailable for SRV analysis, and negative calculated SRV is clipped to zero. These SRV estimates remain separate from vendor-compatible $S_{\max}$.
+
+## 5. Illumination to excess carrier density
 
 The current reference calculation uses
 
@@ -71,7 +107,7 @@ This has the steady-state structure
 \Delta n=G\tau.
 ```
 
-## 5. Implied Voc
+## 6. Implied Voc
 
 For p-type material with doping $N_A$, a physical carrier-product expression is
 
@@ -98,7 +134,7 @@ V_{\rm oc,compat}
 
 This distinction, temperature and the $n_i(T)$ convention are part of the reference profile; the physical expression above must not be substituted for the vendor-regressed compatibility calculation.
 
-## 6. Intensity-scan J0
+## 7. Intensity-scan J0
 
 An injection scan can estimate emitter $J_0$ from the high-injection falloff of lifetime.
 
@@ -132,7 +168,7 @@ The intensity-scan reference path reports this result in mA/cm² after the corre
 
 Point selection matters. The fit is performed on a defined post-maximum-lifetime portion of the scan, with a minimum lifetime-drop criterion before the fit is accepted.
 
-## 7. Dual-QSS relationship
+## 8. Dual-QSS relationship
 
 Dual QSS can add steady-state correction and optional J0 methods to an injection scan. The current viewer validates the stored raw injection/transient path; vendor result-table post-processing for corrected lifetime, injection, implied Voc and J0 has not yet been established.
 
@@ -147,7 +183,7 @@ Its scientific elements include:
 
 These operations belong to a separate measurement family because the lifetime correction and J0 pathways differ from the simple map.
 
-## 8. Geometry and maps
+## 9. Geometry and maps
 
 Spatial QSS measurements combine a lifetime value with a target/pattern definition.
 
@@ -161,9 +197,9 @@ The project supports several coordinate families, including:
 
 Geometry validation is tracked separately from lifetime/Smax/Voc validation because coordinate reconstruction is its own input-to-output path.
 
-## 9. Scientific interpretation
+## 10. Scientific interpretation
 
-The three primary simple-map quantities answer different questions:
+The three primary vendor-comparison simple-map quantities answer different questions:
 
 **$\tau_{\rm eff}$** — how long excess carriers persist under the measured condition.
 
@@ -171,9 +207,9 @@ The three primary simple-map quantities answer different questions:
 
 **Implied $V_{\rm oc}$** — the quasi-Fermi-level splitting implied by doping, injection and temperature.
 
-They share the same lifetime input while depending on different physical assumptions.
+They share the same lifetime input while depending on different physical assumptions. Optional Analyzer SRV is a separate post-processing estimate and does not replace Smax.
 
-## 10. Validation status
+## 11. Validation status
 
 Current QSS map profiles have paired-output validation for lifetime, geometry, Smax and profile-specific implied-Voc behavior.
 
