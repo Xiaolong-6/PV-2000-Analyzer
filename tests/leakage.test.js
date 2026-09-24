@@ -64,3 +64,8 @@ test('Leakage one-point geometry is rendered as a measurement-position schematic
   assert.match(src,/positionSvg/);
   assert.match(src,/onePoint:true/);
 });
+
+test('Leakage position view preserves physical aspect ratio',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8');
+  assert.match(src,/PV\.plot\.equalAspectRanges/);
+});
