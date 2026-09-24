@@ -137,12 +137,12 @@ Unsupported families should be implemented directly on the current domain archit
 
 However, architecture readiness is not the gate for scientific support. The gate is evidence: at least one real XML plus matching numeric PV-2000 output for the new calculated result path.
 
+SPV and Leakage are now implemented on the current domain/profile architecture with paired calculation evidence. Their additional categorical branches remain profile-scoped.
+
 Current candidates remain:
 
-- SPV / Diffusion Length;
 - Frequency Scan;
 - Voc / Voc Mapping;
-- Leakage;
 - Fe / LID;
 - Surface Passivation;
 - Junction Lifetime;
