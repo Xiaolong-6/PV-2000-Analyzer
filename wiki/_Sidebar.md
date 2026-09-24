@@ -14,6 +14,8 @@
 - [ISC / VCPD](ISC-and-VCPD)
 - [CET / EOT](CV-and-CET)
 - [LBIC](LBIC)
+- [SPV / Diffusion Length](SPV)
+- [Leakage](Leakage)
 
 ### Science and validation
 
