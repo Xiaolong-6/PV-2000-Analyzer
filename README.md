@@ -30,6 +30,8 @@ PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab 
 | `VcpdMeasurement` | VCPD | Vcpd Dark | paired map profile validated |
 | `CETMeasurement` | CET / EOT | EOT, Cd, R² | `CET-9PT-SQUARE-001` validates the current fixed-point path |
 | `LBICMeasurement` | LBIC | Current, Reflectivity, IQE plus active raw channels | single-beam, multi-beam pseudo-square and reflectance-only profiles validated |
+| `SPVMeasurement` | SPV / Diffusion Length | DL, Tau, SPV8, SPV6 | paired 4 mm RoundWafer map path validated; DL/Tau availability matches vendor `Ud.` behavior |
+| `LeakageMeasurement` | Leakage | VSASS+, VSASS-, LI | paired one-point paths validate natural-cubic VSASS extraction; positive-only availability is preserved |
 | other | Generic XML Inspector | XML structure and stored values | fallback only; no scientific result claim |
 
 The project-level vendor-version validation boundary is currently anchored to paired files produced by **Semilab PV-2000 v1.3.0.5**. Other releases may load when schemas are compatible, but are not version-validated unless recorded in the reference-profile documentation.
