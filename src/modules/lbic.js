@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Q_PV2000=1.602e-19;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Profiles=PV.profiles,Q_PV2000=1.602e-19;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const esc=value=>PV.ui.escapeHtml(value);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2&&v!==0?v.toExponential(n):v.toFixed(n);
@@ -119,32 +119,35 @@
       laserByKey={};
     for(const l of lasers)laserByKey[String(l.index)]={...l,photonFlux:flux[l.index]};
 
-    const actual=iterations[0]?.pointCount??0;
-    let expected=NaN,
-      coords=[],
-      coordinateSource='unavailable';
-
-    if(patternType==='SquareRegionPattern'&&[nx,ny,regionX,regionY,width,height].every(Number.isFinite)){
-      const scheduled=GEO.rectGrid(regionX,regionY,width,height,nx,ny,null,1),
-        matched=GEO.scheduleForPointCount(scheduled,actual,{allowPartialPrefix:true});
-      expected=matched.expectedPointCount;
-      coords=matched.points;
-      if(coords.length){
-        coordinateSource=matched.geometryStatus==='partial'
-          ?'SquareRegionPattern acquisition prefix (partial)'
-          :'SquareRegionPattern Region + Dimension';
-      }
-    }else if(patternType==='MapPattern'&&targetType==='PseudoSquareCell'){
-      const halfWidth=effectiveHalf(targetWidth,edgeExclusion),
-        halfHeight=effectiveHalf(targetHeight,edgeExclusion),
-        radius=effectiveHalf(diameter,edgeExclusion);
-      if([halfWidth,halfHeight,radius,pitchX,pitchY].every(Number.isFinite)){
-        const candidate=GEO.pseudoSquareGrid(halfWidth,halfHeight,radius,pitchX,pitchY);
-        expected=candidate.length;
-        coords=expected===actual?candidate:[];
-        if(coords.length)coordinateSource='MapPattern + PseudoSquareCell';
-      }
-    }
+    const actual=iterations[0]?.pointCount??0,
+      geometryModel=GEO.resolveMeasurementGeometry({
+        patternType,
+        targetType,
+        pointCount:actual,
+        diameter,
+        targetWidth,
+        targetHeight,
+        edgeExclusion,
+        substrateShape:c.shapeType,
+        substrateRadius:c.radius,
+        pitchX,
+        pitchY,
+        regionX,
+        regionY,
+        regionWidth:width,
+        regionHeight:height,
+        nx,
+        ny,
+        allowPartialPrefix:true
+      }),
+      expected=geometryModel.expectedPointCount,
+      coords=geometryModel.pointsMm,
+      coordinateSource=coords.length
+        ?`${patternType} + ${targetType} · ${geometryModel.interpretation}${geometryModel.geometryStatus==='partial'?' · acquisition prefix (partial)':''}`
+        :'unavailable',
+      resolvedGeometryProfile=geometryModel.geometryStatus==='complete'
+        ?Profiles.resolveGeometry({geometryModel})
+        :null;
 
     return{
       ...c,
@@ -162,8 +165,12 @@
       expectedPointCount:expected,
       coords,
       coordinateSource,
-      geometryStatus:coords.length?(Number.isFinite(expected)&&actual<expected?'partial':'reconstructed'):'unavailable',
-      geometryComplete:coords.length>0&&(!Number.isFinite(expected)||actual===expected),
+      geometryModel,
+      geometryProfile:resolvedGeometryProfile
+        ?{id:resolvedGeometryProfile.id,status:resolvedGeometryProfile.status}
+        :{id:null,status:geometryModel.geometryStatus==='partial'?'partial':coords.length?'inferred':'unsupported'},
+      geometryStatus:geometryModel.geometryStatus,
+      geometryComplete:geometryModel.geometryStatus==='complete',
       targetType,
       targetWidth,
       targetHeight,
@@ -189,22 +196,20 @@
   const eqePercent=(currentMicroA,photonFlux)=>Number.isFinite(currentMicroA)&&Number.isFinite(photonFlux)&&photonFlux>0?(currentMicroA*1e-6/Q_PV2000/photonFlux)*100:NaN;
   const iqePercent=(eqe,totalR)=>{if(!Number.isFinite(eqe)||!Number.isFinite(totalR)||totalR>=100)return NaN;const v=eqe/(1-totalR/100);return Number.isFinite(v)&&v<=100?v:NaN};
   function referenceFamily(raw,laser,d){
-    const names=Object.keys(raw?.channels||{}),
-      expected=['Current','DirectReflection','ScatteredReflection'],
-      exactChannels=names.length===expected.length&&expected.every(n=>names.includes(n)),
-      unit=/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,'')),
-      squareGeometry=d.patternType==='SquareRegionPattern'&&[d.nx,d.ny,d.regionX,d.regionY,d.width,d.height].every(Number.isFinite)&&d.nx>=1&&d.ny>=1&&(!Number.isFinite(d.pointCount)||!Number.isFinite(d.expectedPointCount)||d.pointCount===d.expectedPointCount),
-      pseudoGeometry=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell'&&[d.targetWidth,d.targetHeight,d.diameter,d.pitchX,d.pitchY,d.edgeExclusion].every(Number.isFinite)&&d.targetWidth>0&&d.targetHeight>0&&d.diameter>0&&d.pitchX>0&&d.pitchY>0,
-      beamCount=d.beamCount??1,
+    const unit=/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,'')),
       iterationCount=d.iterationCount??1,
       currentFlag=flagState(d.measureCurrent),
       directFlag=flagState(d.measureDirect),
       diffuseFlag=flagState(d.measureDiffuse),
-      currentCommon=exactChannels&&currentFlag===true&&directFlag===true&&diffuseFlag===true&&unit&&Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0&&iterationCount===1,
-      reflectanceOnly=exactChannels&&currentFlag===false&&directFlag===true&&diffuseFlag===true&&raw.channels.Current.every(v=>v===0)&&iterationCount===1;
-    if(currentCommon&&squareGeometry&&beamCount===1)return'LBIC-SINGLE-001';
-    if(currentCommon&&pseudoGeometry&&beamCount>=2)return'LBIC-MULTI-002';
-    if(reflectanceOnly&&squareGeometry&&beamCount===1)return'LBIC-REFLECTANCE-003';
+      hasFlux=Number.isFinite(laser?.photonFlux)&&laser.photonFlux>0,
+      currentReady=currentFlag===true&&unit&&hasFlux&&iterationCount===1,
+      disabledCurrentIsPlaceholder=currentFlag===false&&
+        (!raw?.channels?.Current||raw.channels.Current.every(v=>v===0))&&
+        iterationCount===1;
+    if(currentReady&&directFlag===true&&diffuseFlag===true)return'LBIC-CALC-CURRENT-DIRECT-SCATTERED-001';
+    if(currentReady&&directFlag===false&&diffuseFlag===true)return'LBIC-CALC-CURRENT-SCATTERED-002';
+    if(currentReady&&directFlag===false&&diffuseFlag===false)return'LBIC-CALC-CURRENT-ONLY-003';
+    if(disabledCurrentIsPlaceholder&&directFlag===true&&diffuseFlag===true)return'LBIC-CALC-REFLECTANCE-ONLY-004';
     return'';
   }
   function isReferenceProfile(raw,laser,d){return Boolean(referenceFamily(raw,laser,d))}
@@ -217,15 +222,18 @@
     for(const [name,values] of Object.entries(raw?.channels||{})){
       const concept=conceptFor(name);
       if(!channelActive(concept,d))continue;
-      metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',concept,xmlName:name,tier:tierFor(concept)};
+      metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',profileId:family||null,validation:referenceProfile?'validated':'raw',concept,xmlName:name,tier:tierFor(concept)};
     }
 
     let total=findMetric(metrics,'total'),
       direct=findMetric(metrics,'direct'),
       diffuse=findMetric(metrics,'diffuse');
-    if(!total&&direct&&diffuse){
+    if(!total&&((direct&&diffuse)||(!direct&&diffuse&&family==='LBIC-CALC-CURRENT-SCATTERED-002'))){
       const key='__reflectivity',
-        opticalValues=direct.values.map((v,i)=>rawReflectance(v,diffuse.values[i]));
+        opticalValues=direct
+          ?direct.values.map((v,i)=>rawReflectance(v,diffuse.values[i]))
+          :diffuse.values.slice(),
+        rule=direct?'DirectReflection + ScatteredReflection':'ScatteredReflection';
       metrics[key]={
         key,
         label:'Reflectivity',
@@ -233,8 +241,10 @@
         unit:'%',
         values:opticalValues.map(v=>Number.isFinite(v)?Math.max(0,Math.min(100,v)):NaN),
         opticalValues,
-        source:referenceProfile?'PV-2000 reproduced: clamp(DirectReflection + ScatteredReflection, 0..100)':'candidate: clamp(direct + scattered, 0..100)',
+        source:referenceProfile?`PV-2000 reproduced: clamp(${rule}, 0..100)`:`candidate: clamp(${rule}, 0..100)`,
         status:referenceProfile?'validated':'inferred',
+        profileId:family||null,
+        validation:referenceProfile?'validated':'inferred',
         concept:'total',
         tier:'primary'
       };
@@ -246,7 +256,7 @@
     const flux=laser?.photonFlux;
     if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,''))){
       const key='__eqe';
-      metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',concept:'eqe',tier:'advanced'};
+      metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',profileId:family||null,validation:'inferred',concept:'eqe',tier:'advanced'};
     }
 
     eqe=findMetric(metrics,'eqe');
@@ -262,6 +272,8 @@
         values:eqe.values.map((v,i)=>iqePercent(v,opticalValues[i])),
         source:referenceProfile?'PV-2000 reproduced: EQE / (1 - raw optical reflectivity); calculated IQE > 100% is blank':'candidate: EQE / (1 - reflectivity), >100% invalid',
         status:referenceProfile?'validated':'inferred',
+        profileId:family||null,
+        validation:referenceProfile?'validated':'inferred',
         concept:'iqe',
         tier:'primary'
       };
