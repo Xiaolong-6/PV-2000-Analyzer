@@ -24,7 +24,7 @@ Two private 1649-site `SPVMeasurement` XML + numeric CSV pairs establish `SPV-CA
 
 One pair contains only one finite DL/Tau site; the other contains 49. Raw SPV channels remain present at all measured sites where DL/Tau are unavailable.
 
-The validated calculation envelope is the standard non-enhanced, non-texture, non-parsed-signal branch exercised by the pairs. Other SPV branches remain inferred until paired output extends the calculation profile.
+The validated calculation envelope is the standard non-enhanced, non-texture, non-parsed-signal, measured-linearity branch exercised by the pairs. The recovered DLL also shows a historical parameter-order quirk in which the stored LED6 temperature coefficient is applied to SPV8 and LED8 to SPV6; runtime and the validator preserve that behavior. Other SPV branches remain inferred until paired output extends the calculation profile.
 
 ## Leakage — paired VSASS / LI regression
 
@@ -42,7 +42,7 @@ The compatibility implementation reproduces the vendor natural-cubic spline extr
 
 ## CET — paired NinePointPattern / SquareCell regression
 
-One private `CETMeasurement` XML + matching PV-2000 numeric CSV export establishes `CET-9PT-SQUARE-001`.
+One private `CETMeasurement` XML + matching PV-2000 numeric CSV export establishes the historical `CET-9PT-SQUARE-001` evidence bundle. Runtime validation is decoupled into `CET-CALC-001` for EOT/Cd/R² and `GEOM-NINEPOINT-SQUARE-001` for the paired NinePointPattern + SquareCell coordinates.
 
 The pair contains 9 sites and validates both the fixed-point geometry and the derived result path.
 
@@ -70,7 +70,7 @@ The validator expects same-basename private XML/CSV pairs under `private/referen
 
 The larger unpaired CET XML corpus exercises OnePoint, FixedPoints, RoundWafer NinePoint and SquareRegion structures. These are import/structure evidence only unless a matching vendor output is supplied.
 
-See `docs/ALGORITHMS_CET.md` and profile `CET-9PT-SQUARE-001` in `docs/REFERENCE_PROFILES.md`.
+See `docs/ALGORITHMS_CET.md` and the CET evidence/profile section in `docs/REFERENCE_PROFILES.md`.
 
 ## QSS-µPCD map — XML + raw PV-2000 export
 
