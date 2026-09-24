@@ -7,6 +7,10 @@
   const astr=(e,n,d='')=>e?.getAttribute?.(n)??d;
   function directPath(e,names){for(const n of names){e=X.direct(e,n);if(!e)return null}return e}
   function vector(e,n){const h=X.direct(e,n),v=h?X.children(h)[0]:null;return v?X.children(v).map(x=>Number(x.textContent)).filter(Number.isFinite):[]}
+  function nodeRange(e,n,lo,hi){
+    const r=X.direct(e,n);
+    return{min:X.num(r,'Min',lo),max:X.num(r,'Max',hi)};
+  }
   function range(a,p=.06){a=a.filter(Number.isFinite);if(!a.length)return[0,1];let lo=Math.min(...a),hi=Math.max(...a);if(lo===hi){const d=Math.abs(lo)||1;lo-=d*.1;hi+=d*.1}const d=(hi-lo)*p;return[lo-d,hi+d]}
   function posRange(a,p=.05){a=a.filter(v=>v>0&&Number.isFinite(v));if(!a.length)return[1,10];let lo=Math.min(...a),hi=Math.max(...a);if(lo===hi){lo/=1.2;hi*=1.2}const f=(hi/lo)**p;return[lo/f,hi*f]}
   function ticks(lo,hi,n=5){if(!(hi>lo))return[lo];const r=(hi-lo)/n,p=10**Math.floor(Math.log10(Math.abs(r))),q=r/p,s=(q<=1?1:q<=2?2:q<=5?5:10)*p,o=[];for(let x=Math.ceil(lo/s)*s;x<=hi+s*1e-9;x+=s)o.push(x);return o}
@@ -34,6 +38,297 @@
     const last=pairs[pairs.length-1];
     if(last.x<1000)return{value:last.y,available:true,rule:'right-endpoint-below-1000',profileId:'QSS-INJ-RESULT-001',validation:'validated'};
     return unavailable('unvalidated-target-placement');
+  }
+  const DUAL_Q=1.602e-19,DUAL_K=1.38066e-23,DUAL_NI=1.22e10;
+  const boolValue=v=>String(v||'').toLowerCase()==='true';
+  const finiteMax=a=>a.reduce((m,v)=>Number.isFinite(v)&&v>m?v:m,-Infinity);
+  function linearInterp(xs,ys,q,clamp=true){
+    const pairs=xs.map((x,i)=>[Number(x),Number(ys[i])])
+      .filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]))
+      .sort((a,b)=>a[0]-b[0]);
+    if(!pairs.length)return NaN;
+    if(q<=pairs[0][0])return clamp?pairs[0][1]:NaN;
+    if(q>=pairs[pairs.length-1][0])return clamp?pairs[pairs.length-1][1]:NaN;
+    let lo=0,hi=pairs.length-1;
+    while(lo<=hi){
+      const mid=(lo+hi)>>1,x=pairs[mid][0];
+      if(x<q)lo=mid+1;
+      else if(x>q)hi=mid-1;
+      else return pairs[mid][1];
+    }
+    const [x0,y0]=pairs[hi],[x1,y1]=pairs[lo];
+    return x1===x0?y0:y0+(q-x0)/(x1-x0)*(y1-y0);
+  }
+  function minpackSmooth(x,y,s=1){
+    const n=Math.min(x.length,y.length);
+    if(n<2)return y.slice();
+    const a=Array.from({length:3},()=>Array(Math.max(0,n-1)).fill(0)),
+      b=Array.from({length:7},()=>Array(n+2).fill(0)),
+      yfit=Array(n).fill(0);
+    let p=0,h=x[1]-x[0],f2=-s,g=0,invh=0,e=0,f=(y[1]-y[0])/h,scratch=0;
+    if(!(h>0))return y.slice();
+    if(n>=3){
+      for(let i1=3;i1<=n;i1++){
+        g=h;h=x[i1-1]-x[i1-2];
+        if(!(h>0))return y.slice();
+        invh=1/h;e=f;f=(y[i1-1]-y[i1-2])*invh;yfit[i1-1]=f-e;
+        b[3][i1-1]=(g+h)*0.6666667;b[4][i1-1]=h*0.3333333;b[2][i1-1]=1/g;
+        b[0][i1-1]=invh;b[1][i1-1]=-1/g-invh;
+      }
+      for(let i1=3;i1<=n;i1++){
+        const j=i1-2,b0=b[0][i1-1],b1=b[1][i1-1],b2=b[2][i1-1];
+        a[0][j]=b0*b0+b1*b1+b2*b2;
+        a[1][j]=b0*b[1][i1]+b1*b[2][i1];
+        a[2][j]=b0*b[2][i1+1];
+      }
+    }
+    for(let iteration=0;iteration<500;iteration++){
+      if(n>=3){
+        for(let i1=3;i1<=n;i1++){
+          b[1][i1-2]=f*b[0][i1-2];b[2][i1-3]=g*b[0][i1-3];
+          b[0][i1-1]=1/(p*a[0][i1-2]+b[3][i1-1]-f*b[1][i1-2]-g*b[2][i1-3]);
+          b[5][i1-1]=yfit[i1-1]-b[1][i1-2]*b[5][i1-2]-b[2][i1-3]*b[5][i1-3];
+          f=p*a[1][i1-2]+b[4][i1-1]-h*b[1][i1-2];g=h;h=a[2][i1-2]*p;
+        }
+        const reverseBase=n+3;
+        for(let i1=3;i1<=n;i1++){
+          const k1=reverseBase-i1;
+          b[5][k1-1]=b[0][k1-1]*b[5][k1-1]-b[1][k1-1]*b[5][k1]-b[2][k1-1]*b[5][k1+1];
+        }
+      }
+      e=0;h=0;
+      for(let i1=2;i1<=n;i1++){
+        g=h;h=(b[5][i1]-b[5][i1-1])/(x[i1-1]-x[i1-2]);scratch=h-g;
+        b[6][i1-1]=scratch;e+=scratch*scratch;
+      }
+      g=-h;b[6][n]=g;e-=g*h;
+      const oldF2=f2;f2=e*p*p;
+      if(f2>=s||f2<=oldF2)break;
+      f=0;h=(b[6][2]-b[6][1])/(x[1]-x[0]);
+      if(n>=3){
+        for(let i1=3;i1<=n;i1++){
+          g=h;h=(b[6][i1]-b[6][i1-1])/(x[i1-1]-x[i1-2]);
+          g=h-g-b[1][i1-2]*b[0][i1-2]-b[2][i1-3]*b[0][i1-3];
+          f+=g*b[0][i1-1]*g;b[0][i1-1]=g;
+        }
+      }
+      h=e-p*f;
+      if(h<=0)break;
+      p+=(s-f2)/((Math.sqrt(s/e)+p)*h);
+    }
+    for(let i1=1;i1<n;i1++)yfit[i1-1]=y[i1-1]-p*b[6][i1];
+    b[0][n-1]=y[n-1]-p*b[6][n];yfit[n-1]=b[0][n-1];
+    return yfit;
+  }
+  function smoothingStart(points,decay){
+    if(!points.length)return 0;
+    let ymax=points[0].y,ymin=points[0].y,maxIndex=0,minIndex=0;
+    for(let i=1;i<points.length;i++){
+      const y=points[i].y;
+      if(y>=ymax){ymax=y;maxIndex=i+5}
+      if(y<=ymin){ymin=y;minIndex=i+5}
+    }
+    return decay?maxIndex:minIndex;
+  }
+  function qdcDetails(t){
+    const raw=t?.points||[];
+    if(raw.length<10)return{qdc:0,decay:false,supported:false};
+    const offset=raw.slice(0,10).reduce((sum,p)=>sum+p.y,0)/10,
+      ys=raw.map(p=>p.y),ymin=Math.min(...ys),ymax=Math.max(...ys),
+      decay=Math.abs(ymax)>Math.abs(ymin),extreme=decay?ymax:ymin;
+    let start=0;
+    if(decay)while(start<raw.length&&raw[start].y<extreme)start++;
+    else while(start<raw.length&&raw[start].y>extreme)start++;
+    const pts=raw.slice(start).map(p=>({x:p.x,y:p.y-offset})),smoothStart=smoothingStart(pts,decay);
+    if(smoothStart>=pts.length)return{qdc:0,decay,supported:false};
+    const sx=pts.slice(smoothStart).map(p=>p.x),sy=pts.slice(smoothStart).map(p=>p.y),
+      fit=minpackSmooth(sx,sy,1),yfit=Array(smoothStart).fill(0).concat(fit),
+      px=pts.map(p=>p.x),amp=t?.amplitude;
+    if(!Number.isFinite(amp))return{qdc:0,decay,supported:false};
+    const tA=linearInterp(yfit,px,amp),tHalf=linearInterp(yfit,px,amp/2),tQuarter=linearInterp(yfit,px,amp/4),
+      qdc=(tQuarter-tHalf)/(tHalf-tA),value=Number.isNaN(qdc)?0:qdc;
+    return{qdc:Number.isFinite(value)?value:0,decay,supported:true,rawStart:start,smoothStart,tA,tHalf,tQuarter};
+  }
+  function quadraticDerivative(x0,y0,x1,y1,x2,y2,x){
+    return y0*(2*x-x1-x2)/((x0-x1)*(x0-x2))
+      +y1*(2*x-x0-x2)/((x1-x0)*(x1-x2))
+      +y2*(2*x-x0-x1)/((x2-x0)*(x2-x1));
+  }
+  function akimaDerivatives(xs,ys){
+    const n=xs.length,slopes=Array(n-1),weights=Array(n-1).fill(0),d=Array(n).fill(0);
+    for(let i=0;i<n-1;i++)slopes[i]=(ys[i+1]-ys[i])/(xs[i+1]-xs[i]);
+    for(let i=1;i<n-1;i++)weights[i]=Math.abs(slopes[i]-slopes[i-1]);
+    d[0]=quadraticDerivative(xs[0],ys[0],xs[1],ys[1],xs[2],ys[2],xs[0]);
+    d[1]=quadraticDerivative(xs[0],ys[0],xs[1],ys[1],xs[2],ys[2],xs[1]);
+    d[n-2]=quadraticDerivative(xs[n-3],ys[n-3],xs[n-2],ys[n-2],xs[n-1],ys[n-1],xs[n-2]);
+    d[n-1]=quadraticDerivative(xs[n-3],ys[n-3],xs[n-2],ys[n-2],xs[n-1],ys[n-1],xs[n-1]);
+    for(let i=2;i<n-2;i++){
+      const denom=Math.abs(weights[i-1])+Math.abs(weights[i+1]);
+      d[i]=denom!==0
+        ?(weights[i+1]*slopes[i-1]+weights[i-1]*slopes[i])/(weights[i+1]+weights[i-1])
+        :((xs[i+1]-xs[i])*slopes[i-1]+(xs[i]-xs[i-1])*slopes[i])/(xs[i+1]-xs[i-1]);
+    }
+    return d;
+  }
+  function hermite(xs,ys,d,x){
+    let i;
+    if(x<=xs[0])i=0;
+    else if(x>=xs[xs.length-1])i=xs.length-2;
+    else{
+      let lo=0,hi=xs.length-1;
+      while(lo<=hi){const mid=(lo+hi)>>1;if(xs[mid]<=x)lo=mid+1;else hi=mid-1}
+      i=Math.max(0,Math.min(xs.length-2,hi));
+    }
+    const x0=xs[i],x1=xs[i+1],h=x1-x0,u=(x-x0)/h;
+    return(2*u**3-3*u**2+1)*ys[i]+(u**3-2*u**2+u)*h*d[i]
+      +(-2*u**3+3*u**2)*ys[i+1]+(u**3-u**2)*h*d[i+1];
+  }
+  function augmentLogAkima(points,multiplier=10000){
+    if(points.length<3)return[];
+    const xs=points.map(p=>Math.log(p.x)),ys=points.map(p=>Math.log(p.y)),d=akimaDerivatives(xs,ys),
+      delta=(Math.max(...xs)-Math.min(...xs))/(points.length-1)/multiplier,
+      count=(points.length-1)*multiplier,out=Array(count);
+    for(let i=0;i<count;i++){const x=Math.min(...xs)+i*delta;out[i]={x:Math.exp(x),y:Math.exp(hermite(xs,ys,d,x))}}
+    return out;
+  }
+  const sgn=v=>v>0?1:v<0?-1:0;
+  function localExtreme(points){
+    let previous=0;
+    for(let i=1;i<points.length;i++){
+      const current=sgn(points[i].y-points[i-1].y);
+      if(previous===0){if(current)previous=current;continue}
+      if(current&&current!==previous)return points[i];
+    }
+    return null;
+  }
+  function integrate(points){
+    let total=0;
+    const out=[];
+    for(let i=0;i<points.length-1;i++){
+      const area=(points[i+1].x-points[i].x)*(points[i].y+points[i+1].y)/2;
+      out.push({x:points[i].x,y:total+area});total+=area;
+    }
+    return out;
+  }
+  function teff(points,integrated){
+    const x0=points[0].x;
+    return integrated.map((p,i)=>({x:p.x,y:(p.y+points[i].y*x0)/p.x}));
+  }
+  function qdcFiltered(d,qdcs){
+    const lo=d.validQdcRange?.min,hi=d.validQdcRange?.max,
+      inside=qdcs.map((v,i)=>Number.isFinite(v)&&v>=lo&&v<=hi?i:-1).filter(i=>i>=0);
+    if(!inside.length)return[];
+    const first=inside[0],last=inside[inside.length-1];
+    return d.points.slice(first,last+1)
+      .map(p=>({x:p.intensityMilli,y:p.lifetime}))
+      .filter(p=>p.x>0&&p.y>0&&Number.isFinite(p.x)&&Number.isFinite(p.y));
+  }
+  function injectionLevel(intensity,tau,wafer,optical){
+    const w=wafer>0?wafer:200;
+    return 2.38e17*intensity*optical/w*tau*1e-5;
+  }
+  function impliedVoc(dn,doping,tempC){
+    const T=(tempC===0?27:tempC)+272.15,thermal=DUAL_K*T/DUAL_Q;
+    return thermal*Math.log(dn*(doping+dn)/(DUAL_NI*DUAL_NI)+1);
+  }
+  function smax(tau,wafer){return tau===0?0:wafer*1e-4/(2*tau*1e-6)}
+  function lineFit(points){
+    const n=points.length,sx=points.reduce((s,p)=>s+p.x,0),sy=points.reduce((s,p)=>s+p.y,0),
+      sxx=points.reduce((s,p)=>s+p.x*p.x,0),sxy=points.reduce((s,p)=>s+p.x*p.y,0),
+      den=n*sxx-sx*sx;
+    return n<2||den===0?{intercept:NaN,slope:NaN}:{slope:(n*sxy-sx*sy)/den,intercept:(sy-((n*sxy-sx*sy)/den)*sx)/n};
+  }
+  function getRegion(points,target,ratio,min){
+    if(points.length<min)return[];
+    if(points.length===min)return points.slice();
+    const lo=target*(1-ratio),hi=target*(1+ratio),indices=[];
+    points.forEach((p,i)=>{if(p.x>=lo&&p.x<=hi)indices.push(i)});
+    let minIndex,maxIndex,selected;
+    if(indices.length){minIndex=indices[0];maxIndex=indices[indices.length-1];selected=points.slice(minIndex,maxIndex+1)}
+    else{
+      let nearest=0,best=Infinity;
+      points.forEach((p,i)=>{const z=Math.abs(p.x-target);if(z<best){best=z;nearest=i}});
+      minIndex=maxIndex=nearest;selected=[points[nearest]];
+    }
+    while(selected.length<min){
+      const dl=minIndex>0?Math.abs(target-points[minIndex-1].x):Infinity,
+        dr=maxIndex<points.length-1?Math.abs(points[maxIndex+1].x-target):Infinity;
+      if(dl<dr){minIndex--;selected.unshift(points[minIndex])}
+      else if(maxIndex<points.length-1){maxIndex++;selected.push(points[maxIndex])}
+      else if(minIndex>0){minIndex--;selected.unshift(points[minIndex])}
+      else break;
+    }
+    return selected;
+  }
+  function ksJ0(values,dn,d){
+    if(boolValue(d.augerCorrection))return{value:NaN,available:false,rule:'auger-unvalidated'};
+    const points=values.map((tau,i)=>({x:dn[i],y:tau}))
+      .filter(p=>p.x!==0&&p.y!==0&&Number.isFinite(p.x)&&Number.isFinite(p.y));
+    if(points.length<=2)return{value:0,available:false,rule:'insufficient-points'};
+    const selected=getRegion(points,d.defaultDeltaN,d.defaultDeltaNRange/100,3)
+      .map(p=>({x:p.x,y:1/(p.y*1e-6)}));
+    if(selected.length<3)return{value:0,available:false,rule:'insufficient-region'};
+    const slope=lineFit(selected).slope,wcm=d.waferThickness*1e-4;
+    let value=slope*DUAL_Q*wcm*DUAL_NI**2/2*1e15;
+    if(value<0)value=0;
+    return{value,available:value!==0,rule:value===0?'vendor-zero-undefined':'validated'};
+  }
+  function basoreJ0(d){
+    const lo=d.jZeroIntensity?.min,hi=d.jZeroIntensity?.max,
+      points=d.points.map(p=>({x:p.intensityMilli/1000,y:p.lifetime}))
+        .filter(p=>p.x>=lo&&p.x<=hi&&p.y>0&&Number.isFinite(p.x)&&Number.isFinite(p.y));
+    if(points.length<3)return{value:0,available:false,rule:'insufficient-points'};
+    const fit=lineFit(points.map(p=>({x:p.x*2.38e17*d.opticalFactor,y:1/(p.y*1e-6)**2}))),
+      factor=DUAL_Q*(d.waferThickness*1e-4*DUAL_NI)**2/8;
+    const value=Math.max(0,factor*fit.slope*1e15);
+    return{value,available:value!==0,rule:value===0?'vendor-zero-undefined':'validated'};
+  }
+  function pairedDualResults(d){
+    const unavailable=rule=>({available:false,profileId:'QSS-INJ-RESULT-001',validation:'unavailable',rule});
+    if(d?.patternType!=='OnePointPattern'||d?.targetType!=='RoundWafer'||d?.probe!=='Back'||d?.bias!=='Back')return unavailable('outside-paired-profile');
+    if(boolValue(d.augerCorrection))return unavailable('auger-unvalidated');
+    const values=d.points.map(p=>p.lifetime),intensity=d.points.map(p=>p.intensityMilli);
+    if(values.length!==intensity.length||values.length<3)return unavailable('invalid-vectors');
+    if(!intensity.includes(1000)&&finiteMax(intensity)>=1000)return unavailable('unvalidated-target-placement');
+    const qdetails=d.points.map(p=>qdcDetails(p.transient)),qdcs=qdetails.map(q=>q.qdc);
+    if(qdetails.some(q=>!q.supported||!q.decay))return unavailable('qdc-polarity-or-transient-unvalidated');
+    const dteffOne=linearInterp(intensity,values,1000),baseDn=intensity.map((x,i)=>injectionLevel(Math.max(x,.1),values[i],d.waferThickness,d.opticalFactor)),
+      baseVoc=baseDn.map(v=>impliedVoc(v,d.doping,d.temperatureC));
+    let corrected=values.slice(),correctedDn=baseDn.slice(),teffOne=dteffOne,maxTeff=finiteMax(values),teffCurve=[];
+    const measured=qdcFiltered(d,qdcs);
+    if(measured.length>=6){
+      let dense=augmentLogAkima(measured,10000);
+      if(dense.length){
+        const overall=sgn(dense[dense.length-1].y-dense[0].y);
+        let peak=localExtreme(dense);
+        if(!peak||overall!==sgn(dense[dense.length-1].y-peak.y))peak=dense[0];
+        dense=dense.filter(p=>p.x>=peak.x);
+        teffCurve=teff(dense,integrate(dense));
+        if(teffCurve.length){
+          maxTeff=finiteMax(teffCurve.map(p=>p.y));
+          const cx=teffCurve.map(p=>p.x),cy=teffCurve.map(p=>p.y),domainMin=cx[0],domainMax=cx[cx.length-1];
+          if(1000>=domainMin&&1000<=domainMax)teffOne=linearInterp(cx,cy,1000);
+          corrected=intensity.map(x=>x>=domainMin&&x<=domainMax?linearInterp(cx,cy,x):0);
+          correctedDn=corrected.map((tau,i)=>injectionLevel(intensity[i],tau,d.waferThickness,d.opticalFactor));
+        }
+      }
+    }
+    const dnOne=linearInterp(intensity,correctedDn,1000),vocOne=linearInterp(intensity,baseVoc,1000),
+      calculate=boolValue(d.calculateJ0),includeKs=boolValue(d.includeKsJ0),
+      ks=calculate&&includeKs?ksJ0(corrected,correctedDn,d):{value:0,available:false,rule:'not-requested'},
+      basore=calculate?basoreJ0(d):{value:0,available:false,rule:'not-requested'};
+    return{
+      available:true,profileId:'QSS-INJ-RESULT-001',validation:'validated',qdc:qdcs,corrected,correctedDn,teffCurve,
+      teffD:{value:dteffOne,available:Number.isFinite(dteffOne)},
+      teffSS:{value:teffOne,available:Number.isFinite(teffOne)},
+      teffSSMax:{value:maxTeff,available:Number.isFinite(maxTeff)},
+      basoreJ0:basore,
+      dn:{value:dnOne,available:Number.isFinite(dnOne)&&dnOne!==0},
+      smax:{value:smax(teffOne,d.waferThickness),available:Number.isFinite(teffOne)&&teffOne!==0},
+      smaxMax:{value:smax(maxTeff,d.waferThickness),available:Number.isFinite(maxTeff)&&maxTeff!==0},
+      voc:{value:vocOne,available:Number.isFinite(vocOne)&&vocOne!==0},
+      ksJ0:ks
+    };
   }
   function parseTransient(t){
     const tr=X.direct(t,'Transient'),
@@ -76,7 +371,7 @@
         substrateShape:c.shapeType,
         substrateRadius:c.radius
       });
-    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,rawCoefficients,targetType:X.attrType(target),diameter,edgeExclusion,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity')};
+    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,rawCoefficients,targetType:X.attrType(target),diameter,edgeExclusion,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity'),validQdcRange:nodeRange(m,'ValidQdcRange',.9,1.1),jZeroIntensity:nodeRange(m,'JZeroIntensity',1,5)};
   }
   function measurementGeometry(d){
     const resolved=d?.geometryModel;
@@ -106,8 +401,14 @@
   function analyze(d){
     const life=d.points.map(p=>lifetimeValue(p)),
       valid=life.map(v=>v>0&&Number.isFinite(v)),
-      dv=d.points.map(p=>Number.isFinite(p.lifetime)&&Number.isFinite(p.transient?.lifetime)?p.lifetime-p.transient.lifetime:NaN);
-    return{source:'xml',valid,validCount:valid.filter(Boolean).length,invalidCount:valid.filter(v=>!v).length,summary:S.summary(life.filter((v,i)=>valid[i])),maxTransientDelta:Math.max(0,...dv.filter(Number.isFinite).map(Math.abs)),pairedResult:pairedTeffdOneSun(d)};
+      dv=d.points.map(p=>Number.isFinite(p.lifetime)&&Number.isFinite(p.transient?.lifetime)?p.lifetime-p.transient.lifetime:NaN),
+      vendorResult=pairedDualResults(d);
+    return{
+      source:'xml',valid,validCount:valid.filter(Boolean).length,invalidCount:valid.filter(v=>!v).length,
+      summary:S.summary(life.filter((v,i)=>valid[i])),
+      maxTransientDelta:Math.max(0,...dv.filter(Number.isFinite).map(Math.abs)),
+      pairedResult:pairedTeffdOneSun(d),vendorResult
+    };
   }
   function axes(ctx,W,H,p,xr,yr,xLabel,yLabel,logX=false){
     const X=x=>logX
@@ -245,7 +546,44 @@
   function pointRows(d){return d.points.map((p,i)=>[i+1,p.intensityMilli,p.intensitySun,p.lifetime,p.power,p.transient?.lifetime??'',p.transient?.evaluation??'',p.transient?.delta??'',p.transient?.preTrigger??'',p.transient?.autoCursor??'',p.transient?.timeCursor??'',p.transient?.average??'',p.transient?.amplitude??'',p.transient?.microwave??'',p.transient?.laserPower??'',p.transient?.voltage??'',p.transient?.offset??'',p.transient?.timeBase??'',p.transient?.points?.length??0])}
   function exportCurve(d){PV.exporter.csv(`${safe(d.resultName||d.name)}_dual_qss.csv`,['Point','QSS intensity [mSun]','QSS intensity [Sun]','XML Values lifetime [us]','Laser power vector','PV-2000 raw LifeTime / TransientInfo [us]','Evaluation','Delta [ns]','PreTrigger [us]','AutoCursor','TimeCursor [us]','Average','Amplitude [mV]','Microwave [GHz]','Transient LaserPower','Voltage range [mV]','Offset [mV]','TimeBase [us]','Transient samples'],pointRows(d))}
   function exportTransient(d,i){const p=d.points[i];PV.exporter.csv(`${safe(d.resultName||d.name)}_point_${i+1}_transient.csv`,['Time [us]','Voltage [mV]'],(p?.transient?.points||[]).map(q=>[q.x,q.y]))}
+  function resultRow(a){
+    const r=a.vendorResult;
+    if(!r?.available)return[];
+    const value=x=>x?.available?x.value:'Ud.';
+    return[[value(r.teffD),value(r.teffSS),value(r.teffSSMax),value(r.basoreJ0),value(r.dn),value(r.smax),value(r.smaxMax),value(r.voc),value(r.ksJ0)]];
+  }
+  function exportResults(d,a){
+    PV.exporter.csv(`${safe(d.resultName||d.name)}_dual_qss_results.csv`,['teff.d (1 Sun) [us]','teff.SS (1 Sun) [us]','teff.SS Max [us]','Basore Emitter J0 [fA/cm2]','Delta n (1 Sun) [cm-3]','Smax (1 Sun) [cm/s]','Smax [cm/s]','Implied Voc (1 Sun) [V]','K-S Emitter J0 [fA/cm2]'],resultRow(a));
+  }
   function row(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`}
+  function resultSummaryHtml(a){
+    const r=a.vendorResult;
+    if(!r?.available){
+      return row('Vendor-compatible result table','Unavailable',r?.rule||'Outside QSS-INJ-RESULT-001')
+        +row('Raw sweep mean',`${fmt(a.summary.mean)} µs`)
+        +row('Raw sweep median',`${fmt(a.summary.median)} µs`)
+        +row('Raw sweep stdev',`${fmt(a.summary.stdev)} µs`)
+        +row('Raw min',`${fmt(a.summary.min)} µs`)
+        +row('Raw max',`${fmt(a.summary.max)} µs`)
+        +row('Invalid / ≤0',a.invalidCount);
+    }
+    const show=(x,unit='',n=6)=>x?.available?`${fmt(x.value,n)}${unit}`:'Ud.';
+    return row('teff.d (1 Sun)',show(r.teffD,' µs'))
+      +row('teff.SS (1 Sun)',show(r.teffSS,' µs'))
+      +row('teff.SS Max',show(r.teffSSMax,' µs'))
+      +row('Δn (1 Sun)',r.dn?.available?r.dn.value.toExponential(6):'Ud.')
+      +row('Smax (1 Sun)',show(r.smax,' cm/s'))
+      +row('Smax at max teff.SS',show(r.smaxMax,' cm/s'))
+      +row('Implied Voc (1 Sun)',show(r.voc,' V',9))
+      +row('Basore Emitter J0',show(r.basoreJ0,' fA/cm²'))
+      +row('K-S Emitter J0',show(r.ksJ0,' fA/cm²'))
+      +row('Raw sweep mean',`${fmt(a.summary.mean)} µs`)
+      +row('Raw sweep median',`${fmt(a.summary.median)} µs`)
+      +row('Raw sweep stdev',`${fmt(a.summary.stdev)} µs`)
+      +row('Raw min',`${fmt(a.summary.min)} µs`)
+      +row('Raw max',`${fmt(a.summary.max)} µs`)
+      +row('Invalid / ≤0',a.invalidCount);
+  }
   function render(host,d,a){let sets=[{label:d.resultName||d.name||'Current XML',data:d,fileName:''}],selSet=0,selPoint=0,logX=true,zoom={curve:{x:null,y:null},transient:{x:null,y:null}};const current=()=>sets[selSet]?.data.points[selPoint];
     function selectedHtml(){const p=current(),t=p?.transient;if(!p)return'—';return`<dl class="meta">${row('Dataset',sets[selSet].label)}${row('Point',selPoint+1)}${row('Intensity',`${fmt(p.intensityMilli)} mSun`)}${row('Lifetime',`${fmt(lifetimeValue(p),4)} µs`,'Read from TransientInfo@LifeTime in the imported XML, with XML Values used only as a fallback when TransientInfo LifeTime is unavailable.')}${row('Evaluation',t?.evaluation||'—')}${row('Delta',`${fmt(t?.delta,3)} ns`)}${row('Pre-trigger',`${fmt(t?.preTrigger,3)} µs`)}${row('Auto cursor',fmt(t?.autoCursor,0))}${row('Time cursor',`${fmt(t?.timeCursor,3)} µs`)}${row('Average',fmt(t?.average,0))}${row('Amplitude',`${fmt(t?.amplitude,3)} mV`)}${row('Microwave',`${fmt(t?.microwave,4)} GHz`)}${row('Transient laser power',fmt(t?.laserPower,4))}${row('Voltage range',`${fmt(t?.voltage,3)} mV`)}${row('Offset',`${fmt(t?.offset,4)} mV`)}${row('Time base',`${fmt(t?.timeBase,3)} µs`)}${row('Samples',t?.points?.length||0)}</dl>`}
     function legendHtml(){
@@ -256,7 +594,7 @@
       return visible+(sets.length>4?`<span class="dual-qss-legend-more">+${sets.length-4}</span>`:'');
     }
     function comparisonHtml(){return sets.length===1?'<span class="note">Add another Dual QSS XML to overlay LP/HP or repeat measurements.</span>':sets.map((s,i)=>`<div class="comparison-row"><span class="comparison-swatch" style="background:var(${colors[i%colors.length]})"></span><span>${esc(s.label)}</span>${i?`<button data-remove="${i}">×</button>`:''}</div>`).join('')}
-    host.innerHTML=`<div class="module-grid dual-qss-module"><aside class="side"><section class="panel"><h3>Measurement ${help('Reads the DualQssMeasurement injection-intensity, stored lifetime vectors and transient waveform path. The raw transient path is paired-validated. For QSS-INJ-RESULT-001, teff.d (1 Sun) is also reconstructed from XML Values with the paired exact-1000 / below-target endpoint rules; steady-state lifetime, Voc and J0 remain unresolved runtime results.')}</h3><dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive lifetime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Geometry',Number.isFinite(d.diameter)?`Ø${fmt(d.diameter,1)} mm ${d.targetType||d.shapeType||''}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'—')}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl></section><section class="panel"><h3>Comparison overlay</h3><div id="dqComparisons" class="comparison-list">${comparisonHtml()}</div><label class="btn comparison-open">Add XML<input id="dqAdd" type="file" accept=".xml,text/xml,application/xml" multiple></label></section><section class="panel"><h3>Results summary</h3><dl class="meta">${row('teff.d (1 Sun)',a.pairedResult?.available?`${fmt(a.pairedResult.value,6)} µs`:'—','QSS-INJ-RESULT-001 only. Real paired HighPower/LowPower XML+CSV evidence validates XML Values at an exact 1000 mSun point and the final acquired Values point when acquisition ends below 1000 mSun. Interior interpolation is intentionally not generalized without another pair.')}${row('Raw sweep mean',`${fmt(a.summary.mean)} µs`)}${row('Raw sweep median',`${fmt(a.summary.median)} µs`)}${row('Raw sweep stdev',`${fmt(a.summary.stdev)} µs`)}${row('Raw min',`${fmt(a.summary.min)} µs`)}${row('Raw max',`${fmt(a.summary.max)} µs`)}${row('Invalid / ≤0',a.invalidCount)}</dl></section><section class="panel"><h3>Selected injection point</h3><div id="dqSelected">${selectedHtml()}</div></section><details class="panel"><summary>Acquisition metadata</summary><dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Real paired result XML+CSV cases establish the vendor output columns and availability examples, but browser-side Basore/K-S reconstruction remains unsupported until pointwise parity is established.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl></details></aside><section class="plots"><div class="panel chart"><header><b>Lifetime vs QSS intensity</b>${help('Lifetime is read only from the imported XML: TransientInfo@LifeTime is used when available, with XML Values as a fallback. PV-2000 CSV/raw exports are development-validation evidence and are never runtime inputs.')}<span id="dqCurveLegend" class="dual-qss-inline-legend"></span><span class="grow"></span><select id="dqScale"><option value="log">Log X</option><option value="linear">Linear X</option></select>${PV.plot.axisControls('dqCurveAxes')}<button id="dqExportCurve">Export</button></header><div class="canvas-wrap"><canvas id="dqCurve"></canvas></div></div></section><section class="plots">${positionHtml(d)}<div class="panel chart"><header><b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow"></span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button></header><div class="canvas-wrap"><canvas id="dqTransient"></canvas></div></div></section></div>`;
+    host.innerHTML=`<div class="module-grid dual-qss-module"><aside class="side"><section class="panel"><h3>Measurement ${help('Reads the DualQssMeasurement injection-intensity, stored lifetime vectors and transient waveform path. QSS-INJ-RESULT-001 additionally reconstructs the PV-2000 steady-state result table from XML only; its two real XML+CSV pairs validate teff.d/teff.SS, max teff.SS, Δn, Smax, implied Voc and requested J0 outputs.')}</h3><dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive lifetime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Geometry',Number.isFinite(d.diameter)?`Ø${fmt(d.diameter,1)} mm ${d.targetType||d.shapeType||''}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'—')}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl></section><section class="panel"><h3>Comparison overlay</h3><div id="dqComparisons" class="comparison-list">${comparisonHtml()}</div><label class="btn comparison-open">Add XML<input id="dqAdd" type="file" accept=".xml,text/xml,application/xml" multiple></label></section><section class="panel"><h3>Results summary</h3><dl class="meta">${resultSummaryHtml(a)}</dl>${a.vendorResult?.available?'<button id="dqExportResults">Export result table</button>':''}</section><section class="panel"><h3>Selected injection point</h3><div id="dqSelected">${selectedHtml()}</div></section><details class="panel"><summary>Acquisition metadata</summary><dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Within QSS-INJ-RESULT-001, Basore and K-S J0 are reconstructed on the paired non-Auger path; vendor zero results retain the legacy Ud. state.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl></details></aside><section class="plots"><div class="panel chart"><header><b>Lifetime vs QSS intensity</b>${help('Lifetime is read only from the imported XML: TransientInfo@LifeTime is used when available, with XML Values as a fallback. PV-2000 CSV/raw exports are development-validation evidence and are never runtime inputs.')}<span id="dqCurveLegend" class="dual-qss-inline-legend"></span><span class="grow"></span><select id="dqScale"><option value="log">Log X</option><option value="linear">Linear X</option></select>${PV.plot.axisControls('dqCurveAxes')}<button id="dqExportCurve">Export</button></header><div class="canvas-wrap"><canvas id="dqCurve"></canvas></div></div></section><section class="plots">${positionHtml(d)}<div class="panel chart"><header><b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow"></span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button></header><div class="canvas-wrap"><canvas id="dqTransient"></canvas></div></div></section></div>`;
     host.querySelector('#dqScale').onchange=e=>{logX=e.target.value==='log';zoom.curve={x:null,y:null};redraw()};host.querySelector('#dqAdd').onchange=async e=>{for(const f of e.target.files||[]){try{const p=PV.xml.parse(await f.text());if(p.type!=='DualQssMeasurement')throw new Error(`${f.name}: not DualQssMeasurement.`);const z=parse(p);sets.push({label:z.resultName||z.name||f.name,data:z,fileName:f.name})}catch(err){alert(err.message)}}e.target.value='';zoom.curve={x:null,y:null};redraw()};
     function redraw(){
       if(selSet>=sets.length){selSet=0;selPoint=0}
@@ -290,8 +628,10 @@
       });
       host.querySelector('#dqExportCurve').onclick=()=>exportCurve(sets[selSet].data);
       host.querySelector('#dqExportTransient').onclick=()=>exportTransient(sets[selSet].data,selPoint);
+      const exportResult=host.querySelector('#dqExportResults');
+      if(exportResult)exportResult.onclick=()=>exportResults(d,a);
     }
     redraw();
   }
-  PV.modules=PV.modules||{};PV.modules.dualQss={types:['DualQssMeasurement'],parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,pairedTeffdOneSun,pointRows,measurementGeometry};PV.registry.register(PV.modules.dualQss);
+  PV.modules=PV.modules||{};PV.modules.dualQss={types:['DualQssMeasurement'],parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,pairedTeffdOneSun,pairedDualResults,qdcDetails,minpackSmooth,augmentLogAkima,injectionLevel,impliedVoc,smax,ksJ0,basoreJ0,resultRow,pointRows,measurementGeometry};PV.registry.register(PV.modules.dualQss);
 })(typeof window!=='undefined'?window:globalThis);
