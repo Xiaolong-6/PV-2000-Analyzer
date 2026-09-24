@@ -134,8 +134,10 @@ def calculate(spv8, spv6, s):
     if factor != -1:
         c8 = spv8 * factor / math.log(1 + factor)
         c6 = spv8 / math.log(1 + factor) * ((1 + factor) ** (spv6 / spv8) - 1)
-    t8 = 1 / (1 + s['tc8'] * (s['led'] - 26))
-    t6 = 1 / (1 + s['tc6'] * (s['led'] - 26))
+    # PV-2000's historical helper signature/caller order cross-maps the XML coefficients:
+    # SPV8 uses the stored LED6 coefficient; SPV6 uses the stored LED8 coefficient.
+    t8 = 1 / (1 + s['tc6'] * (s['led'] - 26))
+    t6 = 1 / (1 + s['tc8'] * (s['led'] - 26))
     if s['oxide'] <= 0:
         r8, r6 = min(1, max(0, s['r8'])), min(1, max(0, s['r6']))
         if r8 != 1 and r6 != 1:
@@ -171,8 +173,10 @@ def parse_xml(path):
         'tc6': number(md, 'TemperatureCorrectionCoefficientLED6', 0),
         'chuck': number(iteration, 'ChuckTemperature'),
         'led': number(iteration, 'LEDTemperature'),
-        'spv8_global': number(iteration, 'SPV8Global'),
-        'spv8_reduced': number(iteration, 'SPV8ReducedGlobal'),
+        'linearity_method': text(measurement, 'LinearityRatioMethod', 'UseMeasuredLR'),
+        'manual_linearity': number(measurement, 'ManualLinearityRatioValue'),
+        'spv8_global': number(measurement, 'ManualLinearityRatioValue') if text(measurement, 'LinearityRatioMethod', 'UseMeasuredLR') == 'UseManualLR' else number(iteration, 'SPV8Global'),
+        'spv8_reduced': 1.0 if text(measurement, 'LinearityRatioMethod', 'UseMeasuredLR') == 'UseManualLR' else number(iteration, 'SPV8ReducedGlobal'),
         'ratio_ok': number(iteration, 'LineartiyRatioOK'),
         'r8': number(measurement, 'ReflectivityCorrection8', 0),
         'r6': number(measurement, 'ReflectivityCorrection6', 0),
