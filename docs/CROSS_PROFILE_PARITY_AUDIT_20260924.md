@@ -237,11 +237,13 @@ Calibration measurements remain outside this roadmap unless there is a separate 
 
 ## P6 self-audit result
 
+- CET was also re-audited because it remained the last dedicated runtime profile that coupled calculation identity to one Pattern/Target. It now resolves `CET-CALC-001` and `GEOM-NINEPOINT-SQUARE-001` independently; the historical `CET-9PT-SQUARE-001` name remains an evidence bundle only.
 - P0–P5 calculation/geometry/quantity separation remains intact after adding the two new families.
 - Leakage uses a calculation profile independent from the validated target-relative one-point geometry profile.
 - SPV uses a calculation profile independent from the shared RoundWafer map geometry profile.
 - SPV default filtering is based on a raw SPV channel so quantity-specific DL/Tau `Ud.` sites do not erase otherwise valid raw-channel sites.
 - Parsed-signal and enhanced-mode SPV DL are deliberately unavailable rather than silently applying the standard scalar formula outside its paired evidence envelope.
+- DLL re-audit found the historical temperature-correction parameter-order quirk: the stored LED6 coefficient is applied to SPV8 and LED8 to SPV6. Runtime and private validator now preserve that behavior; a non-zero-coefficient unit test locks it. Manual-linearity mode remains outside the paired validated profile.
 - IntensityScan remains a raw/fallback case; no unsupported derived scientific output was invented.
 ## Acceptance criteria for the refactor
 
