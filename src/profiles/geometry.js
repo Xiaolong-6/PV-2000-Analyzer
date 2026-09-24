@@ -32,6 +32,34 @@
   }));
 
   PV.profiles.register({
+    id:'GEOM-ONEPOINT-TARGETREL-002',
+    axis:'geometry',
+    familyId:'geometry',
+    status:'validated',
+    matches:data=>{
+      const g=geometry(data);
+      return g.geometryStatus==='complete'&&
+        g.patternType==='OnePointPattern'&&
+        g.interpretation==='single-target-relative-point'&&
+        g.pointsMm?.length===1;
+    }
+  });
+
+  PV.profiles.register({
+    id:'GEOM-FIXEDPOINTS-ABS-001',
+    axis:'geometry',
+    familyId:'geometry',
+    status:'validated',
+    matches:data=>{
+      const g=geometry(data);
+      return g.geometryStatus==='complete'&&
+        g.patternType==='FixedPointsPattern'&&
+        g.interpretation==='explicit-fixed-points'&&
+        g.pointsMm?.length>0;
+    }
+  });
+
+  PV.profiles.register({
     id:'GEOM-ONEPOINT-CENTER-001',
     axis:'geometry',
     familyId:'geometry',
