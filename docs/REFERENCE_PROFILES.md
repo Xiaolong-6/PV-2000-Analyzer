@@ -257,7 +257,7 @@ Treat multiple iterations, another DataItem/transient layout, another pattern/ta
 
 See `docs/ALGORITHMS_DUAL_QSS.md`.
 
-### QSS-INJ-RESULT-001 — Dual QSS paired numeric result scalar
+### QSS-INJ-RESULT-001 — Dual QSS paired final-result parity
 
 **Measurement type**
 
@@ -265,28 +265,40 @@ See `docs/ALGORITHMS_DUAL_QSS.md`.
 
 **Reference material**
 
-Two private **real XML + matching numeric PV-2000 result CSV** pairs. Both use `OnePointPattern + RoundWafer`, `ProbeSelection=Back` and `QssBiasSelection=Back`. One acquired sweep includes 1000 mSun explicitly; the other terminates below 1000 mSun.
+Two private **real XML + matching numeric PV-2000 final-result CSV** pairs. Both use `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back` and `UseAugerCorrection=false`. The HighPower sweep contains an acquired 1000 mSun point; the LowPower sweep terminates at 681 mSun.
 
 **Validated / established**
 
-- final-result `teff.d (1 Sun)` uses the XML `Values` vector rather than rounded `TransientInfo@LifeTime`;
-- exact-1000 case: XML `Values` at 1000 mSun matches the vendor scalar with **0 µs error**;
-- below-target case: when acquisition ends at 681 mSun, PV-2000 returns the final acquired XML `Values` element as `teff.d (1 Sun)`, again with **0 µs error**;
-- no interior interpolation rule is generalized from these pairs; a sweep spanning 1000 mSun without an exact 1000 mSun point remains unsupported for this scalar until paired evidence exists;
-- vendor `Smax (1 Sun)` equals `50 * W_um / teff.SS_1sun_us` in both pairs (maximum observed absolute regression error approximately **1.1e-13 cm/s**);
-- vendor maximum-lifetime `Smax` equals `50 * W_um / teff.SS_max_us` in both pairs (maximum observed absolute regression error approximately **3.9e-14 cm/s**);
-- in the finite-Δn pair, `Δn (1 Sun) = 2.38e12 * 1000 * OpticalFactor * teff.SS / W_um` agrees with the numeric export to approximately **1.1e-15 relative error**;
-- the second pair exports Basore J0 and Δn as undefined while K-S J0 and Implied Voc remain defined, establishing one concrete availability example without yet establishing the browser-side algorithms.
+- QDC is independently reconstructed from each stored transient. Maximum absolute error against the original DLL internal QDC arrays is about **7.92e-11** (25-point HighPower) and **2.67e-12** (16-point LowPower).
+- The QDC support rule is the contiguous interval from the first point inside `ValidQdcRange` through the last point inside the range.
+- Steady-state reconstruction uses the reference-build MinPack preprocessing followed by **log-log Akima** densification ×10,000, local-extremum selection, trapezoidal integration and corrected-lifetime interpolation.
+- `teff.d (1 Sun)` is taken from XML `Values` through the vendor clamped interpolation path.
+- HighPower `teff.SS (1 Sun)` = **280.94342922609 µs** and `teff.SS Max` = **893.70740338579 µs** are reproduced to about **2.3e-13 µs** and **3.4e-13 µs** respectively.
+- LowPower `teff.SS (1 Sun)` = **236.991629 µs** and `teff.SS Max` = **1984.29119677534 µs** are reproduced to 0 and about **9.1e-13 µs** respectively.
+- HighPower Δn (1 Sun), Smax values, Implied Voc, Basore J0 and K-S J0 all reproduce the numeric vendor export within floating-point tolerance.
+- LowPower preserves vendor availability semantics: Basore J0 and Δn are `Ud.`, while Implied Voc and K-S J0 remain defined.
+- K-S J0 maximum observed absolute error is about **7.3e-12 fA/cm²**; Implied Voc maximum observed absolute error is about **4.4e-16 V**.
+- The runtime result-table export uses the same profile-scoped quantities and preserves unavailable results rather than substituting zeros as valid values.
 
 **Runtime boundary**
 
-Only the paired-validated `teff.d (1 Sun)` scalar is added to runtime Results summary, and only for the validated exact-1000 / below-target endpoint cases. Runtime does not synthesize teff.SS, teff.SS Max, Implied Voc, Basore J0, K-S J0 or a general Δn result from these two pairs.
+The full result path is enabled only for the paired semantic envelope above. `UseAugerCorrection=true`, alternate source selections, a sweep spanning 1000 mSun without an exact acquired 1000-mSun point, and other structural/categorical branches remain unavailable until real paired output validates them.
+
+The broader `QSS-INJ-001` 273-pair corpus still validates the raw injection/transient path; it does not automatically extend this final-result profile to all historical Dual QSS files.
+
+**Validation**
+
+Run the public launcher against the private paired case directories:
+
+```bash
+npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
+```
+
+The private workflow executes that runtime directly against both real XML+CSV pairs.
 
 **NEW PROFILE triggers / evidence extensions**
 
-A different pattern/target/source-selection path, multi-iteration schema, or different result-table algorithm is a new profile. An interior 1000-mSun interpolation case can extend this profile only after a real XML + matching numeric PV-2000 CSV establishes the rule.
-
-Run `npm run validate:dual-qss-results` against the private paired case directories.
+A different pattern/target/source-selection path, `UseAugerCorrection=true`, a multi-iteration schema, another result-table algorithm, or a different 1000-mSun placement rule requires new matching numeric vendor output before the profile is widened.
 
 See `docs/ALGORITHMS_DUAL_QSS.md`.
 
