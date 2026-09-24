@@ -1,401 +1,83 @@
-# Measurement architecture refactor plan
+# Measurement architecture roadmap
 
-Status: **Phase A merged in `v20260923.11`; shared-filter rollouts completed through DIT in `v20260923.17`; CET became the first Phase F family implemented directly on the new architecture in `v20260923.19`.**
+## Current status
 
-Phase A introduced domain/quantity/selection/profile/geometry primitives without broad UI behavior changes. Phase B activates the shared selection lifecycle in ISC/VCPD and adds a reusable Valid-data filter controller/UI contract while preserving reconstructed result values and raw XML readings. The JZero rollout migrates its older module-local filter onto the same shared controller/UI contract without changing the two-iteration reconstruction or vendor-regressed calculation path.
+The measurement-domain architecture is in production on main.
 
-The LBIC rollout applies the same contract within the current iteration/beam context and drives summaries, map, distribution and line profiles without changing channel calculations, geometry semantics or validation profiles.
+Completed foundations:
 
-The DIT rollout keeps algorithm validity as the intrinsic mask and applies the user filter only after COCOS/flatband/Minimum Dit/Midgap calculations. It therefore changes site population views and exports without feeding filter state back into any scientific calculation.
+- normalized measurement/provenance envelope;
+- quantity/availability primitives;
+- semantic validation-profile registry;
+- canonical geometry service;
+- shared site-selection / Valid-data filter controller;
+- shared UI/plot/export helpers where applicable.
 
-## 1. Goal
+Current family integration:
 
-Restructure PV-2000 Analyzer so measurement parsing, physical models, compatibility behavior, validation state and visualization are explicit layers.
+| Family | Architecture state |
+|---|---|
+| ISC / VCPD | domain-model pilot; shared geometry/selection/profile contracts |
+| CET | implemented directly on the domain architecture |
+| QSS-µPCD | shared selection and geometry integrated; family-specific parser/analyzer retained |
+| JZero | shared selection and geometry integrated; family-specific calculation retained |
+| LBIC | shared selection/geometry helpers integrated where applicable; dynamic channel model retained |
+| DIT | shared selection/geometry integrated; tightly coupled COCOS calculation remains family-specific |
+| Dual QSS | dedicated injection-sweep model; shared geometry context where applicable |
+| Generic Inspector | fallback; intentionally exempt from scientific-analyzer uniformity |
 
-The refactor should make it easier to add newly understood measurement families without duplicating formulas or mixing raw instrument data with analyzer-derived quantities.
+The roadmap is no longer a sequence of old branch phases. Remaining work should be driven by concrete duplication or a new validated measurement family.
 
-The first implementation branch must preserve:
+## Architecture invariants
 
-- current numerical outputs;
-- current validation labels;
-- XML-only runtime behavior;
-- current UI behavior;
-- current export semantics;
-- existing profile boundaries.
+### Provenance
 
-No scientific result should change merely because its code moved.
+Every displayed quantity should be identifiable as one of:
 
-## 2. Why the current module shape is becoming limiting
+- raw/stored measurement;
+- controller/device result;
+- corrected measurement;
+- analyzer-derived physical result;
+- compatibility result;
+- Analyzer-only optional result.
 
-The current registry contract is intentionally small:
+Do not silently replace a stored/controller result with a new viewer calculation.
 
-```js
-{
-  types,
-  parse(),
-  analyze(),
-  render()
-}
-```
+### Availability and filtering
 
-That worked well for early expansion, but the supported families now contain several different kinds of result ownership.
+Intrinsic scientific/support validity and user filtering are separate masks.
 
-### Raw or stored measurement
+A user filter may narrow supported sites. It must not make an intrinsically unavailable value valid, and it must not feed back into the scientific calculation unless a family explicitly defines such behavior.
 
-Examples:
+### Geometry
 
-- Kelvin-probe readings;
-- LBIC beam channels;
-- XML `Values`;
-- stored transient samples.
+Keep distinct:
 
-### Controller/device result
+- nominal target boundary;
+- scheduled measurement boundary;
+- canonical point coordinates/acquisition order;
+- actual acquired sites;
+- interpolation support.
 
-Examples:
-
-- general uPCD lifetime evaluation;
-- several sheet-resistance / eddy quantities.
-
-### Corrected measurement
-
-Examples:
-
-- ISC Vcpd offset correction;
-- ISC Vsb correction factor;
-- signed DIT Vsb construction.
-
-### Analyzer-derived physical result
+Raw pattern coefficients are not physical millimetres unless their encoding is established.
 
-Examples:
+### Profiles
 
-- QSS Smax;
-- analyzer SRV;
-- physical implied Voc;
-- diffusion-length/lifetime conversions.
-
-### Compatibility result
-
-Examples:
-
-- PV-2000-compatible QSS implied Voc;
-- DIT compatibility paths;
-- JZero compatibility output;
-- profile-specific clipping, interpolation and validity rules.
-
-### Analyzer-only optional result
-
-Examples:
-
-- optional DIT PCHIP/midgap analysis;
-- Physical Si / Ge QSS estimates.
-
-These distinctions should become explicit metadata instead of being inferred from module-local code and labels.
-
-## 3. Architecture invariants
-
-The refactor must preserve these rules.
-
-1. Runtime remains XML-only.
-2. Dispatch still begins from `Measurement/@xsi:type`.
-3. Unknown types still fall back to Generic Inspector.
-4. Raw XML values are retained exactly where currently retained.
-5. Controller sentinels stay distinguishable from missing data and user filtering.
-6. Validation stays attached to explicit profile families.
-7. Numeric parameter changes do not automatically create new profiles.
-8. Filenames, sample names and substrate IDs never determine measurement type, material or compatibility profile.
-9. Material selection remains explicit when the XML does not encode it reliably.
-10. Private reference material stays outside tracked source.
-11. The scientific workspace layout contract remains unchanged.
-12. Position/geometry visualizations belong in the right visualization area; controls, metadata, summaries and selected-point details belong in the left sidebar.
-
-## 4. Target data flow
-
-```text
-PV-2000 XML
-    │
-    ▼
-XML acquisition parser
-    │
-    ▼
-Normalized measurement
-    │
-    ├─ identity / environment
-    ├─ acquisition settings
-    ├─ raw and stored channels
-    ├─ geometry
-    └─ source metadata
-    │
-    ▼
-Measurement definition
-    │
-    ├─ family semantics
-    ├─ profile resolver
-    ├─ available calculations
-    └─ result provenance
-    │
-    ▼
-Pure scientific / compatibility calculations
-    │
-    ▼
-Quantity set
-    │
-    ├─ values
-    ├─ unit
-    ├─ availability
-    ├─ validity reason
-    ├─ provenance
-    ├─ model/profile identity
-    └─ validation status
-    │
-    ▼
-Presentation
-    ├─ summary
-    ├─ map
-    ├─ measurement-position schematic
-    ├─ distribution
-    ├─ profiles
-    ├─ family-specific curves
-    └─ CSV export
-```
-
-## 5. Normalized measurement envelope
-
-Do not force every family into one giant schema.
-
-Use a small common envelope plus family-specific data.
-
-Conceptually:
-
-```js
-{
-  type,
-  familyId,
-  identity: {
-    name,
-    resultName,
-    substrateId
-  },
-  environment: {
-    temperature,
-    waferThickness
-  },
-  geometry,
-  acquisition,
-  channels,
-  settings,
-  familyData
-}
-```
-
-Parsing should extract and normalize structure only.
-
-Scientific calculations should not happen inside XML parsing.
-
-## 5A. XML discovery / Advanced analysis
-
-For every measurement family, inspect the XML beyond the fields reproduced in PV-2000 CSV/UI. Preserve useful stored quantities and unknown numeric channels instead of designing the analyzer only around vendor-visible outputs.
-
-The quantity model distinguishes presentation tier from evidence:
-
-- primary;
-- advanced;
-- diagnostic.
-
-This allows XML-only information to be useful without implying vendor parity. LBIC already demonstrates the intended behavior.
-
-## 6. First-class quantity model
-
-Introduce a shared quantity object.
-
-Conceptually:
-
-```js
-{
-  id,
-  label,
-  unit,
-  values,
-  provenance,
-  availability,
-  modelId,
-  profileId,
-  validation,
-  tier,
-  evidence
-}
-```
-
-Recommended provenance vocabulary:
-
-- `raw`
-- `stored-controller`
-- `corrected`
-- `derived-physical`
-- `derived-compatibility`
-- `analyzer-optional`
-
-This directly represents cases already present in the project.
-
-Examples:
-
-- Dual QSS `TransientInfo@LifeTime` → `raw`
-- general uPCD evaluated lifetime → `stored-controller`
-- ISC Vcpd Dark → `corrected`
-- QSS SRV → `derived-physical`
-- QSS PV-2000-compatible Implied Voc → `derived-compatibility`
-- DIT Midgap PCHIP → `analyzer-optional`
-
-## 7. Availability and validity
-
-Availability should be separate from user filtering.
-
-Conceptual result state:
-
-```js
-{
-  available,
-  reason,
-  rawValue,
-  value
-}
-```
-
-Suggested reason codes:
-
-- `missing-input`
-- `controller-sentinel`
-- `inactive-channel`
-- `non-finite`
-- `not-computable`
-- `outside-measured-domain`
-- `profile-rejected`
-- `unsupported-path`
-
-User range filtering should remain a separate mask.
-
-This is important for QSS, where `-1 µs` means unavailable, and for LBIC, where an inactive Current placeholder must not be presented as a measured current.
-
-## 8. Scientific services
-
-Reusable physics and mathematics should live in pure, DOM-free services.
-
-Candidate files:
-
-```text
-src/science/
-  semiconductor.js
-  lifetime.js
-  j0.js
-  optics.js
-  capacitance.js
-  diffusion.js
-  fitting.js
-```
-
-Candidate responsibilities:
-
-### semiconductor.js
-
-- thermal voltage;
-- semiconductor space charge;
-- material parameter handling;
-- physically motivated implied Voc helpers.
-
-### lifetime.js
-
-- Smax;
-- SRV;
-- steady-state carrier-density relations.
-
-### j0.js
-
-- Kane-Swanson relations;
-- Basore-style helpers.
-
-### optics.js
-
-- photon-energy/current conversions;
-- reflectivity/EQE/IQE helpers.
-
-### capacitance.js
-
-- dielectric capacitance;
-- EOT conversion.
-
-### diffusion.js
-
-- `L = sqrt(D τ)`;
-- `τ = L² / D`.
-
-### fitting.js
-
-- linear regression;
-- first-order frequency-response fit;
-- reusable interpolation primitives.
-
-Every function should take explicit constants/parameters.
-
-Avoid hidden global semiconductor constants.
-
-Example:
-
-```js
-qsc({
-  vsb,
-  doping,
-  temperatureK,
-  ni,
-  epsilonR,
-  dopingType
-})
-```
-
-## 9. Compatibility profiles
-
-Physical models and compatibility profiles should be separate concepts.
-
-A compatibility profile can define:
-
-- constants;
-- sign conventions;
-- temperature convention;
-- discrete point selection;
-- clipping;
-- blanking;
-- interpolation rules;
-- accepted Vsb window;
-- historical output semantics.
-
-Suggested structure:
-
-```text
-src/profiles/
-  dit.js
-  qss.js
-  dual-qss.js
-  jzero.js
-  isc.js
-  vcpd.js
-  lbic.js
-```
-
-Profile resolution should use categorical semantics only:
-
-- measurement type;
+Validation profiles are semantic input→output paths, resolved from categorical behavior such as:
+
+- XML measurement type/schema;
 - algorithm mode;
-- pattern/geometry type;
+- geometry encoding;
 - active channel combination;
 - result path;
 - unit convention;
-- schema/data layout.
+- blanking/availability rule.
 
-Do not resolve profiles from sample identity or arbitrary numeric changes.
+Do not create profile logic from filenames, sample identities or arbitrary numeric settings.
 
-## 10. Measurement definitions
+## Family definition direction
 
-Extend the registry gradually from a type lookup into a family-definition registry.
-
-Conceptually:
+The registry already exposes `familyId`, `capabilities` and `types`. Future work may continue toward richer declarative family metadata when it removes real duplication:
 
 ```js
 {
@@ -411,446 +93,98 @@ Conceptually:
 }
 ```
 
-The renderer should be able to discover what quantities are available without knowing their formulas.
+This is a direction, not a requirement to rewrite stable family-specific renderers.
 
-## 11. Geometry domain service
+Unique views such as DIT Vcpd/Vsb/Dit curves, Dual QSS transients and LBIC pixel/channel detail should remain family-specific.
 
-Current `src/core/geometry.js` contains useful grid helpers. Extend the concept into a normalized geometry result.
+## Shared scientific services
 
-Recommended geometry object:
+Extract a shared pure scientific helper only when at least two real analyzer paths need the same definition and the constants/provenance can remain explicit.
 
-```js
-{
-  patternType,
-  nominalShape,
-  scheduledShape,
-  points,
-  acquiredMask,
-  edgeExclusion,
-  acquisitionOrder,
-  provenance,
-  validationStatus
-}
-```
+Candidate domains include:
 
-Keep these concepts separate:
+- semiconductor charge/material parameters;
+- lifetime/Smax/SRV;
+- J0;
+- optical photon/current conversions;
+- capacitance/EOT;
+- diffusion-length/lifetime;
+- reusable fitting/interpolation primitives.
 
-- nominal sample boundary;
-- scheduled measurement boundary;
-- actual acquired sites;
-- interpolation support.
+Avoid hidden global scientific constants.
 
-This prevents errors such as treating a `OnePointPattern` as a spatial heatmap.
+## Remaining migration opportunities
 
-Supported families already require:
+### QSS / JZero
 
-- OnePointPattern;
-- MapPattern;
-- SquareRegionPattern;
-- HighDensityPattern;
-- RoundWafer;
-- SquareCell;
-- PseudoSquareCell.
-
-## 12. Presentation boundary
-
-Shared plot components should consume quantities and geometry rather than family-specific parser fields.
-
-Target APIs can evolve toward:
-
-```js
-renderMap({geometry, quantity, filter})
-renderDistribution({quantity, filter})
-renderProfiles({geometry, quantity, filter})
-renderMeasurementPosition({geometry})
-```
-
-Keep family-specific renderers for genuinely unique scientific views:
-
-- DIT Vcpd-Qc;
-- DIT Vsb-Qc;
-- DIT Dit-Vsb;
-- Dual QSS stored transient;
-- LBIC selected-pixel channel detail.
-
-### Layout ownership rule
-
-Left sidebar:
-
-- controls;
-- metadata;
-- summaries;
-- selected-point details;
-- acquisition settings.
-
-Right visualization area:
-
-- maps;
-- measurement-position schematics;
-- distributions;
-- line profiles;
-- scientific curves;
-- stored transients.
-
-This rule should become testable.
-
-## 13. Validation metadata
-
-Validation metadata should be available to the analyzer without embedding reference-instance statistics into ordinary runtime output.
-
-Conceptually:
-
-```js
-{
-  profileId,
-  status,
-  validatedQuantities,
-  geometryStatus
-}
-```
-
-Allowed status vocabulary remains:
-
-- validated;
-- reproduced at shown precision;
-- inferred;
-- unsupported.
-
-Exact evidence stays in:
-
-- `docs/REFERENCE_PROFILES.md`
-- `docs/VALIDATION.md`
-
-## 14. How the accumulated measurement knowledge maps to the new architecture
+Share additional lifetime/J0 helpers only if regression proves no change to current compatibility paths. JZero-specific implied-Voc compatibility must not be collapsed into the general QSS model merely for code reuse.
 
 ### DIT
 
-Needs explicit separation of:
-
-- measured dark/light CPD;
-- corrected/signed Vsb;
-- semiconductor Qsc;
-- Standard COCOS compatibility behavior;
-- inferred COCOS-II compatibility behavior;
-- discrete Minimum Dit;
-- optional PCHIP/midgap analysis;
-- material model.
-
-This should migrate late because it has the most coupled calculations and UI.
-
-### ISC / VCPD
-
-Best first migration candidate.
-
-ISC naturally demonstrates:
-
-- raw repeated readings;
-- offset-corrected Vcpd;
-- correction-factor Vsb;
-- derived Vcpd Light;
-- availability rules;
-- map geometry.
-
-VCPD demonstrates a simpler stored/averaged quantity on the same infrastructure.
-
-### QSS-uPCD
-
-Demonstrates result provenance particularly well:
-
-- stored/controller lifetime;
-- raw sentinel;
-- compatibility Smax;
-- compatibility Implied Voc;
-- analyzer physical Si/Ge estimate;
-- analyzer SRV;
-- user validity filter.
-
-### Dual QSS
-
-Needs three clearly different lifetime concepts:
-
-- XML `Values`;
-- `TransientInfo@LifeTime`;
-- unresolved vendor result-table Lifetime.
-
-The architecture must prevent one from silently replacing another.
-
-### JZero
-
-Should reuse shared lifetime/J0/geometry services after QSS migration.
+DIT has the most coupled calculation and UI path. Further extraction should be incremental and regression-led. Standard COCOS, inferred COCOS-II, material models, Minimum Dit and optional Midgap PCHIP must remain separable concepts.
 
 ### LBIC
 
-Needs dynamic channel definitions plus provenance:
+Dynamic channel definitions and measurement flags are essential. Shared optics helpers are useful only if they preserve active/inactive channel semantics, raw versus derived reflectivity and profile-specific IQE availability.
 
-- measured Current;
-- Direct/Scattered reflection;
-- derived Reflectivity;
-- calculated EQE/IQE;
-- inactive placeholders;
-- partial-acquisition geometry.
+### Dual QSS
 
-### CV / CET
+The architecture must preserve three distinct lifetime concepts: XML `Values`, `TransientInfo@LifeTime`, and vendor result-table lifetime/steady-state results. Do not unify them under one generic lifetime field.
 
-The base CV family is primarily acquisition/process state.
+## New measurement families
 
-CET is a derived-result path that adds:
+Unsupported families should be implemented directly on the current domain architecture instead of adding new one-off global state.
 
-- linear charge/CPD fit;
-- effective capacitance;
-- EOT;
-- R².
+However, architecture readiness is not the gate for scientific support. The gate is evidence: at least one real XML plus matching numeric PV-2000 output for the new calculated result path.
 
-The new architecture should allow a derived family to reuse an acquisition model without duplicating parsing.
+Current candidates remain:
 
-### SPV / Diffusion Length
+- SPV / Diffusion Length;
+- Frequency Scan;
+- Voc / Voc Mapping;
+- Leakage;
+- Fe / LID;
+- Surface Passivation;
+- Junction Lifetime;
+- Sheet Resistance / Eddy;
+- Height;
+- dedicated CV analysis if a real paired result path is established.
 
-Future support should use shared optical/fitting/diffusion services.
+Priority should follow available paired evidence, not this list order.
 
-The documented processing chain contains:
+## Regression strategy
 
-- linearity correction;
-- penetration-depth correction;
-- texture correction;
-- reflectivity/oxide correction;
-- LED-temperature correction;
-- diffusion-length extraction;
-- lifetime from diffusion length.
+For any migration:
 
-### Fe / LID, Surface Passivation, Junction Lifetime
-
-These should enter as dedicated derived-result definitions using shared lifetime/recombination services.
-
-### Frequency Scan
-
-Should use a reusable first-order response fit:
-
-```text
-V(f) = V0 / sqrt(1 + (2πfτ)^2)
-```
-
-with interpolation/reporting of selected frequencies and fit quality.
-
-### Voc / Voc Mapping
-
-Voc Mapping is a corrected dark/light mapping path.
-
-Voc itself reconstructs a pseudo-I-V relation and derived Voc/Vmp/FF.
-
-### Leakage
-
-Needs a transient-derived quantity pipeline:
-
-- smoothed CPD;
-- corrected-time interpolation;
-- VSASS+ / VSASS−;
-- LI difference;
-- dielectric dV/dt → current-density transform.
-
-### Sheet Resistance / Eddy
-
-These are strong examples of `stored-controller` / passthrough results.
-
-The analyzer should not invent a viewer-side formula when the device result is already stored.
-
-### Height
-
-A simple calibrated transformation is suitable for the shared quantity/provenance model.
-
-## 15. Migration order
-
-Do not migrate all modules in one branch.
-
-### Next implementation branch — Phase A
-
-Branch:
-
-`refactor/measurement-domain-core`
-
-Scope:
-
-1. Add quantity/provenance/availability primitives.
-2. Add normalized geometry envelope helpers.
-3. Add profile metadata registry without changing profile decisions.
-4. Add pure semiconductor/lifetime helpers only where needed by the pilot.
-5. Migrate ISC/VCPD internally to the new domain model.
-6. Keep the existing ISC/VCPD UI visually unchanged.
-7. Preserve every current paired-reference result.
-8. Add adapter helpers so untouched modules continue using the current registry contract.
-
-Out of scope for this first branch:
-
-- DIT migration;
-- QSS migration;
-- LBIC migration;
-- new measurement-family support;
-- UI redesign;
-- formula changes;
-- validation-envelope expansion.
-
-### Geometry correction included in Phase A
-
-A DIT NinePointPattern family exposed a coordinate-space bug: XML coefficients near ±0.632 were being displayed as ±0.632 mm on a 100 mm wafer. The shared resolver now treats this pattern as target-relative.
-
-For a 100 mm RoundWafer with 4 mm EdgeExclusion:
-
-```text
-scheduled radius = 50 - 4 = 46 mm
-x_mm = x_coefficient * 46
-```
-
-Thus ±0.632455532 maps to approximately ±29.09 mm. This coordinate interpretation is **inferred** until paired PV-2000 X/Y output is available.
-
-The resolver preserves raw coefficients and forbids unknown coefficient encodings from becoming physical millimetres implicitly.
-
-### Phase A implementation status
-
-Implemented on the current refactor branch:
-
-- quantity/provenance model;
-- availability/reason primitives;
-- shared site-selection contract (`supportMask / filterMask / activeMask`) with one site index space;
-- canonical Pattern/Target geometry resolver with raw coefficients separated from `pointsMm`;
-- normalized measurement envelope;
-- semantic profile registry;
-- normalized geometry envelope;
-- backwards-compatible registry metadata;
-- ISC-MAP-001 and VCPD-MAP-001 profile definitions;
-- ISC/VCPD pilot migration with unchanged renderer/export interfaces;
-- domain/profile/provenance regression tests.
-
-Private ISC/VCPD paired validators remain the numerical acceptance gate before merge.
-
-### Phase B
-
-Migrate the established QSS-uPCD Valid-data filter onto the shared selection layer **without changing behavior**. QSS is the reference implementation for filter metric selection, Reset, 1–99%, map masking, Distribution counts, summary statistics, profile masking and export flags.
-
-Then migrate JZero to the same selection layer and remove its duplicate local `validMask / summaryMasked` implementation.
-
-Do not add filter UI to every family in this phase.
-
-After QSS/JZero parity is locked, use a dedicated feature branch to connect suitable families such as ISC/VCPD, LBIC, Dual QSS and site-level DIT to the shared filter capability.
-
-This validates:
-
-- stored-controller provenance;
-- sentinel availability;
-- physical vs compatibility calculations;
-- user filter separation.
-
-### Phase C
-
-Migrate Dual QSS and JZero.
-
-### Phase D
-
-Migrate LBIC.
-
-### Phase E
-
-Migrate DIT last.
-
-### Phase F
-
-Implement remaining unsupported families directly on the new architecture.
-
-`CETMeasurement` / EOT was the first family completed in this phase (`v20260923.19`). CV acquisition semantics are documented, but there is still no dedicated `CVMeasurement` analyzer.
-
-Recommended remaining order:
-
-1. SPV/Diffusion Length;
-2. Frequency Scan;
-3. Voc/Voc Mapping;
-4. Leakage;
-5. Fe/LID;
-6. Surface Passivation;
-7. Junction Lifetime;
-8. Sheet Resistance/Eddy;
-9. Height.
-
-## 16. Characterization and regression strategy
-
-Before moving a family, lock its current behavior.
-
-For each migrated family:
-
-1. parse the same XML through old and new paths;
-2. compare normalized values;
-3. compare all exported quantities;
+1. parse the same real XML before/after;
+2. compare normalized raw/stored values;
+3. compare every exported quantity;
 4. compare availability masks;
-5. compare validation/profile labels;
-6. run paired private validators where available;
-7. run existing browser/layout tests;
-8. inspect at least one real representative XML visually.
+5. compare profile/validation labels;
+6. run paired private validators when references exist;
+7. run public unit/layout tests and build;
+8. visually inspect at least one representative real XML.
 
-During migration, a temporary dual-path comparison helper is acceptable in tests.
+## Stop conditions
 
-Do not ship two user-selectable calculation paths merely for the refactor.
+Investigate before merge if architecture work causes:
 
-## 17. Suggested first-branch file structure
-
-```text
-src/core/
-  measurement.js
-  quantity.js
-  validity.js
-  geometry.js
-  registry.js
-
-src/science/
-  semiconductor.js
-  lifetime.js
-
-src/profiles/
-  isc.js
-  vcpd.js
-
-src/modules/
-  isc.js
-```
-
-Keep the global `PV2000` IIFE/build model for now.
-
-A module-system/bundler migration would add unrelated risk and is not part of this scientific architecture refactor.
-
-## 18. First-branch acceptance criteria
-
-The first implementation branch is complete only when:
-
-- all current tests pass;
-- `npm run build` passes;
-- private ISC and VCPD validators still pass pointwise;
-- ISC/VCPD numerical exports are unchanged;
-- existing UI labels and layouts are unchanged;
-- Generic Inspector fallback is unchanged;
-- registry remains backward-compatible with untouched modules;
-- provenance and availability can be inspected in tests;
-- no profile status changes;
-- no new scientific formula is introduced;
-- no private reference file is committed.
-
-## 19. Stop conditions
-
-Stop the refactor and investigate if any migration causes:
-
-- changed numerical output without an explicit scientific reason;
-- changed invalid/blank behavior;
-- a validated profile becoming inferred;
-- a user filter being confused with availability;
-- a raw channel being replaced by a derived value;
-- a controller result being recomputed without evidence;
+- unexplained numerical drift;
+- changed undefined/blank behavior;
+- a validated path becoming inferred or vice versa without new evidence;
+- user filtering being confused with scientific availability;
+- raw/controller results being replaced by derived values;
 - geometry point order changing;
-- new filename/sample-name inference;
-- UI regressions caused by domain-layer changes.
+- filename/sample-name inference;
+- UI regressions unrelated to the migration.
 
-## 20. Documentation synchronization
+## Documentation synchronization
 
-During each migration:
+When architecture or support changes, update:
 
-- Wiki explains the physics and mathematics;
-- `docs/REFERENCE_PROFILES.md` owns validation profile scope;
-- `docs/VALIDATION.md` owns numerical evidence;
-- `docs/ARCHITECTURE.md` documents the implemented architecture;
-- this plan remains the migration roadmap until all current families are moved.
-
-The architecture should support scientific growth without forcing the Wiki to mirror implementation details.
+- `docs/ARCHITECTURE.md` for implemented runtime contracts;
+- `docs/MEASUREMENT_TYPES.md` for support status;
+- `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md` for evidence;
+- the family algorithm note;
+- the corresponding `main/wiki/` page;
+- `docs/HANDOFF.md` when the current developer state materially changes.

@@ -1,5 +1,7 @@
 # CV and CET
 
+> **Analyzer support:** `CETMeasurement` has a dedicated CET / EOT analyzer. The base CV family is documented here for acquisition/scientific context, but there is currently **no dedicated `CVMeasurement` analyzer**. A CV-shaped XML may still be inspectable through the Generic XML Inspector.
+
 The CV/CET family uses corona charge and Kelvin-probe measurements to control a surface-potential sweep and, in the CET path, estimate an effective capacitance and equivalent oxide thickness.
 
 ## 1. CV acquisition concept

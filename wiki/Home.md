@@ -1,52 +1,53 @@
-# PV-2000 Analyzer Scientific Wiki
+# PV-2000 Analyzer Wiki
 
-PV-2000 Analyzer is a browser-based environment for reading and analyzing PV-2000 XML measurement files. This Wiki collects the physics, mathematics, units, assumptions and measurement semantics used by the project.
+This Wiki is the **user guide and scientific reference** for PV-2000 Analyzer. It explains how to work with PV-2000 XML files, what each dedicated analyzer displays, where calculated quantities come from, and how strongly each result path has been validated.
 
-The Wiki is maintained as a living scientific reference. Each page presents the current best understanding directly.
+**Open the analyzer:** https://xiaolong-6.github.io/PV-2000-Analyzer/
 
 ## Start here
 
-- [Scientific Foundations](Scientific-Foundations)
-- [Measurement Families](Measurement-Families)
-- [Validation and Reference Profiles](Validation-and-Reference-Profiles)
-- [DIT](DIT)
-- [QSS-uPCD](QSS-uPCD)
-- [CV and CET](CV-and-CET)
+1. [Getting Started](Getting-Started) — open a file, use folder navigation, understand local/offline processing.
+2. [Using the Analyzer](Using-the-Analyzer) — common sidebar, filters, maps, distributions, plots and exports.
+3. [Measurement Families](Measurement-Families) — which XML types have dedicated analyzers and which remain unsupported.
+4. [Validation and Reference Profiles](Validation-and-Reference-Profiles) — what “validated”, “inferred” and “unsupported” mean.
 
-## What belongs here
+## Dedicated analyzers
 
-Scientific pages explain:
+| Analyzer | XML type | Main purpose |
+|---|---|---|
+| [DIT / COCOS](DIT) | `DITMeasurement` | surface band bending, Dit, Qtot, Qsc, Cox/EOT |
+| [QSS-µPCD](QSS-uPCD) | `QssUpcdMeasurement` | lifetime maps, Smax, implied Voc, optional Analyzer SRV |
+| [QSS Injection](Dual-QSS) | `DualQssMeasurement` | injection-dependent lifetime and stored transient inspection |
+| [Emitter J0](Emitter-J0) | `JZeroMeasurement` | two-intensity lifetime/Smax/Voc maps and Basore J0 |
+| [ISC / VCPD](ISC-and-VCPD) | `ISCMeasurement`, `VcpdMeasurement` | Kelvin-probe surface-potential results |
+| [CET / EOT](CV-and-CET) | `CETMeasurement` | contactless capacitance, EOT and fit quality |
+| [LBIC](LBIC) | `LBICMeasurement` | photocurrent, reflectivity and IQE mapping |
 
-- what a measurement represents physically;
-- which quantities are measured, stored, corrected or derived;
-- governing equations and symbol definitions;
-- units and dimensional relationships;
-- assumptions and approximations;
-- validity, blanking and undefined conditions;
-- relationships between measurement families;
-- compatibility-model status and validation scope.
+Unknown XML types open in the **Generic XML Inspector**. That fallback exposes stored structure/data; it does not mean the measurement has a dedicated scientific analyzer.
 
-Implementation details, XML-field mappings, tests and exact validation evidence remain in the repository documentation.
+## How to read scientific results
 
-## Validation vocabulary
+PV-2000 Analyzer keeps result provenance explicit. A value can be:
 
-**Validated** — numerically checked against matching PV-2000 output for a stated reference profile.
+- stored directly in XML;
+- evaluated by the instrument/controller before export;
+- corrected from stored readings;
+- derived by a scientific model in the analyzer;
+- calculated by a profile-specific compatibility model;
+- an optional Analyzer-only estimate.
 
-**Reproduced at shown precision** — agreement is established to the precision visible in the available reference output.
+See [Scientific Foundations](Scientific-Foundations) for shared equations and [Validation and Reference Profiles](Validation-and-Reference-Profiles) for evidence terminology.
 
-**Inferred** — the scientific or compatibility model is documented, while matching output has not yet established numerical parity.
+## Validation boundary
 
-**Unsupported** — the project does not currently provide the corresponding scientific result.
+Current version-level vendor validation is anchored to matching PV-2000 files/exports produced by **Semilab PV-2000 v1.3.0.5**. Other versions may load when their schemas are compatible, but they are not automatically version-validated.
 
-## Scientific model and compatibility model
+Validation is always scoped to a particular input→output path. A family can contain a validated geometry path and an inferred optional result at the same time.
 
-A scientific model describes the underlying semiconductor, optical or electrical relationship.
+## Documentation source
 
-A compatibility model describes a calculation used to reproduce a defined reference-output family.
-
-A quantity can have both descriptions. Validation applies to the stated input-to-output profile and is recorded separately from physical plausibility. Current paired examples include the `CET-9PT-SQUARE-001` contactless EOT/capacitance profile.
-
-## Project links
+The reviewed Wiki source lives in the main repository under `wiki/` and is synchronized to the published GitHub Wiki. Exact profile IDs and numerical regression evidence remain in the repository documentation.
 
 - Repository: https://github.com/Xiaolong-6/PV-2000-Analyzer
-- Analyzer: https://xiaolong-6.github.io/PV-2000-Analyzer/
+- Validation profiles: https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/docs/REFERENCE_PROFILES.md
+- Numerical evidence: https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/docs/VALIDATION.md

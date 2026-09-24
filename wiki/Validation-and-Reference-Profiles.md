@@ -74,17 +74,31 @@ A physically correct equation can differ numerically from a historical software 
 
 The project records both the scientific relation and the compatibility status.
 
-## 6. Example: CET fixed-point profile
+## 6. Current profile examples
+
+The current implemented analyzers include several explicitly named profile families, for example:
+
+- `QSS-INJ-RESULT-001` — narrow Dual-QSS teff.d (1 Sun) result path;
+- the JZero calculation/geometry profiles for the paired two-intensity pseudo-square reference;
+- separate ISC and VCPD paired map profiles;
+- `CET-9PT-SQUARE-001` — CET NinePointPattern + SquareCell;
+- `LBIC-SINGLE-001` — current-enabled single-beam LBIC;
+- `LBIC-MULTI-002` — current-enabled multi-beam pseudo-square LBIC;
+- `LBIC-REFLECTANCE-003` — reflectance-only LBIC.
+
+This list is illustrative, not the authoritative profile registry. Exact IDs, matching conditions, tolerances and evidence remain in the repository validation documents.
+
+## 7. Example: CET fixed-point profile
 
 `CET-9PT-SQUARE-001` is a useful example of path-scoped validation. One paired `NinePointPattern + SquareCell` reference validates target-relative fixed-point geometry together with EOT, Cd, R² and the legacy undefined-fit behavior. Other CET geometries can still be importable while remaining inferred until paired output extends the evidence envelope.
 
-## 7. Public and private reference data
+## 8. Public and private reference data
 
 The browser application remains XML-only at runtime.
 
 Reference CSVs, reports and screenshots are development evidence. Public contribution cases can be tracked when publication rights are clear. Confidential or uncleared material remains outside public tracked content.
 
-## 8. Authoritative project records
+## 9. Authoritative project records
 
 Exact profile IDs and validation claims live in:
 
