@@ -150,6 +150,8 @@ npm run validate:isc
 npm run validate:vcpd
 npm run validate:lbic
 npm run validate:cet
+npm run validate:leakage
+npm run validate:spv
 ```
 
 Private validators may skip or require explicit local paths when their reference material is not present in the public checkout. A skip is not a validation pass.
