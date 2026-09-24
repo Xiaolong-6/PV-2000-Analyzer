@@ -54,6 +54,7 @@ Ordinary numeric settings that are inputs to this same formula — for example w
 - `UseEnhancedMode=true`;
 - texture-correction-enabled cases;
 - parsed-signal mode;
+- manual-linearity-ratio (`UseManualLR`) branch;
 - alternate wavelength/configuration families or optical branches not exercised by the pair.
 
 Calculation validation is separate from geometry validation. The current 4 mm RoundWafer map geometry resolves through the shared map geometry profile.
@@ -95,11 +96,13 @@ The paired one-point non-zero coefficient case also establishes the shared targe
 
 ---
 
-### CET-9PT-SQUARE-001 — CET NinePointPattern + SquareCell
+### CET-9PT-SQUARE-001 — CET paired evidence bundle
 
 **Measurement type**
 
 `CETMeasurement`
+
+Runtime validation is split into `CET-CALC-001` for EOT/Cd/R² calculation semantics and `GEOM-NINEPOINT-SQUARE-001` for the paired NinePointPattern + SquareCell coordinate path. `CET-9PT-SQUARE-001` remains the historical evidence-bundle name, not a runtime geometry+algorithm gate.
 
 **Reference material**
 
