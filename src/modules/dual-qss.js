@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Profiles=PV.profiles;
   const esc=v=>PV.ui.escapeHtml(v),help=t=>PV.ui.help(t),css=n=>PV.ui.cssVar(n);
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2&&v!==0?v.toExponential(n):v.toFixed(n);
@@ -25,7 +25,7 @@
   function lifetimeLabel(source='transient'){return source==='values'?'XML Values lifetime':'Lifetime'}
   function pairedTeffdOneSun(d){
     const unavailable=rule=>({value:NaN,available:false,rule,profileId:'QSS-INJ-RESULT-001',validation:'unavailable'});
-    if(d?.patternType!=='OnePointPattern'||d?.targetType!=='RoundWafer'||d?.probe!=='Back'||d?.bias!=='Back'){
+    if(d?.patternType!=='OnePointPattern'||d?.probe!=='Back'||d?.bias!=='Back'){
       return unavailable('outside-paired-profile');
     }
     const pairs=(d.points||[])
@@ -285,7 +285,7 @@
   }
   function pairedDualResults(d){
     const unavailable=rule=>({available:false,profileId:'QSS-INJ-RESULT-001',validation:'unavailable',rule});
-    if(d?.patternType!=='OnePointPattern'||d?.targetType!=='RoundWafer'||d?.probe!=='Back'||d?.bias!=='Back')return unavailable('outside-paired-profile');
+    if(d?.patternType!=='OnePointPattern'||d?.probe!=='Back'||d?.bias!=='Back')return unavailable('outside-paired-profile');
     if(boolValue(d.augerCorrection))return unavailable('auger-unvalidated');
     const values=d.points.map(p=>p.lifetime),intensity=d.points.map(p=>p.intensityMilli);
     if(values.length!==intensity.length||values.length<3)return unavailable('invalid-vectors');
@@ -359,6 +359,9 @@
     const values=vector(item,'Values'),intensity=vector(item,'Intensity'),power=vector(item,'Power'),tr=X.direct(item,'Transients'),transients=tr?X.children(tr).filter(e=>X.lname(e)==='TransientInfo').map(parseTransient):[],n=Math.max(values.length,intensity.length,power.length,transients.length),pattern=X.direct(m,'Pattern'),target=X.direct(m,'Target'),coeff=X.direct(pattern,'Coefficients'),rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[];
     const points=Array.from({length:n},(_,i)=>({intensityMilli:intensity[i],intensitySun:Number.isFinite(intensity[i])?intensity[i]/1000:NaN,lifetime:values[i],power:power[i],transient:transients[i]||null}));
     const targetDiameter=X.num(target,'Diameter',NaN),targetEdge=X.num(target,'EdgeExclusion',NaN),measurementEdge=X.num(m,'EdgeExclusion',NaN),
+      targetSize=X.direct(target,'Size'),
+      targetWidth=X.num(targetSize,'Width',NaN),
+      targetHeight=X.num(targetSize,'Height',NaN),
       diameter=Number.isFinite(targetDiameter)?targetDiameter:Number.isFinite(c.radius)?2*c.radius:NaN,
       edgeExclusion=Number.isFinite(targetEdge)?targetEdge:measurementEdge,
       geometryModel=GEO.resolveMeasurementGeometry({
@@ -367,11 +370,19 @@
         rawCoefficients,
         pointCount:1,
         diameter,
+        targetWidth,
+        targetHeight,
         edgeExclusion,
         substrateShape:c.shapeType,
         substrateRadius:c.radius
-      });
-    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,rawCoefficients,targetType:X.attrType(target),diameter,edgeExclusion,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity'),validQdcRange:nodeRange(m,'ValidQdcRange',.9,1.1),jZeroIntensity:nodeRange(m,'JZeroIntensity',1,5)};
+      }),
+      resolvedGeometryProfile=geometryModel.geometryStatus==='complete'
+        ?Profiles.resolveGeometry({geometryModel})
+        :null,
+      geometryProfile=resolvedGeometryProfile
+        ?{id:resolvedGeometryProfile.id,status:resolvedGeometryProfile.status}
+        :{id:null,status:geometryModel.pointsMm.length?'inferred':'unsupported'};
+    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,geometryProfile,rawCoefficients,targetType:X.attrType(target),targetWidth,targetHeight,diameter,edgeExclusion,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity'),validQdcRange:nodeRange(m,'ValidQdcRange',.9,1.1),jZeroIntensity:nodeRange(m,'JZeroIntensity',1,5)};
   }
   function measurementGeometry(d){
     const resolved=d?.geometryModel;
@@ -381,6 +392,17 @@
         onePoint:d?.patternType==='OnePointPattern',
         radius:resolved.nominal.radius,
         innerRadius:Number.isFinite(resolved.scheduled?.radius)?resolved.scheduled.radius:NaN,
+        coord:d?.coord||resolved.pointsMm?.[0]||{x:0,y:0}
+      };
+    }
+    if(resolved?.shape==='rect'&&Number.isFinite(resolved.nominal?.halfWidth)&&Number.isFinite(resolved.nominal?.halfHeight)){
+      return{
+        kind:'rect',
+        onePoint:d?.patternType==='OnePointPattern',
+        halfWidth:resolved.nominal.halfWidth,
+        halfHeight:resolved.nominal.halfHeight,
+        innerHalfWidth:resolved.scheduled?.halfWidth,
+        innerHalfHeight:resolved.scheduled?.halfHeight,
         coord:d?.coord||resolved.pointsMm?.[0]||{x:0,y:0}
       };
     }
@@ -394,9 +416,20 @@
   }
   function positionHtml(d){
     const g=measurementGeometry(d);
-    if(!g.onePoint||g.kind!=='round')return'';
-    const R=82,cx=110,cy=103,scale=R/g.radius,ri=Number.isFinite(g.innerRadius)?g.innerRadius*scale:NaN,px=cx+g.coord.x*scale,py=cy-g.coord.y*scale;
-    return`<div class="panel chart dual-qss-position-panel"><header><b>Measurement position</b>${help('OnePointPattern is a single scheduled measurement, not a spatial heatmap. The outline uses the nominal substrate/target geometry and the dashed line shows EdgeExclusion when available.')}</header><div class="chart-stage dual-qss-position-stage"><svg viewBox="0 0 220 205" role="img" aria-label="Single measurement position on nominal circular substrate"><circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--panel2)" stroke="var(--soft)" stroke-width="2"/>${Number.isFinite(ri)?`<circle cx="${cx}" cy="${cy}" r="${ri}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5,4"/>`:''}<line x1="${cx-R}" x2="${cx+R}" y1="${cy}" y2="${cy}" stroke="var(--grid2)"/><line x1="${cx}" x2="${cx}" y1="${cy-R}" y2="${cy+R}" stroke="var(--grid2)"/><circle cx="${px}" cy="${py}" r="6" fill="var(--blue)" stroke="var(--text)" stroke-width="1.5"/><text x="${cx}" y="199" text-anchor="middle" fill="var(--muted)" font-size="10">Ø${fmt(g.radius*2,0)} mm${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''} · point (${fmt(g.coord.x,1)}, ${fmt(g.coord.y,1)}) mm</text></svg></div></div>`;
+    if(!g.onePoint||!['round','rect'].includes(g.kind))return'';
+    const R=82,cx=110,cy=103,
+      scale=g.kind==='round'?R/g.radius:Math.min(R/g.halfWidth,R/g.halfHeight),
+      px=cx+g.coord.x*scale,py=cy-g.coord.y*scale,
+      nominal=g.kind==='round'
+        ?`<circle cx="${cx}" cy="${cy}" r="${R}" fill="var(--panel2)" stroke="var(--soft)" stroke-width="2"/>`
+        :`<rect x="${cx-g.halfWidth*scale}" y="${cy-g.halfHeight*scale}" width="${2*g.halfWidth*scale}" height="${2*g.halfHeight*scale}" fill="var(--panel2)" stroke="var(--soft)" stroke-width="2"/>`,
+      scheduled=g.kind==='round'&&Number.isFinite(g.innerRadius)
+        ?`<circle cx="${cx}" cy="${cy}" r="${g.innerRadius*scale}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5,4"/>`
+        :g.kind==='rect'&&Number.isFinite(g.innerHalfWidth)&&Number.isFinite(g.innerHalfHeight)
+          ?`<rect x="${cx-g.innerHalfWidth*scale}" y="${cy-g.innerHalfHeight*scale}" width="${2*g.innerHalfWidth*scale}" height="${2*g.innerHalfHeight*scale}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5,4"/>`
+          :'',
+      label=g.kind==='round'?`Ø${fmt(g.radius*2,0)} mm`:`${fmt(g.halfWidth*2,0)} × ${fmt(g.halfHeight*2,0)} mm`;
+    return`<div class="panel chart dual-qss-position-panel"><header><b>Measurement position</b>${help('OnePointPattern is a single scheduled measurement, not a spatial heatmap. Geometry validation is independent from QSS-INJ-RESULT-001 calculation parity.')}</header><div class="chart-stage dual-qss-position-stage"><svg viewBox="0 0 220 205" role="img" aria-label="Single measurement position on nominal target">${nominal}${scheduled}<line x1="${cx-R}" x2="${cx+R}" y1="${cy}" y2="${cy}" stroke="var(--grid2)"/><line x1="${cx}" x2="${cx}" y1="${cy-R}" y2="${cy+R}" stroke="var(--grid2)"/><circle cx="${px}" cy="${py}" r="6" fill="var(--blue)" stroke="var(--text)" stroke-width="1.5"/><text x="${cx}" y="199" text-anchor="middle" fill="var(--muted)" font-size="10">${label}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''} · point (${fmt(g.coord.x,1)}, ${fmt(g.coord.y,1)}) mm</text></svg></div></div>`;
   }
   function analyze(d){
     const life=d.points.map(p=>lifetimeValue(p)),
