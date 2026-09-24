@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
-require('../src/core/stats.js');require('../src/core/geometry.js');require('../src/core/registry.js');
+require('../src/core/stats.js');require('../src/core/geometry.js');require('../src/core/profiles.js');require('../src/profiles/geometry.js');require('../src/core/registry.js');
 PV2000.xml={};PV2000.exporter={csv(){}};
 require('../src/modules/lbic.js');
 const L=PV2000.modules.lbic;
@@ -99,8 +99,10 @@ test('current-enabled parity requires explicit active flags and a known current 
   assert.equal(L.referenceFamily(raw,laser,d),'LBIC-CALC-CURRENT-DIRECT-SCATTERED-001');
   for(const field of Object.keys(CURRENT_FLAGS)){
     assert.equal(L.referenceFamily(raw,laser,{...d,[field]:''}),'');
-    assert.equal(L.referenceFamily(raw,laser,{...d,[field]:'false'}),'');
   }
+  assert.equal(L.referenceFamily(raw,laser,{...d,measureCurrent:'false'}),'');
+  assert.equal(L.referenceFamily(raw,laser,{...d,measureDirect:'false'}),'LBIC-CALC-CURRENT-SCATTERED-002');
+  assert.equal(L.referenceFamily(raw,laser,{...d,measureDiffuse:'false'}),'');
   assert.equal(L.referenceFamily(raw,laser,{...d,currentUnit:''}),'');
   const unknownUnit=L.deriveBeam(raw,laser,{...d,currentUnit:''});
   assert.equal(Object.values(unknownUnit.metrics).some(m=>m.concept==='eqe'||m.concept==='iqe'),false);
@@ -214,7 +216,7 @@ test('paired scattered-only optical path synthesizes Reflectivity without Direct
 });
 
 
-test('partial SquareRegion acquisition can use the leading validated row-major schedule without claiming profile parity',()=>{
+test('partial SquareRegion acquisition keeps calculation parity separate from geometry completeness',()=>{
   const full=PV2000.geometry.rectGrid(-10,-50,60,60,61,61,null,1),
     partial=full.slice(0,2814);
   assert.equal(full.length,3721);
