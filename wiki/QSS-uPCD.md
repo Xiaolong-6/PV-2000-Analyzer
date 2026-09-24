@@ -2,6 +2,19 @@
 
 QSS-uPCD combines an effective-lifetime measurement with illumination, wafer thickness and doping information to derive recombination-related quantities.
 
+## In the analyzer
+
+The `QssUpcdMeasurement` analyzer provides:
+
+- effective-lifetime maps and acquisition/profile views;
+- Smax and profile-specific PV-2000-compatible implied Voc;
+- optional Analyzer-side physical Si/Ge implied-Voc estimates;
+- optional Analyzer SRV post-processing, disabled by default;
+- map, Distribution, filtering and CSV export;
+- explicit handling of non-positive raw lifetime sentinels versus scientifically available values.
+
+The **Valid-data filter** is user analysis state applied after intrinsic lifetime support. It affects summaries and population plots without changing the stored XML lifetime or making an intrinsically unavailable site valid.
+
 ## 1. Lifetime provenance
 
 On the simple QSS-uPCD map path, lifetime is already stored in the measurement data.
