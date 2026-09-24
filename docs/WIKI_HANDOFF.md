@@ -1,120 +1,81 @@
-# Wiki handoff
+# Wiki publication handoff
 
-Source status: **tracked on `main` under `wiki/`**.
+## Source of truth
 
-Purpose: maintain the published GitHub Wiki from version-controlled Markdown sources while feature work continues separately.
+The canonical Wiki source is the version-controlled `wiki/` directory on `main`.
 
-## 1. Wiki source directory
+The live GitHub Wiki is a publication target. Do not treat a direct edit on the live Wiki as authoritative; make the change in `main/wiki/`, review it with the repository change, and let the sync workflow publish it.
 
-Files under **wiki/** are written as publishable Wiki pages, using GitHub Wiki page slugs as filenames.
+## Current page set
 
-Tracked source set (initial Wiki publication 2026-09-23):
+User guide:
 
-- Home.md
-- _Sidebar.md
-- Scientific-Foundations.md
-- Measurement-Families.md
-- Validation-and-Reference-Profiles.md
-- DIT.md
-- QSS-uPCD.md
-- CV-and-CET.md
+- `Home.md`
+- `Getting-Started.md`
+- `Using-the-Analyzer.md`
+- `Measurement-Families.md`
 
-These pages are living documents. Update the current text directly when scientific understanding improves. Git history provides the change record.
+Supported analyzers:
 
-## 2. Writing style
+- `DIT.md`
+- `QSS-uPCD.md`
+- `Dual-QSS.md`
+- `Emitter-J0.md`
+- `ISC-and-VCPD.md`
+- `CV-and-CET.md`
+- `LBIC.md`
 
-Wiki pages present the current scientific model in a continuous narrative.
+Reference:
 
-Preferred content:
+- `Scientific-Foundations.md`
+- `Validation-and-Reference-Profiles.md`
+- `_Sidebar.md`
 
-- physical meaning;
-- equations;
-- symbol definitions;
-- units;
-- derivation/rationale;
-- assumptions;
-- validity conditions;
-- result provenance;
-- relationships to other measurements;
-- validation status.
+## Automatic synchronization
 
-Avoid patch-note language inside scientific pages. Historical correction narratives belong in Git history, changelog or private research notes.
+`.github/workflows/wiki-sync.yml` mirrors `main/wiki/*.md` to the repository's GitHub Wiki after Wiki-source changes reach `main`. The workflow is intentionally one-way so a separately edited Wiki cannot silently override reviewed repository source.
 
-## 3. Public-content boundary
+The workflow:
 
-Wiki pages may contain independently stated physics, mathematics, units, measurement semantics and observed compatibility relationships.
+1. checks out the main repository;
+2. checks out the associated `.wiki` repository;
+3. replaces the published Markdown set with `main/wiki/*.md`;
+4. commits and pushes only when content changed.
 
-Keep the following outside the public Wiki:
+A manual `workflow_dispatch` entry is also available for republishing the current source.
 
-- vendor binaries;
-- debug symbols;
-- decompiled source;
-- internal source/build paths;
-- binary offsets;
-- proprietary implementation fragments;
+## Content boundary
+
+The public Wiki may contain independently stated physics, mathematics, units, measurement semantics and observed compatibility relationships.
+
+Do not copy these materials into the public Wiki:
+
+- proprietary vendor binaries or source fragments;
+- debug symbols or decompiled implementation fragments;
 - raw reverse-engineering logs;
-- private reference files without publication clearance.
+- private reference files without publication clearance;
+- confidential customer/sample information;
+- local filesystem paths that expose private infrastructure.
 
-## 4. Wiki synchronization workflow
+Exact reference-profile IDs and regression tolerances remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
-The Wiki repository is initialized. For future source updates:
+## Markdown rules
 
-    git clone https://github.com/Xiaolong-6/PV-2000-Analyzer.wiki.git
-    cd PV-2000-Analyzer.wiki
-    copy or sync ../PV-2000-Analyzer/wiki/*.md into this repository
-    git add -- Home.md _Sidebar.md Scientific-Foundations.md Measurement-Families.md Validation-and-Reference-Profiles.md DIT.md QSS-uPCD.md CV-and-CET.md
-    git commit -m "Update scientific measurement Wiki"
-    git push
+Use GitHub-compatible Markdown:
 
-Before each push, check for private material, render equations with GitHub-compatible Markdown, and verify the live page. Use `$...$` for inline math and fenced `math` blocks for multiline display equations; standalone multiline `$$` blocks can be parsed as headings in the Wiki.
+- inline math: `$...$`;
+- display math: fenced `math` blocks where practical;
+- Wiki links: page slugs such as `[Dual QSS](Dual-QSS)`;
+- avoid links to untracked/planned pages.
 
-The repository `wiki/` directory remains the editable source of truth. Never copy from `private/` into the Wiki Git repository.
+## Verification after publication
 
-## 5. Source-of-truth split
+After a Wiki-source merge:
 
-Wiki:
-- primary public scientific explanation;
-- equations and derivations;
-- physical interpretation;
-- units and assumptions;
-- validity conditions.
+1. confirm the **Sync Wiki** workflow succeeds;
+2. open the live Home page and Sidebar;
+3. verify newly added/renamed pages resolve;
+4. spot-check display equations and tables;
+5. confirm unsupported families are not presented as dedicated analyzers.
 
-Repository docs:
-- XML/implementation mapping;
-- exact reference-profile IDs;
-- validation evidence;
-- tests;
-- architecture and contributor rules.
-
-For validation status, docs/REFERENCE_PROFILES.md and docs/VALIDATION.md remain authoritative.
-
-## 6. Next Wiki pages
-
-Recommended continuation order:
-
-1. SPV-and-Diffusion-Length
-2. Voc-and-Voc-Mapping
-3. Frequency-Scan
-4. Leakage
-5. Fe-and-LID
-6. Surface-Passivation
-7. Junction-Lifetime
-8. Sheet-Resistance-and-Eddy
-9. Geometry-and-Coordinate-Reconstruction
-10. Dual-QSS
-11. Emitter-J0
-12. ISC
-13. VCPD
-14. LBIC
-
-The local reverse-engineering notebook contains the algorithm-level material needed for these pages.
-
-## 7. Private research handoff
-
-The current private research notebook is:
-
-**PV2000_REFERENCE_ANALYSIS_2026-09-22.md**
-
-It contains the detailed reconstruction ledger, formulas, defaults, managed-result inventory and remaining validation boundaries.
-
-Continue research from its Progress / handoff ledger rather than rescanning completed families.
+If automatic publication is unavailable, a maintainer may clone the `.wiki.git` repository and copy the reviewed `main/wiki/*.md` files manually. The source of truth still remains `main/wiki/`.
