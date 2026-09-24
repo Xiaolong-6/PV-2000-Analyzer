@@ -57,3 +57,10 @@ test('ordinary interval changes stay inside the Leakage profile',()=>{
   });
   assert.equal(p?.id,'LEAKAGE-CALC-VSASS-001');
 });
+
+test('Leakage one-point geometry is rendered as a measurement-position schematic',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8');
+  assert.match(src,/Measurement position/);
+  assert.match(src,/positionSvg/);
+  assert.match(src,/onePoint:true/);
+});
