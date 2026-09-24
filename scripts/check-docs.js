@@ -44,7 +44,7 @@ for(const file of roots){
 const requiredWikiPages=[
   'Home.md','Getting-Started.md','Using-the-Analyzer.md','Measurement-Families.md',
   'DIT.md','QSS-uPCD.md','Dual-QSS.md','Emitter-J0.md','ISC-and-VCPD.md',
-  'CV-and-CET.md','LBIC.md','Scientific-Foundations.md',
+  'CV-and-CET.md','LBIC.md','SPV.md','Leakage.md','Scientific-Foundations.md',
   'Validation-and-Reference-Profiles.md','_Sidebar.md'
 ];
 for(const name of requiredWikiPages){
