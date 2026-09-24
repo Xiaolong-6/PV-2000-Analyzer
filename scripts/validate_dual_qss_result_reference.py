@@ -5,7 +5,7 @@ This validator deliberately separates what is reconstructed from XML from what i
 only an internally consistent relationship among vendor result columns.
 
 Validated from the current paired profile:
-- teff.d (1 Sun): clamped linear interpolation of XML Values versus actual XML Intensity
+- teff.d (1 Sun): only the exact-1000 and below-target endpoint rules exercised by the current real pairs
 - Smax (1 Sun): W / (2 * vendor teff.SS)
 - Smax at maximum teff.SS: W / (2 * vendor teff.SS Max)
 - finite Delta n (1 Sun): generation * vendor teff.SS
@@ -116,6 +116,13 @@ def parse_xml(path: Path):
             f"{path.name}: Intensity/Values count mismatch {len(intensity)} != {len(values)}"
         )
 
+    probe = (child(measurement, "ProbeSelection").text or "").strip() if child(measurement, "ProbeSelection") is not None else ""
+    bias = (child(measurement, "QssBiasSelection").text or "").strip() if child(measurement, "QssBiasSelection") is not None else ""
+    if probe != "Back" or bias != "Back":
+        raise AssertionError(
+            f"{path.name}: QSS-INJ-RESULT-001 expects ProbeSelection=Back and QssBiasSelection=Back"
+        )
+
     return {
         "intensity": intensity,
         "values": values,
@@ -125,12 +132,8 @@ def parse_xml(path: Path):
         "doping_type": (child(measurement, "DopingType").text or "").strip()
         if child(measurement, "DopingType") is not None
         else "",
-        "probe": (child(measurement, "ProbeSelection").text or "").strip()
-        if child(measurement, "ProbeSelection") is not None
-        else "",
-        "bias": (child(measurement, "QssBiasSelection").text or "").strip()
-        if child(measurement, "QssBiasSelection") is not None
-        else "",
+        "probe": probe,
+        "bias": bias,
     }
 
 
