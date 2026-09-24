@@ -175,7 +175,7 @@ Dual QSS can add steady-state correction and optional J0 methods to an injection
 Its scientific elements include:
 
 - QDC-based transient-quality gating;
-- reconstruction of steady-state effective lifetime;
+- reconstruction of steady-state effective lifetime; managed-code inspection shows the reference build uses a log-log **Akima** spline (despite the wrapper class being named `CubicSplineInterpolator`), followed by integration and linear interpolation;
 - excess-carrier-density recalculation;
 - optional Auger correction;
 - Kane-Swanson-style J0;
