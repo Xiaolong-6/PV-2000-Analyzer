@@ -1,7 +1,8 @@
 (function(root){
   const PV=root.PV2000=root.PV2000||{};
   PV.profiles.register({
-    id:'VCPD-MAP-001',
+    id:'VCPD-CALC-001',
+    axis:'calculation',
     familyId:'vcpd',
     measurementTypes:['VcpdMeasurement'],
     status:'validated',
@@ -9,15 +10,10 @@
     matches:data=>
       data?.measurementKind==='vcpd'&&
       data.iterationCount===1&&
-      data.patternType==='MapPattern'&&
-      data.targetType==='RoundWafer'&&
-      data.coordinateSource==='MapPattern + RoundWafer'&&
-      data.coords?.length===data.sites?.length&&
-      data.lightOn==='false'&&
       Number.isFinite(data.offset)&&
       Math.abs(data.offset)<=1e-12&&
       Array.isArray(data.sites)&&
       data.sites.length>0&&
-      data.sites.every(site=>site.darkRaw?.length===1)
+      data.sites.every(site=>site.darkRaw?.length>0)
   });
 })(typeof window!=='undefined'?window:globalThis);

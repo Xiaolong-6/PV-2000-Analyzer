@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
-require('../src/core/stats.js');require('../src/core/selection.js');require('../src/core/geometry.js');require('../src/core/registry.js');
+require('../src/core/stats.js');require('../src/core/selection.js');require('../src/core/geometry.js');require('../src/core/profiles.js');require('../src/profiles/geometry.js');require('../src/core/registry.js');
 PV2000.xml={};PV2000.exporter={csv(){}};
 require('../src/modules/qss-upcd.js');
 const values=[10.02216008,9.403090016,9.183140694,9.034540845,8.866233804,8.90195199,8.75130022,9.172374746,12.69525316];
@@ -16,6 +16,28 @@ test('wafer-map target geometry separates nominal target and scheduled region',(
 });
 test('Smax formula',()=>{const v=PV2000.modules.qss.smax(11.658483155829508,300);assert.ok(Math.abs(v-1286.617)<0.01)});
 test('PV2000-compatible implied Voc is in reference range',()=>{const d={qssMilli:30,waferThickness:300,opticalFactor:.708,doping:1e14,temperatureC:24.494949494949495};const v=PV2000.modules.qss.impliedVoc(11.658483155829508,d);assert.ok(v>0.35&&v<0.38)});
+test('QSS validation metadata separates geometry, stored lifetime, Smax and Voc',()=>{
+  const Q=PV2000.modules.qss,
+    d={
+      values:[100,-1,200],
+      patternType:'HighDensityPattern',
+      qssMilli:1000,
+      waferThickness:200,
+      opticalFactor:1,
+      doping:1e15,
+      temperatureC:25,
+      geometryProfile:{id:'GEOM-HIGHDENSITY-SQUARE-001',status:'validated'}
+    },
+    a=Q.analyze(d);
+  assert.equal(a.geometryProfile.id,'GEOM-HIGHDENSITY-SQUARE-001');
+  assert.equal(a.metrics.lifetime.profileId,'QSS-STORED-LIFETIME-001');
+  assert.equal(a.metrics.smax.profileId,'QSS-CALC-LIFETIME-SMAX-001');
+  assert.equal(a.metrics.smax.validation,'numeric-validated-availability-inferred');
+  assert.equal(a.metrics.voc.profileId,null);
+  assert.equal(a.metrics.voc.validation,'inferred');
+  assert.deepEqual(Q.intrinsicLifetimeMask(d.values,true),[true,false,true]);
+});
+
 test('shared valid-data filter preserves inclusive QSS range semantics',()=>{
   const metrics={lifetime:{key:'lifetime',values:[1,2,3,10]}},
     filter=PV2000.selection.createFilter({metrics,siteCount:4,metricKey:'lifetime'});

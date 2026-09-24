@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Profiles=PV.profiles;
   const Q=1.602176634e-19,K=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI_BASORE_COMPAT=8.626227186463587e9;
   const NI_VOC_300=[1.1136399052670412e10,1.107764334152709e10];
@@ -123,13 +123,11 @@
       evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'',
       completePair=values.length===2&&values[0].length>0&&values[0].length===values[1].length,
       validatedCalculation=completePair&&!incompleteStatus,
-      validatedGeometry=patternType==='MapPattern'&&
-        targetType==='PseudoSquareCell'&&
-        geometryModel.interpretation==='pseudo-square-target-pitch-grid'&&
-        geometryModel.geometryStatus==='complete',
-      geometryStatus=validatedGeometry
-        ?'validated'
-        :geometryModel.geometryStatus==='partial'?'partial':'inferred',
+      resolvedGeometryProfile=geometryModel.geometryStatus==='complete'
+        ?Profiles.resolveGeometry({geometryModel})
+        :null,
+      geometryStatus=resolvedGeometryProfile?.status||
+        (geometryModel.geometryStatus==='partial'?'partial':'inferred'),
       pairedSiteCount=values.length>=2?Math.min(values[0].length,values[1].length):0;
 
     return{
@@ -146,7 +144,7 @@
         status:validatedCalculation?'validated':completePair?'inferred':'incomplete'
       },
       geometryProfile:{
-        id:validatedGeometry?'JZERO-GEOM-MAP-PSEUDOSQUARE-001':null,
+        id:resolvedGeometryProfile?.id||null,
         status:geometryStatus
       },
       iterations:iterations.length,
@@ -213,7 +211,12 @@
     return Q*NI_BASORE_COMPAT*NI_BASORE_COMPAT*(W/4)*slope*1e15;
   }
   function analyze(d){
-    const tau1=d.values[0]||[],
+    const calcProfileId=d.calculationProfile?.id||null,
+      calcValidation=d.calculationProfile?.status==='validated'?'validated':'inferred',
+      vocValidated=d.geometryProfile?.id==='GEOM-MAP-PSEUDOSQUARE-001'&&calcValidation==='validated',
+      vocProfileId=vocValidated?'JZERO-VOC-MAP-PSEUDOSQUARE-001':null,
+      vocValidation=vocValidated?'reproduced-at-shown-precision':'inferred',
+      tau1=d.values[0]||[],
       tau2=d.values[1]||[],
       n=Math.max(d.siteCount||0,tau1.length,tau2.length),
       tau1Full=Array.from({length:n},(_,i)=>Number.isFinite(tau1[i])?tau1[i]:NaN),
@@ -234,6 +237,8 @@
     return{metrics:{
       j0:{
         key:'j0',
+        profileId:calcProfileId,
+        validation:calcValidation,
         short:'Basore J0',
         label:'Basore J0',
         unit:'fA/cm²',
@@ -242,6 +247,8 @@
       },
       tau1:{
         key:'tau1',
+        profileId:calcProfileId,
+        validation:calcValidation,
         short:`τeff.d (${sun(0)})`,
         label:`τeff.d (${sun(0)})`,
         unit:'µs',
@@ -250,6 +257,8 @@
       },
       tau2:{
         key:'tau2',
+        profileId:calcProfileId,
+        validation:calcValidation,
         short:`τeff.d (${sun(1)})`,
         label:`τeff.d (${sun(1)})`,
         unit:'µs',
@@ -258,6 +267,8 @@
       },
       smax1:{
         key:'smax1',
+        profileId:calcProfileId,
+        validation:calcValidation,
         short:`Smax (${sun(0)})`,
         label:`Smax (${sun(0)})`,
         unit:'cm/s',
@@ -266,6 +277,8 @@
       },
       smax2:{
         key:'smax2',
+        profileId:calcProfileId,
+        validation:calcValidation,
         short:`Smax (${sun(1)})`,
         label:`Smax (${sun(1)})`,
         unit:'cm/s',
@@ -274,6 +287,8 @@
       },
       voc1:{
         key:'voc1',
+        profileId:vocProfileId,
+        validation:vocValidation,
         short:`Implied Voc (${sun(0)})`,
         label:`Implied Voc (${sun(0)})`,
         unit:'V',
@@ -282,6 +297,8 @@
       },
       voc2:{
         key:'voc2',
+        profileId:vocProfileId,
+        validation:vocValidation,
         short:`Implied Voc (${sun(1)})`,
         label:`Implied Voc (${sun(1)})`,
         unit:'V',

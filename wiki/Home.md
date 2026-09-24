@@ -22,6 +22,8 @@ This Wiki is the **user guide and scientific reference** for PV-2000 Analyzer. I
 | [ISC / VCPD](ISC-and-VCPD) | `ISCMeasurement`, `VcpdMeasurement` | Kelvin-probe surface-potential results |
 | [CET / EOT](CV-and-CET) | `CETMeasurement` | contactless capacitance, EOT and fit quality |
 | [LBIC](LBIC) | `LBICMeasurement` | photocurrent, reflectivity and IQE mapping |
+| [SPV / Diffusion Length](SPV) | `SPVMeasurement` | two-wavelength SPV diffusion length, derived lifetime and raw SPV channels |
+| [Leakage](Leakage) | `LeakageMeasurement` | VSASS+/VSASS- and leakage indicator from corona-relaxation CPD transients |
 
 Unknown XML types open in the **Generic XML Inspector**. That fallback exposes stored structure/data; it does not mean the measurement has a dedicated scientific analyzer.
 

@@ -23,11 +23,86 @@ This is a validation boundary, not an exact-version runtime whitelist. XML from 
 
 ## Profile registry
 
-### CET-9PT-SQUARE-001 — CET NinePointPattern + SquareCell
+### SPV-CALC-STANDARD-001 — standard two-wavelength SPV map
+
+**Measurement type**
+
+`SPVMeasurement`
+
+**Reference material**
+
+Two private real XML + numeric PV-2000 CSV pairs, each a 1649-site 4 mm `MapPattern + RoundWafer` map.
+
+**Validated / established**
+
+- output set: DL [µm], Tau [µs], SPV8 [mV], SPV6 [mV];
+- standard non-enhanced calculation branch;
+- measured-linearity correction path;
+- wavelength-to-penetration-depth conversion;
+- oxide-thickness correction path used by the paired files;
+- DL acceptance rule: non-positive or >2500 µm becomes unavailable;
+- Tau is derived from DL using the vendor minority-carrier mobility constant;
+- SPV8/SPV6 remain available independently of DL/Tau availability;
+- paired `Ud.` masks for DL/Tau reproduce with zero mismatches.
+
+Across the two pairs, maximum absolute differences are approximately **1.64e-11 µm** for DL and **2.06e-11 µs** for Tau; SPV8/SPV6 agree to floating-point precision.
+
+Ordinary numeric settings that are inputs to this same formula — for example wavelength, temperature, multiplier and positive oxide-thickness magnitude — do not create a new profile by themselves.
+
+**Not validated by this profile**
+
+- `UseEnhancedMode=true`;
+- texture-correction-enabled cases;
+- parsed-signal mode;
+- manual-linearity-ratio (`UseManualLR`) branch;
+- alternate wavelength/configuration families or optical branches not exercised by the pair.
+
+Calculation validation is separate from geometry validation. The current 4 mm RoundWafer map geometry resolves through the shared map geometry profile.
+
+---
+
+### LEAKAGE-CALC-VSASS-001 — Leakage VSASS / LI extraction
+
+**Measurement type**
+
+`LeakageMeasurement`
+
+**Reference material**
+
+Two private real XML + numeric PV-2000 CSV pairs. One contains positive and negative branches; one is positive-only.
+
+**Validated / established**
+
+- mean Vcpd-offset subtraction;
+- time axis from the stored measurement interval;
+- local knot window around 1.2 s;
+- vendor natural cubic spline and end-interval extrapolation behavior;
+- evaluation at `1.2 s - polarity delay`;
+- VSASS+, VSASS- and LI availability semantics;
+- positive-only data preserve VSASS+ while VSASS-/LI remain unavailable.
+
+For the both-polarity pair, maximum absolute differences are approximately **4.3e-14 V** for VSASS+, **1.1e-14 V** for VSASS- and **2.8e-14 V** for LI. The positive-only pair reproduces VSASS+ to approximately **1.8e-15 V**.
+
+The sampling interval is an ordinary numeric input to this spline path and is not used as profile identity.
+
+**Not validated by this profile**
+
+- negative-only Leakage operation;
+- multi-point Leakage result geometry;
+- other material/thickness acquisition branches;
+- the derivative I-V diagnostic as a separately user-facing validated quantity.
+
+The paired one-point non-zero coefficient case also establishes the shared target-relative OnePoint geometry path independently of the scientific calculation profile.
+
+---
+
+### CET-9PT-SQUARE-001 — CET paired evidence bundle
 
 **Measurement type**
 
 `CETMeasurement`
+
+Runtime validation is split into `CET-CALC-001` for EOT/Cd/R² calculation semantics and `GEOM-NINEPOINT-SQUARE-001` for the paired NinePointPattern + SquareCell coordinate path. `CET-9PT-SQUARE-001` remains the historical evidence-bundle name, not a runtime geometry+algorithm gate.
 
 **Reference material**
 

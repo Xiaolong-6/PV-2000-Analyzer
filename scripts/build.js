@@ -16,9 +16,12 @@ const files=[
   'src/core/ui.js',
   'src/core/plot.js',
   'src/core/registry.js',
+  'src/profiles/geometry.js',
   'src/profiles/isc.js',
   'src/profiles/vcpd.js',
   'src/profiles/cet.js',
+  'src/profiles/leakage.js',
+  'src/profiles/spv.js',
   'src/modules/dit.js',
   'src/modules/qss-upcd.js',
   'src/modules/dual-qss.js',
@@ -26,6 +29,8 @@ const files=[
   'src/modules/isc.js',
   'src/modules/lbic.js',
   'src/modules/cet.js',
+  'src/modules/leakage.js',
+  'src/modules/spv.js',
   'src/modules/generic.js',
   'src/app.js'
 ];

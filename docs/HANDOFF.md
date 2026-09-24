@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Current main baseline before this branch: `v20260924.2`.
-- Feature branch: `feat/dual-qss-full-result-parity`.
-- Target release: `v20260924.3`.
-- Scope: complete the already paired Dual QSS final-result path; no new measurement family is added.
+- Current main baseline before this branch: `v20260924.4` audit baseline.
+- Feature branch: `feat/validation-decoupling-p0-p6`.
+- Target follow-up: validation-axis separation plus paired Leakage/SPV implementation.
+- Scope: complete P0–P6 from the cross-profile audit without widening unsupported scientific branches.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -24,11 +24,11 @@ Next work should therefore start with validation-axis separation, not with anoth
 7. perform the sentinel-aware QSS HighDensity pass;
 8. investigate DIT historical regenerated-export drift without weakening the stronger original-pair rules;
 9. re-audit Dual QSS alternate geometries before relaxing its result-profile gate;
-10. only after this refactor add Leakage, then SPV; defer IntensityScan until numeric export evidence is trustworthy.
+10. **completed:** Leakage and the paired standard SPV map path are implemented; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
 
-## Dedicated analyzers on main
+## Dedicated analyzers on this branch
 
 - `DITMeasurement` — Dit / COCOS.
 - `QssUpcdMeasurement` — QSS-µPCD map.
@@ -38,6 +38,8 @@ The detailed evidence and implementation sequence are recorded in `docs/CROSS_PR
 - `VcpdMeasurement` — VCPD, dispatched by the shared Kelvin-probe module.
 - `CETMeasurement` — contactless EOT / capacitance.
 - `LBICMeasurement` — LBIC raster.
+- `SPVMeasurement` — SPV / Diffusion Length.
+- `LeakageMeasurement` — VSASS / leakage indicator.
 - Unknown types — Generic XML Inspector fallback only.
 
 The landing page intentionally separates dedicated analyzers, the Generic Inspector fallback and the project-level PV-2000 v1.3.0.5 validation boundary.
@@ -60,7 +62,7 @@ ISC validates repeated dark/light reading reconstruction to Vcpd Dark, Vcpd Ligh
 
 ### CET
 
-`CET-9PT-SQUARE-001` validates NinePointPattern + SquareCell coordinates, EOT, Cd, R², summary statistics and the historical undefined EOT/Cd + R²=0 behavior.
+The historical `CET-9PT-SQUARE-001` pair now feeds two runtime validation axes: `CET-CALC-001` validates EOT/Cd/R² semantics, while `GEOM-NINEPOINT-SQUARE-001` validates NinePointPattern + SquareCell coordinates. The undefined EOT/Cd + R²=0 behavior remains regressed.
 
 ### LBIC
 
@@ -122,7 +124,9 @@ Never publish private reference files or proprietary vendor material merely to m
 1. Dual QSS: extend `QSS-INJ-RESULT-001` only when new real pairs cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
 2. LBIC: establish calculated diffusion-length behavior from matching real output before implementing DL.
 3. Expand JZero/CET/geometry profiles only when a categorical new path is exercised by paired vendor output.
-4. CV and the other known families remain without dedicated analyzers until real XML + numeric reference pairs support implementation.
+4. SPV: extend beyond the standard paired map path only with matching vendor output for enhanced, texture, parsed-signal or other categorical branches.
+5. Leakage: extend beyond the paired one-point acquisition path only with matching vendor output.
+6. CV, Frequency Scan, Voc/Voc Mapping, Fe/LID, Surface Passivation, Junction Lifetime, Sheet Resistance/Eddy, Height and other known families remain without dedicated analyzers until the real XML + numeric-export gate is met.
 
 ## Validation commands
 
@@ -146,6 +150,8 @@ npm run validate:isc
 npm run validate:vcpd
 npm run validate:lbic
 npm run validate:cet
+npm run validate:leakage
+npm run validate:spv
 ```
 
 Private validators may skip or require explicit local paths when their reference material is not present in the public checkout. A skip is not a validation pass.

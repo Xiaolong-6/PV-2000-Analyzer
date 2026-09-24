@@ -1,6 +1,9 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 global.PV2000={};
 require('../src/core/stats.js');
+require('../src/core/profiles.js');
+require('../src/profiles/geometry.js');
+require('../src/core/geometry.js');
 require('../src/core/registry.js');
 PV2000.xml={direct(){return null},children(){return[]}};
 PV2000.ui={};
@@ -65,12 +68,18 @@ test('Dual QSS does not invent unpaired interior interpolation or profile varian
   assert.equal(interior.available,false);
   assert.equal(interior.rule,'unvalidated-target-placement');
 
-  const wrongProfile=PV2000.modules.dualQss.pairedTeffdOneSun({
+  const squareTarget=PV2000.modules.dualQss.pairedTeffdOneSun({
     ...base,targetType:'SquareCell',
     points:[{intensityMilli:1000,lifetime:200}]
   });
-  assert.equal(wrongProfile.available,false);
-  assert.equal(wrongProfile.rule,'outside-paired-profile');
+  assert.equal(squareTarget.available,true);
+  assert.equal(squareTarget.value,200);
+  const wrongPattern=PV2000.modules.dualQss.pairedTeffdOneSun({
+    ...base,patternType:'SquareRegionPattern',
+    points:[{intensityMilli:1000,lifetime:200}]
+  });
+  assert.equal(wrongPattern.available,false);
+  assert.equal(wrongPattern.rule,'outside-paired-profile');
 });
 
 test('Dual QSS raw lifetime falls back to XML Values when TransientInfo LifeTime is missing',()=>{
@@ -113,6 +122,27 @@ test('missing transient attributes stay missing instead of becoming numeric zero
   assert.deepEqual(parsed.points,[]);
 });
 
+
+test('Dual QSS OnePoint SquareCell resolves geometry independently from final-result calculation',()=>{
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'OnePointPattern',
+    targetType:'SquareCell',
+    rawCoefficients:[{x:0,y:0}],
+    pointCount:1,
+    targetWidth:100,
+    targetHeight:80,
+    edgeExclusion:5
+  });
+  assert.equal(PV2000.profiles.resolveGeometry({geometryModel:g}).id,'GEOM-ONEPOINT-CENTER-001');
+  const view=PV2000.modules.dualQss.measurementGeometry({
+    patternType:'OnePointPattern',
+    geometryModel:g,
+    coord:g.pointsMm[0]
+  });
+  assert.equal(view.kind,'rect');
+  assert.equal(view.halfWidth,50);
+  assert.equal(view.halfHeight,40);
+});
 
 test('Dual QSS OnePoint geometry falls back to circular substrate metadata',()=>{
   const g=PV2000.modules.dualQss.measurementGeometry({

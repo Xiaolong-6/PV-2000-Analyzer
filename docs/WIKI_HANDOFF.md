@@ -24,6 +24,8 @@ Supported analyzers:
 - `ISC-and-VCPD.md`
 - `CV-and-CET.md`
 - `LBIC.md`
+- `SPV.md`
+- `Leakage.md`
 
 Reference:
 

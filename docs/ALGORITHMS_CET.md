@@ -10,7 +10,7 @@ The implemented result quantities are:
 - **Cd** [nF/cm²]
 - **R²** [dimensionless]
 
-The first paired profile is `CET-9PT-SQUARE-001`: `NinePointPattern + SquareCell`.
+The first paired evidence bundle is `CET-9PT-SQUARE-001`: `NinePointPattern + SquareCell`. Runtime validation is decoupled: `CET-CALC-001` owns EOT/Cd/R² calculation parity and `GEOM-NINEPOINT-SQUARE-001` owns the paired coordinate rule.
 
 ## XML path
 
@@ -115,7 +115,7 @@ CET uses the shared architecture:
 
 The Valid-data filter can use EOT, Cd or R². The same active site mask drives result summaries, map, Distribution and filter-aware exports. Raw XML values and per-site fit inputs remain preserved.
 
-## Validation — CET-9PT-SQUARE-001
+## Validation — CET paired evidence
 
 The private paired reference contains 9 sites.
 
@@ -138,7 +138,7 @@ By default it looks for same-basename XML/CSV pairs under `private/reference/cet
 
 ## Profile boundary
 
-`CET-9PT-SQUARE-001` validates:
+The paired evidence validates:
 
 - `CETMeasurement`;
 - `NinePointPattern + SquareCell`;

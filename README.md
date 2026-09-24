@@ -28,8 +28,10 @@ PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab 
 | `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | paired two-intensity map profile validated |
 | `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB | paired map profile validated |
 | `VcpdMeasurement` | VCPD | Vcpd Dark | paired map profile validated |
-| `CETMeasurement` | CET / EOT | EOT, Cd, R² | `CET-9PT-SQUARE-001` validates the current fixed-point path |
+| `CETMeasurement` | CET / EOT | EOT, Cd, R² | `CET-CALC-001` calculation + `GEOM-NINEPOINT-SQUARE-001` paired geometry; historical evidence bundle `CET-9PT-SQUARE-001` |
 | `LBICMeasurement` | LBIC | Current, Reflectivity, IQE plus active raw channels | single-beam, multi-beam pseudo-square and reflectance-only profiles validated |
+| `SPVMeasurement` | SPV / Diffusion Length | DL, Tau, SPV8, SPV6 | paired 4 mm RoundWafer map path validated; DL/Tau availability matches vendor `Ud.` behavior |
+| `LeakageMeasurement` | Leakage | VSASS+, VSASS-, LI | paired one-point paths validate natural-cubic VSASS extraction; positive-only availability is preserved |
 | other | Generic XML Inspector | XML structure and stored values | fallback only; no scientific result claim |
 
 The project-level vendor-version validation boundary is currently anchored to paired files produced by **Semilab PV-2000 v1.3.0.5**. Other releases may load when schemas are compatible, but are not version-validated unless recorded in the reference-profile documentation.

@@ -28,6 +28,8 @@ This directory contains the engineering and validation documentation for PV-2000
 - `ALGORITHMS_VCPD.md` — VCPD.
 - `ALGORITHMS_CET.md` — CET / EOT.
 - `ALGORITHMS_LBIC.md` — LBIC.
+- `ALGORITHMS_SPV.md` — SPV / diffusion length.
+- `ALGORITHMS_LEAKAGE.md` — Leakage VSASS / LI.
 
 These files document XML mapping, compatibility arithmetic and family-specific implementation boundaries. They should not become chronological development diaries.
 

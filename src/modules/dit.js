@@ -4,6 +4,7 @@
     S=PV.stats,
     GEO=PV.geometry,
     Sel=PV.selection,
+    Profiles=PV.profiles,
     q=1.60218e-19,
     k=1.38e-23,
     T=300;
@@ -73,6 +74,12 @@
         substrateRadius:c.radius
       }),
       coords=geometryModel.pointsMm,
+      resolvedGeometryProfile=geometryModel.geometryStatus==='complete'
+        ?Profiles.resolveGeometry({geometryModel})
+        :null,
+      geometryProfile=resolvedGeometryProfile
+        ?{id:resolvedGeometryProfile.id,status:resolvedGeometryProfile.status}
+        :{id:null,status:geometryModel.geometryStatus==='partial'?'partial':coords.length?'inferred':'unsupported'},
       sites=[];
       
     items.forEach((it,si)=>{
@@ -98,7 +105,7 @@
       cocosIIMinVsb:firstNum([m,md],['CocosIIMinVsb','CocosIIMinVSB','COCOSIIMinVsb','COCOSIIMinVSB'],-0.1),
       cocosIIMaxVsb:firstNum([m,md],['CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
       backSurfaceShift:firstBool([m,md],['BackSurfaceShift'],false),
-      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,diameter,edgeExclusion,coords,rawCoefficients,geometryModel,pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
+      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,diameter,edgeExclusion,coords,rawCoefficients,geometryModel,geometryProfile,pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
         
   }
 

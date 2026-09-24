@@ -17,7 +17,9 @@
     "style:check": "node scripts/check-source-density.js",
     "check": "npm run lint && npm run style:check && npm run docs:check && npm test",
     "docs:check": "node scripts/check-docs.js",
-    "validate:dual-qss-runtime-results": "node scripts/validate_dual_qss_runtime_reference.js"
+    "validate:dual-qss-runtime-results": "node scripts/validate_dual_qss_runtime_reference.js",
+    "validate:leakage": "node scripts/run_python.js scripts/validate_leakage_reference.py",
+    "validate:spv": "node scripts/run_python.js scripts/validate_spv_reference.py"
   },
   "license": "AGPL-3.0-only",
   "author": "Xiaolong Liu",

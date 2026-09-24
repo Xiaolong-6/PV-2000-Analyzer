@@ -8,6 +8,7 @@ require('../src/core/quantity.js');
 require('../src/core/selection.js');
 require('../src/core/measurement.js');
 require('../src/core/profiles.js');
+require('../src/profiles/geometry.js');
 require('../src/core/registry.js');
 require('../src/profiles/isc.js');
 require('../src/profiles/vcpd.js');
@@ -162,7 +163,7 @@ test('ISC analysis exposes the three manual-defined result quantities with sampl
 test('ISC quantities expose provenance and profile metadata without changing values',()=>{
   const d={
     measurementKind:'isc',
-    profile:{id:'ISC-MAP-001',status:'validated'},
+    calculationProfile:{id:'ISC-CALC-001',status:'validated'},
     sites:[
       {dark:1,light:.5,vsb:.5},
       {dark:2,light:1.25,vsb:.75}
@@ -171,7 +172,7 @@ test('ISC quantities expose provenance and profile metadata without changing val
   const a=ISC.analyze(d);
   assert.equal(a.metrics.dark.provenance,PV2000.quantity.PROVENANCE.CORRECTED);
   assert.equal(a.metrics.light.provenance,PV2000.quantity.PROVENANCE.DERIVED_COMPATIBILITY);
-  assert.equal(a.metrics.vsb.profileId,'ISC-MAP-001');
+  assert.equal(a.metrics.vsb.profileId,'ISC-CALC-001');
   assert.equal(a.metrics.vsb.validation,'validated');
   assert.deepEqual(a.metrics.vsb.values,[.5,.75]);
   assert.deepEqual(PV2000.validity.mask(a.metrics.vsb.availability),[true,true]);
@@ -196,18 +197,31 @@ test('ISC domain attachment preserves geometry and resolves the validated profil
     targetWidth:100,
     targetHeight:100,
     edgeExclusion:30,
+    resolvedGeometry:PV2000.geometry.resolveMeasurementGeometry({
+      patternType:'MapPattern',
+      targetType:'SquareCell',
+      pointCount:1,
+      targetWidth:100,
+      targetHeight:100,
+      edgeExclusion:30,
+      pitchX:40,
+      pitchY:40
+    }),
     readingsPerSite:1,
     measurementInterval:.02,
     lightOn:'',
     temperatureC:23
   };
   ISC.attachDomain(d);
-  assert.equal(d.profile.id,'ISC-MAP-001');
+  assert.equal(d.calculationProfile.id,'ISC-CALC-001');
+  assert.equal(d.geometryProfile.id,'GEOM-MAP-SQUARE-001');
   assert.equal(d.domain.familyId,'isc');
-  assert.equal(d.domain.profile.status,'validated');
+  assert.equal(d.domain.calculationProfile.status,'validated');
+  assert.equal(d.domain.geometryProfile.status,'validated');
   assert.equal(d.domain.geometry.shape,'rect');
   assert.equal(d.domain.geometry.validationStatus,'validated');
-  assert.deepEqual(d.domain.geometry.points,[{x:0,y:0}]);
+  assert.ok(Math.abs(d.domain.geometry.points[0].x)<1e-12);
+  assert.ok(Math.abs(d.domain.geometry.points[0].y)<1e-12);
 });
 
 test('registry exposes migrated module metadata while preserving type resolution',()=>{
@@ -243,8 +257,9 @@ test('explicit coefficient geometry does not inherit the validated ISC profile',
     temperatureC:23
   };
   ISC.attachDomain(d);
-  assert.equal(d.profile,null);
-  assert.equal(d.domain.profile,null);
+  assert.equal(d.calculationProfile.id,'ISC-CALC-001');
+  assert.equal(d.domain.calculationProfile.id,'ISC-CALC-001');
+  assert.equal(d.geometryProfile,null);
   assert.equal(d.domain.geometry.validationStatus,'inferred');
 });
 

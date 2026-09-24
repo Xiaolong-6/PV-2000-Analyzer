@@ -225,13 +225,37 @@ Remove Pattern/Target from the final-result calculation identity only after alte
 
 ### P6 — new measurement families
 
-After the profile refactor is stable:
+Completed on the validation-decoupling branch:
 
-1. **LeakageMeasurement** — lowest-complexity new dedicated analyzer; two successful harness references already exist.
-2. **SPVMeasurement** — implement only the paired map path first (DL, Tau, SPV channels) and keep unsupported profiles conservative.
-3. **IntensityScanMeasurement** — defer scientific implementation until a trustworthy numeric result export can be produced; XML-only/raw inspection remains acceptable.
+1. **LeakageMeasurement** — dedicated analyzer added. Two real XML+CSV pairs reproduce VSASS+/VSASS-/LI through the recovered natural-cubic extraction path to floating-point precision. The positive-only availability branch is covered.
+2. **SPVMeasurement** — dedicated paired-map analyzer added for DL, Tau, SPV8 and SPV6. Two 1649-site 4 mm RoundWafer pairs reproduce DL/Tau at ~1e-11 absolute scale and preserve the vendor `Ud.` mask exactly.
+3. **IntensityScanMeasurement** — remains deferred. The vendor class exposes raw acquisition data but no independent `CreateDataValues()` scientific-result path, and both attempted harness exports fail at that missing method.
+
+Calculation and geometry validation remain separate for both new analyzers. Additional SPV modes and broader Leakage acquisition/geometry paths require new paired evidence before profile expansion.
 
 Calibration measurements remain outside this roadmap unless there is a separate need to inspect them without hardware.
+
+## P6 self-audit result
+
+- CET was also re-audited because it remained the last dedicated runtime profile that coupled calculation identity to one Pattern/Target. It now resolves `CET-CALC-001` and `GEOM-NINEPOINT-SQUARE-001` independently; the historical `CET-9PT-SQUARE-001` name remains an evidence bundle only.
+- P0–P5 calculation/geometry/quantity separation remains intact after adding the two new families.
+- Leakage uses a calculation profile independent from the validated target-relative one-point geometry profile.
+- SPV uses a calculation profile independent from the shared RoundWafer map geometry profile.
+- SPV default filtering is based on a raw SPV channel so quantity-specific DL/Tau `Ud.` sites do not erase otherwise valid raw-channel sites.
+- Parsed-signal and enhanced-mode SPV DL are deliberately unavailable rather than silently applying the standard scalar formula outside its paired evidence envelope.
+- DLL re-audit found the historical temperature-correction parameter-order quirk: the stored LED6 coefficient is applied to SPV8 and LED8 to SPV6. Runtime and private validator now preserve that behavior; a non-zero-coefficient unit test locks it. Manual-linearity mode remains outside the paired validated profile.
+- IntensityScan remains a raw/fallback case; no unsupported derived scientific output was invented.
+### Final P6 acceptance run
+
+A private CI job checked out this public feature branch and ran the shipped public validators directly against the private real reference pairs:
+
+- Leakage: 2 / 2 pairs passed; maximum absolute errors were approximately 4.26e-14 V (VSASS+), 1.07e-14 V (VSASS-) and 2.84e-14 V (LI).
+- SPV: 2 / 2 1649-site pairs passed; DL maximum absolute error was 1.64e-11 µm, Tau 2.06e-11 µs, raw SPV-channel error <= 1.78e-15 mV, and every availability-mask comparison had zero mismatches.
+- Browser smoke: 4 / 4 representative real XMLs dispatched to the dedicated analyzer and rendered without page errors, console errors or dialogs.
+- Visual review of the generated screenshots found one Leakage one-point aspect-ratio defect; the shared equal-aspect range helper was then applied and the full private acceptance workflow was rerun successfully.
+- Final visual review confirms complete circular and square target outlines, correct selected-point placement, populated SPV map/distribution views, and quantity-specific DL/Tau unavailability without loss of raw SPV channels.
+
+The private files, screenshots and vendor binaries remain outside the public repository.
 
 ## Acceptance criteria for the refactor
 

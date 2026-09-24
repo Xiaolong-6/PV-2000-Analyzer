@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260924.5 — 2026-09-24
+
+- Decoupled calculation-profile, geometry-profile and quantity-level validation metadata across the measurement-domain architecture, preserving existing validated numerical paths while allowing geometry evidence to evolve independently.
+- Added paired `LeakageMeasurement` support with `LEAKAGE-CALC-VSASS-001`; two real XML+CSV pairs reproduce natural-cubic VSASS+/VSASS-/LI extraction to floating-point precision, including the positive-only availability branch.
+- Added paired `SPVMeasurement` support with `SPV-CALC-STANDARD-001`; two 1649-site 4 mm RoundWafer pairs reproduce DL/Tau to approximately 2e-11 absolute error, raw SPV8/SPV6 to floating-point precision and the vendor `Ud.` mask with zero mismatches.
+- Added target-relative non-center OnePoint geometry support plus independent geometry profiles, and kept parsed-signal/enhanced SPV branches outside the validated calculation envelope.
+- Aligned SPV with the shared Valid-data filter, map, Distribution, axes/bins and export UI contracts; updated landing-page analyzer inventory, README, validation docs and tracked Wiki source.
+- Kept `IntensityScanMeasurement` deferred after confirming the current vendor class has raw-data export semantics but no independent scientific `CreateDataValues()` result path.
+- P6 self-audit corrected the recovered SPV temperature-coefficient cross-mapping, kept manual-linearity mode outside the paired profile, and split CET runtime validation into `CET-CALC-001` plus `GEOM-NINEPOINT-SQUARE-001`.
 ## v20260924.4 — 2026-09-24
 
 - Audited 30 newly harness-paired private cases across the seven already implemented measurement families, first through the existing validators and then with calculation and geometry parity separated.

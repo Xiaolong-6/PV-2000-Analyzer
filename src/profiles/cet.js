@@ -2,13 +2,15 @@
   const PV=root.PV2000=root.PV2000||{};
 
   PV.profiles.register({
-    id:'CET-9PT-SQUARE-001',
+    id:'CET-CALC-001',
+    axis:'calculation',
     familyId:'cet',
+    measurementTypes:['CETMeasurement'],
     status:'validated',
+    outputQuantities:['cet-eot','cet-cd','cet-r2'],
     matches:data=>
       data?.type==='CETMeasurement'&&
-      data?.patternType==='NinePointPattern'&&
-      data?.targetType==='SquareCell'&&
-      data?.geometryModel?.interpretation==='target-relative-fixed-point-pattern'
+      data?.sites?.length>0&&
+      Number.isFinite(data.coronaCharge)
   });
 })(typeof window!=='undefined'?window:globalThis);

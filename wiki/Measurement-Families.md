@@ -14,6 +14,8 @@ This page separates **dedicated runtime analyzers** from measurement families th
 | [VCPD](ISC-and-VCPD) | `VcpdMeasurement` | stored/averaged Kelvin-probe readings | implemented; separate paired map profile validated |
 | [CET / EOT](CV-and-CET) | `CETMeasurement` | corona/CPD sweep plus fitted capacitance/EOT | implemented; `CET-9PT-SQUARE-001` validates the current fixed-point path |
 | [LBIC](LBIC) | `LBICMeasurement` | measured photocurrent/reflection channels plus derived Reflectivity/IQE | implemented; three current reference-profile families; calculated DL unsupported |
+| [SPV / Diffusion Length](SPV) | `SPVMeasurement` | raw SPV8/SPV6 plus compatibility DL and DL-derived Tau | implemented; paired 4 mm RoundWafer standard path validated |
+| [Leakage](Leakage) | `LeakageMeasurement` | offset-corrected transient interpolation to VSASS+/VSASS- plus LI | implemented; two paired one-point cases validate the current extraction path |
 
 The **Generic XML Inspector** handles unregistered XML types as a structural/raw-data fallback. It is not listed above because it performs no family-specific scientific reconstruction.
 
@@ -22,10 +24,8 @@ The **Generic XML Inspector** handles unregistered XML types as a structural/raw
 These families may be described in manuals/reference research or may appear in XML collections, but the current application does not provide a dedicated scientific analyzer for them:
 
 - CV acquisition/process family;
-- SPV / Diffusion Length;
 - Frequency Scan;
 - Voc / Voc Mapping / pseudo-I–V;
-- Leakage;
 - Fe / LID / ALID;
 - Surface Passivation;
 - Junction Lifetime;
@@ -44,7 +44,7 @@ DIT, ISC, VCPD and CET share contact-potential/charge concepts. CV is scientific
 
 ### Lifetime and recombination
 
-QSS-µPCD, Dual QSS and Emitter J0 share lifetime/injection concepts but use different data provenance and compatibility paths. They should not be treated as interchangeable representations of the same stored lifetime.
+QSS-µPCD, Dual QSS, Emitter J0 and SPV all expose lifetime-related quantities but use different acquisition physics and provenance. SPV Tau is derived from optical diffusion length, not a transient lifetime. They should not be treated as interchangeable representations of the same stored lifetime.
 
 ### Optical and electrical mapping
 
