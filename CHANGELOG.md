@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260924.2 — 2026-09-24
+
+- Re-audited all public documentation against current main after the Dual QSS result-parity update.
+- Reworked the Wiki from a science-only reference into a user-facing guide plus scientific reference, with dedicated pages for every currently implemented analyzer family.
+- Replaced stale branch-era documentation and future-tense Wiki planning with current source-of-truth rules, current architecture status and explicit unsupported-family gates.
+- Added a version-controlled documentation index and one-way GitHub Actions synchronization from `main/wiki/` to the published GitHub Wiki so the live Wiki no longer drifts from reviewed source.
+- Kept runtime calculations, validation envelopes and analyzer behavior unchanged.
+
 ## v20260924.1 — 2026-09-24
 
 - Added the paired-evidence gate: a new scientific analyzer, derived quantity or calculation path requires at least one real PV-2000 XML plus its matching numeric PV-2000 CSV export; XML-only files may support parsing/raw inspection but not a new calculated result claim.
