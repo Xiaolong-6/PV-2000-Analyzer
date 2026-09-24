@@ -633,5 +633,12 @@
     }
     redraw();
   }
-  PV.modules=PV.modules||{};PV.modules.dualQss={types:['DualQssMeasurement'],parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,pairedTeffdOneSun,pairedDualResults,qdcDetails,minpackSmooth,augmentLogAkima,injectionLevel,impliedVoc,smax,ksJ0,basoreJ0,resultRow,pointRows,measurementGeometry};PV.registry.register(PV.modules.dualQss);
+  PV.modules=PV.modules||{};
+  PV.modules.dualQss={
+    types:['DualQssMeasurement'],
+    parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,
+    pairedTeffdOneSun,pairedDualResults,qdcDetails,minpackSmooth,augmentLogAkima,
+    injectionLevel,impliedVoc,smax,ksJ0,basoreJ0,resultRow,pointRows,measurementGeometry
+  };
+  PV.registry.register(PV.modules.dualQss);
 })(typeof window!=='undefined'?window:globalThis);
