@@ -31,7 +31,7 @@ Z  = 10000 / a^2
 
 When texture correction is disabled, the resulting `Z6` and `Z8` are used directly.
 
-The paired profile exercises the oxide-correction branch. After the optical and LED-temperature corrections, let
+The paired profile exercises the oxide-correction branch. The recovered vendor helper has a historical parameter-order quirk: XML `TemperatureCorrectionCoefficientLED6` is applied to SPV8, while XML `TemperatureCorrectionCoefficientLED8` is applied to SPV6. The Analyzer preserves that compatibility behavior. After the optical and LED-temperature corrections, let
 
 ```text
 R = SPV8_corrected / SPV6_corrected
@@ -65,6 +65,7 @@ Categorical changes that currently remain outside `SPV-CALC-STANDARD-001` includ
 - texture correction enabled;
 - parsed-signal processing;
 - N-type lifetime branch;
+- manual-linearity-ratio (`UseManualLR`) branch;
 - reflectivity-correction branch instead of the paired oxide-correction branch.
 
 These paths remain inferred/unvalidated until matching numeric vendor output is supplied.
