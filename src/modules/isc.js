@@ -47,6 +47,7 @@
     const resolved=d?.resolvedGeometry;
     if(resolved?.shape==='circle'&&resolved.nominal)return{shape:'circle',nominal:resolved.nominal,scheduled:resolved.scheduled};
     if(resolved?.shape==='rect'&&resolved.nominal)return{shape:'rect',nominal:resolved.nominal,scheduled:resolved.scheduled};
+    if(resolved?.shape==='pseudo-square'&&resolved.nominal)return{shape:'pseudo-square',nominal:resolved.nominal,scheduled:resolved.scheduled};
     if(d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)&&d.diameter>0){
       const radius=d.diameter/2,
         scheduledRadius=effectiveHalf(d.diameter,d.edgeExclusion);
@@ -74,28 +75,20 @@
 
   function attachDomain(d){
     const familyId=d.measurementKind==='vcpd'?'vcpd':'isc',
-      profile=d.geometryStatus==='partial'?null:Profiles.resolve(familyId,d),
-      target=targetGeometry(d),
-      validationStatus=profile?.status||(d.coords.length===d.sites.length&&d.coords.length?'inferred':'unsupported'),
-      geometryModel=GEO.envelope({
-        patternType:d.patternType,
-        targetType:d.targetType,
-        shape:target?.shape||'unknown',
-        nominal:target?.nominal||null,
-        scheduled:target?.scheduled||null,
-        points:d.coords,
-        edgeExclusion:d.edgeExclusion,
-        acquisitionOrder:d.coords.length?'x-fast / ascending-y or explicit XML order':'unknown',
-        provenance:d.coordinateSource,
-        validationStatus,
-        geometryStatus:d.geometryStatus,
-        expectedPointCount:d.expectedPointCount,
-        acquiredPointCount:d.sites.length,
-        completionFraction:d.completionFraction,
-        coordinateCompleteness:d.coordinateCompleteness
-      }),
-      profileRef=profile?{id:profile.id,status:profile.status}:null;
-    d.profile=profileRef;
+      calculationProfile=Profiles.resolveCalculation(familyId,d),
+      geometryProfile=Profiles.resolveGeometry(d),
+      calculationRef=calculationProfile?{id:calculationProfile.id,status:calculationProfile.status}:null,
+      geometryRef=geometryProfile?{id:geometryProfile.id,status:geometryProfile.status}:null,
+      geometryValidation=geometryRef?.status||
+        (d.geometryStatus==='partial'?'partial':d.coords.length===d.sites.length&&d.coords.length?'inferred':'unsupported'),
+      geometryModel={
+        ...d.resolvedGeometry,
+        validationStatus:geometryValidation,
+        profileId:geometryRef?.id||null
+      };
+    d.profile=calculationRef;
+    d.calculationProfile=calculationRef;
+    d.geometryProfile=geometryRef;
     d.geometryModel=geometryModel;
     d.domain=M.create({
       type:d.type,
@@ -119,7 +112,13 @@
         :{darkReadings:'VcpdDark',lightReadings:'VcpdLight'},
       settings:{offset:d.offset,factor:d.factor,lightOn:d.lightOn},
       familyData:{siteCount:d.sites.length},
-      profile:profileRef
+      profile:calculationRef,
+      calculationProfile:calculationRef,
+      geometryProfile:geometryRef,
+      validation:{
+        calculation:calculationRef,
+        geometry:geometryRef
+      }
     });
     return d;
   }
@@ -142,6 +141,16 @@
       pitch=X.direct(pattern,'Pitch'),
       pitchX=X.num(pitch,'X',NaN),
       pitchY=X.num(pitch,'Y',NaN),
+      region=X.direct(pattern,'Region'),
+      regionLocation=X.direct(region,'Location'),
+      regionSize=X.direct(region,'Size'),
+      dimension=X.direct(pattern,'Dimension'),
+      regionX=X.num(region,'X',X.num(regionLocation,'X',NaN)),
+      regionY=X.num(region,'Y',X.num(regionLocation,'Y',NaN)),
+      regionWidth=X.num(region,'Width',X.num(regionSize,'Width',NaN)),
+      regionHeight=X.num(region,'Height',X.num(regionSize,'Height',NaN)),
+      nx=X.num(dimension,'X',NaN),
+      ny=X.num(dimension,'Y',NaN),
       size=X.direct(target,'Size'),
       targetWidth=X.num(size,'Width',NaN),
       targetHeight=X.num(size,'Height',NaN),
@@ -172,14 +181,20 @@
         substrateRadius:c.radius,
         pitchX,
         pitchY,
+        regionX,
+        regionY,
+        regionWidth,
+        regionHeight,
+        nx,
+        ny,
         allowPartialPrefix
       }),
       coords=geometryResolved.pointsMm,
-      coordinateBase=targetType==='SquareCell'
-        ?'MapPattern + SquareCell'
-        :isVcpd?'MapPattern + RoundWafer':'MapPattern + RoundWafer (inferred)',
+      coordinateBase=geometryResolved.interpretation&&geometryResolved.interpretation!=='unresolved'
+        ?`${patternType} + ${targetType} · ${geometryResolved.interpretation}`
+        :`${patternType||'unknown pattern'} + ${targetType||'unknown target'}`,
       coordinateSource=coords.length
-        ?(geometryResolved.geometryStatus==='partial'?coordinateBase+' acquisition prefix (partial)':coordinateBase)
+        ?(geometryResolved.geometryStatus==='partial'?coordinateBase+' · acquisition prefix (partial)':coordinateBase)
         :'unavailable';
 
     sites.forEach((site,i)=>{site.coord=coords[i]||null});
@@ -205,6 +220,12 @@
       edgeExclusion,
       pitchX,
       pitchY,
+      regionX,
+      regionY,
+      regionWidth,
+      regionHeight,
+      nx,
+      ny,
       numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),
       numberOfReadings:X.num(m,'NumberOfReadings',NaN),
       readingsPerSite:isVcpd?X.num(m,'NumberOfReadings',NaN):X.num(m,'NumberOfDataPoints',NaN),
@@ -222,8 +243,8 @@
 
   function analyze(d){
     const isVcpd=d.measurementKind==='vcpd',
-      profileId=d.profile?.id||null,
-      validation=d.profile?.status||Q.VALIDATION.INFERRED,
+      profileId=d.calculationProfile?.id||d.profile?.id||null,
+      validation=d.calculationProfile?.status||d.profile?.status||Q.VALIDATION.INFERRED,
       metrics={
         dark:Q.create({
           id:isVcpd?'vcpd-dark':'isc-vcpd-dark',
@@ -392,12 +413,12 @@
       pointY=[b.ymin-(dy||1)/2,b.ymax+(dy||1)/2],
       autoX=geometry?.shape==='circle'
         ?[-geometry.nominal.radius*1.06,geometry.nominal.radius*1.06]
-        :geometry?.shape==='rect'
+        :['rect','pseudo-square'].includes(geometry?.shape)
           ?[-geometry.nominal.halfWidth*1.06,geometry.nominal.halfWidth*1.06]
           :pointX,
       autoY=geometry?.shape==='circle'
         ?[-geometry.nominal.radius*1.06,geometry.nominal.radius*1.06]
-        :geometry?.shape==='rect'
+        :['rect','pseudo-square'].includes(geometry?.shape)
           ?[-geometry.nominal.halfHeight*1.06,geometry.nominal.halfHeight*1.06]
           :pointY,
       aspect=PV.plot.equalAspectRanges(autoX,autoY,W-p.l-p.r,H-p.t-p.b),
@@ -422,6 +443,17 @@
           y0=Y(boundary.halfHeight),
           y1=Y(-boundary.halfHeight);
         ctx.rect(Math.min(x0,x1),Math.min(y0,y1),Math.abs(x1-x0),Math.abs(y1-y0));
+      }else if(geometry?.shape==='pseudo-square'){
+        const n=240,eps=1e-12;
+        for(let i=0;i<=n;i++){
+          const a=2*Math.PI*i/n,ct=Math.cos(a),st=Math.sin(a),
+            rx=Math.abs(ct)>eps?boundary.halfWidth/Math.abs(ct):Infinity,
+            ry=Math.abs(st)>eps?boundary.halfHeight/Math.abs(st):Infinity,
+            rr=Math.min(boundary.radius,rx,ry),
+            px=X(rr*ct),py=Y(rr*st);
+          if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+        }
+        ctx.closePath();
       }
     };
 
