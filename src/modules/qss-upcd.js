@@ -1,5 +1,5 @@
 (function(root){
-  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection;
+  const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Profiles=PV.profiles;
   const q=1.602176634e-19,k=1.380649e-23,KB_EV=8.617333262145e-5;
   const NI300_PV2000_COMPAT=1.517791063348261e10;
   const NI300_MANUAL=1.02e10;
@@ -123,9 +123,16 @@
       regionWidth,
       regionHeight,
       nx,
-      ny
+      ny,
+      allowPartialPrefix:GEO.isIncompleteAcquisitionStatus(c.status)
     }),
-      coords=geometryModel.pointsMm;
+      coords=geometryModel.pointsMm,
+      resolvedGeometryProfile=geometryModel.geometryStatus==='complete'
+        ?Profiles.resolveGeometry({geometryModel})
+        :null,
+      geometryProfile=resolvedGeometryProfile
+        ?{id:resolvedGeometryProfile.id,status:resolvedGeometryProfile.status}
+        :{id:null,status:geometryModel.geometryStatus==='partial'?'partial':coords.length?'inferred':'unsupported'};
       
     const preArray=X.direct(X.direct(m,'PreProcessings'),'ArrayOfPreProcessSettings'),pre0=preArray?X.children(preArray)[0]:null;
     const avgIndex=X.num(m,'Averaging',NaN),
@@ -139,7 +146,7 @@
       evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'';
       
     const qssRange=X.direct(m,'QSSRange');
-    return{...c,values,coords,geometryModel,rawCoefficients:coefficients,patternType,patternName:X.text(pattern,'Name',''),regionX,regionY,regionWidth,regionHeight,nx,ny,highDensityDimension,coefficientCount:coefficients.length,targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
+    return{...c,values,coords,geometryModel,geometryProfile,rawCoefficients:coefficients,patternType,patternName:X.text(pattern,'Name',''),regionX,regionY,regionWidth,regionHeight,nx,ny,highDensityDimension,coefficientCount:coefficients.length,targetType,targetWidth,targetHeight,pitchX,pitchY,diameter,edgeExclusion,mapRadius,mapHalfWidth,mapHalfHeight,
       waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor',1),doping:X.num(m,'Doping',NaN),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower',NaN),
       avgMode,averagingIndex:avgIndex,evaluationMode,autoset:X.text(m,'DoAutoSetting',''),qssMilli:X.num(pre0,'QssLampIntensity',Number(c.header['QSS Intensity'])),temperatureC:X.num(iter,'ChuckTemperature',NaN),measurementVelocity:X.num(iter,'MeasurementVelocity',NaN),tauSteadyStateFactor:X.num(iter,'TauSteadyStateFactor',NaN),qdcValue:X.num(iter,'QDCValue',NaN),
       probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),doRastering:X.text(m,'DoRastering',''),saveTransient:X.text(m,'SaveTransient',''),transient:c.header['Transient']||'',pointAverage:X.text(m,'DoPointAveraging',''),pointAverageCount:X.num(m,'PointAverageCount',NaN),
@@ -202,6 +209,8 @@
     const vocMaterial=opts.vocModel==='physical-ge'?'Ge':'Si',
       physical=opts.vocModel==='physical-si'||opts.vocModel==='physical-ge';
     a.metrics.voc.values=lifetime.map(v=>physical?impliedVocPhysical(v,d,vocMaterial):impliedVoc(v,d));
+    a.metrics.voc.profileId=physical?`QSS-ANALYZER-VOC-${vocMaterial.toUpperCase()}-001`:null;
+    a.metrics.voc.validation=physical?'analyzer-optional':'inferred';
     a.metrics.voc.label=`Implied Voc (${((d.qssMilli||0)/1000).toFixed(2)} sun)`;
     a.metrics.voc.help=physical
       ?`Physical ${vocMaterial} estimate using a material-specific intrinsic-carrier model; this path is not PV-2000-regressed.`
@@ -218,13 +227,20 @@
     return a;
   }
   function analyze(d,options={}){
-    const lifetime=d.values.slice(),smaxVals=lifetime.map(v=>smax(v,d.waferThickness)),vocManual=lifetime.map(v=>impliedVocManual(v,d)),
+    const lifetime=d.values.slice(),
+      smaxVals=lifetime.map(v=>smax(v,d.waferThickness)),
+      vocManual=lifetime.map(v=>impliedVocManual(v,d)),
+      highDensity=d.patternType==='HighDensityPattern',
+      calculationProfile={
+        id:'QSS-CALC-LIFETIME-SMAX-001',
+        status:highDensity?'numeric-validated-availability-inferred':'validated'
+      },
       a={metrics:{
-        lifetime:{key:'lifetime',label:`τeff.d (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'τeff.d',unit:'µs',values:lifetime,help:'Small-perturbation (differential) carrier lifetime measured under the selected steady-state illumination. PV-2000 may encode unavailable sites as -1 µs.'},
-        smax:{key:'smax',label:`Smax (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Smax',unit:'cm/s',values:smaxVals,help:'PV-2000-compatible Smax = W/(2τ). Raw -1 µs sentinel sites are preserved numerically for export/parity but are excluded from scientific analysis by default.'},
-        voc:{key:'voc',label:'Implied Voc',short:'Implied Voc',unit:'V',values:[],help:''},
-        srv:{key:'srv',label:'SRV',short:'SRV',unit:'cm/s',values:[],help:''}
-      },audit:{
+        lifetime:{key:'lifetime',profileId:'QSS-STORED-LIFETIME-001',validation:'stored-controller',label:`τeff.d (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'τeff.d',unit:'µs',values:lifetime,help:'Small-perturbation (differential) carrier lifetime measured under the selected steady-state illumination. PV-2000 may export controller-unsupported sites as Ud.; raw XML values are preserved.'},
+        smax:{key:'smax',profileId:calculationProfile.id,validation:calculationProfile.status,label:`Smax (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Smax',unit:'cm/s',values:smaxVals,help:'PV-2000-compatible Smax = W/(2τ). Raw controller sentinel/unsupported sites are preserved numerically; scientific filtering remains separate from vendor export blanking.'},
+        voc:{key:'voc',profileId:null,validation:'inferred',label:'Implied Voc',short:'Implied Voc',unit:'V',values:[],help:''},
+        srv:{key:'srv',profileId:'QSS-ANALYZER-SRV-001',validation:'analyzer-optional',label:'SRV',short:'SRV',unit:'cm/s',values:[],help:''}
+      },calculationProfile,geometryProfile:d.geometryProfile||null,audit:{
         vocManualStats:S.summary(vocManual.filter(Number.isFinite)),
         rawLifetimeStats:S.summary(lifetime.filter(Number.isFinite)),
         rawSmaxStats:S.summary(smaxVals.filter(Number.isFinite)),
