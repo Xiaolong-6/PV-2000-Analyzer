@@ -58,57 +58,71 @@ Other raw-path regression results:
 
 ## Paired numeric result profile — QSS-INJ-RESULT-001
 
-Two additional **real, matching DualQssMeasurement XML + numeric PV-2000 result CSV pairs** establish a narrow final-result path for `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back`.
+Two **real, matching DualQssMeasurement XML + numeric PV-2000 final-result CSV pairs** establish the current vendor-compatible result path for `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back`, with `UseAugerCorrection=false`.
 
-The final vendor scalar **teff.d (1 Sun)** is taken from the XML `Values` vector, not from the rounded `TransientInfo@LifeTime` field:
+The browser reconstructs the result table from XML only. The CSV is used only by the private regression workflow.
 
-- in the paired high-range case, 1000 mSun is acquired explicitly and XML `Values` at 1000 mSun reproduces the vendor scalar exactly;
-- in the paired low-range case, acquisition ends at 681 mSun and PV-2000 reports the **last acquired XML `Values` element** as teff.d (1 Sun), again exactly.
+### QDC reconstruction
 
-These two cases validate only those target-placement rules. If an acquired sweep spans 1000 mSun without an exact 1000 mSun sample, the analyzer does **not** invent an interpolation rule; that scalar remains unavailable until another matching XML+CSV pair exercises the case. Left-side clamping is likewise not generalized.
+For every stored transient in both pairs, the runtime reproduces the reference-build QDC calculation:
 
-The paired numeric exports also establish the following dependent relationships:
+1. mean of the first 10 transient Y samples is the baseline;
+2. transient polarity is selected from the larger absolute Y extremum;
+3. samples before the selected extremum are removed and the baseline is subtracted;
+4. the vendor `MinPack.DoSmoothing(..., SM=1)` path is reproduced;
+5. smoothed amplitude is inverted to time with clamped linear interpolation;
+6. times at `A`, `A/2`, and `A/4` are evaluated;
+7. `QDC = (t(A/4)-t(A/2)) / (t(A/2)-t(A))`.
 
-```text
-Smax (1 Sun) [cm/s] = 50 * W_um / teff.SS_1sun_us
-Smax at max teff.SS [cm/s] = 50 * W_um / teff.SS_max_us
-```
+Against the original DLL internal QDC arrays, maximum absolute error is approximately **7.92e-11** for the 25-point HighPower pair and **2.67e-12** for the 16-point LowPower pair.
 
-Both pairs reproduce these relations to floating-point precision. In the pair where vendor Δn (1 Sun) is available,
+The configured `ValidQdcRange` is then applied exactly as a **contiguous first-valid through last-valid interval**, not as an independent point mask.
 
-```text
-Δn = 2.38e12 * I_mSun * OpticalFactor * teff.SS_us / W_um
-```
+### Steady-state lifetime reconstruction
 
-at 1000 mSun also reproduces the numeric export to floating-point precision. This confirms the **teff.SS → Smax/Δn** steps; it does not reconstruct teff.SS itself.
+When the bias source is Back and the QDC-filtered measured curve contains at least six points:
 
-The two CSVs additionally expose teff.SS, teff.SS Max, Implied Voc, K-S J0 and Basore J0/undefined state. A private reference-build replay reproduces those exported values and undefined flags, confirming that the files are internally paired. Browser-side reconstruction of those quantities remains unsupported until their XML→result transformations are independently reproduced point-by-point.
-
-### Research-only steady-state path recovered from the reference build
-
-Managed-code inspection of PV-2000 v1.3.0.5 establishes the control flow without making it a browser validation claim:
-
-1. compute transient QDC and retain the contiguous measured interval from the first QDC inside `ValidQdcRange` through the last one inside the range;
-2. require at least six retained lifetime/intensity points;
-3. transform both axes to natural-log space and densify by a factor of 10,000;
-4. despite its class name `CubicSplineInterpolator`, the reference build calls ALGLIB `buildakimaspline`, so this is specifically a **log-log Akima spline**;
-5. locate a local lifetime extremum and keep the dense portion at or above that intensity;
-6. trapezoidally integrate and form the steady-state lifetime curve as
+1. transform intensity and measured lifetime to natural-log coordinates;
+2. densify by a factor of 10,000 with the reference-build **Akima spline** path;
+3. locate the local lifetime extremum and retain the dense curve from that intensity onward;
+4. trapezoidally integrate the dense curve;
+5. evaluate
    `tauSS_i = (Integral_i + tau_i * I_start) / I_i`;
-7. linearly interpolate that corrected curve versus intensity; corrected values are written only inside the corrected domain, with zero outside it;
+6. linearly interpolate the corrected lifetime over the corrected domain;
+7. set corrected acquired points outside that domain to zero;
 8. recompute excess carrier density from the corrected lifetime.
 
-The base QSS path first evaluates `teff.d (1 Sun)` from XML `Values` with a clamped linear interpolator. The Dual QSS path overwrites `teff.SS (1 Sun)` only when 1000 mSun lies inside the corrected steady-state domain; otherwise the base value remains. This explains the two paired result cases without requiring filename- or sample-specific logic.
+The class name in the vendor assembly is `CubicSplineInterpolator`, but managed IL shows that it calls ALGLIB `buildakimaspline`; the implemented compatibility path is therefore specifically **log-log Akima**, not a generic cubic spline.
 
-This recovered control flow is useful reverse-engineering evidence, but the browser still does not expose teff.SS because exact QDC/transient preprocessing plus the complete Akima path have not yet been independently regressed point-by-point against a sufficiently varied real XML+CSV set.
+The base path evaluates `teff.d (1 Sun)` from XML `Values` using the vendor clamped linear interpolation rule. The Dual QSS path overwrites `teff.SS (1 Sun)` only when 1000 mSun lies inside the corrected steady-state domain. Otherwise the base clamped value remains. This reproduces both current real pairs without sample-name-specific logic.
 
-Run the paired numeric validator with:
+### Final scalar parity
+
+The two paired exports contain nine vendor result quantities. The XML-only runtime now reproduces all nine, including quantity-specific undefined state:
+
+| Quantity | HighPower pair | LowPower pair | Current regression |
+|---|---:|---:|---|
+| teff.d (1 Sun) [µs] | 188.5463167 | 236.991629 | exact in both pairs |
+| teff.SS (1 Sun) [µs] | 280.94342922609 | 236.991629 | max abs error ≈ **2.3e-13 µs** |
+| teff.SS Max [µs] | 893.70740338579 | 1984.29119677534 | max abs error ≈ **9.1e-13 µs** |
+| Basore Emitter J0 [fA/cm²] | 199.548389124001 | Ud. | finite value + undefined state reproduced |
+| Δn (1 Sun) [cm⁻³] | 1.91041531873741e15 | Ud. | finite value + undefined state reproduced |
+| Smax (1 Sun) [cm/s] | 62.2901202858062 | 73.8422706061065 | floating-point parity |
+| Smax at max teff.SS [cm/s] | 19.5813528384141 | 8.81927008920825 | floating-point parity |
+| Implied Voc (1 Sun) [V] | 0.596218597067025 | 0.588201537608459 | max abs error ≈ **4.4e-16 V** |
+| K-S Emitter J0 [fA/cm²] | 128.40923475899 | 863.446682273861 | max abs error ≈ **7.3e-12 fA/cm²** |
+
+Basore uses the configured `JZeroIntensity` range and the raw XML `Values` lifetime path. K-S J0 uses the corrected steady-state lifetime / Δn path and the configured `DefaultDeltaN` window. Vendor-zero/undefined behavior is preserved for the paired profile.
+
+The current runtime deliberately rejects this compatibility result path when `UseAugerCorrection=true`; the Auger branch is reverse-engineered but has no real paired numeric result case yet.
+
+Run the public validator launcher with:
 
 ```bash
-npm run validate:dual-qss-results -- <case-dir> [<case-dir> ...]
+npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 ```
 
-Each case directory contains `result.xml` and its matching `result.csv`. The browser never reads the CSV.
+Each private case directory contains `result.xml` and its matching `result.csv`. The browser itself never reads the CSV.
 
 ## Vendor result-table Lifetime remains separate
 
@@ -139,7 +153,7 @@ Using XML wafer thickness and optical factor, the maximum relative discrepancy a
 
 The injection curve uses **PV-2000 raw** `TransientInfo@LifeTime`, falling back to XML `Values` only when the transient lifetime is unavailable. CSV export preserves both XML lifetime fields explicitly.
 
-For `QSS-INJ-RESULT-001`, Results summary also shows the paired-validated **teff.d (1 Sun)** scalar when the imported XML exercises one of the two validated target-placement rules above. Other final-result quantities remain absent rather than being guessed.
+For `QSS-INJ-RESULT-001`, Results summary exposes the paired-validated final result quantities that are available for the imported XML, and the result-table export preserves vendor-compatible units plus `Ud.` availability semantics. Outside that profile, the analyzer keeps the raw XML/transient views without inventing vendor results.
 
 Logarithmic X is the default because the supplied schedules span orders of magnitude. Clicking a curve point opens the corresponding stored transient and marks `TimeCursor`. Additional `DualQssMeasurement` XMLs can be loaded locally for LP/HP or repeat overlays; this overlay is an analyzer feature, not a claimed vendor stitching algorithm.
 
@@ -147,22 +161,19 @@ Logarithmic X is the default because the supplied schedules span orders of magni
 
 Six additional `OnePointPattern` XMLs exercise high-range injection schedules with `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They confirm that these recipe requests occur on the same raw Dual QSS schema and that the one-point geometry remains meaningful context.
 
-No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The separate two-pair `QSS-INJ-RESULT-001` evidence validates the narrow teff.d (1 Sun) scalar path described above, but does not validate browser-side Basore-Hansen J0, Kane-Swanson J0, teff.SS, Implied Voc or general Δn availability.
+No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The two-pair `QSS-INJ-RESULT-001` validates the full non-Auger Back/Back result path only for its two real paired cases; these six XML-only files do not widen that validation envelope.
 
-## J0 and unresolved post-processing
+## Remaining compatibility boundaries
 
-The XML exposes `CalculateJZeroParams`, `IncludeKSJ0`, `UseAugerCorrection`, `DeltaTauLimitForJ0Calc`, `DefaultDeltaN` and `DefaultDeltaNRangeInPercentage`. These remain metadata.
+The XML exposes `CalculateJZeroParams`, `IncludeKSJ0`, `UseAugerCorrection`, `DeltaTauLimitForJ0Calc`, `DefaultDeltaN` and `DefaultDeltaNRangeInPercentage`.
 
-Still unsupported as vendor-compatible derived results:
+Still outside the validated browser compatibility envelope:
 
-- XML/raw lifetime → teff.SS curve/transformation;
-- teff.SS Max reconstruction;
-- general Δn availability outside the paired finite case;
-- Implied Voc processing;
-- Basore-Hansen J0;
-- Kane-Swanson J0;
+- `UseAugerCorrection=true`;
+- source selections other than the paired Back/Back path;
+- a sweep that crosses 1000 mSun without an acquired 1000-mSun point;
+- multi-iteration or structurally different Dual QSS XML;
+- generalization of the scalar result path to the broader 273-pair raw-export corpus;
 - vendor LP/HP stitching semantics, if any.
 
-The validated teff.d (1 Sun) scalar must remain separate from these unresolved paths.
-
-Do not substitute the spatial QSS-map formulas or a plausible integration approximation for these result-table quantities without pointwise regression.
+The raw 273-pair corpus and the two-pair numeric result profile remain separate evidence sets. New categorical branches require their own real XML + matching numeric PV-2000 CSV before the runtime profile is widened.

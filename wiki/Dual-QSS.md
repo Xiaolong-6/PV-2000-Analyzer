@@ -70,15 +70,15 @@ Those downstream equations do not by themselves establish how PV-2000 transforms
 
 Injection-dependent lifetime can support Kane–Swanson- or Basore-style emitter-saturation-current analysis. The scientific concept is documented in [Scientific Foundations](Scientific-Foundations) and [Emitter J0](Emitter-J0).
 
-For Dual QSS, the vendor-compatible teff.SS and J0 transformations remain outside runtime until their XML→result behavior is reproduced point-by-point from real paired files.
+For `QSS-INJ-RESULT-001`, the vendor-compatible teff.SS and J0 transformations are implemented in runtime and validated point-by-point against two real XML+numeric-CSV pairs. This remains a profile-scoped result path; Auger correction and alternate source-selection branches are not generalized without their own pairs.
 
 ## Validation status
 
 Current evidence separates two boundaries:
 
 - the raw injection/transient path is validated on a large paired corpus;
-- `QSS-INJ-RESULT-001` validates the narrow teff.d (1 Sun) behavior described above.
+- `QSS-INJ-RESULT-001` uses two real XML+numeric-CSV pairs to validate the complete non-Auger Back/Back final scalar path: QDC, teff.d, teff.SS, teff.SS Max, Δn, both Smax values, implied Voc, Basore J0 and K-S J0.
 
-teff.SS, teff.SS Max, implied Voc and J0 remain **unsupported as vendor-compatible browser results**.
+The compatibility result path remains profile-scoped. Auger correction, alternate source selections and other categorical result branches stay unavailable until matching vendor output validates them.
 
 Exact corpus counts, tolerances and profile details are maintained in the repository validation documentation.

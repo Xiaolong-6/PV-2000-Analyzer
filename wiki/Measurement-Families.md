@@ -8,7 +8,7 @@ This page separates **dedicated runtime analyzers** from measurement families th
 |---|---|---|---|
 | [DIT / COCOS](DIT) | `DITMeasurement` | corrected Kelvin-probe/corona data plus analyzer-derived semiconductor/Dit results | implemented; validation is path/profile dependent; COCOS-II inferred |
 | [QSS-µPCD](QSS-uPCD) | `QssUpcdMeasurement` | stored/controller lifetime plus derived Smax/Voc and optional Analyzer SRV | implemented; map profiles have paired validation |
-| [Dual QSS](Dual-QSS) | `DualQssMeasurement` | stored injection/transient data plus narrow profile-scoped result reconstruction | implemented; raw path validated; teff.d (1 Sun) has a narrow paired profile; teff.SS/Voc/J0 unsupported |
+| [Dual QSS](Dual-QSS) | `DualQssMeasurement` | stored injection/transient data plus profile-scoped steady-state/Voc/J0 reconstruction | implemented; raw path validated; two-pair `QSS-INJ-RESULT-001` validates the non-Auger Back/Back final scalar result table |
 | [Emitter J0](Emitter-J0) | `JZeroMeasurement` | two lifetime states plus derived Smax/Voc/J0 | implemented; paired two-intensity map path validated |
 | [ISC](ISC-and-VCPD) | `ISCMeasurement` | corrected/derived repeated Kelvin-probe readings | implemented; paired map profile validated |
 | [VCPD](ISC-and-VCPD) | `VcpdMeasurement` | stored/averaged Kelvin-probe readings | implemented; separate paired map profile validated |

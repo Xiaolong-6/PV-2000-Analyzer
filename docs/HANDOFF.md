@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main before this documentation audit: `v20260924.1`.
-- Documentation/Wiki audit branch: `docs/main-wiki-audit-20260924`.
-- Audit target version: `v20260924.2`.
-- Runtime behavior and scientific calculations are intentionally unchanged by this audit.
+- Current main baseline before this branch: `v20260924.2`.
+- Feature branch: `feat/dual-qss-full-result-parity`.
+- Target release: `v20260924.3`.
+- Scope: complete the already paired Dual QSS final-result path; no new measurement family is added.
 
 ## Dedicated analyzers on main
 
@@ -27,7 +27,7 @@ The landing page intentionally separates dedicated analyzers, the Generic Inspec
 
 The canonical raw lifetime remains `TransientInfo@LifeTime`, with XML `Values` kept as a distinct stored vector/fallback. The expanded private raw corpus contains 273 exact XML/CSV pairs and 5833 injection points.
 
-`QSS-INJ-RESULT-001` adds a narrow paired numeric result path: vendor `teff.d (1 Sun)` is reproduced exactly from XML `Values` for the observed exact-1000 mSun case and the observed below-target endpoint case. Browser runtime still does not expose teff.SS / teff.SS Max, implied Voc or J0 as vendor-compatible derived results.
+`QSS-INJ-RESULT-001` now reconstructs the complete nine-scalar vendor result path for two real non-Auger Back/Back XML+CSV pairs. QDC matches original DLL internals to ≤7.92e-11 absolute error; teff.d, teff.SS, teff.SS Max, Δn, both Smax values, implied Voc, Basore J0 and K-S J0 all match the numeric vendor exports within floating-point tolerances, including the LowPower Basore/Δn `Ud.` states. Runtime remains XML-only.
 
 ### JZero
 
@@ -98,7 +98,7 @@ Never publish private reference files or proprietary vendor material merely to m
 
 ## Remaining high-priority scientific gaps
 
-1. Dual QSS: reproduce teff.SS / teff.SS Max from XML on additional paired result cases before exposing the dependent vendor-compatible Δn/Voc/J0 paths.
+1. Dual QSS: extend `QSS-INJ-RESULT-001` only when new real pairs cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
 2. LBIC: establish calculated diffusion-length behavior from matching real output before implementing DL.
 3. Expand JZero/CET/geometry profiles only when a categorical new path is exercised by paired vendor output.
 4. CV and the other known families remain without dedicated analyzers until real XML + numeric reference pairs support implementation.
@@ -119,6 +119,7 @@ npm run validate:dit
 npm run validate:qss
 npm run validate:dual-qss
 npm run validate:dual-qss-results
+npm run validate:dual-qss-runtime-results
 npm run validate:jzero
 npm run validate:isc
 npm run validate:vcpd

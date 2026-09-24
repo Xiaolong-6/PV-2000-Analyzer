@@ -8,7 +8,7 @@ This page is the repository-level index of dedicated analyzer support. “Implem
 |---|---|---|---|
 | `DITMeasurement` | Dit / COCOS | Vcpd/Vsb curves, discrete Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT, site filtering and spatial context | Standard-COCOS-related evidence is profile-scoped; COCOS-II remains inferred |
 | `QssUpcdMeasurement` | QSS-µPCD | lifetime map, Smax, PV-2000-compatible implied Voc, optional physical Si/Ge estimate, optional Analyzer SRV, filtering/maps/distribution/profiles | paired map profiles; sentinel and geometry boundaries are explicit |
-| `DualQssMeasurement` | QSS Injection | one-point injection sweep, canonical raw lifetime, stored transients, LP/HP/repeat overlays, exports, validated teff.d (1 Sun) result rule | 273 raw XML/CSV pairs / 5833 points plus `QSS-INJ-RESULT-001`; teff.SS, implied Voc and J0 remain unsupported in runtime |
+| `DualQssMeasurement` | QSS Injection | one-point injection sweep, canonical raw lifetime, stored transients, LP/HP/repeat overlays, paired vendor-compatible teff.d/teff.SS/teff.SS Max/Δn/Smax/Voc/Basore J0/K-S J0 result table and exports | 273 raw XML/CSV pairs / 5833 points plus two-pair `QSS-INJ-RESULT-001`; full non-Auger Back/Back scalar result parity validated for those two real pairs |
 | `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels, Basore J0, map/distribution/filter/export; incomplete acquisitions degrade per quantity | paired two-intensity pseudo-square path validated; alternate/incomplete geometry remains profile-scoped |
 | `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB, repeated-reading inspection, map/distribution/filter/export | paired `MapPattern + SquareCell` path validated |
 | `VcpdMeasurement` | VCPD | Vcpd Dark, map/distribution/filter/export | paired `MapPattern + RoundWafer` path validated |
@@ -49,7 +49,7 @@ XML-only files may justify parser work, raw-value display or an explicitly **inf
 
 ## Current high-value validation gaps
 
-- Dual QSS: establish the XML→teff.SS / teff.SS Max transformation on additional paired numeric cases before exposing it; implied Voc and J0 follow only after that lifetime path is pointwise reproduced.
+- Dual QSS: broaden `QSS-INJ-RESULT-001` only when new real XML+CSV pairs exercise Auger correction, alternate source selections, different 1000-mSun placement or other categorical result branches.
 - LBIC: calculated diffusion length remains unsupported until the vendor DL transformation is established from matching real output.
 - JZero/CET/other implemented families: expand categorical geometry/result envelopes only when matching vendor output exercises the new path.
 - New families: implement directly on the current measurement-domain architecture only after the real XML + numeric-export gate is met.

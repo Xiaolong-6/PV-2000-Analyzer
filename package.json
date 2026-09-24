@@ -16,7 +16,8 @@
     "lint": "eslint src scripts tests",
     "style:check": "node scripts/check-source-density.js",
     "check": "npm run lint && npm run style:check && npm run docs:check && npm test",
-    "docs:check": "node scripts/check-docs.js"
+    "docs:check": "node scripts/check-docs.js",
+    "validate:dual-qss-runtime-results": "node scripts/validate_dual_qss_runtime_reference.js"
   },
   "license": "AGPL-3.0-only",
   "author": "Xiaolong Liu",

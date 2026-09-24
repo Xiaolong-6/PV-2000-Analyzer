@@ -149,35 +149,36 @@ The analyzer remains XML-only at runtime. Paired CSVs are private regression evi
 
 See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
 
-## Dual QSS numeric final-result pair — QSS-INJ-RESULT-001
+## Dual QSS numeric final-result parity — QSS-INJ-RESULT-001
 
-Two additional real `DualQssMeasurement` XML files have matching **numeric PV-2000 final-result CSV exports**. They establish a narrow `OnePointPattern + RoundWafer`, Back/Back source-selection result profile.
+Two real `DualQssMeasurement` XML files have matching **numeric PV-2000 final-result CSV exports**. The profile is `OnePointPattern + RoundWafer`, Back/Back source selection, non-Auger.
+
+The independent private reconstruction starts from XML only and reproduces vendor QDC internals plus all nine final scalar outputs. The public runtime validator then executes the browser implementation against the same two XML+CSV pairs.
 
 | Quantity / behavior | Paired regression | Status |
 |---|---:|---|
-| `teff.d (1 Sun)`, explicit 1000 mSun acquisition | max abs error **0 µs** from XML `Values` | validated |
-| `teff.d (1 Sun)`, acquisition ending below 1000 mSun | max abs error **0 µs** using final acquired XML `Values` | validated paired endpoint rule |
-| `Smax (1 Sun)` from vendor teff.SS and XML thickness | max abs error ≈ **1.1e-13 cm/s** | validated downstream relation |
-| max-lifetime `Smax` from vendor teff.SS Max and XML thickness | max abs error ≈ **3.9e-14 cm/s** | validated downstream relation |
-| finite `Δn (1 Sun)` from vendor teff.SS, intensity, optical factor and thickness | relative error ≈ **1.1e-15** | validated downstream relation |
-| second-pair Basore J0 / Δn unavailable flags | vendor undefined, while K-S J0 and Voc remain defined | observed availability example |
-| teff.SS / teff.SS Max reconstruction | not yet reproduced from XML | unsupported |
-| Implied Voc / Basore J0 / K-S J0 reconstruction | not yet reproduced from XML | unsupported |
+| QDC, HighPower 25 transients | max abs error ≈ **7.92e-11** | validated internal path |
+| QDC, LowPower 16 transients | max abs error ≈ **2.67e-12** | validated internal path |
+| teff.d (1 Sun) | **0 µs** error in both pairs | validated |
+| teff.SS (1 Sun) | max abs error ≈ **2.3e-13 µs** | validated |
+| teff.SS Max | max abs error ≈ **9.1e-13 µs** | validated |
+| Basore J0 | finite HighPower value exact to floating-point tolerance; LowPower `Ud.` reproduced | validated |
+| Δn (1 Sun) | finite HighPower value reproduced; LowPower `Ud.` reproduced | validated |
+| Smax (1 Sun) | max abs error ≈ **4.3e-14 cm/s** | validated |
+| Smax at max teff.SS | max abs error ≈ **4.7e-14 cm/s** | validated |
+| Implied Voc (1 Sun) | max abs error ≈ **4.4e-16 V** | validated |
+| K-S J0 | max abs error ≈ **7.3e-12 fA/cm²** | validated |
 
-The paired validator intentionally does **not** extrapolate beyond its evidence. If a sweep spans 1000 mSun without an exact 1000 mSun point, no interior interpolation is emitted until a real matching XML+CSV pair establishes that behavior.
+Current pair values include HighPower `teff.SS=280.94342922609 µs`, `teff.SS Max=893.70740338579 µs`, Basore J0 `199.548389124001 fA/cm²`, K-S J0 `128.40923475899 fA/cm²`; LowPower `teff.SS=236.991629 µs`, `teff.SS Max=1984.29119677534 µs`, Basore/Δn unavailable and K-S J0 `863.446682273861 fA/cm²`.
 
-Run against private paired case directories:
+Run:
 
 ```bash
-npm run validate:dual-qss-results -- <case-dir> [<case-dir> ...]
+npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 ```
 
-Current paired evidence gives:
+The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or other categorical Dual QSS result branches.
 
-- one 25-point case covering 30–20500 mSun with exact 1000 mSun sampling;
-- one 16-point case covering 1–681 mSun, establishing the observed right-endpoint behavior below the 1-sun target.
-
-The browser uses only the XML. The private CSVs are regression evidence and are never runtime inputs.
 
 ## Emitter J0 map — paired XML/CSV regression
 
