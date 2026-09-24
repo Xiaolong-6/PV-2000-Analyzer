@@ -21,7 +21,7 @@ Open XML
   -> module.render()
 ```
 
-The shared domain layer is now established and used directly by ISC/VCPD and CET. QSS-uPCD, JZero, LBIC and DIT also reuse shared selection/geometry services where migrated while retaining their family-specific parser/analyzer interfaces; Dual QSS retains its dedicated injection-sweep model.
+The shared domain layer is established across the dedicated analyzers. ISC/VCPD, CET, SPV and Leakage attach normalized measurement envelopes directly; QSS-uPCD, JZero, LBIC, DIT and Dual QSS also use the shared calculation/geometry profile and/or selection/geometry services while retaining family-specific parser/analyzer interfaces.
 
 A PV-2000 CSV/XPS export is never a runtime input.
 
@@ -128,7 +128,7 @@ All site-aligned arrays share one immutable site index space. Coordinates, Quant
 
 The selection layer also owns reset-range and percentile helpers. Valid-data UI controls consume this model; they do not define intrinsic validity themselves.
 
-QSS-uPCD remains the behavioral reference for Valid-data filtering semantics. QSS, JZero, ISC/VCPD, LBIC, DIT and CET now use the shared site-selection/filter contract where applicable; family-specific intrinsic validity and quantity availability remain separate from user filtering.
+QSS-uPCD remains the behavioral reference for Valid-data filtering semantics. QSS, JZero, ISC/VCPD, LBIC, DIT, CET and SPV use the shared site-selection/filter contract where applicable; family-specific intrinsic validity and quantity availability remain separate from user filtering.
 
 ### Normalized measurement
 
@@ -136,7 +136,7 @@ QSS-uPCD remains the behavioral reference for Valid-data filtering semantics. QS
 
 ```js
 {
-  schemaVersion,
+  schemaVersion,          // currently 2
   source,
   type,
   familyId,
@@ -147,7 +147,13 @@ QSS-uPCD remains the behavioral reference for Valid-data filtering semantics. QS
   channels,
   settings,
   familyData,
-  profile
+  profile,                // compatibility alias of calculationProfile
+  calculationProfile,
+  geometryProfile,
+  validation: {
+    calculation,
+    geometry
+  }
 }
 ```
 
@@ -167,39 +173,21 @@ Profile matching uses categorical measurement semantics such as:
 
 It must not use filenames, sample names or arbitrary numeric identity values.
 
-Current profile metadata registered in the shared profile layer includes:
+The shared registry now stores profiles on explicit axes. Current examples include calculation profiles such as `ISC-CALC-001`, `VCPD-CALC-001`, `CET-9PT-SQUARE-001`, `SPV-CALC-STANDARD-001` and `LEAKAGE-CALC-VSASS-001`, plus independent geometry profiles in `src/profiles/geometry.js`.
 
-- `ISC-MAP-001`
-- `VCPD-MAP-001`
-- `CET-9PT-SQUARE-001`
-
-Exact evidence and validation boundaries remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
+Exact IDs, matching semantics and evidence boundaries remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
 ### Validation-axis separation
 
-A cross-profile audit of the private 2026-09-24 corpus showed that **scientific calculation semantics and spatial geometry must be validated as independent axes**. The canonical geometry resolver already supports this separation technically; the remaining coupling is mainly in profile matching and validator gates.
+A cross-profile audit of the private 2026-09-24 corpus established that scientific calculation semantics and spatial geometry must be validated as independent axes. This is now implemented in the shared domain/profile layer.
 
-A measurement should conceptually carry:
+A normalized measurement can carry:
 
 - a **calculation profile** — parser/result semantics, correction rules, unit conventions and algorithm branches that determine scientific values;
 - a **geometry profile** — Pattern/Target coordinate encoding, site ordering, nominal/scheduled boundaries and incomplete-acquisition mapping;
-- **quantity-level validation** — evidence status for each derived result when quantities inside one calculation family do not share the same validation envelope.
+- **quantity-level validation** — evidence status carried by each Quantity when sibling outputs have different evidence envelopes.
 
-Geometry may determine the site index and physical coordinates used by a calculation, but a different validated geometry must not automatically invalidate a calculation that consumes the same site-aligned raw inputs. Conversely, exact coordinate parity does not validate a scientific formula.
-
-The current shared `profile` field and `PV2000.profiles.resolve()` API remain in place until the migration is implemented. The target model is equivalent to:
-
-```js
-validation: {
-  calculation: { id, status, evidence },
-  geometry: { id, status, evidence },
-  quantities: {
-    "<quantity-id>": { profileId, status, evidence }
-  }
-}
-```
-
-`Quantity` already carries its own profile/validation metadata, so the migration should reuse that layer rather than create a second quantity-status system. The normalized measurement envelope should gain separate calculation/geometry profile metadata without forcing a Cartesian product of every algorithm × geometry combination.
+`src/core/profiles.js` resolves profiles by axis through `resolveCalculation()` and `resolveGeometry()`. The legacy `profile` field remains only as a compatibility alias for the calculation profile; new code should use the explicit fields.
 
 The practical rule is:
 
@@ -207,9 +195,9 @@ The practical rule is:
 2. resolve canonical physical geometry independently;
 3. verify that both share the same immutable site index space;
 4. attach quantity validation independently when one output has a narrower evidence envelope;
-5. render the dataset when geometry is supported even if a particular calculated quantity remains inferred or unavailable.
+5. render supported data even when a particular calculated quantity remains inferred or unavailable.
 
-This rule is already explicit for JZero and is now the required direction for ISC/VCPD, QSS-µPCD, LBIC, DIT and Dual QSS as their profile metadata are migrated.
+Profile gates must describe **categorical semantic branches**, not filenames, sample identities or ordinary numeric parameter values. For example, changing SPV wavelength or oxide-thickness magnitude inside the same standard oxide-correction formula does not create a new calculation profile; enabling enhanced mode, texture correction, parsed-signal processing, a different doping branch, or the reflectivity-vs-oxide branch can.
 
 ### Canonical measurement geometry
 
@@ -234,7 +222,8 @@ Current shared strategies include:
 - SquareRegionPattern explicit physical regions;
 - HighDensityPattern normalized target coefficients;
 - NinePointPattern / FivePointPattern normalized target coefficients;
-- center OnePointPattern.
+- center OnePointPattern;
+- target-relative non-center OnePointPattern coefficients when a scheduled target extent is available.
 
 For RoundWafer target-relative patterns, normalized coefficients scale by the scheduled radius `Diameter/2 - EdgeExclusion`. For SquareCell they scale by the EdgeExclusion-adjusted half-width and half-height.
 
@@ -254,27 +243,14 @@ Nominal sample shape, scheduled measurement boundary and actual acquired points 
 
 ## Migrated domain families
 
-`src/modules/isc.js` was the first migrated family; `src/modules/cet.js` was implemented directly on the shared domain architecture.
+The normalized domain/profile architecture is now the common evidence model across the dedicated analyzers. Families do not need identical internal renderers, but calculation, geometry and quantity evidence must be expressible independently.
 
-The parser still exposes the same fields used by the established UI and exports, and additionally attaches:
+SPV and Leakage were added directly on this architecture:
 
-- `domain` — normalized measurement envelope;
-- `geometryModel` — normalized geometry;
-- `profile` — semantic reference-profile id/status.
+- SPV keeps raw SPV8/SPV6 available independently of DL/Tau availability and uses the shared Valid-data filter/map/distribution contract;
+- Leakage separates the paired VSASS/LI calculation profile from the independently validated target-relative OnePoint geometry path.
 
-The analyzer now constructs Quantity objects while retaining the existing `metrics.dark/light/vsb` shape expected by the renderer.
-
-This allows provenance and validation metadata to become explicit without changing:
-
-- numerical result arrays;
-- summary statistics;
-- maps;
-- distributions;
-- raw-reading plots;
-- exports;
-- UI labels/layout.
-
-Other modules continue to register and resolve through the same registry API even when only selected shared services have been adopted.
+Existing families retain their family-specific scientific views while using the shared evidence/geometry/selection services where applicable. The migration goal is semantic consistency, not forced source-code uniformity.
 
 ## Source layout
 
@@ -299,8 +275,11 @@ Other modules continue to register and resolve through the same registry API eve
 - `src/profiles/isc.js` — ISC-MAP-001 semantic envelope.
 - `src/profiles/vcpd.js` — VCPD-MAP-001 semantic envelope.
 - `src/profiles/cet.js` — CET-9PT-SQUARE-001 semantic envelope.
+- `src/profiles/geometry.js` — shared geometry-profile registry for validated coordinate encodings.
+- `src/profiles/leakage.js` — paired Leakage VSASS/LI calculation profile.
+- `src/profiles/spv.js` — paired standard SPV calculation profile.
 
-Additional families should gain shared profile metadata only when their reference envelope is understood.
+Additional families should gain shared profile metadata only when their reference envelope is understood. Ordinary numeric parameter variation inside an established formula is not a reason to mint a new profile.
 
 ### Measurement modules
 
@@ -311,6 +290,8 @@ Additional families should gain shared profile metadata only when their referenc
 - `src/modules/isc.js` — ISC/VCPD analyzer on the shared domain core.
 - `src/modules/lbic.js` — LBIC raster analyzer.
 - `src/modules/cet.js` — contactless capacitance / EOT analyzer.
+- `src/modules/leakage.js` — Leakage VSASS / LI analyzer.
+- `src/modules/spv.js` — two-wavelength SPV / diffusion-length analyzer.
 - `src/modules/generic.js` — unknown-type fallback.
 - `src/app.js` — file opening, dispatch and shared shell.
 
