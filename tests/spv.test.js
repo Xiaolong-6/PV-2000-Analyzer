@@ -80,6 +80,7 @@ test('ordinary numeric settings stay inside the standard SPV profile',()=>{
     type:'SPVMeasurement',
     sites:[{}],
     parseSignals:false,
+    linearityRatioMethod:'UseMeasuredLR',
     useEnhancedMode:false,
     useTextureCorrection:false,
     dopingType:'PType',
@@ -93,7 +94,7 @@ test('ordinary numeric settings stay inside the standard SPV profile',()=>{
 
 test('categorical SPV branch changes do not inherit standard validation',()=>{
   const base={
-    type:'SPVMeasurement',sites:[{}],parseSignals:false,useEnhancedMode:false,
+    type:'SPVMeasurement',sites:[{}],parseSignals:false,linearityRatioMethod:'UseMeasuredLR',useEnhancedMode:false,
     useTextureCorrection:false,dopingType:'PType',multiplier:1000,
     wavelength8:778,wavelength6:933,oxideThickness:4
   };
@@ -101,4 +102,31 @@ test('categorical SPV branch changes do not inherit standard validation',()=>{
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useTextureCorrection:true}),null);
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,dopingType:'NType'}),null);
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,oxideThickness:0}),null);
+});
+
+test('vendor cross-maps nonzero LED temperature coefficients',()=>{
+  const base={
+    spv8Global:5.329166666666667,spv8ReducedGlobal:6.9295,linearityRatioOk:2.00009,
+    wavelength8:778,wavelength6:933,chuckTemperature:24,ledTemperature:25,
+    temperatureCorrection8:0,temperatureCorrection6:0,oxideThickness:4,
+    reflectivity8:0,reflectivity6:0,useTextureCorrection:false,textureCorrection:.74,
+    useEnhancedMode:false,isPType:true
+  };
+  const zero=PV2000.modules.spv.calculatePoint(3.4875,3.174,base);
+  const led6=PV2000.modules.spv.calculatePoint(3.4875,3.174,{...base,temperatureCorrection6:.01});
+  const led8=PV2000.modules.spv.calculatePoint(3.4875,3.174,{...base,temperatureCorrection8:.01});
+  assert.ok(Math.abs(led6.corrected8-zero.corrected8*.99)<1e-12);
+  assert.ok(Math.abs(led6.corrected6-zero.corrected6)<1e-12);
+  assert.ok(Math.abs(led8.corrected8-zero.corrected8)<1e-12);
+  assert.ok(Math.abs(led8.corrected6-zero.corrected6*.99)<1e-12);
+});
+
+test('manual linearity-ratio branch stays outside paired SPV validation',()=>{
+  const base={
+    type:'SPVMeasurement',sites:[{}],parseSignals:false,linearityRatioMethod:'UseMeasuredLR',
+    useEnhancedMode:false,useTextureCorrection:false,dopingType:'PType',
+    multiplier:1000,wavelength8:778,wavelength6:933,oxideThickness:4
+  };
+  assert.equal(PV2000.profiles.resolveCalculation('spv',base)?.id,'SPV-CALC-STANDARD-001');
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,linearityRatioMethod:'UseManualLR'}),null);
 });
