@@ -1,4 +1,10 @@
-# Agent handoff — 2026-09-23 — v20260923.22
+# Agent handoff — 2026-09-24 — v20260924.1
+
+## Dual QSS paired result parity — QSS-INJ-RESULT-001
+
+Two real `DualQssMeasurement` XML files with matching numeric PV-2000 CSV result exports establish a narrow result-table profile. Runtime now reproduces vendor `teff.d (1 Sun)` exactly from XML `Values` for (a) an acquired 1000 mSun point and (b) the paired low-range case that terminates below 1000 mSun and uses the final acquired point. The browser does not synthesize interior interpolation outside those paired rules.
+
+Private harness replay also confirms the vendor result builder exposes nine outputs: teff.d (1 Sun), teff.SS (1 Sun), teff.SS Max, K-S Emitter J0, Basore Emitter J0, Δn (1 Sun), Smax (1 Sun), Smax at teff.SS Max and Implied Voc (1 Sun). Smax and finite Δn downstream relations are numerically locked against the paired exports, but the XML→teff.SS reconstruction and the Voc/J0 result paths remain research-only and are not exposed by the browser yet.
 
 ## Paired-evidence gate for new analysis
 
