@@ -38,7 +38,7 @@ The vendor software also constructs a smoothed derivative diagnostic using diele
 
 ## Validation boundary
 
-Current paired evidence is one-point data. Multi-point Leakage geometry, different material/thickness branches and additional acquisition modes require matching vendor output before expanding the validated profile.
+The sampling interval is an input to the same spline calculation rather than a profile identity. Current paired evidence is one-point data. Multi-point Leakage geometry, different material/thickness branches and additional acquisition modes require matching vendor output before expanding the validated profile.
 
 Calculation validation and geometry validation are independent.
 
