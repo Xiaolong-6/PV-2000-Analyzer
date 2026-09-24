@@ -33,3 +33,15 @@ test('Leakage build is loaded before generic fallback',()=>{
   assert.ok(moduleIndex>=0);
   assert.ok(generic>moduleIndex);
 });
+
+test('Leakage calculation profile matches paired 0.1 s acquisition branch',()=>{
+  const p=PV2000.profiles.resolveCalculation('leakage',{
+    type:'LeakageMeasurement',
+    sites:[{}],
+    measurePositive:true,
+    measureNegative:false,
+    positiveSettings:{intervalSeconds:.1},
+    negativeSettings:{intervalSeconds:.1}
+  });
+  assert.equal(p?.id,'LEAKAGE-CALC-VSASS-001');
+});
