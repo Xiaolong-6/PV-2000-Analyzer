@@ -62,7 +62,7 @@ ISC validates repeated dark/light reading reconstruction to Vcpd Dark, Vcpd Ligh
 
 ### CET
 
-`CET-9PT-SQUARE-001` validates NinePointPattern + SquareCell coordinates, EOT, Cd, R², summary statistics and the historical undefined EOT/Cd + R²=0 behavior.
+The historical `CET-9PT-SQUARE-001` pair now feeds two runtime validation axes: `CET-CALC-001` validates EOT/Cd/R² semantics, while `GEOM-NINEPOINT-SQUARE-001` validates NinePointPattern + SquareCell coordinates. The undefined EOT/Cd + R²=0 behavior remains regressed.
 
 ### LBIC
 
