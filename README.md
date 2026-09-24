@@ -6,44 +6,45 @@
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer"><img alt="Source" src="https://img.shields.io/badge/SOURCE-GITHUB-24292f?style=for-the-badge&logo=github&logoColor=white"></a>
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/CONTRIBUTING.md"><img alt="Contribute" src="https://img.shields.io/badge/CONTRIBUTE-GUIDE-0969da?style=for-the-badge&logo=git&logoColor=white"></a>
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new?template=share-pv2000-data.yml"><img alt="Share PV-2000 data" src="https://img.shields.io/badge/SHARE-PV--2000%20DATA-8250df?style=for-the-badge&logo=github&logoColor=white"></a>
-  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/issues/new"><img alt="Report issue" src="https://img.shields.io/badge/REPORT-ISSUE-d73a49?style=for-the-badge&logo=github&logoColor=white"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/pages.yml"><img alt="GitHub Pages" src="https://github.com/Xiaolong-6/PV-2000-Analyzer/actions/workflows/pages.yml/badge.svg"></a>
-</p>
-
-<p align="center">
   <a href="LICENSE"><img alt="License AGPL-3.0" src="https://img.shields.io/badge/LICENSE-AGPL--3.0-663399?style=flat-square&logo=gnu&logoColor=white"></a>
   <a href="COMMERCIAL_LICENSE.md"><img alt="Commercial license available" src="https://img.shields.io/badge/COMMERCIAL%20LICENSE-AVAILABLE-b8860b?style=flat-square"></a>
-  <a href="CLA.md"><img alt="CLA required" src="https://img.shields.io/badge/CONTRIBUTIONS-CLA%20REQUIRED-1f6feb?style=flat-square"></a>
 </p>
 
-Local, browser-based analysis of Semilab PV-2000 XML result files. The user imports one XML; the app detects `Measurement/@xsi:type` and dispatches it to a measurement-specific analyzer.
+PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab PV-2000 XML result files. Import one XML and the application detects `Measurement/@xsi:type`, selects a dedicated analyzer when one exists, and falls back to a Generic XML Inspector for unknown types.
 
-**PV-2000 software-version boundary:** current version-level vendor validation is anchored to measurement files and matching exports produced by **Semilab PV-2000 v1.3.0.5**. Files from other PV-2000 versions may still load when their schemas and measurement profiles are compatible, but they are not version-validated unless separately recorded in `docs/REFERENCE_PROFILES.md`.
+**Runtime is XML-only.** Matching PV-2000 CSV/XPS exports are regression evidence used during development; they are never required to analyze a user file.
 
-Scientific background, measurement semantics and user guidance are maintained in the [project Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki).
+## Supported analyzers
 
-Current modules:
+| XML type | Analyzer | Main outputs | Current evidence boundary |
+|---|---|---|---|
+| `DITMeasurement` | Dit / COCOS | Vcpd/Vsb, Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT | profile-scoped; Standard COCOS evidence plus inferred COCOS-II path |
+| `QssUpcdMeasurement` | QSS-µPCD | lifetime, Smax, implied Voc, optional Analyzer SRV | paired map profiles; non-positive sentinel handling is explicit |
+| `DualQssMeasurement` | QSS Injection | injection sweep, stored transients, teff.d (1 Sun) on the validated result profile | raw path validated; teff.SS / Voc / J0 not yet reconstructed in runtime |
+| `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | paired two-intensity map profile validated |
+| `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB | paired map profile validated |
+| `VcpdMeasurement` | VCPD | Vcpd Dark | paired map profile validated |
+| `CETMeasurement` | CET / EOT | EOT, Cd, R² | `CET-9PT-SQUARE-001` validates the current fixed-point path |
+| `LBICMeasurement` | LBIC | Current, Reflectivity, IQE plus active raw channels | single-beam, multi-beam pseudo-square and reflectance-only profiles validated |
+| other | Generic XML Inspector | XML structure and stored values | fallback only; no scientific result claim |
 
-- `DITMeasurement` — COCOS / Dit analysis with target-aware spatial context and the shared site-level Valid-data filter. Algorithm validity remains intrinsic; a user-selected Qtot / Minimum Dit / Midgap Dit / EOT / Cox / Qsc / Initial Qc / Max |Vsb| range only narrows the site population used by Results summary, wafer-map coloring and map export. Current-site Vcpd/Vsb/Dit curves and the underlying Minimum Dit/Midgap calculations are never altered by filtering. The analyzer retains PV2000-style discrete minimum Dit, optional Midgap Dit with default 10 mV median-binned PCHIP or original PCHIP, flatband/Qtot/Cox/EOT extraction, XML metadata and contextual analysis-method routing.
-- `QssUpcdMeasurement` — QSS-µPCD map analysis with raw lifetime preservation, sentinel-aware scientific validity, Smax, PV-2000-compatible Implied Voc, optional Physical Si/Ge estimates, opt-in Analyzer SRV post-processing, and the shared site-level Valid-data filter. QSS recipe/XML metadata remain separate from Analyzer interpretation controls. SRV is disabled by default; when enabled it defaults to planar geometry, while Textured / black remains an explicit special-case model.
-- `DualQssMeasurement` — single-point injection-intensity sweep analysis using the XML `TransientInfo@LifeTime` value (falling back to XML `Values` only when needed), per-injection stored transient inspection, nominal one-point measurement-position context, local LP/HP/repeat overlay and CSV export. The expanded private corpus has 273 exact raw XML/CSV pairs covering 5833 injection points. A separate two-pair numeric result profile (`QSS-INJ-RESULT-001`) now reproduces vendor `teff.d (1 Sun)` exactly from XML `Values` for the observed exact-1000 and below-target endpoint cases. Vendor teff.SS/teff.SS Max, Implied Voc and J0 remain unsupported in the browser until their XML→result transformations are pointwise reproduced.
-- `JZeroMeasurement` — dedicated Emitter J0 map analyzer with the shared site-level Valid-data filter. Any of the seven JZero result quantities can define one paired-site active mask; each displayed quantity additionally applies its own finite/support mask. Summary, map, distribution and exports use the same selection state while the underlying two lifetime iterations and derived J0/Smax/Voc values remain unchanged. The paired 5017-site `MapPattern + PseudoSquareCell` reference validates two QSS lifetime maps, pseudo-square coordinates, Smax and Basore-Hansen J0 point-by-point; Implied Voc is reproduced with a separately documented JZero compatibility calibration to <0.07 mV.
-- `ISCMeasurement` / `VcpdMeasurement` — shared Kelvin-probe/VCPD analyzer with site-level valid-data filtering. ISC exposes Vcpd Dark / Vcpd Light / VSB with repeated-reading reconstruction and lets any of those quantities define one shared site mask; VCPD exposes direct Vcpd Dark maps from its own `Readings` schema. The active mask is applied consistently to summaries, maps, distributions and exports while raw readings remain preserved. Separate paired XML/CSV profiles validate ISC `MapPattern + SquareCell` and VCPD `MapPattern + RoundWafer` paths point-by-point.
-- `CETMeasurement` — dedicated contactless EOT/capacitance analyzer using the shared measurement-domain and canonical-geometry contracts. It exposes EOT, Cd and R² with the shared site-level Valid-data filter, wafer/cell map, Distribution, current-site Vcpd-light/Qc fit and CSV exports. `CET-9PT-SQUARE-001` validates a 9-site `NinePointPattern + SquareCell` pair point-by-point, including target-relative coordinates, the historical `q = 1.602e-19 C` compatibility arithmetic and the legacy undefined-fit behavior; other observed CET geometries remain inferred until paired output is available.
-- `LBICMeasurement` — spatial LBIC raster analysis with dynamic beam/wavelength channels, XML measurement-flag semantics and site-level valid-data filtering within the current iteration/beam. The selected filter quantity drives one shared site mask across summaries, map, distribution and X/Y profiles while raw values remain preserved in exports. Paired references validate current-enabled single-beam `SquareRegionPattern` (`LBIC-SINGLE-001`), independent current-enabled multi-beam `MapPattern + PseudoSquareCell` (`LBIC-MULTI-002`), and reflectance-only `SquareRegionPattern` with `MeasureCurrent=false` (`LBIC-REFLECTANCE-003`). Reflectance-only files suppress zero Current placeholders, default to Reflectivity, and do not synthesize EQE/IQE; calculated diffusion length remains unsupported.
-- Unknown types — Generic XML Inspector rather than a hard failure.
+The project-level vendor-version validation boundary is currently anchored to paired files produced by **Semilab PV-2000 v1.3.0.5**. Other releases may load when schemas are compatible, but are not version-validated unless recorded in the reference-profile documentation.
 
 ## Use
 
-The normal entry point is the [live analyzer](https://xiaolong-6.github.io/PV-2000-Analyzer/). For offline use, choose **Download Offline** on the landing page and open the downloaded self-contained HTML locally. Processing stays in the browser.
+Open the [live analyzer](https://xiaolong-6.github.io/PV-2000-Analyzer/), then drop or select a PV-2000 XML file. Processing stays in the browser.
 
-In the analyzer toolbar, `←` / `→` load the previous or next XML directly from an already authorized folder; clicking an arrow never opens a file/folder picker. Browsers do not expose arbitrary sibling files after a normal single-file selection, so folder authorization is a separate explicit action.
+For repeated files from one directory, authorize the folder once with **Folder**. The `←` / `→` buttons then load adjacent XML files directly; the arrows do not open a picker.
 
-For local development:
+For offline use, choose **Download Offline HTML** on the landing page and open the downloaded self-contained HTML locally.
+
+The [project Wiki](https://github.com/Xiaolong-6/PV-2000-Analyzer/wiki) is the user guide and scientific reference. It covers the common UI, supported analyzers, equations, provenance, assumptions and validation vocabulary.
+
+## Development
 
 ```bash
 npm install --ignore-scripts --no-audit --no-fund
@@ -51,24 +52,20 @@ npm run check
 npm run build
 ```
 
-The build writes `dist/index.html` and `dist/PV-2000-Analyzer.html`; `dist/` is generated and is not committed. Reference validators and implementation workflow live in [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/VALIDATION.md](docs/VALIDATION.md).
+The build writes `dist/index.html` and `dist/PV-2000-Analyzer.html`; `dist/` is generated and not committed.
 
-Licensing details are kept in [LICENSE](LICENSE), [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md) and [CLA.md](CLA.md).
+Repository documentation is indexed in [docs/README.md](docs/README.md). Exact validation envelopes and numerical evidence live in [docs/REFERENCE_PROFILES.md](docs/REFERENCE_PROFILES.md) and [docs/VALIDATION.md](docs/VALIDATION.md).
 
-## Runtime/data rule
+## Contributing data or code
 
-PV-2000 XML is the runtime input. Vendor/user CSV/XPS exports are regression references only and are never runtime dependencies.
+New scientific analyzer/result support requires at least one **real XML plus its matching numeric PV-2000 export**. XML-only material can support parsing, raw inspection or an explicitly inferred profile, but is not enough to establish a new calculated result path.
 
-Existing local or confidential reference material belongs under ignored `private/`. Publicly contributed regression cases may instead live under `reference_data/` only under [REFERENCE_DATA_LICENSE.md](REFERENCE_DATA_LICENSE.md). Prefer XML + numeric CSV; full XPS/vendor reports and full-interface screenshots remain private by default. Vendor manuals, proprietary binaries/debug symbols/decompiled source, group code and confidential customer/sample material must not be published.
+A data-only contribution is welcome. See [CONTRIBUTING.md](CONTRIBUTING.md), [reference_data/README.md](reference_data/README.md), and the **Share PV-2000 data** issue template.
 
-## Contributing new PV-2000 support
+Public reference data must satisfy [REFERENCE_DATA_LICENSE.md](REFERENCE_DATA_LICENSE.md). Confidential, proprietary or uncleared material belongs outside the public repository.
 
-Anyone using PV-2000 can help expand the supported measurement/result combinations. A **data-only pull request is welcome**: submit the raw XML plus the matching PV-2000 exported CSV/XPS and preferably a screenshot showing the selected PV-2000 result/settings. No code is required.
+## Licensing
 
-Developers may instead branch from current `main`, implement support, include the matching reference case and regression coverage, and request merge. Validation follows semantic input→output profile families rather than exact numeric settings such as raster size, wavelength, power or FluxCache values.
+Source code is available under [AGPL-3.0-only](LICENSE), with a separate [commercial licensing](COMMERCIAL_LICENSE.md) path. Contributions are subject to the project [CLA](CLA.md).
 
-Use the **Share PV-2000 data** shortcut above for a guided issue, or see `CONTRIBUTING.md`, `reference_data/README.md` and `docs/REFERENCE_PROFILES.md` before submitting data or code.
-
-See `docs/ARCHITECTURE.md` for the maintained UI/runtime contract and `docs/REFERENCE_PROFILES.md` for the central validation envelope, plus `docs/VALIDATION.md`, `docs/HANDOFF.md` and the algorithm notes for detailed evidence.
-
-This is an independent analysis utility and is not affiliated with or endorsed by Semilab.
+PV-2000 Analyzer is an independent analysis utility and is not affiliated with or endorsed by Semilab.
