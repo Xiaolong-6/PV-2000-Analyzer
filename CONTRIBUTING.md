@@ -85,6 +85,7 @@ Before opening an implementation PR, run:
 npm run check
 npm run validate:qss
 npm run validate:dual-qss
+npm run validate:dual-qss-results
 npm run validate:jzero
 npm run validate:isc
 npm run validate:vcpd
