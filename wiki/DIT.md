@@ -2,6 +2,19 @@
 
 Interface-state-density analysis combines corona charge, Kelvin-probe surface potential and semiconductor space-charge physics.
 
+## In the analyzer
+
+The `DITMeasurement` analyzer provides site-level DIT/COCOS analysis with:
+
+- Vcpd–Qc, Vsb–Qc and Dit–Vsb inspection;
+- discrete **Minimum Dit (PV2000-style)**;
+- optional **Midgap Dit (PCHIP)**;
+- Qsc, Qtot, Cox/EOT and flat-band-related results;
+- target-aware site/measurement-position context;
+- a shared Valid-data filter for population statistics and map display.
+
+The Valid-data filter is downstream of the scientific calculation. Filtering can change which sites contribute to summary/map population views, but it does not recalculate Minimum Dit, Midgap Dit, Qsc, Qtot or the selected-site curves.
+
 ## 1. Physical picture
 
 A controlled corona charge changes the electrostatic boundary condition at the semiconductor surface. Dark and illuminated Kelvin-probe measurements provide the corresponding surface-potential response.
