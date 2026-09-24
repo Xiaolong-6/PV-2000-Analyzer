@@ -20,6 +20,8 @@ const files=[
   'src/profiles/isc.js',
   'src/profiles/vcpd.js',
   'src/profiles/cet.js',
+  'src/profiles/leakage.js',
+  'src/profiles/spv.js',
   'src/modules/dit.js',
   'src/modules/qss-upcd.js',
   'src/modules/dual-qss.js',
