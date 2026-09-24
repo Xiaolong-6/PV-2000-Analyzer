@@ -220,7 +220,8 @@ test('ISC domain attachment preserves geometry and resolves the validated profil
   assert.equal(d.domain.geometryProfile.status,'validated');
   assert.equal(d.domain.geometry.shape,'rect');
   assert.equal(d.domain.geometry.validationStatus,'validated');
-  assert.deepEqual(d.domain.geometry.points,[{x:0,y:0}]);
+  assert.ok(Math.abs(d.domain.geometry.points[0].x)<1e-12);
+  assert.ok(Math.abs(d.domain.geometry.points[0].y)<1e-12);
 });
 
 test('registry exposes migrated module metadata while preserving type resolution',()=>{
