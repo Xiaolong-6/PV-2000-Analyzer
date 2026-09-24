@@ -1,26 +1,57 @@
-# PV-2000 measurement types and roadmap
+# PV-2000 measurement types
 
-The supplied PV-2000A manual documents data-viewing modes for diffusion length, Fe, ALID, surface-passivation indicator, junction lifetime, frequency scan, initial surface charge, Dit, EOT, IV, QSS-µPCD, emitter J0 map, QSS-µPCD Scan/J0, sheet resistance and eddy resistivity.
+This page is the repository-level index of dedicated analyzer support. “Implemented” means the XML type has a measurement-specific runtime path; validation remains scoped to the profiles listed in `REFERENCE_PROFILES.md`.
 
-Current implementation:
+## Dedicated analyzers
 
-| XML type | Analyzer | Status |
-|---|---|---|
-| `DITMeasurement` | COCOS / Dit | implemented; core quantities retained from previous standalone analyzer |
-| `QssUpcdMeasurement` | QSS-µPCD map | implemented with raw-lifetime preservation, non-positive-sentinel-aware scientific validity, Smax, PV-2000-compatible Implied Voc, explicit Physical Si/Ge estimates, opt-in Analyzer lifetime→SRV post-processing, map/distribution/profile views and CSV export; the expanded 96-XML RoundWafer corpus is fully import-smoked |
-| `DualQssMeasurement` | QSS injection sweep | implemented with validated PV-2000 raw `LifeTime` (`TransientInfo@LifeTime`), separate XML `Values` diagnostics, stored transients, local overlays and exports; 273 exact raw XML/CSV pairs validate 5833 injection points, and paired numeric result profile `QSS-INJ-RESULT-001` reproduces vendor `teff.d (1 Sun)` exactly for the observed exact-1000 / below-target endpoint paths; teff.SS/teff.SS Max, Implied Voc and J0 remain pending |
-| `JZeroMeasurement` | Emitter J0 map | implemented as a dedicated two-QSS map analyzer; one 5017-site paired XML/CSV reference validates PseudoSquareCell coordinates, both lifetime channels, both Smax channels and Basore J0 point-by-point; Implied Voc is compatibility-regressed to <0.07 mV |
-| `ISCMeasurement` / `VcpdMeasurement` | ISC / Kelvin-probe VCPD | implemented as separate result profiles on shared Kelvin-probe infrastructure; paired references validate ISC and VCPD map paths independently |
-| `CETMeasurement` | Contactless EOT / capacitance | implemented on the shared measurement-domain architecture; `CET-9PT-SQUARE-001` validates NinePointPattern + SquareCell coordinates plus EOT/Cd/R² point-by-point and summary statistics; other observed CET geometries remain inferred pending matching vendor output |
-| `LBICMeasurement` | LBIC raster | implemented; `LBIC-SINGLE-001` validates current-enabled single-beam SquareRegionPattern, `LBIC-MULTI-002` validates independent current-enabled multi-beam MapPattern + PseudoSquareCell, and `LBIC-REFLECTANCE-003` validates reflectance-only SquareRegionPattern (`MeasureCurrent=false`) with Direct/Scattered → Reflectivity |
-| other | Generic Inspector | detected and displayed, no scientific calculations |
+| XML type | Analyzer | Runtime scope | Evidence boundary |
+|---|---|---|---|
+| `DITMeasurement` | Dit / COCOS | Vcpd/Vsb curves, discrete Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT, site filtering and spatial context | Standard-COCOS-related evidence is profile-scoped; COCOS-II remains inferred |
+| `QssUpcdMeasurement` | QSS-µPCD | lifetime map, Smax, PV-2000-compatible implied Voc, optional physical Si/Ge estimate, optional Analyzer SRV, filtering/maps/distribution/profiles | paired map profiles; sentinel and geometry boundaries are explicit |
+| `DualQssMeasurement` | QSS Injection | one-point injection sweep, canonical raw lifetime, stored transients, LP/HP/repeat overlays, exports, validated teff.d (1 Sun) result rule | 273 raw XML/CSV pairs / 5833 points plus `QSS-INJ-RESULT-001`; teff.SS, implied Voc and J0 remain unsupported in runtime |
+| `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels, Basore J0, map/distribution/filter/export; incomplete acquisitions degrade per quantity | paired two-intensity pseudo-square path validated; alternate/incomplete geometry remains profile-scoped |
+| `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB, repeated-reading inspection, map/distribution/filter/export | paired `MapPattern + SquareCell` path validated |
+| `VcpdMeasurement` | VCPD | Vcpd Dark, map/distribution/filter/export | paired `MapPattern + RoundWafer` path validated |
+| `CETMeasurement` | CET / EOT | EOT, Cd, R², fixed-point geometry, Vcpd-light/Qc fit, filter/map/distribution/export | `CET-9PT-SQUARE-001` validates the current NinePointPattern + SquareCell path |
+| `LBICMeasurement` | LBIC | dynamic beam/channel analysis, Current/Reflectivity/IQE where applicable, map/distribution/X/Y profiles/filter/export | `LBIC-SINGLE-001`, `LBIC-MULTI-002`, `LBIC-REFLECTANCE-003` |
 
-Recommended next modules / validation work:
+Unknown XML types are routed to the **Generic XML Inspector**. The fallback is useful for stored-value inspection but is not a scientific analyzer and does not imply support for that measurement family.
 
-1. Continue `DualQssMeasurement` result-table parity from the established `QSS-INJ-RESULT-001` teff.d path: reproduce teff.SS / teff.SS Max first, then Δn / Implied Voc and Basore / K-S J0 with paired numeric output. Keep each unresolved quantity out of runtime until pointwise parity is established.
-2. Extend LBIC only when a categorical input/output path changes beyond the recorded current-enabled single-beam, current-enabled multi-beam pseudo-square, and reflectance-only SquareRegion families; add diffusion length only after the vendor DL algorithm is established from matching real output.
-3. Expand `JZeroMeasurement` only when another real pattern/target/result path is paired with vendor output; keep the current two-intensity PseudoSquareCell envelope explicit.
-4. IV.
-5. Sheet resistance / eddy resistivity.
+## Known families without a dedicated scientific analyzer
 
-Do not map a new XML type to an existing module just because the output looks similar; use its actual `xsi:type` and inspect its data schema first.
+The project contains scientific/reference knowledge for additional PV-2000 families, but current runtime support must not be implied from that documentation.
+
+- CV acquisition/process history — documented because CET reuses related corona/Kelvin-probe concepts; no dedicated `CVMeasurement` analyzer.
+- SPV / Diffusion Length.
+- Frequency Scan.
+- Voc / Voc Mapping / pseudo-I–V.
+- Leakage.
+- Fe / LID / ALID.
+- Surface Passivation.
+- Junction Lifetime.
+- Sheet Resistance.
+- Eddy / resistivity.
+- Height / displacement.
+- Other XML families not listed in the dedicated-analyzer table.
+
+## Gate for expanding scientific support
+
+A new scientific analyzer or a new calculated result path requires:
+
+1. at least one real PV-2000 XML;
+2. its matching numeric PV-2000 result export;
+3. an explicit semantic profile definition;
+4. regression coverage for values, availability/blanking and geometry where applicable;
+5. a documented status boundary in `REFERENCE_PROFILES.md` and `VALIDATION.md`;
+6. visual inspection of at least one representative real XML after implementation.
+
+XML-only files may justify parser work, raw-value display or an explicitly **inferred** geometry/path. They are not enough to claim reproduction of a vendor-derived scientific result.
+
+## Current high-value validation gaps
+
+- Dual QSS: establish the XML→teff.SS / teff.SS Max transformation on additional paired numeric cases before exposing it; implied Voc and J0 follow only after that lifetime path is pointwise reproduced.
+- LBIC: calculated diffusion length remains unsupported until the vendor DL transformation is established from matching real output.
+- JZero/CET/other implemented families: expand categorical geometry/result envelopes only when matching vendor output exercises the new path.
+- New families: implement directly on the current measurement-domain architecture only after the real XML + numeric-export gate is met.
+
+Do not alias a new XML type to an existing analyzer merely because its displayed quantities look similar. Dispatch and validation follow the actual `Measurement/@xsi:type`, schema and semantic result path.
