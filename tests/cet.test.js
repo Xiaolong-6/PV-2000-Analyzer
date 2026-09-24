@@ -105,3 +105,32 @@ test('single-file build includes CET before generic fallback',()=>{
   assert.ok(cet>=0);
   assert.ok(generic>cet);
 });
+test('CET calculation validation is independent from geometry',()=>{
+  const calc=PV2000.profiles.resolveCalculation('cet',{
+    type:'CETMeasurement',
+    sites:[{}],
+    coronaCharge:1e11,
+    patternType:'OnePointPattern',
+    targetType:'RoundWafer'
+  });
+  assert.equal(calc?.id,'CET-CALC-001');
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'NinePointPattern',
+    targetType:'SquareCell',
+    rawCoefficients:[
+      {x:0,y:0},{x:-Math.sqrt(.4),y:0},{x:0,y:-Math.sqrt(.4)},
+      {x:Math.sqrt(.4),y:0},{x:0,y:Math.sqrt(.4)},
+      {x:-Math.sqrt(.4),y:Math.sqrt(.4)},{x:Math.sqrt(.4),y:Math.sqrt(.4)},
+      {x:Math.sqrt(.4),y:-Math.sqrt(.4)},{x:-Math.sqrt(.4),y:-Math.sqrt(.4)}
+    ],
+    pointCount:9,targetWidth:156,targetHeight:156,edgeExclusion:4
+  });
+  assert.equal(PV2000.profiles.resolveGeometry({geometryModel:g})?.id,'GEOM-NINEPOINT-SQUARE-001');
+});
+
+test('CET source resolves calculation and geometry axes separately',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8');
+  assert.match(src,/Profiles\.resolveCalculation\('cet',data\)/);
+  assert.match(src,/Profiles\.resolveGeometry\(data\)/);
+  assert.doesNotMatch(src,/Profiles\.resolve\('cet',data\)/);
+});
