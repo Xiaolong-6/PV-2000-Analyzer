@@ -47,6 +47,8 @@ Two private real XML + numeric PV-2000 CSV pairs, each a 1649-site 4 mm `MapPatt
 
 Across the two pairs, maximum absolute differences are approximately **1.64e-11 µm** for DL and **2.06e-11 µs** for Tau; SPV8/SPV6 agree to floating-point precision.
 
+Ordinary numeric settings that are inputs to this same formula — for example wavelength, temperature, multiplier and positive oxide-thickness magnitude — do not create a new profile by themselves.
+
 **Not validated by this profile**
 
 - `UseEnhancedMode=true`;
@@ -80,8 +82,11 @@ Two private real XML + numeric PV-2000 CSV pairs. One contains positive and nega
 
 For the both-polarity pair, maximum absolute differences are approximately **4.3e-14 V** for VSASS+, **1.1e-14 V** for VSASS- and **2.8e-14 V** for LI. The positive-only pair reproduces VSASS+ to approximately **1.8e-15 V**.
 
+The sampling interval is an ordinary numeric input to this spline path and is not used as profile identity.
+
 **Not validated by this profile**
 
+- negative-only Leakage operation;
 - multi-point Leakage result geometry;
 - other material/thickness acquisition branches;
 - the derivative I-V diagnostic as a separately user-facing validated quantity.
