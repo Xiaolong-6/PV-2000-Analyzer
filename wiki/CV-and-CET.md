@@ -162,7 +162,7 @@ These settings change the acquisition trajectory. Scientific pages should state 
 
 ## 11. Validation status
 
-`CET-9PT-SQUARE-001` is validated against one matching 9-site PV-2000 XML/numeric-export pair for:
+One matching 9-site PV-2000 XML/numeric-export pair forms the historical `CET-9PT-SQUARE-001` evidence bundle. Runtime validation is split between `CET-CALC-001` for EOT/Cd/R² and `GEOM-NINEPOINT-SQUARE-001` for the paired coordinate path. The pair validates:
 
 - target-relative NinePointPattern coordinates on a SquareCell;
 - EOT;
