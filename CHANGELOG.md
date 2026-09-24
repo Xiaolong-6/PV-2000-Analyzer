@@ -8,6 +8,7 @@
 - Added target-relative non-center OnePoint geometry support plus independent geometry profiles, and kept parsed-signal/enhanced SPV branches outside the validated calculation envelope.
 - Aligned SPV with the shared Valid-data filter, map, Distribution, axes/bins and export UI contracts; updated landing-page analyzer inventory, README, validation docs and tracked Wiki source.
 - Kept `IntensityScanMeasurement` deferred after confirming the current vendor class has raw-data export semantics but no independent scientific `CreateDataValues()` result path.
+- P6 self-audit corrected the recovered SPV temperature-coefficient cross-mapping, kept manual-linearity mode outside the paired profile, and split CET runtime validation into `CET-CALC-001` plus `GEOM-NINEPOINT-SQUARE-001`.
 ## v20260924.4 — 2026-09-24
 
 - Audited 30 newly harness-paired private cases across the seven already implemented measurement families, first through the existing validators and then with calculation and geometry parity separated.
