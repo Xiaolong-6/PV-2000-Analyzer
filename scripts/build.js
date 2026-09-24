@@ -16,6 +16,7 @@ const files=[
   'src/core/ui.js',
   'src/core/plot.js',
   'src/core/registry.js',
+  'src/profiles/geometry.js',
   'src/profiles/isc.js',
   'src/profiles/vcpd.js',
   'src/profiles/cet.js',
