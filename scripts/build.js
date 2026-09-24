@@ -29,6 +29,8 @@ const files=[
   'src/modules/isc.js',
   'src/modules/lbic.js',
   'src/modules/cet.js',
+  'src/modules/leakage.js',
+  'src/modules/spv.js',
   'src/modules/generic.js',
   'src/app.js'
 ];
