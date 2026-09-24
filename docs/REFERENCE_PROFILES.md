@@ -765,6 +765,24 @@ Ordinary wavelength, laser power, Region origin/size and complete SquareRegionPa
 
 ---
 
+## 2026-09-24 cross-profile audit boundary
+
+The private cross-profile audit described in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md` used 30 harness-generated pairs across the already implemented families. It showed that the canonical coordinate rules frequently validate across Pattern/Target combinations that the current monolithic profile matchers classify as `NEW PROFILE`.
+
+This evidence changes the **profile architecture rule**, not the public validation labels by itself:
+
+- calculation semantics and geometry semantics are separate validation axes;
+- exact X/Y parity can promote a geometry profile without promoting every derived quantity;
+- a calculation may retain its validated profile across multiple independently validated geometries when pointwise result parity confirms the same algorithm path;
+- individual quantities may have narrower profiles than their sibling outputs;
+- future validators must report calculation, geometry and quantity parity separately.
+
+The strongest new examples are ISC/VCPD, where the same result equations are exact across multiple geometries, and JZero, where lifetime/Smax/Basore J0 generalize while Implied Voc does not. LBIC additionally demonstrates that channel/result combinations such as current-only and scattered-reflectance-only are genuine calculation-profile changes and must not be confused with geometry changes.
+
+No profile is automatically widened merely by this audit. Each public `validated` label should be updated only together with the corresponding runtime/profile migration and regression gate.
+
+---
+
 ## Procedure for adding a new profile
 
 When a new real data combination arrives:

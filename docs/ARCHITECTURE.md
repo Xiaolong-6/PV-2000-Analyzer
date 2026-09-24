@@ -175,6 +175,42 @@ Current profile metadata registered in the shared profile layer includes:
 
 Exact evidence and validation boundaries remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
+### Validation-axis separation
+
+A cross-profile audit of the private 2026-09-24 corpus showed that **scientific calculation semantics and spatial geometry must be validated as independent axes**. The canonical geometry resolver already supports this separation technically; the remaining coupling is mainly in profile matching and validator gates.
+
+A measurement should conceptually carry:
+
+- a **calculation profile** — parser/result semantics, correction rules, unit conventions and algorithm branches that determine scientific values;
+- a **geometry profile** — Pattern/Target coordinate encoding, site ordering, nominal/scheduled boundaries and incomplete-acquisition mapping;
+- **quantity-level validation** — evidence status for each derived result when quantities inside one calculation family do not share the same validation envelope.
+
+Geometry may determine the site index and physical coordinates used by a calculation, but a different validated geometry must not automatically invalidate a calculation that consumes the same site-aligned raw inputs. Conversely, exact coordinate parity does not validate a scientific formula.
+
+The current shared `profile` field and `PV2000.profiles.resolve()` API remain in place until the migration is implemented. The target model is equivalent to:
+
+```js
+validation: {
+  calculation: { id, status, evidence },
+  geometry: { id, status, evidence },
+  quantities: {
+    "<quantity-id>": { profileId, status, evidence }
+  }
+}
+```
+
+`Quantity` already carries its own profile/validation metadata, so the migration should reuse that layer rather than create a second quantity-status system. The normalized measurement envelope should gain separate calculation/geometry profile metadata without forcing a Cartesian product of every algorithm × geometry combination.
+
+The practical rule is:
+
+1. resolve raw/result semantics without using geometry as a surrogate for algorithm identity;
+2. resolve canonical physical geometry independently;
+3. verify that both share the same immutable site index space;
+4. attach quantity validation independently when one output has a narrower evidence envelope;
+5. render the dataset when geometry is supported even if a particular calculated quantity remains inferred or unavailable.
+
+This rule is already explicit for JZero and is now the required direction for ISC/VCPD, QSS-µPCD, LBIC, DIT and Dual QSS as their profile metadata are migrated.
+
 ### Canonical measurement geometry
 
 `src/core/geometry.js` owns Pattern/Target-to-physical-coordinate interpretation for migrated coordinate paths. Raw XML coefficients are preserved separately from physical millimetre coordinates. CET extends the same contract to `FixedPointsPattern/PointValues`: those explicit point values are treated as absolute millimetre coordinates, while fixed 5/9-point `Coefficients` remain target-relative and are scaled by the scheduled target extent.

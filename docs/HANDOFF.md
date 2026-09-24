@@ -7,6 +7,27 @@
 - Target release: `v20260924.3`.
 - Scope: complete the already paired Dual QSS final-result path; no new measurement family is added.
 
+## Cross-profile parity / geometry-decoupling audit
+
+A 2026-09-24 private audit added 30 newly harness-paired cases across the already implemented DIT, QSS-µPCD, Dual QSS, JZero, ISC, VCPD and LBIC families. Calibration-only failures were intentionally excluded from scientific conclusions.
+
+The decisive architecture finding is that the **canonical geometry layer is already broadly reusable, while profile validation remains too coupled to geometry**. The decoupled audit reproduced 25 complete coordinate sets to floating-point precision and one incomplete SquareRegion prefix exactly. ISC and VCPD also preserved their scientific result equations across multiple independently validated geometries.
+
+Next work should therefore start with validation-axis separation, not with another measurement-family feature:
+
+1. add separate calculation- and geometry-profile metadata to the normalized domain model;
+2. keep per-Quantity validation independent;
+3. change validators to emit calculation / geometry / quantity outcomes separately;
+4. migrate ISC/VCPD first because their new pairs prove the same calculation across different geometries;
+5. migrate JZero next, preserving exact lifetime/Smax/Basore parity while keeping Implied Voc on a narrower evidence envelope;
+6. split LBIC channel semantics from geometry and add the paired current-only / scattered-only paths;
+7. perform the sentinel-aware QSS HighDensity pass;
+8. investigate DIT historical regenerated-export drift without weakening the stronger original-pair rules;
+9. re-audit Dual QSS alternate geometries before relaxing its result-profile gate;
+10. only after this refactor add Leakage, then SPV; defer IntensityScan until numeric export evidence is trustworthy.
+
+The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
+
 ## Dedicated analyzers on main
 
 - `DITMeasurement` — Dit / COCOS.
