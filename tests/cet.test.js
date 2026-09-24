@@ -8,6 +8,7 @@ require('../src/core/selection.js');
 require('../src/core/measurement.js');
 require('../src/core/profiles.js');
 require('../src/core/registry.js');
+require('../src/profiles/geometry.js');
 PV2000.xml={};
 PV2000.ui={escapeHtml:String,help(){return''},cssVar(){return''}};
 PV2000.plot={};
