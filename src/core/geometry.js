@@ -356,13 +356,26 @@
     }else if(patternType==='OnePointPattern'&&pointCount===1){
       const p=finiteCoefficients(rawCoefficients)&&rawCoefficients.length
         ?rawCoefficients[0]
-        :{x:0,y:0};
-      if(Math.abs(p.x)<=1e-12&&Math.abs(p.y)<=1e-12){
+        :{x:0,y:0},
+        centered=Math.abs(p.x)<=1e-12&&Math.abs(p.y)<=1e-12;
+      if(centered){
         pointsMm=[{x:0,y:0}];
         sourceSpace='origin';
         interpretation='single-center-point';
         evidenceStatus='inferred';
         acquisitionOrder='single point';
+      }else if(boundary.scheduled&&['circle','rect','pseudo-square'].includes(boundary.shape)){
+        const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
+          scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight;
+        pointsMm=scaleTargetRelativeCoefficients([p],scaleX,scaleY,1,{
+          circular:boundary.shape==='circle'
+        });
+        if(pointsMm.length){
+          sourceSpace='normalized-target-coefficient';
+          interpretation='single-target-relative-point';
+          evidenceStatus='inferred';
+          acquisitionOrder='single point';
+        }
       }
     }
 
