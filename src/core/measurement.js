@@ -6,6 +6,10 @@
     return value&&typeof value==='object'?{...value}:value;
   }
 
+  function profileRef(profile){
+    return profile?{id:profile.id||null,status:profile.status||'inferred'}:null;
+  }
+
   function create({
     type='',
     familyId='',
@@ -17,10 +21,15 @@
     channels={},
     settings={},
     familyData={},
-    profile=null
+    profile=null,
+    calculationProfile=null,
+    geometryProfile=null,
+    validation=null
   }={}){
+    const calc=profileRef(calculationProfile||profile),
+      geom=profileRef(geometryProfile);
     return{
-      schemaVersion:1,
+      schemaVersion:2,
       source,
       type,
       familyId,
@@ -31,7 +40,13 @@
       channels:copy(channels)||{},
       settings:copy(settings)||{},
       familyData:copy(familyData)||{},
-      profile:profile?{id:profile.id||null,status:profile.status||'inferred'}:null
+      profile:calc,
+      calculationProfile:calc,
+      geometryProfile:geom,
+      validation:validation?copy(validation):{
+        calculation:calc,
+        geometry:geom
+      }
     };
   }
 
