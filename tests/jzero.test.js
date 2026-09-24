@@ -3,6 +3,8 @@ global.PV2000={};
 require('../src/core/stats.js');
 require('../src/core/selection.js');
 require('../src/core/geometry.js');
+require('../src/core/profiles.js');
+require('../src/profiles/geometry.js');
 require('../src/core/registry.js');
 PV2000.xml={};
 PV2000.ui={escapeHtml:String,help(){return''},cssVar(){return''}};
@@ -153,10 +155,35 @@ test('JZero no longer hard-codes MapPattern + PseudoSquareCell as the only loada
   assert.doesNotMatch(src,/targetType!==['"]PseudoSquareCell['"]/);
   assert.match(src,/resolveMeasurementGeometry/);
   assert.match(src,/JZERO-CALC-001/);
-  assert.match(src,/JZERO-GEOM-MAP-PSEUDOSQUARE-001/);
+  assert.match(src,/Profiles\.resolveGeometry/);
+  assert.match(src,/GEOM-MAP-PSEUDOSQUARE-001/);
   assert.match(src,/Measurement position/);
 });
 
+
+test('JZero quantity validation is narrower than calculation and geometry validation',()=>{
+  const d={
+    values:[[200,300],[125,140]],
+    qssMilli:[1000,3000],
+    waferThickness:200,
+    opticalFactor:1,
+    doping:1.5e16,
+    temperatures:[28,28],
+    calculationProfile:{id:'JZERO-CALC-001',status:'validated'},
+    geometryProfile:{id:'GEOM-HIGHDENSITY-ROUND-001',status:'validated'}
+  };
+  const a=PV2000.modules.jzero.analyze(d);
+  assert.equal(a.metrics.j0.profileId,'JZERO-CALC-001');
+  assert.equal(a.metrics.j0.validation,'validated');
+  assert.equal(a.metrics.smax1.validation,'validated');
+  assert.equal(a.metrics.voc1.profileId,null);
+  assert.equal(a.metrics.voc1.validation,'inferred');
+
+  d.geometryProfile={id:'GEOM-MAP-PSEUDOSQUARE-001',status:'validated'};
+  const legacy=PV2000.modules.jzero.analyze(d);
+  assert.equal(legacy.metrics.voc1.profileId,'JZERO-VOC-MAP-PSEUDOSQUARE-001');
+  assert.equal(legacy.metrics.voc1.validation,'reproduced-at-shown-precision');
+});
 
 test('JZero shared filter keeps one paired-site mask and adds displayed-metric support',()=>{
   const d={
