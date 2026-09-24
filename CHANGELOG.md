@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260924.1 — 2026-09-24
+
+- Added the paired-evidence gate: a new scientific analyzer, derived quantity or calculation path requires at least one real PV-2000 XML plus its matching numeric PV-2000 CSV export; XML-only files may support parsing/raw inspection but not a new calculated result claim.
+- Added Dual QSS numeric result profile `QSS-INJ-RESULT-001` from two real XML+CSV pairs and reproduced vendor `teff.d (1 Sun)` exactly for the observed exact-1000 mSun and below-target endpoint paths.
+- Added a private-result validator for Dual QSS final-result pairs and kept vendor CSVs strictly as development regression evidence; runtime remains XML-only.
+- Locked the downstream Smax and finite Δn relations against the paired result exports while keeping teff.SS / teff.SS Max, Implied Voc, Basore J0 and K-S J0 out of runtime until their XML→result transformations are pointwise reproduced.
+- Updated README, measurement roadmap, validation/profile docs and tracked Wiki source to reflect the narrower validated result envelope.
+
 ## v20260923.22 — 2026-09-23
 
 - Audited repository documentation and tracked Wiki sources against current `main` after the analyzer/sidebar cleanup.

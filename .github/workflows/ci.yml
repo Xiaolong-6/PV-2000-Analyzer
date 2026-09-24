@@ -28,10 +28,12 @@ jobs:
         run: |
           npm run validate:qss
           npm run validate:dual-qss
+          npm run validate:dual-qss-results
           npm run validate:jzero
           npm run validate:isc
           npm run validate:vcpd
           npm run validate:lbic
+          npm run validate:cet
       - name: Build
         run: npm run build
       - name: Upload dist

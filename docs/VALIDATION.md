@@ -139,7 +139,7 @@ Regression results:
 | vendor `dn` given positive vendor Lifetime | generation formula max relative discrepancy ≈ **0.509%** at rounded CSV precision | validated downstream step |
 | Implied Voc / J0 | output path not reproduced | inferred / unsupported |
 
-The expanded corpus resolves an earlier ambiguity: **CSV raw `LifeTime` corresponds to `TransientInfo@LifeTime`, while XML `Values` is a separate closely related lifetime vector.** The analyzer defaults to `TransientInfo@LifeTime`, exposes `XML Values` as a diagnostic curve source, and exports both explicitly.
+The expanded corpus resolves an earlier ambiguity: **CSV raw `LifeTime` corresponds to `TransientInfo@LifeTime`, while XML `Values` is a separate closely related lifetime vector.** The analyzer uses `TransientInfo@LifeTime` for the injection curve (with XML `Values` fallback only when needed) and preserves both fields explicitly in CSV export.
 
 The CSV top-table `Lifetime[us]` remains a third, post-processed quantity. It is not synthesized at runtime until its transformation and validity rule are reproduced point-by-point.
 
@@ -148,6 +148,36 @@ A supplemental six-XML set confirms `OnePointPattern` center coordinates with `S
 The analyzer remains XML-only at runtime. Paired CSVs are private regression evidence and are not runtime inputs.
 
 See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
+
+## Dual QSS numeric final-result pair — QSS-INJ-RESULT-001
+
+Two additional real `DualQssMeasurement` XML files have matching **numeric PV-2000 final-result CSV exports**. They establish a narrow `OnePointPattern + RoundWafer`, Back/Back source-selection result profile.
+
+| Quantity / behavior | Paired regression | Status |
+|---|---:|---|
+| `teff.d (1 Sun)`, explicit 1000 mSun acquisition | max abs error **0 µs** from XML `Values` | validated |
+| `teff.d (1 Sun)`, acquisition ending below 1000 mSun | max abs error **0 µs** using final acquired XML `Values` | validated paired endpoint rule |
+| `Smax (1 Sun)` from vendor teff.SS and XML thickness | max abs error ≈ **1.1e-13 cm/s** | validated downstream relation |
+| max-lifetime `Smax` from vendor teff.SS Max and XML thickness | max abs error ≈ **3.9e-14 cm/s** | validated downstream relation |
+| finite `Δn (1 Sun)` from vendor teff.SS, intensity, optical factor and thickness | relative error ≈ **1.1e-15** | validated downstream relation |
+| second-pair Basore J0 / Δn unavailable flags | vendor undefined, while K-S J0 and Voc remain defined | observed availability example |
+| teff.SS / teff.SS Max reconstruction | not yet reproduced from XML | unsupported |
+| Implied Voc / Basore J0 / K-S J0 reconstruction | not yet reproduced from XML | unsupported |
+
+The paired validator intentionally does **not** extrapolate beyond its evidence. If a sweep spans 1000 mSun without an exact 1000 mSun point, no interior interpolation is emitted until a real matching XML+CSV pair establishes that behavior.
+
+Run against private paired case directories:
+
+```bash
+npm run validate:dual-qss-results -- <case-dir> [<case-dir> ...]
+```
+
+Current paired evidence gives:
+
+- one 25-point case covering 30–20500 mSun with exact 1000 mSun sampling;
+- one 16-point case covering 1–681 mSun, establishing the observed right-endpoint behavior below the 1-sun target.
+
+The browser uses only the XML. The private CSVs are regression evidence and are never runtime inputs.
 
 ## Emitter J0 map — paired XML/CSV regression
 

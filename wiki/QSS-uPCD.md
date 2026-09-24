@@ -170,12 +170,12 @@ Point selection matters. The fit is performed on a defined post-maximum-lifetime
 
 ## 8. Dual-QSS relationship
 
-Dual QSS can add steady-state correction and optional J0 methods to an injection scan. The current viewer validates the stored raw injection/transient path; vendor result-table post-processing for corrected lifetime, injection, implied Voc and J0 has not yet been established.
+Dual QSS can add steady-state correction and optional J0 methods to an injection scan. The viewer validates the stored raw injection/transient path and now has a narrow paired numeric result profile (`QSS-INJ-RESULT-001`) in which vendor `teff.d (1 Sun)` is reproduced exactly from XML `Values` for the observed exact-1000 and below-target endpoint cases. The corrected teff.SS / teff.SS Max, implied Voc and J0 transformations remain outside runtime until pointwise parity is established.
 
 Its scientific elements include:
 
 - QDC-based transient-quality gating;
-- reconstruction of steady-state effective lifetime;
+- reconstruction of steady-state effective lifetime; managed-code inspection shows the reference build uses a log-log **Akima** spline (despite the wrapper class being named `CubicSplineInterpolator`), followed by integration and linear interpolation;
 - excess-carrier-density recalculation;
 - optional Auger correction;
 - Kane-Swanson-style J0;

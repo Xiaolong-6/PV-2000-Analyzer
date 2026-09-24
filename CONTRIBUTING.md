@@ -30,6 +30,8 @@ For substantial corporate contributions, a separately signed CLA may be requeste
 
 If the analyzer does not support a measurement, channel, result, pattern or algorithm path you need, you can submit reference data without implementing anything.
 
+A new scientific analyzer or calculated result path is not accepted on XML structure alone: development must have at least one real XML plus its matching numeric PV-2000 CSV export. XML-only cases can still support parser/raw-view work or document a future profile boundary.
+
 Please add one case under:
 
 ```text
@@ -83,6 +85,7 @@ Before opening an implementation PR, run:
 npm run check
 npm run validate:qss
 npm run validate:dual-qss
+npm run validate:dual-qss-results
 npm run validate:jzero
 npm run validate:isc
 npm run validate:vcpd
