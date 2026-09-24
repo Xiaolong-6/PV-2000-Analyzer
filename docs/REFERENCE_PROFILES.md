@@ -23,6 +23,73 @@ This is a validation boundary, not an exact-version runtime whitelist. XML from 
 
 ## Profile registry
 
+### SPV-CALC-STANDARD-001 — standard two-wavelength SPV map
+
+**Measurement type**
+
+`SPVMeasurement`
+
+**Reference material**
+
+Two private real XML + numeric PV-2000 CSV pairs, each a 1649-site 4 mm `MapPattern + RoundWafer` map.
+
+**Validated / established**
+
+- output set: DL [µm], Tau [µs], SPV8 [mV], SPV6 [mV];
+- standard non-enhanced calculation branch;
+- measured-linearity correction path;
+- wavelength-to-penetration-depth conversion;
+- oxide-thickness correction path used by the paired files;
+- DL acceptance rule: non-positive or >2500 µm becomes unavailable;
+- Tau is derived from DL using the vendor minority-carrier mobility constant;
+- SPV8/SPV6 remain available independently of DL/Tau availability;
+- paired `Ud.` masks for DL/Tau reproduce with zero mismatches.
+
+Across the two pairs, maximum absolute differences are approximately **1.64e-11 µm** for DL and **2.06e-11 µs** for Tau; SPV8/SPV6 agree to floating-point precision.
+
+**Not validated by this profile**
+
+- `UseEnhancedMode=true`;
+- texture-correction-enabled cases;
+- parsed-signal mode;
+- alternate wavelength/configuration families or optical branches not exercised by the pair.
+
+Calculation validation is separate from geometry validation. The current 4 mm RoundWafer map geometry resolves through the shared map geometry profile.
+
+---
+
+### LEAKAGE-CALC-VSASS-001 — Leakage VSASS / LI extraction
+
+**Measurement type**
+
+`LeakageMeasurement`
+
+**Reference material**
+
+Two private real XML + numeric PV-2000 CSV pairs. One contains positive and negative branches; one is positive-only.
+
+**Validated / established**
+
+- mean Vcpd-offset subtraction;
+- time axis from the stored measurement interval;
+- local knot window around 1.2 s;
+- vendor natural cubic spline and end-interval extrapolation behavior;
+- evaluation at `1.2 s - polarity delay`;
+- VSASS+, VSASS- and LI availability semantics;
+- positive-only data preserve VSASS+ while VSASS-/LI remain unavailable.
+
+For the both-polarity pair, maximum absolute differences are approximately **4.3e-14 V** for VSASS+, **1.1e-14 V** for VSASS- and **2.8e-14 V** for LI. The positive-only pair reproduces VSASS+ to approximately **1.8e-15 V**.
+
+**Not validated by this profile**
+
+- multi-point Leakage result geometry;
+- other material/thickness acquisition branches;
+- the derivative I-V diagnostic as a separately user-facing validated quantity.
+
+The paired one-point non-zero coefficient case also establishes the shared target-relative OnePoint geometry path independently of the scientific calculation profile.
+
+---
+
 ### CET-9PT-SQUARE-001 — CET NinePointPattern + SquareCell
 
 **Measurement type**
