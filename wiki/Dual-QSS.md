@@ -70,7 +70,7 @@ Those downstream equations do not by themselves establish how PV-2000 transforms
 
 Injection-dependent lifetime can support Kane–Swanson- or Basore-style emitter-saturation-current analysis. The scientific concept is documented in [Scientific Foundations](Scientific-Foundations) and [Emitter J0](Emitter-J0).
 
-For Dual QSS, the vendor-compatible teff.SS and J0 transformations remain outside runtime until their XML→result behavior is reproduced point-by-point from real paired files.
+For `QSS-INJ-RESULT-001`, the vendor-compatible teff.SS and J0 transformations are implemented in runtime and validated point-by-point against two real XML+numeric-CSV pairs. This remains a profile-scoped result path; Auger correction and alternate source-selection branches are not generalized without their own pairs.
 
 ## Validation status
 
