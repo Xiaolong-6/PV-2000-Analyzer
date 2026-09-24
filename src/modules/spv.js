@@ -52,7 +52,7 @@
       c8=spv8*factor/Math.log(1+factor);
       c6=spv8/Math.log(1+factor)*(Math.pow(1+factor,spv6/spv8)-1);
     }
-    const t8=1/(1+s.temperatureCorrection8*(s.ledTemperature-26)),t6=1/(1+s.temperatureCorrection6*(s.ledTemperature-26));
+    const t8=1/(1+s.temperatureCorrection6*(s.ledTemperature-26)),t6=1/(1+s.temperatureCorrection8*(s.ledTemperature-26));
     if(s.oxideThickness<=0){
       const r8=Math.max(0,Math.min(1,s.reflectivity8)),r6=Math.max(0,Math.min(1,s.reflectivity6));
       if(r8!==1&&r6!==1){c8/=1-r8;c6/=1-r6}
@@ -77,7 +77,9 @@
         wavelength8:X.num(md,'Wavelength8',NaN),wavelength6:X.num(md,'Wavelenght6',NaN),
         temperatureCorrection8:X.num(md,'TemperatureCorrectionCoefficientLED8',0),temperatureCorrection6:X.num(md,'TemperatureCorrectionCoefficientLED6',0),
         chuckTemperature:X.num(iteration,'ChuckTemperature',NaN),ledTemperature:X.num(iteration,'LEDTemperature',NaN),
-        spv8Global:X.num(iteration,'SPV8Global',NaN),spv8ReducedGlobal:X.num(iteration,'SPV8ReducedGlobal',NaN),
+        linearityRatioMethod:X.text(m,'LinearityRatioMethod','UseMeasuredLR'),manualLinearityRatioValue:X.num(m,'ManualLinearityRatioValue',NaN),
+        spv8Global:X.text(m,'LinearityRatioMethod','UseMeasuredLR')==='UseManualLR'?X.num(m,'ManualLinearityRatioValue',NaN):X.num(iteration,'SPV8Global',NaN),
+        spv8ReducedGlobal:X.text(m,'LinearityRatioMethod','UseMeasuredLR')==='UseManualLR'?1:X.num(iteration,'SPV8ReducedGlobal',NaN),
         linearityRatioOk:X.num(iteration,'LineartiyRatioOK',NaN),reflectivity8:X.num(m,'ReflectivityCorrection8',0),reflectivity6:X.num(m,'ReflectivityCorrection6',0),
         useTextureCorrection:bool(X.text(m,'UseTextureCorrection','false')),textureCorrection:X.num(m,'TextureCorrection',NaN),
         useEnhancedMode:bool(X.text(m,'UseEnhancedMode','false')),parseSignals:bool(X.text(m,'ParseSignals','false')),
