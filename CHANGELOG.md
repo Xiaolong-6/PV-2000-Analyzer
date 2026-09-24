@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260924.3.2 — 2026-09-24
+## v20260924.4 — 2026-09-24
 
 - Audited 30 newly harness-paired private cases across the seven already implemented measurement families, first through the existing validators and then with calculation and geometry parity separated.
 - Confirmed that the canonical geometry resolver generalizes beyond the current monolithic profile gates: 25 complete coordinate sets reproduce vendor X/Y to floating-point precision, plus one exact incomplete SquareRegion acquisition prefix.
