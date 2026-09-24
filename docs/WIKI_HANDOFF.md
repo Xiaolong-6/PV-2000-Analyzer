@@ -65,7 +65,7 @@ Use GitHub-compatible Markdown:
 
 - inline math: `$...$`;
 - display math: fenced `math` blocks where practical;
-- Wiki links: page slugs such as `[Dual QSS](Dual-QSS)`;
+- Wiki links use page slugs such as `Dual-QSS` rather than repository-relative file paths;
 - avoid links to untracked/planned pages.
 
 ## Verification after publication
