@@ -8,6 +8,7 @@ require('../src/core/quantity.js');
 require('../src/core/selection.js');
 require('../src/core/measurement.js');
 require('../src/core/profiles.js');
+require('../src/profiles/geometry.js');
 
 test('quantity keeps values and availability as separate concepts',()=>{
   const q=PV2000.quantity.create({
@@ -37,12 +38,16 @@ test('measurement envelope keeps common identity, geometry and profile metadata 
     familyId:'vcpd',
     identity:{resultName:'example'},
     geometry,
-    profile:{id:'VCPD-MAP-001',status:'validated'}
+    calculationProfile:{id:'VCPD-CALC-001',status:'validated'},
+    geometryProfile:{id:'GEOM-MAP-ROUND-001',status:'validated'}
   });
-  assert.equal(m.schemaVersion,1);
+  assert.equal(m.schemaVersion,2);
   assert.equal(m.source,'xml');
   assert.equal(m.geometry.scheduled.radius,92);
-  assert.deepEqual(m.profile,{id:'VCPD-MAP-001',status:'validated'});
+  assert.deepEqual(m.profile,{id:'VCPD-CALC-001',status:'validated'});
+  assert.deepEqual(m.calculationProfile,{id:'VCPD-CALC-001',status:'validated'});
+  assert.deepEqual(m.geometryProfile,{id:'GEOM-MAP-ROUND-001',status:'validated'});
+  assert.deepEqual(m.validation.geometry,{id:'GEOM-MAP-ROUND-001',status:'validated'});
 });
 
 test('profile registry resolves semantic matches without numeric identity whitelists',()=>{
@@ -56,6 +61,28 @@ test('profile registry resolves semantic matches without numeric identity whitel
   assert.equal(PV2000.profiles.resolve('test',{mode:'b'}),null);
 });
 
+
+test('profile registry resolves calculation and geometry axes independently',()=>{
+  PV2000.profiles.register({
+    id:'TEST-CALC-AXIS',
+    familyId:'axis-test',
+    axis:'calculation',
+    status:'validated',
+    matches:data=>data?.calc===true
+  });
+  assert.equal(PV2000.profiles.resolveCalculation('axis-test',{calc:true}).id,'TEST-CALC-AXIS');
+  const g=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'MapPattern',
+    targetType:'RoundWafer',
+    pointCount:305,
+    diameter:100,
+    edgeExclusion:0,
+    pitchX:5,
+    pitchY:5
+  });
+  assert.equal(PV2000.profiles.resolveGeometry({geometryModel:g}).id,'GEOM-MAP-ROUND-001');
+  assert.equal(PV2000.profiles.resolveCalculation('axis-test',{calc:false}),null);
+});
 
 test('unknown coefficient semantics never become physical mm implicitly',()=>{
   const g=PV2000.geometry.resolveMeasurementGeometry({
