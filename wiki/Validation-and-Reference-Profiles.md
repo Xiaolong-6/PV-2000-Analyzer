@@ -78,7 +78,7 @@ The project records both the scientific relation and the compatibility status.
 
 The current implemented analyzers include several explicitly named profile families, for example:
 
-- `QSS-INJ-RESULT-001` — narrow Dual-QSS teff.d (1 Sun) result path;
+- `QSS-INJ-RESULT-001` — two-pair Dual-QSS non-Auger Back/Back final-result path covering QDC, teff.d/teff.SS, Δn/Smax/Voc and Basore/K-S J0;
 - the JZero calculation/geometry profiles for the paired two-intensity pseudo-square reference;
 - separate ISC and VCPD paired map profiles;
 - `CET-9PT-SQUARE-001` — CET NinePointPattern + SquareCell;
