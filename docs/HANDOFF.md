@@ -28,7 +28,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
 
-## Dedicated analyzers on main
+## Dedicated analyzers on this branch
 
 - `DITMeasurement` — Dit / COCOS.
 - `QssUpcdMeasurement` — QSS-µPCD map.
