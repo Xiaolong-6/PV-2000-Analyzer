@@ -84,7 +84,9 @@ The current implemented analyzers include several explicitly named profile famil
 - `CET-9PT-SQUARE-001` — CET NinePointPattern + SquareCell;
 - `LBIC-SINGLE-001` — current-enabled single-beam LBIC;
 - `LBIC-MULTI-002` — current-enabled multi-beam pseudo-square LBIC;
-- `LBIC-REFLECTANCE-003` — reflectance-only LBIC.
+- `LBIC-REFLECTANCE-003` — reflectance-only LBIC;
+- `SPV-CALC-STANDARD-001` — paired standard two-wavelength SPV DL/Tau path;
+- `LEAKAGE-CALC-VSASS-001` — paired Leakage natural-cubic VSASS/LI extraction.
 
 This list is illustrative, not the authoritative profile registry. Exact IDs, matching conditions, tolerances and evidence remain in the repository validation documents.
 
