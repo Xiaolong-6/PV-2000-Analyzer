@@ -176,15 +176,23 @@ def validate(xml_path, csv_path):
     return errors
 
 
+def pair_paths(value):
+    if '::' in value:
+        xml_value, csv_value = value.split('::', 1)
+        return Path(xml_value), Path(csv_value)
+    xml_path = Path(value)
+    return xml_path, xml_path.with_suffix('.csv')
+
+
 def main():
-    args = [Path(value) for value in sys.argv[1:]]
+    args = list(sys.argv[1:])
     if not args:
-        args = [Path(value) for value in sorted(glob.glob('private/reference/leakage/*.xml'))]
+        args = sorted(glob.glob('private/reference/leakage/*.xml'))
     if not args:
-        print('Leakage paired validator: SKIP (provide XML paths)')
+        print('Leakage paired validator: SKIP (provide XML paths or XML::CSV pairs)')
         return 0
-    for xml_path in args:
-        csv_path = xml_path.with_suffix('.csv')
+    for value in args:
+        xml_path, csv_path = pair_paths(value)
         errors = validate(xml_path, csv_path)
         print(f'LEAKAGE PASS {xml_path.name}: VSASS+={errors[0]:.3g}, VSASS-={errors[1]:.3g}, LI={errors[2]:.3g}')
     return 0
