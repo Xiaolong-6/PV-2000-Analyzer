@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260924.3 — 2026-09-24
+
+- Completed the two-pair `QSS-INJ-RESULT-001` Dual QSS final-result reconstruction from XML only for the non-Auger Back/Back path.
+- Reproduced original DLL QDC internals with maximum absolute error ≈ **7.92e-11** across the paired HighPower/LowPower transients, including MinPack smoothing and contiguous QDC-range gating.
+- Reconstructed the vendor steady-state path with log-log Akima densification, integration and corrected-lifetime interpolation.
+- Matched all nine numeric vendor result quantities for both real XML+CSV pairs: teff.d, teff.SS, teff.SS Max, Basore J0, Δn, both Smax values, Implied Voc and K-S J0, including quantity-specific `Ud.` states.
+- Added an XML-only runtime result-table export and private paired regression gate; Auger correction, alternate source selections and other categorical branches remain unavailable until separately paired.
+- Updated repository docs and tracked Wiki source to the new validation envelope.
+
 ## v20260924.2 — 2026-09-24
 
 - Re-audited all public documentation against current main after the Dual QSS result-parity update.
