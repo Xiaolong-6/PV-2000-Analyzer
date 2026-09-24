@@ -13,11 +13,10 @@
       data.parseSignals===false&&
       data.useEnhancedMode===false&&
       data.useTextureCorrection===false&&
-      Math.abs((data.multiplier??NaN)-1000)<1e-12&&
-      Math.abs((data.wavelength8??NaN)-778)<1e-12&&
-      Math.abs((data.wavelength6??NaN)-933)<1e-12&&
-      Math.abs(data.temperatureCorrection8||0)<1e-12&&
-      Math.abs(data.temperatureCorrection6||0)<1e-12&&
-      Math.abs((data.oxideThickness??NaN)-4)<1e-12
+      data.dopingType==='PType'&&
+      Number.isFinite(data.multiplier)&&data.multiplier>0&&
+      Number.isFinite(data.wavelength8)&&data.wavelength8>0&&
+      Number.isFinite(data.wavelength6)&&data.wavelength6>0&&
+      Number.isFinite(data.oxideThickness)&&data.oxideThickness>0
   });
 })(typeof window!=='undefined'?window:globalThis);
