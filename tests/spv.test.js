@@ -74,3 +74,31 @@ test('SPV source uses shared filter, map and Distribution controls',()=>{
   assert.match(src,/Q\.PROVENANCE\.RAW/);
   assert.match(src,/Q\.PROVENANCE\.DERIVED_COMPATIBILITY/);
 });
+
+test('ordinary numeric settings stay inside the standard SPV profile',()=>{
+  const p=PV2000.profiles.resolveCalculation('spv',{
+    type:'SPVMeasurement',
+    sites:[{}],
+    parseSignals:false,
+    useEnhancedMode:false,
+    useTextureCorrection:false,
+    dopingType:'PType',
+    multiplier:500,
+    wavelength8:772,
+    wavelength6:934,
+    oxideThickness:8
+  });
+  assert.equal(p?.id,'SPV-CALC-STANDARD-001');
+});
+
+test('categorical SPV branch changes do not inherit standard validation',()=>{
+  const base={
+    type:'SPVMeasurement',sites:[{}],parseSignals:false,useEnhancedMode:false,
+    useTextureCorrection:false,dopingType:'PType',multiplier:1000,
+    wavelength8:778,wavelength6:933,oxideThickness:4
+  };
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useEnhancedMode:true}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useTextureCorrection:true}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,dopingType:'NType'}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,oxideThickness:0}),null);
+});
