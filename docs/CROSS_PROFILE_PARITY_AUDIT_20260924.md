@@ -245,6 +245,18 @@ Calibration measurements remain outside this roadmap unless there is a separate 
 - Parsed-signal and enhanced-mode SPV DL are deliberately unavailable rather than silently applying the standard scalar formula outside its paired evidence envelope.
 - DLL re-audit found the historical temperature-correction parameter-order quirk: the stored LED6 coefficient is applied to SPV8 and LED8 to SPV6. Runtime and private validator now preserve that behavior; a non-zero-coefficient unit test locks it. Manual-linearity mode remains outside the paired validated profile.
 - IntensityScan remains a raw/fallback case; no unsupported derived scientific output was invented.
+### Final P6 acceptance run
+
+A private CI job checked out this public feature branch and ran the shipped public validators directly against the private real reference pairs:
+
+- Leakage: 2 / 2 pairs passed; maximum absolute errors were approximately 4.26e-14 V (VSASS+), 1.07e-14 V (VSASS-) and 2.84e-14 V (LI).
+- SPV: 2 / 2 1649-site pairs passed; DL maximum absolute error was 1.64e-11 µm, Tau 2.06e-11 µs, raw SPV-channel error <= 1.78e-15 mV, and every availability-mask comparison had zero mismatches.
+- Browser smoke: 4 / 4 representative real XMLs dispatched to the dedicated analyzer and rendered without page errors, console errors or dialogs.
+- Visual review of the generated screenshots found one Leakage one-point aspect-ratio defect; the shared equal-aspect range helper was then applied and the full private acceptance workflow was rerun successfully.
+- Final visual review confirms complete circular and square target outlines, correct selected-point placement, populated SPV map/distribution views, and quantity-specific DL/Tau unavailability without loss of raw SPV channels.
+
+The private files, screenshots and vendor binaries remain outside the public repository.
+
 ## Acceptance criteria for the refactor
 
 The refactor is complete when:
