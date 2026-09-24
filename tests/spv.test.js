@@ -62,3 +62,15 @@ test('SPV build is loaded before generic fallback',()=>{
   assert.ok(moduleIndex>=0);
   assert.ok(generic>moduleIndex);
 });
+
+test('SPV source uses shared filter, map and Distribution controls',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8');
+  assert.match(src,/Sel\.createFilter/);
+  assert.match(src,/validDataFilterMarkup/);
+  assert.match(src,/bindValidDataFilter/);
+  assert.match(src,/axisControls\('spvMapAxes'\)/);
+  assert.match(src,/axisControls\('spvHistAxes'/);
+  assert.match(src,/binControls\('spvHistBins'/);
+  assert.match(src,/Q\.PROVENANCE\.RAW/);
+  assert.match(src,/Q\.PROVENANCE\.DERIVED_COMPATIBILITY/);
+});
