@@ -225,14 +225,24 @@ Remove Pattern/Target from the final-result calculation identity only after alte
 
 ### P6 — new measurement families
 
-After the profile refactor is stable:
+Completed on the validation-decoupling branch:
 
-1. **LeakageMeasurement** — lowest-complexity new dedicated analyzer; two successful harness references already exist.
-2. **SPVMeasurement** — implement only the paired map path first (DL, Tau, SPV channels) and keep unsupported profiles conservative.
-3. **IntensityScanMeasurement** — defer scientific implementation until a trustworthy numeric result export can be produced; XML-only/raw inspection remains acceptable.
+1. **LeakageMeasurement** — dedicated analyzer added. Two real XML+CSV pairs reproduce VSASS+/VSASS-/LI through the recovered natural-cubic extraction path to floating-point precision. The positive-only availability branch is covered.
+2. **SPVMeasurement** — dedicated paired-map analyzer added for DL, Tau, SPV8 and SPV6. Two 1649-site 4 mm RoundWafer pairs reproduce DL/Tau at ~1e-11 absolute scale and preserve the vendor `Ud.` mask exactly.
+3. **IntensityScanMeasurement** — remains deferred. The vendor class exposes raw acquisition data but no independent `CreateDataValues()` scientific-result path, and both attempted harness exports fail at that missing method.
+
+Calculation and geometry validation remain separate for both new analyzers. Additional SPV modes and broader Leakage acquisition/geometry paths require new paired evidence before profile expansion.
 
 Calibration measurements remain outside this roadmap unless there is a separate need to inspect them without hardware.
 
+## P6 self-audit result
+
+- P0–P5 calculation/geometry/quantity separation remains intact after adding the two new families.
+- Leakage uses a calculation profile independent from the validated target-relative one-point geometry profile.
+- SPV uses a calculation profile independent from the shared RoundWafer map geometry profile.
+- SPV default filtering is based on a raw SPV channel so quantity-specific DL/Tau `Ud.` sites do not erase otherwise valid raw-channel sites.
+- Parsed-signal and enhanced-mode SPV DL are deliberately unavailable rather than silently applying the standard scalar formula outside its paired evidence envelope.
+- IntensityScan remains a raw/fallback case; no unsupported derived scientific output was invented.
 ## Acceptance criteria for the refactor
 
 The refactor is complete when:
