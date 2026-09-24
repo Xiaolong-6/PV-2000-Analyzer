@@ -84,6 +84,24 @@ at 1000 mSun also reproduces the numeric export to floating-point precision. Thi
 
 The two CSVs additionally expose teff.SS, teff.SS Max, Implied Voc, K-S J0 and Basore J0/undefined state. A private reference-build replay reproduces those exported values and undefined flags, confirming that the files are internally paired. Browser-side reconstruction of those quantities remains unsupported until their XML→result transformations are independently reproduced point-by-point.
 
+### Research-only steady-state path recovered from the reference build
+
+Managed-code inspection of PV-2000 v1.3.0.5 establishes the control flow without making it a browser validation claim:
+
+1. compute transient QDC and retain the contiguous measured interval from the first QDC inside `ValidQdcRange` through the last one inside the range;
+2. require at least six retained lifetime/intensity points;
+3. transform both axes to natural-log space and densify by a factor of 10,000;
+4. despite its class name `CubicSplineInterpolator`, the reference build calls ALGLIB `buildakimaspline`, so this is specifically a **log-log Akima spline**;
+5. locate a local lifetime extremum and keep the dense portion at or above that intensity;
+6. trapezoidally integrate and form the steady-state lifetime curve as
+   `tauSS_i = (Integral_i + tau_i * I_start) / I_i`;
+7. linearly interpolate that corrected curve versus intensity; corrected values are written only inside the corrected domain, with zero outside it;
+8. recompute excess carrier density from the corrected lifetime.
+
+The base QSS path first evaluates `teff.d (1 Sun)` from XML `Values` with a clamped linear interpolator. The Dual QSS path overwrites `teff.SS (1 Sun)` only when 1000 mSun lies inside the corrected steady-state domain; otherwise the base value remains. This explains the two paired result cases without requiring filename- or sample-specific logic.
+
+This recovered control flow is useful reverse-engineering evidence, but the browser still does not expose teff.SS because exact QDC/transient preprocessing plus the complete Akima path have not yet been independently regressed point-by-point against a sufficiently varied real XML+CSV set.
+
 Run the paired numeric validator with:
 
 ```bash
