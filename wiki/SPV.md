@@ -47,6 +47,8 @@ The current paired profile does **not** validate:
 
 Such files may still be structurally readable, but their derived-result status remains inferred until matching vendor output extends the profile.
 
+Ordinary numeric settings such as wavelength, temperature, multiplier and positive oxide-thickness magnitude remain inputs to this same standard formula; they do not create a new calculation profile by themselves.
+
 Geometry validation is tracked separately from calculation validation.
 
 ## Related documentation
