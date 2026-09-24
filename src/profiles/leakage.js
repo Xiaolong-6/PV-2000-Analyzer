@@ -12,8 +12,10 @@
       if(data?.measurePositive)enabled.push(data.positiveSettings?.intervalSeconds);
       if(data?.measureNegative)enabled.push(data.negativeSettings?.intervalSeconds);
       return data?.type==='LeakageMeasurement'&&
-        data.sites?.length>0&&enabled.length>0&&
-        enabled.every(v=>Number.isFinite(v)&&Math.abs(v-.1)<1e-12);
+        data.sites?.length>0&&
+        data.measurePositive===true&&
+        enabled.length>0&&
+        enabled.every(v=>Number.isFinite(v)&&v>0);
     }
   });
 })(typeof window!=='undefined'?window:globalThis);
