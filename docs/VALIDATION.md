@@ -9,6 +9,37 @@ The central registry of validated reference envelopes is `docs/REFERENCE_PROFILE
 
 Public reference data do not change the runtime contract: the analyzer still consumes XML only. CSV/XPS/screenshots are test and reverse-engineering evidence. A public dataset also does not by itself prove the PV-2000 internal algorithm; the validation label applies only to the observed input→output envelope.
 
+## SPV — paired standard-map regression
+
+Two private 1649-site `SPVMeasurement` XML + numeric CSV pairs establish `SPV-CALC-STANDARD-001`.
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| site count | 1649 XML = 1649 export for both pairs | validated |
+| SPV8 / SPV6 | floating-point agreement | validated |
+| DL | max abs error ≈ 1.64e-11 µm | validated |
+| Tau | max abs error ≈ 2.06e-11 µs | validated |
+| DL/Tau `Ud.` mask | 0 mismatches | validated semantic handling |
+| map geometry | 4 mm RoundWafer schedule, 1649 sites | validated through independent geometry profile |
+
+One pair contains only one finite DL/Tau site; the other contains 49. Raw SPV channels remain present at all measured sites where DL/Tau are unavailable.
+
+The validated calculation envelope is the standard non-enhanced, non-texture, non-parsed-signal branch exercised by the pairs. Other SPV branches remain inferred until paired output extends the calculation profile.
+
+## Leakage — paired VSASS / LI regression
+
+Two private `LeakageMeasurement` XML + numeric CSV pairs establish `LEAKAGE-CALC-VSASS-001`.
+
+| Quantity / behavior | Regression result | Status |
+|---|---:|---|
+| VSASS+ | max abs error ≈ 4.3e-14 V on both-polarity pair; ≈1.8e-15 V on positive-only pair | validated |
+| VSASS- | max abs error ≈ 1.1e-14 V | validated |
+| LI | max abs error ≈ 2.8e-14 V | validated |
+| positive-only availability | VSASS+ available, VSASS-/LI unavailable | validated |
+| target-relative one-point coordinate | non-zero coefficient resolves to vendor 18.4 mm / 18.4 mm | validated geometry path |
+
+The compatibility implementation reproduces the vendor natural-cubic spline extraction around 1.2 s and its end-interval extrapolation behavior. The separate derivative I-V diagnostic is recovered reference knowledge but is not currently a separately validated primary output.
+
 ## CET — paired NinePointPattern / SquareCell regression
 
 One private `CETMeasurement` XML + matching PV-2000 numeric CSV export establishes `CET-9PT-SQUARE-001`.
