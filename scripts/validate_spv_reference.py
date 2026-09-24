@@ -233,15 +233,23 @@ def validate(xml_path, csv_path):
     return results
 
 
+def pair_paths(value):
+    if '::' in value:
+        xml_value, csv_value = value.split('::', 1)
+        return Path(xml_value), Path(csv_value)
+    xml_path = Path(value)
+    return xml_path, xml_path.with_suffix('.csv')
+
+
 def main():
-    args = [Path(value) for value in sys.argv[1:]]
+    args = list(sys.argv[1:])
     if not args:
-        args = [Path(value) for value in sorted(glob.glob('private/reference/spv/*.xml'))]
+        args = sorted(glob.glob('private/reference/spv/*.xml'))
     if not args:
-        print('SPV paired validator: SKIP (provide XML paths)')
+        print('SPV paired validator: SKIP (provide XML paths or XML::CSV pairs)')
         return 0
-    for xml_path in args:
-        csv_path = xml_path.with_suffix('.csv')
+    for value in args:
+        xml_path, csv_path = pair_paths(value)
         results = validate(xml_path, csv_path)
         labels = ['DL', 'Tau', 'SPV8', 'SPV6']
         print('SPV PASS ' + xml_path.name + ': ' + ', '.join(
