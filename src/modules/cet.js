@@ -105,10 +105,12 @@
   }
 
   function attachDomain(data){
-    const profile=Profiles.resolve('cet',data),
-      validation=profile?.status||Q.VALIDATION.INFERRED;
-    data.profile=profile?{id:profile.id,status:profile.status}:null;
-    data.geometryModel.validationStatus=validation;
+    const calculationProfile=Profiles.resolveCalculation('cet',data),
+      geometryProfile=Profiles.resolveGeometry(data);
+    data.calculationProfile=calculationProfile?{id:calculationProfile.id,status:calculationProfile.status}:null;
+    data.geometryProfile=geometryProfile?{id:geometryProfile.id,status:geometryProfile.status}:null;
+    data.profile=data.calculationProfile;
+    data.geometryModel.validationStatus=data.geometryProfile?.status||(data.coords.length?'inferred':'unsupported');
     data.domain=M.create({
       type:data.type,
       familyId:'cet',
@@ -136,7 +138,8 @@
         compatibilityChargeConstantC:LEGACY_Q,
         eotFactor:EOT_FACTOR
       },
-      profile:data.profile
+      calculationProfile:data.calculationProfile,
+      geometryProfile:data.geometryProfile
     });
     return data;
   }
@@ -224,8 +227,8 @@
   }
 
   function analyze(data){
-    const validation=data.profile?.status||Q.VALIDATION.INFERRED,
-      profileId=data.profile?.id||null,
+    const validation=data.calculationProfile?.status||Q.VALIDATION.INFERRED,
+      profileId=data.calculationProfile?.id||null,
       metrics={
         eot:Q.create({
           id:'cet-eot',
@@ -329,7 +332,8 @@
       const state=filterController.snapshot(),
         current=data.sites[site],
         point=current.coord?`X ${fmt(current.coord.x,2)} mm · Y ${fmt(current.coord.y,2)} mm`:'coordinate unavailable',
-        profile=data.profile?`${data.profile.status} · ${data.profile.id}`:'inferred';
+        calculation=data.calculationProfile?`${data.calculationProfile.status} · ${data.calculationProfile.id}`:'inferred',
+        geometry=data.geometryProfile?`${data.geometryProfile.status} · ${data.geometryProfile.id}`:'inferred';
       host.innerHTML=`<div class="module-grid cet-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('CET fits illuminated Kelvin-probe CPD against the configured corona-charge sequence and reports effective Cd, equivalent SiO₂ thickness and linear-fit R².')}</h3><dl class="meta">
           ${meta('Result',data.resultName)}
@@ -338,7 +342,8 @@
           ${meta('Status',data.status)}
           ${meta('Pattern',data.patternName||data.patternType)}
           ${meta('Target',targetLabel())}
-          ${meta('Profile',profile,'Paired validation currently covers NinePointPattern + SquareCell. Other resolver-supported CET geometries remain inferred until matching vendor coordinates are supplied.')}
+          ${meta('Calculation',calculation,'EOT/Cd/R² validation is independent from spatial geometry.')}
+          ${meta('Geometry',geometry,'The paired NinePointPattern + SquareCell coordinate path is validated independently. Other resolver-supported CET geometries remain inferred until matching vendor coordinates are supplied.')}
           ${meta('Corona step',Number.isFinite(data.coronaCharge)?data.coronaCharge.toExponential(3)+' q/cm²':'—')}
           ${meta('Vcpd offset',Number.isFinite(data.offset)?fmt(data.offset,6)+' V':'—')}
         </dl></section>
