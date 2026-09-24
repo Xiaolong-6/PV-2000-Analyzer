@@ -13,6 +13,7 @@
       data.parseSignals===false&&
       data.useEnhancedMode===false&&
       data.useTextureCorrection===false&&
+      data.linearityRatioMethod==='UseMeasuredLR'&&
       data.dopingType==='PType'&&
       Number.isFinite(data.multiplier)&&data.multiplier>0&&
       Number.isFinite(data.wavelength8)&&data.wavelength8>0&&
