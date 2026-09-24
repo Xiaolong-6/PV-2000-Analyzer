@@ -45,3 +45,15 @@ test('Leakage calculation profile matches paired 0.1 s acquisition branch',()=>{
   });
   assert.equal(p?.id,'LEAKAGE-CALC-VSASS-001');
 });
+
+test('ordinary interval changes stay inside the Leakage profile',()=>{
+  const p=PV2000.profiles.resolveCalculation('leakage',{
+    type:'LeakageMeasurement',
+    sites:[{}],
+    measurePositive:true,
+    measureNegative:true,
+    positiveSettings:{intervalSeconds:.02},
+    negativeSettings:{intervalSeconds:.05}
+  });
+  assert.equal(p?.id,'LEAKAGE-CALC-VSASS-001');
+});
