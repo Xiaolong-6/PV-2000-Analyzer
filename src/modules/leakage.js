@@ -131,7 +131,8 @@
     if(shape==='circle'&&Number.isFinite(nominal?.radius))half=nominal.radius*1.08;
     else if((shape==='rect'||shape==='pseudo-square')&&Number.isFinite(nominal?.halfWidth)&&Number.isFinite(nominal?.halfHeight))half=Math.max(nominal.halfWidth,nominal.halfHeight)*1.08;
     else if(point)half=Math.max(Math.abs(point.x),Math.abs(point.y),1)*1.3;
-    const xr=[-half,half],yr=[-half,half],
+    const aspect=PV.plot.equalAspectRanges([-half,half],[-half,half],W-m.l-m.r,H-m.t-m.b),
+      xr=aspect.x,yr=aspect.y,
       xp=x=>m.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-m.l-m.r),
       yp=y=>H-m.b-(y-yr[0])/(yr[1]-yr[0]||1)*(H-m.t-m.b);
     let out=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Measurement position"><rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;
