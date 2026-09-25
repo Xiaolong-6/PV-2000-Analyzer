@@ -321,11 +321,11 @@
       available:true,profileId:'QSS-INJ-RESULT-001',validation:'validated',qdc:qdcs,corrected,correctedDn,teffCurve,
       teffD:{value:dteffOne,available:Number.isFinite(dteffOne)},
       teffSS:{value:teffOne,available:Number.isFinite(teffOne)},
-      teffSSMax:{value:maxTeff,available:Number.isFinite(maxTeff)},
+      teffSSMax:{value:maxTeff,available:calculate&&Number.isFinite(maxTeff),rule:calculate?'validated':'not-requested'},
       basoreJ0:basore,
       dn:{value:dnOne,available:Number.isFinite(dnOne)&&dnOne!==0},
       smax:{value:smax(teffOne,d.waferThickness),available:Number.isFinite(teffOne)&&teffOne!==0},
-      smaxMax:{value:smax(maxTeff,d.waferThickness),available:Number.isFinite(maxTeff)&&maxTeff!==0},
+      smaxMax:{value:smax(maxTeff,d.waferThickness),available:calculate&&Number.isFinite(maxTeff)&&maxTeff!==0,rule:calculate?'validated':'not-requested'},
       voc:{value:vocOne,available:Number.isFinite(vocOne)&&vocOne!==0},
       ksJ0:ks
     };
