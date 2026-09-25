@@ -18,6 +18,10 @@
     const direct=factor*(vdark-vlight);
     return type==='n'?-direct:direct;
   };
+  const initialQcFromPreprocess=(darkVectorCount,chargeStep)=>{
+    if(!Number.isFinite(darkVectorCount)||darkVectorCount<0||!Number.isFinite(chargeStep))return NaN;
+    return (darkVectorCount+1)*chargeStep;
+  };
   const midgapTargetV=d=>{
     const material=materialProfile(d?.material);
     return Math.abs(k*T/q*Math.log(d.doping/material.niCm3));
@@ -97,7 +101,7 @@
       const id=scalarMean(X.direct(it,'InitialVcpdDark'))-off,
         il=scalarMean(X.direct(it,'InitialVcpdLight'))-off,
         iv=standardVsb(id,il,factor,dopingType);
-      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,Vsb:iv,InitialQc:Number.isFinite(prestep)?X.children(X.direct(pred,'VcpdDark')).length*prestep:NaN});
+      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,Vsb:iv,InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)});
     });
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
@@ -857,6 +861,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
     materialProfile,
     materials:MATERIALS,
     standardVsb,
+    initialQcFromPreprocess,
     spatialEnvelope
   };
   PV.registry.register(PV.modules.dit);
