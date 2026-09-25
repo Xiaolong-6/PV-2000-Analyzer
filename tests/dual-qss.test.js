@@ -277,12 +277,12 @@ test('Dual QSS final-result calculation accepts only paired one-site FixedPoints
 });
 
 
-test('Dual QSS result validator separates OnePoint calculation parity from diagnostic branches',()=>{
+test('Dual QSS result validator separates paired single-site calculation parity from diagnostics',()=>{
   const src=fs.readFileSync(require.resolve('../scripts/validate_dual_qss_result_reference.py'),'utf8');
   assert.match(src,/DUAL-QSS DIAGNOSTIC/);
   assert.match(src,/legacy Laser Power \/ Lifetime-only result branch/);
   assert.match(src,/zero acquired result rows/);
-  assert.match(src,/point-averaged lifetime vectors/);
+  assert.match(src,/saved lifetime vectors pointwise/);
   assert.match(src,/FixedPointsPattern/);
   assert.doesNotMatch(src,/outside QSS-INJ-RESULT-001 OnePoint calculation envelope/);
   assert.match(src,/CalculateJZeroParams=false expects teff\.SS Max \/ Smax Max to be Ud\./);
