@@ -1,5 +1,15 @@
 # Changelog
 
+## v20260925.17 — 2026-09-25
+
+- Made the wide desktop workspace a true equal-width three-pane layout with independent vertical scrolling for dataset/analysis state, whole-sample overview and point/local detail.
+- DIT now uses a larger 640×500 wafer-map surface and a sticky Selected site / Measurement point header with Vcpd–Qc, Dit–Vsb, Vsb–Qc and All point-analysis tabs. Pane scroll positions survive shell rebuilds.
+- Unified right-side Selected site typography with the left sidebar hierarchy.
+- Replaced DIT's repeated “Valid-site mean ± stdev” cards with compact Selected-site-style summary rows; selected-site Midgap coverage text now stays in the local-detail panel.
+- Audited other result summaries and compacted QSS, the other family that repeated per-metric statistic labels. Existing ISC/JZero/LBIC/CET/SPV/Leakage summaries already use one shared table header rather than repeating labels per quantity.
+- Removed the redundant persistent `XML: UseCocosII = ... → ...` row; the same mapping remains in Analysis method hover help.
+
+
 ## v20260925.16 — 2026-09-25
 
 - Compact large/small editable numeric values in Valid-data filter and manual-axis text boxes using scientific notation instead of long digit strings.
