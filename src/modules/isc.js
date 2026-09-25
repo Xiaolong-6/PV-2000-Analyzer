@@ -773,8 +773,8 @@
         :'Select Vcpd Dark, Vcpd Light or VSB. '+
           'The solid outline follows the nominal XML target geometry (RoundWafer or SquareCell); '+
           'when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. '+
-          'Click a cell to inspect its raw readings. Wheel zooms both spatial axes; '+
-          'hover an axis to zoom only that direction; double-click restores Auto.',
+          'Click a cell to inspect its raw readings. Scroll normally moves this pane; hold Ctrl/⌘ while scrolling to zoom both spatial axes; '+
+          'hold Ctrl/⌘ over an axis to zoom only that direction; double-click restores Auto.',
       rawHelp=isVcpd
         ?'Direct XML Readings for the selected VcpdMeasurement site. The validated reference has one reading/site and VcpdOffset = 0; non-zero VcpdOffset semantics are intentionally not inferred.'
         :'Offset-corrected dark/light readings from the selected site. These are the repeated readings averaged by PV-2000. The reported Vcpd Light result can differ from the raw illuminated mean after offset because the XML VsbCorrectionFactor is applied to the result path.',
