@@ -136,21 +136,21 @@ test('categorical SPV branches remain profile-scoped',()=>{
   }),null);
 });
 
-test('vendor cross-maps nonzero LED temperature coefficients',()=>{
+test('vendor-compatibility regression locks LED6->SPV8 and LED8->SPV6 temperature cross-map',()=>{
   const base={
     spv8Global:5.329166666666667,spv8ReducedGlobal:6.9295,linearityRatioOk:2.00009,
-    wavelength8:778,wavelength6:933,chuckTemperature:24,ledTemperature:25,
+    wavelength8:778,wavelength6:933,chuckTemperature:24,ledTemperature:29,
     temperatureCorrection8:0,temperatureCorrection6:0,oxideThickness:4,
     reflectivity8:0,reflectivity6:0,useTextureCorrection:false,textureCorrection:.74,
     useEnhancedMode:false,isPType:true
   };
   const zero=PV2000.modules.spv.calculatePoint(3.4875,3.174,base);
-  const led6=PV2000.modules.spv.calculatePoint(3.4875,3.174,{...base,temperatureCorrection6:.01});
-  const led8=PV2000.modules.spv.calculatePoint(3.4875,3.174,{...base,temperatureCorrection8:.01});
-  assert.ok(Math.abs(led6.corrected8-zero.corrected8*.99)<1e-12);
-  assert.ok(Math.abs(led6.corrected6-zero.corrected6)<1e-12);
-  assert.ok(Math.abs(led8.corrected8-zero.corrected8)<1e-12);
-  assert.ok(Math.abs(led8.corrected6-zero.corrected6*.99)<1e-12);
+  const crossed=PV2000.modules.spv.calculatePoint(3.4875,3.174,{
+    ...base,temperatureCorrection6:.01,temperatureCorrection8:.02
+  });
+  // Vendor DLL parameter order is intentionally cross-wired: LED6 scales SPV8, LED8 scales SPV6.
+  assert.ok(Math.abs(crossed.corrected8-zero.corrected8*1.03)<1e-12);
+  assert.ok(Math.abs(crossed.corrected6-zero.corrected6*1.06)<1e-12);
 });
 
 test('manual linearity-ratio branch stays outside paired SPV validation',()=>{
