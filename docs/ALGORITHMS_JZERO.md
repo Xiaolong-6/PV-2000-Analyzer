@@ -158,7 +158,7 @@ The dedicated JZero analyzer provides:
 - filled-site and point map modes;
 - shared site-level valid-data filtering across summary, map, distribution and export;
 - Distribution with Count on X by default, Swap axes and Bins controls;
-- manual Axes controls, wheel zoom and double-click Auto;
+- manual Axes controls, Ctrl/⌘ + wheel zoom and double-click Auto; plain wheel/trackpad motion scrolls the workspace pane;
 - pointwise CSV export for the selected metric;
 - histogram CSV export;
 - current-dataset and acquisition metadata panels.
