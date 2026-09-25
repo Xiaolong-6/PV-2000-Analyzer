@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-25
 
+## Cross-platform validation hardening (v20260925.28)
+
+The private Windows replay of public `npm run check` exposed two source-structure tests that assumed LF line endings. The runtime was correct and all FixedPoints forensic parity checks had already passed; only the test regexes failed after Windows checkout produced CRLF boundaries. The Dual QSS redraw-order assertion and DIT filter/map synchronization assertion now accept either LF or CRLF.
+
+This keeps the public test suite portable across the Ubuntu public CI runner and Windows private vendor-oracle workflows without weakening the asserted code ordering.
+
 ## Audit hardening (v20260925.27)
 
 The post-v26 full-project audit found and closed two engineering-level failure modes without changing scientific formulas. `roundGrid()` now rejects invalid/non-positive pitch before any loop bound is derived, and MapPattern resolution requires a positive finite X/Y pitch before assigning a generated-grid interpretation. XML loading is now transaction-like at the shell boundary: render must succeed before the new dataset becomes `current`; on failure the previous dataset, labels and folder context are restored. Adjacent navigation advances only after a successful load.
@@ -32,8 +38,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.27`.
-- Current hardening branch: `fix/audit-hardening-20260925`.
+- Public main: `v20260925.28`.
+- Current hardening branch: `fix/cross-platform-source-tests-20260925`.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
