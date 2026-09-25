@@ -60,9 +60,39 @@ The exact compatibility constants belong to the validation profile. They should 
 
 ## Implied Voc
 
-Implied Voc is calculated from injection, base doping and the profile-specific intrinsic-carrier model.
+For each QSS state the analyzer first obtains excess-carrier density from
 
-The JZero compatibility path is kept distinct from the general QSS-map implied-Voc path because the paired vendor result family has its own numerical calibration boundary.
+```math
+\Delta n = G\tau.
+```
+
+The **PV-2000-compatible** JZero Voc path follows the current managed DLL:
+
+```math
+T_{compat}=T_{chuck}[^{\circ}\mathrm C]+272.15,
+```
+
+```math
+V_{oc}
+=
+\frac{1.38066\times10^{-23}T_{compat}}
+{1.602\times10^{-19}}
+\ln\left(
+\frac{\Delta n(N+\Delta n)}
+{(1.22\times10^{10})^2}
++1
+\right).
+```
+
+The unusual constants are intentional compatibility details. The current
+vendor `NiForSilicon(T)` method returns a fixed
+`1.22×10^10 cm⁻³` and ignores temperature, and the DLL uses
+`T_C + 272.15` rather than the conventional Kelvin conversion. Zero/missing chuck temperature falls back to 27 °C, and non-positive wafer thickness falls back to 200 µm for the injection conversion. The analyzer
+preserves those behaviors only for the PV-2000-compatible result.
+
+A modern physical `ni(T)` model would be scientifically reasonable for a
+separate analysis mode, but it is numerically different and must not be mixed
+into vendor-comparison results.
 
 ## Geometry
 
@@ -83,15 +113,23 @@ Filtering does not alter either lifetime iteration or recalculate J0 from a diff
 
 ## Validation status
 
-Eight successful numeric pairs from the private 100-case corpus validate the common two-intensity calculation independently of geometry:
+The common two-intensity calculation remains validated independently of
+geometry for lifetime, Smax and Basore J0.
 
-- both lifetime channels;
-- both Smax channels;
-- Basore J0;
-- shared geometry profiles for the paired OnePoint, SquareRegion, HighDensity and Map cases.
+The JZero Implied-Voc path is now closed as `JZERO-VOC-COMPAT-001`.
+Managed-IL tracing recovered the exact current-DLL equation above. A private
+cross-profile audit evaluated 12 harness-generated JZero XML/vendor-CSV pairs
+and 15,886 finite Voc values spanning Map, HighDensity, NinePoint,
+SquareRegion and OnePoint geometries. The recovered equation reproduces the
+vendor values at exported precision; the audit reports
+`0.000000000 mV` maximum absolute error.
 
-Across those pairs, lifetime/Smax/Basore differences remain at floating-point or approximately 1e-11 scale, and X/Y coordinates agree within approximately 4.97e-14 mm.
+The earlier approximately 18.7–21.1 mV discrepancy came from applying a
+physical silicon `ni(T)` correction to two normalization constants fitted to
+the original approximately 28.5 °C map. The older non-map pairs were mostly
+near 23.6–24.2 °C, so temperature and geometry were confounded. Pattern/Target
+does not enter the vendor Voc calculation.
 
-Implied Voc has a narrower evidence envelope. Two `MapPattern + PseudoSquareCell` pairs support `JZERO-VOC-MAP-PSEUDOSQUARE-001` with maximum error approximately 0.850 mV. Paired OnePoint, SquareRegion and HighDensity cases differ by roughly 18.7–21.1 mV under the same compatibility calibration, so their Voc output remains inferred/diagnostic rather than being promoted with the other quantities.
-
-Incomplete acquisitions remain profile-specific and do not become vendor-validated merely because a geometry can be reconstructed.
+Geometry validation still remains a separate axis. Incomplete acquisitions
+remain profile-specific and are not promoted merely because the compatibility
+equation is known.

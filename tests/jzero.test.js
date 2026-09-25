@@ -36,6 +36,20 @@ test('JZero parse maps paired lifetime iterations from a vendor-shaped XML fixtu
   assert.deepEqual(d.temperatures,[25,26]);
 });
 
+test('JZero explicit non-uPCD iteration subtype stays calculation-inferred',()=>{
+  const source=fs.readFileSync(path.join(__dirname,'fixtures','jzero-minimal.xml'),'utf8')
+    .replace('<Iteration><ChuckTemperature>25</ChuckTemperature>','<Iteration xsi:type="OtherIterationData"><ChuckTemperature>25</ChuckTemperature>');
+  const doc=new DOMParser().parseFromString(source,'application/xml');
+  const job=doc.documentElement,measurement=PV2000.xml.direct(job,'Measurement');
+  const d=PV2000.modules.jzero.parse({doc,job,measurement,type:PV2000.xml.attrType(measurement)});
+  assert.deepEqual(d.iterationTypes,['OtherIterationData','']);
+  assert.equal(d.calculationProfile.id,null);
+  assert.equal(d.calculationProfile.status,'inferred');
+  const a=PV2000.modules.jzero.analyze(d);
+  assert.equal(a.metrics.voc1.profileId,null);
+  assert.equal(a.metrics.voc1.validation,'inferred');
+});
+
 test('pseudo-square JZero reference geometry reconstructs 5017 sites',()=>{
   const pts=PV2000.geometry.pseudoSquareGrid(71,71,95.5,2,2,5017);
   assert.equal(pts.length,5017);
@@ -143,9 +157,66 @@ test('JZero Basore, Smax and implied-Voc compatibility reproduce reference point
   assert.ok(Math.abs(a.metrics.j0.values[0]-96.1303349762924)<1e-9);
   assert.ok(Math.abs(a.metrics.smax1.values[0]-49.921436665816)<1e-10);
   assert.ok(Math.abs(a.metrics.smax2.values[0]-79.5628086206319)<1e-10);
-  assert.ok(Math.abs(a.metrics.voc1.values[0]-0.682745286002936)<7e-5);
-  assert.ok(Math.abs(a.metrics.voc2.values[0]-0.70227764869422)<7e-5);
+  assert.ok(Math.abs(a.metrics.voc1.values[0]-0.682745286002936)<1e-12);
+  assert.ok(Math.abs(a.metrics.voc2.values[0]-0.70227764869422)<1e-12);
   assert.equal(Object.keys(a.metrics).length,7);
+});
+
+test('JZero implied-Voc vendor compatibility is pointwise exact across real paired geometry families',()=>{
+  const cases=[
+    {
+      profile:'MapPattern + PseudoSquareCell',
+      tau:200.31474788960881,intensity:1000,w:200,of:1,doping:1.5e16,temp:28.468013468013467,
+      expected:0.682745286002936
+    },
+    {
+      profile:'OnePointPattern + RoundWafer',
+      tau:536.656537,intensity:1000,w:380,of:0.7,doping:4e15,temp:23.576675849403124,
+      expected:0.645647575442322
+    },
+    {
+      profile:'SquareRegionPattern + SquareCell',
+      tau:19.82035527,intensity:1000,w:525,of:1,doping:6.5e14,temp:23.619528619528619,
+      expected:0.507700006644697
+    },
+    {
+      profile:'NinePointPattern + SquareCell',
+      tau:53.1231591,intensity:1000,w:150,of:0.7,doping:5e15,temp:23.925619834710744,
+      expected:0.607850293285686
+    },
+    {
+      profile:'HighDensityPattern + RoundWafer',
+      tau:187.5707712,intensity:1000,w:400,of:0.7,doping:4.55e15,temp:23.931741659014385,
+      expected:0.613816402992686
+    }
+  ];
+  for(const c of cases){
+    const d={waferThickness:c.w,opticalFactor:c.of,doping:c.doping,temperatures:[c.temp]};
+    const actual=PV2000.modules.jzero.impliedVoc(c.tau,c.intensity,d,0);
+    assert.ok(Math.abs(actual-c.expected)<1e-12,`${c.profile}: ${actual} vs ${c.expected}`);
+  }
+});
+
+test('JZero implied-Voc compatibility preserves vendor historical constants',()=>{
+  const c=PV2000.modules.jzero.constants.JZERO_VOC_COMPAT;
+  assert.deepEqual(c,{
+    K:1.38066e-23,Q:1.602e-19,NI_SI:1.22e10,KELVIN_OFFSET:272.15,
+    DEFAULT_TEMP_C:27,DEFAULT_WAFER_UM:200
+  });
+  const src=fs.readFileSync(require.resolve('../src/modules/jzero.js'),'utf8');
+  assert.match(src,/Math\.log\(ratio\+1\)/);
+  assert.match(src,/Changing 272\.15 to 273\.15 .* breaks vendor parity/);
+  assert.doesNotMatch(src,/NI_VOC_300|niAtTemperature|egSi\(/);
+});
+
+test('JZero implied-Voc compatibility preserves vendor missing-input fallbacks',()=>{
+  const base={opticalFactor:1,doping:1.5e16};
+  const missing=PV2000.modules.jzero.impliedVoc(200,1000,{...base,waferThickness:0,temperatures:[0]},0);
+  const explicit=PV2000.modules.jzero.impliedVoc(200,1000,{...base,waferThickness:200,temperatures:[27]},0);
+  assert.equal(missing,explicit);
+
+  const absent=PV2000.modules.jzero.impliedVoc(200,1000,{...base,waferThickness:200,temperatures:[]},0);
+  assert.equal(absent,explicit);
 });
 
 test('JZero UI keeps all seven metrics and shared plot controls',()=>{
@@ -198,12 +269,13 @@ test('JZero no longer hard-codes MapPattern + PseudoSquareCell as the only loada
   assert.match(src,/resolveMeasurementGeometry/);
   assert.match(src,/JZERO-CALC-001/);
   assert.match(src,/Profiles\.resolveGeometry/);
-  assert.match(src,/GEOM-MAP-PSEUDOSQUARE-001/);
+  assert.doesNotMatch(src,/GEOM-MAP-PSEUDOSQUARE-001/);
+  assert.match(src,/JZERO-VOC-COMPAT-001/);
   assert.match(src,/Measurement position/);
 });
 
 
-test('JZero quantity validation is narrower than calculation and geometry validation',()=>{
+test('JZero Voc validation follows the calculation profile, not geometry identity',()=>{
   const d={
     values:[[200,300],[125,140]],
     qssMilli:[1000,3000],
@@ -218,13 +290,18 @@ test('JZero quantity validation is narrower than calculation and geometry valida
   assert.equal(a.metrics.j0.profileId,'JZERO-CALC-001');
   assert.equal(a.metrics.j0.validation,'validated');
   assert.equal(a.metrics.smax1.validation,'validated');
-  assert.equal(a.metrics.voc1.profileId,null);
-  assert.equal(a.metrics.voc1.validation,'inferred');
+  assert.equal(a.metrics.voc1.profileId,'JZERO-VOC-COMPAT-001');
+  assert.equal(a.metrics.voc1.validation,'validated');
 
   d.geometryProfile={id:'GEOM-MAP-PSEUDOSQUARE-001',status:'validated'};
-  const legacy=PV2000.modules.jzero.analyze(d);
-  assert.equal(legacy.metrics.voc1.profileId,'JZERO-VOC-MAP-PSEUDOSQUARE-001');
-  assert.equal(legacy.metrics.voc1.validation,'reproduced-at-shown-precision');
+  const map=PV2000.modules.jzero.analyze(d);
+  assert.equal(map.metrics.voc1.profileId,'JZERO-VOC-COMPAT-001');
+  assert.equal(map.metrics.voc1.validation,'validated');
+
+  d.calculationProfile={id:null,status:'inferred'};
+  const incomplete=PV2000.modules.jzero.analyze(d);
+  assert.equal(incomplete.metrics.voc1.profileId,null);
+  assert.equal(incomplete.metrics.voc1.validation,'inferred');
 });
 
 test('JZero shared filter keeps one paired-site mask and adds displayed-metric support',()=>{
@@ -258,12 +335,14 @@ test('JZero parser wires SquareRegion fields and permits explicit incomplete acq
 
 
 
-test('JZero private validator separates calculation parity from Voc quantity parity',()=>{
+test('JZero private validator enforces cross-profile vendor Voc parity',()=>{
   const src=fs.readFileSync(require.resolve('../scripts/validate_jzero_reference.py'),'utf8');
   assert.match(src,/resolve_xml_geometry/);
   assert.doesNotMatch(src,/xtype\(pattern\)!=['"]MapPattern['"]/);
   assert.doesNotMatch(src,/xtype\(target\)!=['"]PseudoSquareCell['"]/);
-  assert.match(src,/GEOM-MAP-PSEUDOSQUARE-001/);
-  assert.match(src,/TOL_VOC_PROFILE=1e-3/);
-  assert.match(src,/diagnostic\/inferred/);
+  assert.match(src,/VOC_NI_SI=1\.22e10/);
+  assert.match(src,/VOC_KELVIN_OFFSET=272\.15/);
+  assert.match(src,/TOL_VOC=1e-9/);
+  assert.match(src,/JZERO-VOC-COMPAT-001/);
+  assert.doesNotMatch(src,/diagnostic\/inferred|TOL_VOC_PROFILE|NI_VOC_300/);
 });

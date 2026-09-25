@@ -98,7 +98,7 @@ Lifetime→SRV is analyzer post-processing, not a PV-2000 result. Preserve the c
 
 ## JZero validity rule
 
-JZero calculation semantics and spatial geometry are separate. `JZERO-CALC-001` is the two-iteration JZero calculation path; `JZERO-GEOM-MAP-PSEUDOSQUARE-001` is the currently paired geometry path. Preserve site pairing by iteration index. Basore J0 and Smax are pointwise vendor-regressed; JZero Implied Voc uses its own documented compatibility calibration and must not silently reuse the general QSS-map `ni(T)` model.
+JZero calculation semantics and spatial geometry are separate. `JZERO-CALC-001` is the two-iteration JZero calculation path; geometry is resolved independently through the shared geometry profiles. Preserve site pairing by iteration index. Basore J0 and Smax are pointwise vendor-regressed. JZero Implied Voc uses `JZERO-VOC-COMPAT-001`, recovered from the current managed DLL: fixed `NiForSilicon=1.22e10 cm^-3`, `T_C+272.15`, `k=1.38066e-23`, `q=1.602e-19`, and `ln(ratio+1)`. These historical compatibility details are intentional and must not be silently modernized or replaced with the general QSS-map `ni(T)` model.
 
 A different resolver-supported Pattern/Target combination must not be rejected merely because it is not `MapPattern + PseudoSquareCell`. Keep calculation status and geometry status separate: the validated pseudo-square map geometry remains validated, while another geometry such as `OnePointPattern + SquareCell` can be displayed as **inferred** until paired X/Y/display evidence is supplied. A different iteration count/order, raw data schema or result set remains a new calculation profile. Do not map `JZeroMeasurement` to `QssUpcdMeasurement` merely because both contain `UpcdDataItem` lifetime values.
 

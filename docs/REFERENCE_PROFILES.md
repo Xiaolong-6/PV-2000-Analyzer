@@ -545,20 +545,63 @@ The same corpus independently confirms the shared geometry resolver on JZero out
 
 Maximum observed paired coordinate error is approximately **4.97e-14 mm**. Geometry validation remains a separate axis and does not promote a narrower derived quantity automatically.
 
-### JZERO-VOC-MAP-PSEUDOSQUARE-001 — JZero Implied-Voc quantity profile
+### JZERO-VOC-COMPAT-001 — current-DLL JZero Implied-Voc compatibility
 
-The JZero-specific Implied-Voc calibration is **not** part of the broad `JZERO-CALC-001` claim.
+**Measurement type**
 
-Two numeric `MapPattern + PseudoSquareCell` pairs support this quantity profile:
+`JZeroMeasurement`
 
-- the original 5017-site pair reproduces the first/second Voc channels within approximately **0.061 / 0.066 mV**;
-- a second 1221-site pair reaches approximately **0.850 mV** maximum error.
+**Reference material**
 
-The runtime therefore labels JZero Voc on this paired geometry as reproduced at displayed precision.
+Private managed-IL tracing of the current `SDI.Data` JZero result path plus
+**12 harness-generated JZero XML/vendor-CSV pairs**. The paired corpus contains
+**15,886 finite Implied-Voc values** across Map/PseudoSquare, HighDensity/Round,
+NinePoint/Square, SquareRegion/Square and Round, and OnePoint/Square and Round
+geometry families.
 
-The same current calibration differs by approximately **18.7–21.1 mV** on paired OnePoint, SquareRegion and HighDensity cases. Those outputs remain **inferred/diagnostic** even though their lifetime/Smax/Basore quantities and their geometry can be validated independently. No geometry-only change may silently widen this Voc quantity profile.
+**Recovered managed-DLL semantics**
 
-The Basore and Implied-Voc compatibility constants are reverse-engineered regression models for observed vendor output, not claims about undisclosed PV-2000 internal constants.
+For each QSS state:
+
+```text
+Δn      = G × τeff.d
+Tcompat = ChuckTemperature_C + 272.15
+ni      = 1.22e10 cm^-3
+Voc     = (1.38066e-23 × Tcompat / 1.602e-19)
+          × ln( Δn × (Doping + Δn) / ni² + 1 )
+```
+
+The current `NiForSilicon(Double T)` managed method ignores `T` and returns
+`1.22e10`. The `+272.15` offset, rounded Boltzmann/electron-charge constants
+and `+1` inside the logarithm are vendor compatibility behavior and are
+preserved deliberately. The same managed path falls back to 27 °C for a zero/missing chuck temperature and to 200 µm for non-positive wafer thickness during injection conversion.
+
+**Validation result**
+
+The recovered equation reproduces all 15,886 finite paired Voc values at
+exported precision. The private forensic audit reports:
+
+- MAE = **0.000000 mV**;
+- RMS = **0.000000 mV**;
+- maximum absolute error = **0.000000000 mV**.
+
+The public regression gate uses a 1e-9 V tolerance.
+
+This quantity profile is **not geometry-gated**. For a complete validated
+two-iteration `JZERO-CALC-001` acquisition, Pattern/Target determines spatial
+placement but does not change the Voc equation.
+
+**Historical reconstruction note**
+
+The earlier public path fitted two effective `ni,300` values to the original
+warm Map/PseudoSquare corpus and then applied a physical silicon `ni(T)`
+temperature correction. That model produced approximately 18.7–21.1 mV
+cross-profile errors because the older non-map cases were measured at lower
+chuck temperatures. The apparent geometry dependence was a temperature/corpus
+confounder.
+
+`JZERO-VOC-COMPAT-001` is a vendor-compatibility profile, not a claim that
+the legacy constants are the preferred modern physical silicon model.
 
 **Incomplete acquisitions**
 
@@ -566,7 +609,7 @@ Explicitly interrupted acquisitions may preserve first-intensity quantities whil
 
 **NEW PROFILE triggers**
 
-Examples include more or fewer than two lifetime iterations, a different iteration/result ordering, a different raw data-item schema, additional vendor outputs, or evidence that the Basore calculation/availability path changes. Implied-Voc changes are quantity-profile questions and must not be used to invalidate otherwise matching lifetime/Smax/Basore calculation parity.
+Examples include more or fewer than two lifetime iterations, a different iteration/result ordering, a different raw data-item schema, additional vendor outputs, evidence that the Basore calculation/availability path changes, or a PV-2000 version whose managed Implied-Voc constants/temperature convention differ from `JZERO-VOC-COMPAT-001`. Quantity-profile changes must not be used to invalidate otherwise matching lifetime/Smax/Basore calculation parity.
 
 See `docs/ALGORITHMS_JZERO.md` and run `npm run validate:jzero`.
 
