@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.19.1 — 2026-09-25 (branch)
+## v20260925.20 — 2026-09-25
 
 - Reworked SPV, Leakage, Dual QSS, LBIC and ISC/VCPD Wiki pages as measurement-science references, adding physical principles, governing equations, assumptions and interpretation instead of relying mainly on compatibility/regression notes.
 - Corrected stale/contradictory documentation: Dual QSS now documents its exposed teff.SS/Voc/J0 scalar results, and SPV no longer classifies the paired Enhanced N-type path as unvalidated.

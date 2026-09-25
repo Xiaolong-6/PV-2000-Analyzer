@@ -1,6 +1,6 @@
 # Agent handoff — 2026-09-25
 
-## Documentation scientific-content audit (v20260925.19.1 branch)
+## Documentation scientific-content audit (v20260925.20)
 
 The Wiki science layer was audited against current runtime and validation documents. SPV, Leakage, Dual QSS, LBIC and ISC/VCPD now explain measurement physics, governing equations, assumptions and interpretation in addition to compatibility/validation boundaries. Stale Dual-QSS output wording and contradictory SPV Enhanced-N validation wording were removed. `docs:check` now guards the scientific-page equation/validation baseline and selected known stale contradictions.
 
