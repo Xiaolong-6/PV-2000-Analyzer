@@ -228,10 +228,7 @@ def validate_pair(xml_path: Path, csv_path: Path):
             raise AssertionError(
                 f"zero XML DataItems but CSV has {len(v['xs'])} point rows"
             )
-        return (
-            f"VCPD EMPTY {xml_path.name}: zero acquired sites; "
-            "no numeric profile promoted"
-        )
+        return f"VCPD EMPTY {xml_path.name}: zero acquired sites; no numeric profile promoted"
     if len(v["xs"]) != len(x["values"]):
         raise AssertionError(
             f"CSV point count={len(v['xs'])}, XML point count={len(x['values'])}"
