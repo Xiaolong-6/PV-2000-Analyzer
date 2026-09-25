@@ -334,19 +334,22 @@
         point=current.coord?`X ${fmt(current.coord.x,2)} mm · Y ${fmt(current.coord.y,2)} mm`:'coordinate unavailable',
         calculation=data.calculationProfile?`${data.calculationProfile.status} · ${data.calculationProfile.id}`:'inferred',
         geometry=data.geometryProfile?`${data.geometryProfile.status} · ${data.geometryProfile.id}`:'inferred';
+      const finiteEot=analysis.metrics.eot.values.filter(Number.isFinite).length;
       host.innerHTML=`<div class="module-grid cet-module"><aside class="side">
-        <section class="panel"><h3>Measurement ${help('CET fits illuminated Kelvin-probe CPD against the configured corona-charge sequence and reports effective Cd, equivalent SiO₂ thickness and linear-fit R².')}</h3><dl class="meta">
+        <section class="panel"><h3>Measurement ${help('Core CET XML identity and sample geometry. Calculation/geometry validation and acquisition constants are separated below.')}</h3><dl class="meta">
           ${meta('Result',data.resultName)}
           ${meta('Recipe',data.name)}
           ${meta('Substrate',data.substrateId)}
           ${meta('Status',data.status)}
           ${meta('Pattern',data.patternName||data.patternType)}
           ${meta('Target',targetLabel())}
-          ${meta('Calculation',calculation,'EOT/Cd/R² validation is independent from spatial geometry.')}
-          ${meta('Geometry',geometry,'The paired NinePointPattern + SquareCell coordinate path is validated independently. Other resolver-supported CET geometries remain inferred until matching vendor coordinates are supplied.')}
-          ${meta('Corona step',Number.isFinite(data.coronaCharge)?data.coronaCharge.toExponential(3)+' q/cm²':'—')}
-          ${meta('Vcpd offset',Number.isFinite(data.offset)?fmt(data.offset,6)+' V':'—')}
         </dl></section>
+        <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation">
+          <div><b>${data.sites.length}</b><span>XML sites</span></div>
+          <div><b>${finiteEot}</b><span>finite EOT fits</span></div>
+          <div><b>${data.coords.length} / ${data.sites.length}</b><span>coordinates</span></div>
+          <div><b>${state.validCount} / ${state.siteCount}</b><span>pass filter</span></div>
+        </div></section>
         ${PV.ui.validDataFilterMarkup({
           prefix:'cetFilter',
           metrics:analysis.metrics,
@@ -355,7 +358,12 @@
         })}
         <section class="panel"><h3>Results summary ${help('Average, median, sample standard deviation, minimum and maximum use the active valid-data population for each quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
 
-        <details class="panel"><summary>Compatibility model</summary><p class="note meta-detail">For each site, Qc[i] = i × Process.CoronaCharge. The mean illuminated Vcpd vector is offset-corrected and fitted linearly versus Qc. The historical compatibility constants used here are q = 1.602×10⁻¹⁹ C and EOT[Å] = 34.5 / Cd_internal. Runtime remains XML-only; paired CSV is validation evidence only.</p></details>
+        <details class="panel"><summary>Acquisition / validation</summary><dl class="meta meta-detail">
+          ${meta('Calculation profile',calculation,'EOT/Cd/R² validation is independent from spatial geometry.')}
+          ${meta('Geometry profile',geometry,'The paired NinePointPattern + SquareCell coordinate path is validated independently. Other resolver-supported CET geometries remain inferred until matching vendor coordinates are supplied.')}
+          ${meta('Corona step',Number.isFinite(data.coronaCharge)?data.coronaCharge.toExponential(3)+' q/cm²':'—')}
+          ${meta('Vcpd offset',Number.isFinite(data.offset)?fmt(data.offset,6)+' V':'—')}
+        </dl><p class="note meta-detail">For each site, Qc[i] = i × Process.CoronaCharge. The mean illuminated Vcpd vector is offset-corrected and fitted linearly versus Qc. The historical compatibility constants used here are q = 1.602×10⁻¹⁹ C and EOT[Å] = 34.5 / Cd_internal. Runtime remains XML-only; paired CSV is validation evidence only.</p></details>
       </aside>
       <section class="plots overview">
         <div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer / cell map'}</b><span class="grow"></span><select id="cetMetric">${metricOptions()}</select>${PV.plot.axisControls('cetMapAxes')}<button id="cetExportMap">Export</button></header><div class="chart-stage map-stage"><svg id="cetMap" viewBox="0 0 640 360"></svg></div></div>

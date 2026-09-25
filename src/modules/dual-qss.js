@@ -655,8 +655,12 @@ ${row('Samples',t?.points?.length||0)}</dl>`;
     host.innerHTML=`<div class="module-grid dual-qss-module">\
 <aside class="side">\
 <section class="panel">\
-<h3>Measurement ${help('Reads the DualQssMeasurement injection-intensity, stored lifetime vectors and transient waveform path. QSS-INJ-RESULT-001 additionally reconstructs the PV-2000 steady-state result table from XML only; its two real XML+CSV pairs validate teff.d/teff.SS, max teff.SS, Δn, Smax, implied Voc and requested J0 outputs.')}</h3>\
-<dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive lifetime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Geometry',Number.isFinite(d.diameter)?`Ø${fmt(d.diameter,1)} mm ${d.targetType||d.shapeType||''}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'—')}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl>\
+<h3>Measurement ${help('Core XML measurement identity and sample context. Injection-sweep completeness belongs to Current dataset; lower-priority acquisition settings stay collapsed below.')}</h3>\
+<dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Status',d.status||'—')}${row('Pattern',d.patternName||d.patternType||'—')}${row('Geometry',Number.isFinite(d.diameter)?`Ø${fmt(d.diameter,1)} mm ${d.targetType||d.shapeType||''}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'—')}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}</dl>\
+</section>\
+<section class="panel current-dataset-panel">\
+<h3>Current dataset</h3>\
+<div class="validation"><div><b>${d.points.length}</b><span>injection points</span></div><div><b>${a.validCount} / ${d.points.length}</b><span>positive lifetime</span></div><div><b>${esc(d.rangeClass)}</b><span>injection range</span></div></div>\
 </section>\
 <section class="panel">\
 <h3>Comparison overlay</h3>\
@@ -669,7 +673,7 @@ ${row('Samples',t?.points?.length||0)}</dl>`;
 <dl class="meta">${resultSummaryHtml(a)}</dl>${a.vendorResult?.available?'<button id="dqExportResults">Export result table</button>':''}</section>\
 <details class="panel">\
 <summary>Acquisition metadata</summary>\
-<dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Within QSS-INJ-RESULT-001, Basore and K-S J0 are reconstructed on the paired non-Auger path; vendor zero results retain the legacy Ud. state.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl>\
+<dl class="meta">${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Within QSS-INJ-RESULT-001, Basore and K-S J0 are reconstructed on the paired non-Auger path; vendor zero results retain the legacy Ud. state.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl>\
 </details>\
 </aside>\
 <section class="plots overview">\

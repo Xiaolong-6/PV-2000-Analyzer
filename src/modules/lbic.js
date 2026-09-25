@@ -743,7 +743,6 @@
       controller=ensureFilter(it,metrics),
       filterState=controller.snapshot(),
       filterMetrics=visibleMetricMap(metrics),
-      pointOk=it&&d.coords.length===it.pointCount,
       laser=beam?.laser||{},
       pseudo=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell',
       patternText=pseudo?`${d.patternDisplayName||d.patternType} · PseudoSquareCell`:`${d.patternDisplayName||d.patternType} · ${fmt(d.nx,0)} × ${fmt(d.ny,0)}`,
@@ -752,20 +751,20 @@
       measurementMode=flagState(d.measureCurrent)===false&&flagState(d.measureDirect)===true&&flagState(d.measureDiffuse)===true?'Reflectance only':flagState(d.measureCurrent)===true?'Current + optical':'From XML flags';
       host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
       <section class="panel">\
-<h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3>\
+<h3>Measurement ${help('Core XML measurement identity and sample geometry. Active iteration/beam state is separated into Current dataset, while validation/provenance details stay collapsed below.')}</h3>\
 <dl class="meta">${metaRow('Result',d.resultName)}\
 ${metaRow('Recipe',d.name)}\
 ${metaRow('Substrate',d.substrateId)}\
 ${metaRow('Status',d.status)}\
-${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}\
 ${metaRow('Pattern',patternText)}\
-${metaRow(pseudo?'Target':'Region',regionText)}\
-${metaRow(pseudo?'Pitch':'Step',stepText)}\
-${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?(d.geometryComplete?'Point count matches the complete reconstructed geometry schedule.':'The XML is a partial acquisition. Available DataItems are mapped to the leading X-fast / ascending-Y schedule; this partial coordinate path is shown but not vendor-validated.'):'Coordinate reconstruction is unavailable for this point count / geometry combination.')}\
-${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}\
-${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}\
-${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl>\
+${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
 </section>
+      <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation">
+        <div><b>Iteration ${iterationIndex+1}</b><span>active iteration</span></div>
+        <div><b>${Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm`:`Beam ${esc(beamKey)}`}</b><span>active beam</span></div>
+        <div><b>${it?.pointCount||0} / ${d.expectedPointCount||'—'}</b><span>points / schedule</span></div>
+        <div><b id="lDatasetValid">${filterState.validCount} / ${filterState.siteCount}</b><span>pass filter</span></div>
+      </div></section>
       <section class="panel"><h3>View ${help('Primary quantities follow the active XML measurement flags. Current-enabled validated scans expose Current / Reflectivity / IQE. Reflectance-only scans default to Reflectivity and do not synthesize Current, EQE or IQE from disabled placeholder fields. Advanced exposes active raw/intermediate channels. New semantic paths still require paired PV-2000 regression.')}</h3><div class="sidebar-control-grid"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label class="sidebar-control-toggle"><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}><span>Advanced raw / intermediate channels</span></label></div></section>
       ${PV.ui.validDataFilterMarkup({
         prefix:'lFilter',
@@ -775,7 +774,25 @@ ${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition �
       })}
       <section class="panel"><h3>Results summary ${help('Statistics use the active Valid-data filter plus each quantity\'s finite-value availability. The displayed quantity and Filter metric are synchronized by default.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="lSummaryBody">${summaryRows(metrics,controller)}</tbody></table></div></section>
       <details class="panel"><summary>Channel provenance</summary><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></details>
-      <details class="panel"><summary>Geometry / validation ${help('Coordinate validation is profile-specific and documented against matching PV-2000 exports. The on-screen map uses reconstructed physical X/Y coordinates.')}</summary><dl class="meta meta-detail">${metaRow('Geometry status',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}${metaRow('Coordinate source',d.coordinateSource)}${metaRow('Acquisition mapping','X-fast, ascending Y where validated')}${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}${metaRow('Rastering',d.doRastering)}${metaRow('Measure current',d.measureCurrent)}${metaRow('Direct reflectance',d.measureDirect)}${metaRow('Diffuse reflectance',d.measureDiffuse)}${metaRow('Averaging',fmt(d.averaging))}</dl></details>
+      <details class="panel">
+        <summary>Acquisition / validation ${help('Lower-priority channel, acquisition and validation provenance for the active LBIC context.')}</summary>
+        <dl class="meta meta-detail">
+          ${metaRow('Measurement mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}
+          ${metaRow(pseudo?'Pitch':'Step',stepText)}
+          ${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}
+          ${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}
+          ${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}
+          ${metaRow('Geometry status',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceProfile?'validated algorithm family':'inferred for this combination')}
+          ${metaRow('Coordinate source',d.coordinateSource)}
+          ${metaRow('Acquisition mapping','X-fast, ascending Y where validated')}
+          ${metaRow('Pattern Name',d.patternName||'—','The examples contain stale Pattern/Name text, so it is never used for coordinate reconstruction.')}
+          ${metaRow('Rastering',d.doRastering)}
+          ${metaRow('Measure current',d.measureCurrent)}
+          ${metaRow('Direct reflectance',d.measureDirect)}
+          ${metaRow('Diffuse reflectance',d.measureDiffuse)}
+          ${metaRow('Averaging',fmt(d.averaging))}
+        </dl>
+      </details>
       </aside><section class="plots overview">
         <div class="panel chart"><header><b>LBIC raster map</b>${help('Only sites passing the active Valid-data filter and displayed-quantity availability are filled. Raw values remain preserved. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both spatial axes; hold Ctrl/⌘ over the X or Y axis to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
         <div class="panel chart"><header><b>Distribution</b>${help('Count includes only sites passing the active Valid-data filter and displayed-quantity availability. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Ctrl/⌘ + wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('lHistBins',histBins)}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
@@ -795,6 +812,8 @@ ${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition �
           zoom.xProfile={x:null,y:null};
           zoom.yProfile={x:null,y:null};
           host.querySelector('#lSummaryBody').innerHTML=summaryRows(metrics,controller);
+          const datasetValid=host.querySelector('#lDatasetValid');
+          if(datasetValid)datasetValid.textContent=`${state.validCount} / ${state.siteCount}`;
           redraw();
         }
       });

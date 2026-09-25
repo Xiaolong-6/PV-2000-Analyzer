@@ -109,15 +109,16 @@ Do not infer that every module has been fully rewritten into an identical intern
 
 For dedicated analyzers, the left side should use the common information priority where applicable:
 
-1. Measurement;
-2. Current dataset / acquisition context;
-3. Analysis controls;
-4. Valid-data filter;
-5. Results summary;
-6. Selected site/pixel;
-7. detailed/full metadata.
+1. **Measurement** — compact identity only: result, recipe, substrate/status, pattern/target and essential sample descriptors;
+2. **Current dataset / acquisition context** — active iteration/beam plus point counts, completeness, coordinate availability and current valid population;
+3. **Analysis / View controls**;
+4. **Valid-data filter**;
+5. **Results summary**;
+6. collapsed **Acquisition / Full metadata / Validation / provenance**.
 
-Family-specific sections may be omitted or renamed when scientifically appropriate. Generic XML Inspector is exempt.
+Selected site/pixel/measurement-point detail belongs in the right column, not the left sidebar.
+
+Do not use **Measurement** as a catch-all for timestamps, offsets, calibration constants, instrument modes, profile IDs or validation diagnostics. Family-specific sections may be omitted or renamed when scientifically appropriate. Generic XML Inspector is exempt.
 
 User filtering is always separate from intrinsic support/availability. A filtered finite value is not the same state as an unavailable/undefined value.
 

@@ -77,7 +77,7 @@ test('Dit results summary uses compact Selected-site-style rows without repeated
   assert.doesNotMatch(src,/Valid-site mean ± stdev/);
   assert.doesNotMatch(src,/result-card-values/);
   assert.match(css,/\.compact-summary\{[^}]*grid-template-columns:minmax\(0,1fr\) auto/);
-  const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Measurement metadata'));
+  const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Acquisition metadata'));
   assert.doesNotMatch(summary,/Current site|midgapCoverageText\(s\)/);
 });
 
@@ -115,23 +115,58 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
     jzero:fs.readFileSync(require.resolve('../src/modules/jzero.js'),'utf8'),
     isc:fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
     lbic:fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8'),
-    cet:fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8')
+    cet:fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8'),
+    spv:fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8'),
+    leakage:fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8')
+  };
+  const sidebar=src=>{
+    const start=src.indexOf('<aside class="side">'),
+      end=src.indexOf('</aside>',start);
+    assert.ok(start>=0&&end>start,'dedicated analyzer sidebar not found');
+    return src.slice(start,end);
   };
   const ordered=(src,labels)=>{
+    const side=sidebar(src);
     let last=-1;
     for(const label of labels){
-      const next=src.indexOf(label,last+1);
+      const next=side.indexOf(label,last+1);
       assert.ok(next>last,`expected sidebar order item ${label}`);
       last=next;
     }
   };
-  ordered(sources.dit,['<h3>Measurement ','Analysis controls','validDataFilterMarkup','Results summary','Measurement metadata']);
-  ordered(sources.qss,['<h3>Measurement ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset ','<summary>Full metadata']);
-  ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<summary>Acquisition metadata</summary>']);
-  ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
-  ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
-  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
-  ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ']);
+  ordered(sources.dit,['<h3>Measurement ','<h3>Current dataset ','${analysisControls()}','validDataFilterMarkup','Results summary','<summary>Acquisition metadata ','Recipe charge sequence']);
+  ordered(sources.qss,['<h3>Measurement ','<h3>Current dataset ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<summary>Full metadata']);
+  ordered(sources.dual,['<h3>Measurement ','<h3>Current dataset</h3>','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<summary>Acquisition metadata</summary>']);
+  ordered(sources.jzero,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary ','<summary>Validation / provenance</summary>','<summary>Acquisition metadata</summary>']);
+  ordered(sources.isc,['<h3>Measurement ','<h3>Current dataset ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
+  ordered(sources.lbic,['<h3>Measurement ','<h3>Current dataset</h3>','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<summary>Channel provenance</summary>','<summary>Acquisition / validation ']);
+  ordered(sources.cet,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition / validation</summary>']);
+  ordered(sources.spv,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary</h3>','<summary>Acquisition / validation</summary>']);
+  ordered(sources.leakage,['<h3>Measurement</h3>','<h3>Current dataset</h3>','<h3>Results summary</h3>','<summary>Acquisition / validation</summary>']);
+});
+
+test('Current dataset filter counts stay live in ISC and LBIC without forcing a shell rebuild',()=>{
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
+    lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(isc,/id="iDatasetValid"/);
+  assert.match(isc,/datasetValid\.textContent=\`\$\{state\.validCount\} \/ \$\{state\.siteCount\}\`/);
+  assert.match(lbic,/id="lDatasetValid"/);
+  assert.match(lbic,/datasetValid\.textContent=\`\$\{state\.validCount\} \/ \$\{state\.siteCount\}\`/);
+});
+
+test('Measurement panels remain compact identity blocks instead of metadata catch-alls',()=>{
+  const files=['dit.js','qss-upcd.js','dual-qss.js','jzero.js','isc.js','lbic.js','cet.js','spv.js','leakage.js'];
+  for(const file of files){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8'),
+      start=src.indexOf('<h3>Measurement'),
+      end=src.indexOf('</section>',start),
+      panel=src.slice(start,end);
+    assert.ok(start>=0&&end>start,`Measurement panel not found in ${file}`);
+    assert.doesNotMatch(panel,/Result time|Elapsed|Chuck temperature|Measurement velocity|Calculation profile|Geometry profile|Vcpd offset|Photon flux/,`${file} Measurement panel contains lower-priority metadata`);
+  }
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(dit,/Measurement metadata/);
+  assert.match(dit,/<summary>Acquisition metadata /);
 });
 
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{

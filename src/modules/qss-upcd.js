@@ -738,24 +738,21 @@
           'Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.'
         ].join(' ');
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
-        <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
-          ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}\
-${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}\
-${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}\
-${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}\
-${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}\
-${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}\
-${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}\
-${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and effective X/Y site pitch. MapPattern uses target/pitch geometry; SquareRegionPattern uses Region + Dimension in X-fast, ascending-Y acquisition order; HighDensityPattern uses the explicit normalized Coefficients in XML order. SquareCell uses the full coefficient grid; RoundWafer keeps only coefficient sites with x²+y²<1, then scales them by the EdgeExclusion-adjusted radius.')}\
-${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer MapPattern and SquareCell SquareRegionPattern coordinate paths have paired vendor regression references. HighDensityPattern + RoundWafer is also paired against vendor X/Y exports; other QSS pattern/target combinations remain governed by their separately resolved geometry evidence.')}\
-${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}\
-${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}\
-${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}\
-${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}\
-${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}\
-${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used in derived injection-level and implied-Voc calculations.')}\
-${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}
+        <section class="panel"><h3>Measurement ${help('Core XML measurement identity and sample context. Timing and acquisition settings are kept under Full metadata.')}</h3><dl class="meta">
+          ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}
+          ${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}
+          ${metaRow('Substrate',d.substrateId,'Substrate identifier stored with the result.')}
+          ${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML.')}
+          ${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and effective X/Y site pitch.')}
+          ${metaRow('Target',targetSummary(),'Nominal target geometry stored by the XML.')}
+          ${metaRow('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`,'Base doping concentration and conductivity type used by derived lifetime quantities.')}
         </dl></section>
+        <section class="panel current-dataset-panel"><h3>Current dataset ${help('Completeness and active-population counts for the imported XML; these are not vendor-export validation claims.')}</h3><div class="validation">
+          <div><b>${d.values.length}</b><span>XML points</span></div>
+          <div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div>
+          <div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div>
+          <div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div>
+        </div></section>
         <section class="panel"><h3>Analysis controls ${help('These are Analyzer interpretation controls, not PV-2000 recipe parameters. Lifetime handling changes only scientific availability; raw XML lifetime values remain preserved. PV-2000 compatible is the vendor-comparison path for Implied Voc, while Physical Si/Ge are optional Analyzer estimates.')}</h3>
           <div class="filter-grid qss-analysis-grid">
             <label>Lifetime handling<select id="qInvalidMode"><option value="exclude"${excludeInvalid?' selected':''}>Scientific — exclude τ ≤ 0</option><option value="raw"${excludeInvalid?'':' selected'}>Raw XML/controller values</option></select></label>
@@ -786,10 +783,18 @@ ${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe
           applyTitle:'Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.'
         })}
         <section class="panel qss-results-panel"><h3>Results summary ${help('Each row shows mean ± sample standard deviation for the active valid population; median and min–max range remain available on the compact second line. SRV appears only when Additional SRV analysis is explicitly enabled.')}</h3><dl class="meta compact-summary">${summaryCards()}</dl></section>
-        <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel">\
 <summary>Full metadata</summary>\
-<dl class="meta meta-detail">${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}\
+<dl class="meta meta-detail">${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}\
+${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}\
+${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}\
+${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement.')}\
+${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}\
+${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}\
+${metaRow('Transient',d.transient||'—','Transient acquisition mode reported in the PV-2000 HeaderInfo.')}\
+${metaRow('Optical factor',fmt(d.opticalFactor),'Correction factor used in the generation-rate calculation for optical losses such as reflection/transmission.')}\
+${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe side and QSS-bias illumination side stored in the XML.')}\
+${metaRow('Chuck temperature',`${fmt(d.temperatureC)} °C`,'Measured chuck temperature. The analyzer uses it in the temperature-dependent implied-Voc compatibility calculation.')}\
 ${metaRow('Measurement velocity',fmt(d.measurementVelocity),'PV-2000 motion/measurement velocity recorded for the iteration.')}\
 ${metaRow('Tau steady-state factor',fmt(d.tauSteadyStateFactor,6),'PV-2000 iteration-level steady-state lifetime factor stored in the XML; displayed for traceability and not substituted for the measured τeff.d map values.')}\
 ${metaRow('QDC value',fmt(d.qdcValue,6),'Iteration-level Quality of Decay control value. QD near 1 indicates a decay close to ideal exponential behavior.')}\
