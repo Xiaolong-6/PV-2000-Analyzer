@@ -66,8 +66,8 @@ Plots use compact **Axes** controls for manual limits where supported.
 
 Common interactions include:
 
-- wheel/pointer zoom;
-- axis-specific zoom when interacting near an axis;
+- ordinary wheel/trackpad motion scrolls the active workspace pane;
+- **Ctrl/⌘ + wheel** zooms the plot, with axis-specific zoom when the pointer is near one axis;
 - double-click **Auto** reset;
 - equal physical X/Y scale on wafer/cell maps where geometry is spatial.
 
