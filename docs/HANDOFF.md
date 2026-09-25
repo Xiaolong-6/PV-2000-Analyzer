@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline for this branch: `v20260925.4` (CET corpus parity merged in PR #69).
-- Feature branch: `feat/jzero-quantity-corpus-parity`.
-- Scope: close the remaining high-value JZero evidence from the 100-case private corpus without changing scientific formulas.
-- Private regression: eight successful JZero XML/vendor CSV pairs now validate calculation, geometry and Implied-Voc quantity status independently. Reference files stay private.
+- Main baseline for this branch: `v20260925.7` (QSS HighDensity/sentinel parity merged in PR #73).
+- Feature branch: `fix/dit-initial-qc-final-result-parity`.
+- Scope: close the DIT final-result direct/bookkeeping evidence without weakening the stronger Standard COCOS calculation rules.
+- Private regression: thirteen successful DIT final-result XML/vendor CSV pairs cover 43 sites; Initial VDark is floating-point exact and Initial Qc requires one additional PreProcess charge step. Reference files stay private.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -22,7 +22,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
 6. split LBIC channel semantics from geometry and add the paired current-only / scattered-only paths;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
-8. investigate DIT historical regenerated-export drift without weakening the stronger original-pair rules;
+8. **partially completed:** final-result direct/bookkeeping audit validates initial VDark and fixes the Initial Qc off-by-one; corrected-light/N-type/flatband/Dit regenerated-export drift remains an evidence boundary and the stronger original-pair Standard COCOS rules are unchanged;
 9. **completed:** re-audit Dual QSS alternate geometries; keep the result-profile gate because the paired FixedPoints/PseudoSquare evidence conflicts, while preserving the newly proven no-J0 quantity availability rule;
 10. **completed:** Leakage and the paired standard SPV map path are implemented; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
@@ -80,7 +80,7 @@ Four new paired geometry combinations resolve independently of calculation profi
 
 QSS preserves raw lifetime and intrinsic sentinel validity separately from the user Valid-data filter. Smax and profile-specific implied-Voc compatibility behavior are documented; optional physical Si/Ge Voc and SRV are Analyzer-side interpretation paths.
 
-DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. The Ge material option is an Analyzer model and must not be described as a PV-2000 material mode. COCOS-II remains inferred.
+DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark and Initial Qc bookkeeping on 13 final-result pairs / 43 sites; regenerated VLight, N-type Vsb and downstream flatband/Dit results remain diagnostic and do not override the stronger Standard COCOS evidence. The Ge material option is an Analyzer model and COCOS-II remains inferred.
 
 ## Architecture state
 
