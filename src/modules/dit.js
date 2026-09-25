@@ -739,6 +739,7 @@
       mapKey='Qtot',
       analysisOpen=true,
       resultsOpen=true,
+      detailView='vcpd',
       filterController=null,
       metrics=null,
       zoom={vcpd:{x:null,y:null},dit:{x:null,y:null},vsb:{x:null,y:null},map:{x:null,y:null}};
@@ -800,7 +801,6 @@
     const metaHelp={recipe:'PV-2000 recipe/job name stored in the result XML.',substrate:'Substrate identifier stored with the result.',lot:'Lot identifier stored with the result; it may be empty.',status:'PV-2000 execution status.',start:'Execution start timestamp from the result XML.',end:'Execution completion timestamp from the result XML.',elapsed:'Total elapsed measurement time.',pattern:'Measurement pattern name/type and number of measured sites.',points:'Number of Kelvin-probe samples averaged for each Vcpd reading.',interval:'Time interval between the Vcpd samples used to form each vector.',offset:'Kelvin-probe Vcpd calibration offset stored in MeasurementData and applied to reconstructed Vcpd values.',factor:'Standard COCOS correction factor applied to the measured dark-light Vcpd difference when COCOS-II is disabled.',qitRange:'Surface-barrier range configured for Qit/Dit extraction.',c2:'Whether the XML requests COCOS-II. When true, this analyzer replaces the experimental light curve with a synthetic straight light curve before Dit extraction.',c2eot:'Raw COCOS-II EOT setting stored in the XML. The PV2000 inferred method interprets this vendor value as Å.',preCharge:'Corona charge increment used during barrier adjustment before the main sweep.',preTarget:'Target Vsb range for the barrier-adjustment stage.',preAttempts:'Maximum barrier-adjustment attempts and number of extra scans.',processCharge:'Positive/negative corona charge increment used during the main Process sweep.',processTarget:'Target measurement range for terminating the main Process sweep.',processAttempts:'Maximum Process attempts and number of extra scans.'};
       
     const md=(label,value,tip)=>`<dt>${esc(label)} ${help(tip)}</dt><dd>${value}</dd>`;
-    const methodLabel=m=>m==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
     const midgapCoverageText=s=>{
       if(!analysis.options.pchipEnabled||s.midgapStatus==='available')return'';
       if(s.midgapStatus==='outside-measured')return`Theoretical midgap Vsb ${fmt(s.midgapV,3)} V is outside measured coverage ${fmt(s.midgapMeasuredMinVsb,3)}–${fmt(s.midgapMeasuredMaxVsb,3)} V; no extrapolation.`;
@@ -811,8 +811,6 @@
       const o=analysis.options,
         eff=o.effectiveCocosMode,
         isPv=eff==='pv2000-re',
-        resolved=methodLabel(eff),
-        xmlLine=o.cocosMode==='xml'?`<div class="analysis-resolved"><b>XML:</b> UseCocosII = ${d.useCocosII?'true':'false'} <span>→</span> <b>${resolved}</b></div>`:'',
         current=analysis.sites[site]||{},
         rec=analysis.recommendation||{},
         field=(label,tip,control,cls='')=>`<label class="compact-field ${cls}"><span class="field-name">${label} ${help(tip)}</span>${control}</label>`;
@@ -827,7 +825,6 @@
           ${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the inferred PV2000 COCOS-II implementation.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV2000 COCOS-II (inferred)</option></select>`)}
         </div>
         ${o.material==='Ge'?`<div class="analysis-resolved"><b>Ge Analyzer model:</b> legacy MATLAB compatibility · ni = 2E13 cm⁻³ · εr = 16.2 · PV-2000 has no material selector</div>`:''}
-        ${xmlLine}
         ${analysis.error?`<div class="analysis-error">${esc(analysis.error)} Invalid settings are not silently corrected or replaced.</div>`:''}
         ${isPv?`<div class="control-section-title">COCOS-II ${help('Inferred, not vendor-exact. Back Surface Shift exists in PV-2000 but its mathematical effect is not identified, so it is not applied.')}</div><div class="setting-row compact-settings">
           ${field('EOT [Å]','PV2000 inferred mode: SiO₂-equivalent EOT in ångström. The synthetic-light slope is q/Cox with Cox=3.9ε₀/EOT.',`<input id="ditCocosEotA" type="number" min="0.001" step="any" value="${o.cocosIIEOT_A}">`)}
@@ -846,6 +843,11 @@
       </details>`;
     }
     function renderShell(){
+      const paneScroll={
+        side:host.querySelector('.side')?.scrollTop||0,
+        overview:host.querySelector('.overview')?.scrollTop||0,
+        detail:host.querySelector('.detail')?.scrollTop||0
+      };
       if(!analysis.options.pchipEnabled&&mapKey==='MidgapDit')mapKey='Dit';
       const s=analysis.sites[site],
         coord=s.coord||{x:0,y:0},
@@ -854,6 +856,11 @@
         siteActive=filterState.selection.activeMask[site],
         siteFilterState=!s.valid?'ALGORITHM INVALID':siteSupport?(siteActive?'VALID':'FILTERED'):'UNAVAILABLE',
         rows=[['Qtot','Qtot'],['Minimum Dit (PV2000-style)','Dit'],['Midgap Dit (PCHIP)','MidgapDit'],['EOT (SiO₂ eq.)','eot'],['Cox','Cox'],['Qsc','Qsc'],['Initial Qc','InitialQc'],['Max |Vsb|','MaxVsb']],
+        summaryRows=rows.map(([name,key])=>{
+          const statKey=key==='eot'?'eot':key,
+            unit=mapSpec(key==='eot'?'EOT':key)[1];
+          return `<dt>${esc(name)} ${help(resultHelp[key]||'')}</dt><dd><strong>${statText(statKey)} ${esc(unit)}</strong></dd>`;
+        }).join(''),
         selectedResultRows=rows.filter(([,key])=>key!=='InitialQc').map(([name,key])=>{
           const unit=mapSpec(key==='eot'?'EOT':key)[1];
           return `<dt>${esc(name)}</dt><dd>${fmt(metric(s,key))} ${esc(unit)}</dd>`;
@@ -871,7 +878,7 @@
           state:filterState,
           helpText:'Choose a calculated DIT/COCOS site quantity and numeric range. Algorithm-invalid sites remain intrinsically excluded; the user range only narrows the active site population used by Results summary, wafer-map display and map export. Current-site Vcpd/Vsb/Dit curves are never recalculated or truncated by this filter.'
         })}
-        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Mean and sample standard deviation use sites that pass intrinsic algorithm validity, the active Valid-data filter and each quantity\'s finite-value availability. Point-specific values are shown in the right-hand Selected site / Measurement point panel.')}</summary><div class="result-list">${rows.map(([n,k])=>{const sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean ± stdev</span><strong>${statText(sk)}</strong></div></div>${k==='MidgapDit'&&midgapCoverageText(s)?`<div class="note">${esc(midgapCoverageText(s))}</div>`:''}</div>`}).join('')}</div></details>
+        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Each row shows valid-site mean ± sample standard deviation after intrinsic validity, the active Valid-data filter and quantity availability are applied. Point-specific values remain in the right-hand Selected site / Measurement point panel.')}</summary><dl class="meta compact-summary">${summaryRows}</dl></details>
 
         <details class="panel">\
 <summary>Measurement metadata ${help('Detailed recipe, substrate, timing and COCOS settings parsed directly from the imported XML.')}</summary>\
@@ -896,15 +903,34 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         <details class="panel"><summary>Recipe charge sequence ${help('Corona charge increments, target ranges and loop limits controlling barrier adjustment and the main COCOS sweep.')}</summary><dl class="meta meta-detail">${md('PreProcess ΔQc',`${sci(d.pre.charge,3)} cm⁻²`,metaHelp.preCharge)}${md('PreProcess target',`${esc(d.pre.targetMin)} to ${esc(d.pre.targetMax)}`,metaHelp.preTarget)}${md('Pre attempts / extra',`${fmt(d.pre.attempts,0)} / ${fmt(d.pre.extra,0)}`,metaHelp.preAttempts)}${md('Process ΔQc',`${sci(d.process.charge,3)} cm⁻²`,metaHelp.processCharge)}${md('Process target',`${esc(d.process.targetMin)} to ${esc(d.process.targetMax)}`,metaHelp.processTarget)}${md('Process attempts / extra',`${fmt(d.process.attempts,0)} / ${fmt(d.process.extra,0)}`,metaHelp.processAttempts)}</dl></details>
 
       </aside><section class="plots overview">
-        <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 360"></svg></div></div>
+        <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 500"></svg></div></div>
       </section><section class="plots detail">
-        <section class="panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd><dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd>${selectedResultRows}${vendorResultRows}</dl></section>
-        <div class="panel chart"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVcpdAxes')}<button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 640 360"></svg></div></div>
-        <div class="panel chart"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 640 360"></svg></div></div>
-        <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
+        <div class="dit-detail-sticky">
+          <section class="panel dit-selected-panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd><dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd>${selectedResultRows}${vendorResultRows}</dl>${midgapCoverageText(s)?`<div class="note" style="margin-top:7px">${esc(midgapCoverageText(s))}</div>`:''}</section>
+          <div class="panel dit-detail-tabs" role="tablist" aria-label="Point analysis"><button type="button" role="tab" data-dit-view="vcpd">Vcpd–Qc</button><button type="button" role="tab" data-dit-view="dit">Dit–Vsb</button><button type="button" role="tab" data-dit-view="vsb">Vsb–Qc</button><button type="button" role="tab" data-dit-view="all">All</button></div>
+        </div>
+        <div class="panel chart" data-dit-detail="vcpd"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVcpdAxes')}<button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 640 360"></svg></div></div>
+        <div class="panel chart" data-dit-detail="dit"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 640 360"></svg></div></div>
+        <div class="panel chart" data-dit-detail="vsb"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
         <details class="panel"><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV2000 inferred mode uses the flatband anchor, EOT in Å, signed Vsb, and Min/Max Vsb for reported-minimum Dit acceptance. Back Surface Shift remains unresolved and is not applied.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
       </section></div>`;
       host.querySelector('#ditMapMetric').value=mapKey;
+        const syncDetailView=()=>{
+          host.querySelectorAll('[data-dit-view]').forEach(button=>{
+            const active=button.dataset.ditView===detailView;
+            button.setAttribute('aria-selected',active?'true':'false');
+          });
+          host.querySelectorAll('[data-dit-detail]').forEach(panel=>{
+            panel.hidden=detailView!=='all'&&panel.dataset.ditDetail!==detailView;
+          });
+        };
+        host.querySelectorAll('[data-dit-view]').forEach(button=>{
+          button.onclick=()=>{
+            detailView=button.dataset.ditView;
+            syncDetailView();
+          };
+        });
+        syncDetailView();
         host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;
         host.querySelector('#ditPchipMethod').value=analysis.options.pchipMethod;
         host.querySelector('#ditMaterial').value=analysis.options.material;
@@ -1011,6 +1037,16 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
           ])
         )};
         drawAll();
+        const restorePaneScroll=()=>{
+          const sidePane=host.querySelector('.side'),
+            overviewPane=host.querySelector('.overview'),
+            detailPane=host.querySelector('.detail');
+          if(sidePane)sidePane.scrollTop=paneScroll.side;
+          if(overviewPane)overviewPane.scrollTop=paneScroll.overview;
+          if(detailPane)detailPane.scrollTop=paneScroll.detail;
+        };
+        if(typeof requestAnimationFrame==='function')requestAnimationFrame(restorePaneScroll);
+        else restorePaneScroll();
         
     }
     function drawVcpd(){
@@ -1119,7 +1155,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       lo=vv.length?Math.min(...vv):0,
       hi=vv.length?Math.max(...vv):1,
       W=640,
-      H=360,
+      H=500,
       m={l:50,r:24,t:28,b:42},
       coords=analysis.sites.map(x=>x.coord||{x:0,y:0}),
       envelope=spatialEnvelope(d,coords),

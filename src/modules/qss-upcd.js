@@ -706,10 +706,11 @@
       return `${fmt(d.diameter)} mm round · edge ${fmt(d.edgeExclusion)} mm · ${fmt(d.waferThickness)} µm`;
     };
     function summaryCards(){
-      const fields=[['Average','mean'],['Median','median'],['Stdev','stdev'],['Min','min'],['Max','max']];
       return Object.values(visibleMetrics()).map(m=>{
-        const st=statsFor(m.key);
-        return`<div class="qss-result-card" title="${esc(m.help)}"><div class="qss-result-head"><span><b>${esc(m.short)}</b> ${help(m.help)}</span><span>${esc(m.unit)}</span></div><div class="qss-result-values">${fields.map(([label,key])=>`<div><span>${label}</span><strong>${fmt(st[key])}</strong></div>`).join('')}</div></div>`;
+        const st=statsFor(m.key),
+          primary=Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)} ${m.unit}`:'—',
+          secondary=Number.isFinite(st.median)?`median ${fmt(st.median)} · range ${fmt(st.min)}–${fmt(st.max)} ${m.unit}`:'unavailable';
+        return`<dt>${esc(m.short)} ${help(m.help)}</dt><dd><strong>${esc(primary)}</strong><small>${esc(secondary)}</small></dd>`;
       }).join('');
     }
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
@@ -778,7 +779,7 @@ ${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe
           resetTitle:'Reset the range to include every point available under the current lifetime-validity mode.',
           applyTitle:'Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.'
         })}
-        <section class="panel qss-results-panel"><h3>Results summary ${help('Statistics use the active lifetime-handling mode plus the Valid-data filter. Stdev uses N−1, matching the PV-2000 convention. SRV appears only when Additional SRV analysis is explicitly enabled.')}</h3><div class="qss-result-list">${summaryCards()}</div></section>
+        <section class="panel qss-results-panel"><h3>Results summary ${help('Each row shows mean ± sample standard deviation for the active valid population; median and min–max range remain available on the compact second line. SRV appears only when Additional SRV analysis is explicitly enabled.')}</h3><dl class="meta compact-summary">${summaryCards()}</dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('All numbers in this panel come from the currently imported XML and its active valid-data filter. Coordinate generation is an internal completeness check, not a comparison with a vendor export.')}</h3><div class="validation"><div><b>${d.values.length}</b><span>XML points</span></div><div><b>${validN} / ${d.values.length}</b><span>pass valid-data filter</span></div><div><b>${d.coords.length} / ${d.values.length}</b><span>coordinates generated</span></div><div><b>${a.audit.invalidLifetimeCount}</b><span>raw τ ≤ 0 sentinel</span></div><div><b>${Number.isFinite(d.temperatureC)?`${fmt(d.temperatureC)} °C`:'—'}</b><span>XML chuck temperature</span></div></div></section>
         <details class="panel">\
 <summary>Full metadata</summary>\

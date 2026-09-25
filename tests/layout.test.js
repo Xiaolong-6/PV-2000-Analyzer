@@ -69,15 +69,15 @@ test('Dual QSS initial render draws immediately without a control change',()=>{
   assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\n    \}\n    redraw\(\);\n    PV\.plot\.observeResize\(host,redraw\);\n  \}/);
 });
 
-test('Dit results summary is card-based and does not depend on a wide three-column table',()=>{
+test('Dit results summary uses compact Selected-site-style rows without repeated labels',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(src,/results-summary-panel/);
-  assert.match(src,/result-card-values/);
-  assert.doesNotMatch(src,/Results summary[^]*<table><thead><tr><th>Parameter<\/th><th>Valid-site mean<\/th><th>Current site<\/th>/);
-  assert.match(css,/\.dit-module \.result-card-values\{[^}]*grid-template-columns:1fr/);
+  assert.match(src,/id="ditResultsSummary"[^]*<dl class="meta compact-summary">\$\{summaryRows\}<\/dl>/);
+  assert.doesNotMatch(src,/Valid-site mean ± stdev/);
+  assert.doesNotMatch(src,/result-card-values/);
+  assert.match(css,/\.compact-summary\{[^}]*grid-template-columns:minmax\(0,1fr\) auto/);
   const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Measurement metadata'));
-  assert.doesNotMatch(summary,/Current site/);
+  assert.doesNotMatch(summary,/Current site|midgapCoverageText\(s\)/);
 });
 
 test('desktop zoom does not use portrait-only mobile fallback on fine pointers',()=>{
@@ -555,4 +555,46 @@ test('LBIC View uses the same compact stacked-label control language as Valid-da
   assert.match(css,/\.sidebar-control-grid\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\.sidebar-control-grid label,\.filter-grid label\{[^}]*flex-direction:column/);
   assert.match(css,/\.sidebar-control-grid input,\.sidebar-control-grid select,\.filter-grid input,\.filter-grid select\{[^}]*height:30px/);
+});
+
+
+test('wide desktop uses equal-width independently scrollable semantic panes',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.module-grid\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*position:sticky[^}]*height:calc\(100dvh - 66px\)[^}]*overflow-y:auto/);
+  assert.match(css,/@media\(max-width:1200px\)\{\.module-grid\{[^}]*\}\.module-grid>\.side\{[^}]*\}\.module-grid>\.plots\{[^}]*position:static[^}]*height:auto[^}]*overflow:visible/);
+});
+
+test('DIT keeps a large overview map and tabbed local point-analysis workspace',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(src,/detailView='vcpd'/);
+  assert.match(src,/data-dit-view="vcpd"/);
+  assert.match(src,/data-dit-view="dit"/);
+  assert.match(src,/data-dit-view="vsb"/);
+  assert.match(src,/data-dit-view="all"/);
+  assert.match(src,/data-dit-detail="vcpd"/);
+  assert.match(src,/viewBox="0 0 640 500"/);
+  assert.match(src,/paneScroll=\{/);
+  assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
+  assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
+});
+
+test('right-side selected-site typography matches the sidebar hierarchy',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\),\.module-grid>\.plots\.detail>\.dit-detail-sticky>\.panel\{font-size:11px/);
+  assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
+});
+
+test('DIT does not duplicate Follow XML mapping as a persistent status row',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(src,/<b>XML:<\/b> UseCocosII/);
+  assert.match(src,/Follow XML setting maps UseCocosII=false to Standard COCOS/);
+});
+
+test('QSS compact summary keeps all statistics without repeating five labels per metric',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(src,/<dl class="meta compact-summary">\$\{summaryCards\(\)\}<\/dl>/);
+  assert.match(src,/median \$\{fmt\(st\.median\)\} · range/);
+  assert.doesNotMatch(src,/qss-result-values/);
 });
