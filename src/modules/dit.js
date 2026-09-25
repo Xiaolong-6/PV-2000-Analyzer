@@ -884,7 +884,6 @@
           ${md('Pattern',esc(d.patternName||d.patternType||'—'),metaHelp.pattern)}
           ${md('Target',esc(targetText),'Nominal target geometry stored in the XML.')}
           ${md('COCOS mode',d.useCocosII?'COCOS-II':'Standard COCOS',metaHelp.c2)}
-          ${md('Material',esc(analysis.options.material),'Analyzer semiconductor model selected in Analysis controls.')}
           ${md('Doping',`${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³`,'Semiconductor conductivity type and base doping used by the DIT calculations.')}
         </dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset ${help('Completeness and active-population counts for the currently imported XML.')}</h3><div class="validation">
