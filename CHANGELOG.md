@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260925.20.4 — 2026-09-25 (branch)
+
+- Fixed the new pseudo-square boundary regression to treat JavaScript `-0` and `0` as the same geometric coordinate while retaining strict checks for the boundary-site set and row/column indices.
+
 ## v20260925.20.3 — 2026-09-25 (branch)
 
 - Locked the three intentionally different circular-boundary contracts in `src/core/geometry.js`: strict inward-guard Map/Round rastering, inclusive outward-guard PseudoSquare rastering, and strict zero-epsilon HighDensity clipping.

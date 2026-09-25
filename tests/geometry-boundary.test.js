@@ -14,11 +14,12 @@ test('pseudoSquareGrid keeps the inclusive outward-epsilon boundary contract',()
   const radius=1-2.5e-10,
     points=PV2000.geometry.pseudoSquareGrid(1,0,radius,1,1);
   assert.ok(1>radius*radius,'axis grid sites are mathematically just outside this radius');
-  assert.deepEqual(points,[
-    {x:-1,y:0,row:0,col:0},
-    {x:0,y:0,row:0,col:1},
-    {x:1,y:0,row:0,col:2}
+  assert.deepEqual(points.map(({x,row,col})=>({x,row,col})),[
+    {x:-1,row:0,col:0},
+    {x:0,row:0,col:1},
+    {x:1,row:0,col:2}
   ]);
+  assert.ok(points.every(point=>point.y===0));
 });
 
 test('HighDensity circle clipping stays strict with no artificial epsilon',()=>{

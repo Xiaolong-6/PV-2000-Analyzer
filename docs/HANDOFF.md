@@ -1,6 +1,6 @@
 # Agent handoff — 2026-09-25
 
-## Geometry boundary-contract hardening (v20260925.20.3 branch)
+## Geometry boundary-contract hardening (v20260925.20.4 branch)
 
 The canonical geometry core deliberately keeps three different circular predicates. `roundGrid()` is strict with an inward `1e-9` guard; `pseudoSquareGrid()` is inclusive with an outward `1e-9` guard; HighDensity circular clipping is strict with no epsilon. The HighDensity rule is directly parity-sensitive: the 35 × 35 RoundWafer coefficient template resolves to 893 sites only when the stored floating-point coefficients are tested directly without subtracting an artificial epsilon. Dedicated regression tests now lock all three edge semantics, and architecture documentation warns against merging them into one helper without new paired boundary evidence.
 
