@@ -524,12 +524,13 @@ See `docs/ALGORITHMS_DUAL_QSS.md`.
 
 The original core consists of two private **real XML + matching numeric PV-2000 final-result CSV** pairs. Both use `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back` and `UseAugerCorrection=false`. The HighPower sweep contains an acquired 1000 mSun point; the LowPower sweep terminates at 681 mSun.
 
-The 100-case harness adds three compatible current-style `OnePointPattern` result rows: two RoundWafer targets and one SquareCell target. These extend the calculation evidence while geometry remains independently resolved through `GEOM-ONEPOINT-CENTER-001`. Four zero-result acquisitions, one legacy Lifetime-only row and two conflicting FixedPoints/PseudoSquare rows are diagnostic only.
+The 100-case harness adds three compatible current-style `OnePointPattern` result rows (two RoundWafer targets and one SquareCell target) plus two one-site `FixedPointsPattern + PseudoSquareCell` rows. Managed-IL tracing closes the apparent FixedPoints conflict: `DoPointAveraging=false` uses `Values[0][i]`, while `DoPointAveraging=true` uses the pointwise arithmetic mean of `Values[*][i]`. Four zero-result acquisitions and one legacy Lifetime-only row remain diagnostic.
 
 **Validated / established**
 
 - QDC is independently reconstructed from each stored transient. Maximum absolute error against the original DLL internal QDC arrays is about **7.92e-11** (25-point HighPower) and **2.67e-12** (16-point LowPower).
 - The QDC support rule is the contiguous interval from the first point inside `ValidQdcRange` through the last point inside the range.
+- The result-input lifetime preserves every saved XML `Values` vector. When `DoPointAveraging=false`, vendor calculation uses the first vector; when true, `QssDataItem.GetLifeTimeAsVector(i).Average()` defines each effective lifetime point. `PointAverageCount` alone does not select the branch.
 - Steady-state reconstruction uses the reference-build MinPack preprocessing followed by **log-log Akima** densification ×10,000, local-extremum selection, trapezoidal integration and corrected-lifetime interpolation.
 - `teff.d (1 Sun)` is taken from XML `Values` through the vendor clamped interpolation path.
 - HighPower `teff.SS (1 Sun)` = **280.94342922609 µs** and `teff.SS Max` = **893.70740338579 µs** are reproduced to about **2.3e-13 µs** and **3.4e-13 µs** respectively.
@@ -541,13 +542,13 @@ The 100-case harness adds three compatible current-style `OnePointPattern` resul
 
 **Runtime boundary**
 
-The full result path is enabled only for the paired semantic envelope above: `OnePointPattern`, Back/Back source selection and non-Auger processing, with the currently evidenced 1000-mSun placement rules. Target geometry is a separate axis and is not itself a calculation-profile key. `UseAugerCorrection=true`, alternate source selections, a sweep spanning 1000 mSun without an exact acquired 1000-mSun point, and other structural/categorical branches remain unavailable until real paired output validates them.
+The full result path is enabled only for the paired single-site semantic envelope above: `OnePointPattern` or a one-site `FixedPointsPattern`, Back/Back source selection and non-Auger processing, with the currently evidenced 1000-mSun placement rules. Target geometry is a separate axis and is not itself a calculation-profile key. Multi-site FixedPoints, `UseAugerCorrection=true`, alternate source selections, a sweep spanning 1000 mSun without an exact acquired 1000-mSun point, and other structural/categorical branches remain unavailable until real paired output validates them.
 
 The broader `QSS-INJ-001` 273-pair corpus still validates the raw injection/transient path; it does not automatically extend this final-result profile to all historical Dual QSS files.
 
 The 100-case harness adds ten further Dual QSS exports. Four contain no acquired result row and one is an older laser-power/Lifetime-only branch. Of the five nonempty final-result rows, three OnePoint cases stay inside the current non-Auger Back/Back calculation family. One `CalculateJZeroParams=false` pair proves a quantity-level availability rule: `teff.SS Max` and its corresponding maximum-Smax output are vendor `Ud.` even though `teff.SS (1 Sun)`, Δn, Smax and Implied Voc remain finite. Runtime therefore marks those maximum quantities unavailable when J0 calculation is not requested.
 
-Two `FixedPointsPattern + PseudoSquareCell` pairs are intentionally not used to widen the result-profile geometry gate: one is numerically close to the current reconstruction, while the other differs materially in teff.SS, teff.SS Max, J0 and downstream quantities. That conflicting evidence is a categorical result-path boundary, not a reason to generalize by geometry alone.
+The two `FixedPointsPattern + PseudoSquareCell` pairs now validate the recovered point-averaging input rule. The non-averaged case stores one lifetime vector; the 3avg case stores three. Using the vendor-defined effective lifetime closes the 3avg row at floating-point scale without changing downstream QSS/J0 equations. This extends the result profile only to **one-site** FixedPoints acquisitions; it does not generalize multi-site FixedPoints by geometry alone.
 
 **Validation**
 
@@ -557,11 +558,11 @@ Run the public launcher against the private paired case directories:
 npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 ```
 
-The private workflow executes the paired runtime regression on the original core cases and the 100-case classifier independently checks all ten harness exports, yielding **3 PASS + 7 diagnostics** without promoting diagnostic branches.
+The private workflow executes the paired runtime regression on the original core cases and the 100-case classifier independently checks all ten harness exports, yielding **5 PASS + 5 diagnostics** after the two one-site FixedPoints rows are replayed with the recovered saved-vector semantics.
 
 **NEW PROFILE triggers / evidence extensions**
 
-A different calculation pattern, source-selection path, `UseAugerCorrection=true`, a multi-iteration schema, another result-table algorithm, or a different 1000-mSun placement rule requires new matching numeric vendor output before the calculation profile is widened. A target-geometry change is evaluated on the independent geometry axis and does not by itself create a new calculation profile.
+A multi-site FixedPoints calculation, another calculation pattern, source-selection path, `UseAugerCorrection=true`, a multi-iteration schema, another result-table algorithm, or a different 1000-mSun placement rule requires new matching numeric vendor output before the calculation profile is widened. A target-geometry change is evaluated on the independent geometry axis and does not by itself create a new calculation profile.
 
 See `docs/ALGORITHMS_DUAL_QSS.md`.
 
