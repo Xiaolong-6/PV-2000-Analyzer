@@ -314,7 +314,11 @@ For the 13 successful pairs:
 - final-result `Vsb = VDark - VLight_result = F × (VDark - VLight_measured)`. Recovered `CreateDataValues()` IL shows this direct sign is exported for both doping types, while `StartDitCalculation()` separately negates the N-type analysis arrays. The result-table quantity and Standard-COCOS analysis quantity are therefore distinct rather than contradictory; all **43 sites** pass with maximum absolute Vsb error **8.04e-16 V**;
 - PV-2000 `Initial Qc` is **one preprocess charge step beyond the number of stored PreProcess dark vectors**: `(N_preprocess + 1) × CoronaCharge`; all **43 sites** match vendor output exactly after this correction;
 - 12/13 cases resolve through existing shared geometry profiles, with maximum X/Y error about **3.58e-14 mm**; the single FixedPoints/RoundWafer case remains a geometry diagnostic rather than widening geometry support;
-The same final-result rows contain mixed/unavailable Vfb/Qtot/Qit states and materially drifting Dit/Qsc values. They are not promoted by this profile. Run the narrow final-result validator with:
+A second, explicitly version-scoped profile now reconstructs the **current managed-DLL Standard COCOS final-result path** for downstream Vfb/Qsc/Qtot/Qit/Minimum-Dit quantities. Across the same 13 paired files / 43 sites, browser-runtime comparison has **zero availability mismatches**. Maximum absolute errors are about **1.03e-13 V (Vfb)**, **5.49e-4 cm^-2 (Qsc)**, **3.47e-2 cm^-2 (Qtot)**, **3.81e-1 cm^-2 eV^-1 (Minimum Dit)** and **2.93e-3 cm^-2 (Qit)**.
+
+This downstream profile is kept separate from the Analyzer's configurable Standard COCOS scientific path because the recovered vendor implementation uses its own silicon constants, preprocessing and availability rules. It also does not widen COCOS-II or the Analyzer-only Ge model.
+
+Run the narrow direct/bookkeeping final-result validator with:
 
 ```bash
 python scripts/validate_dit_result_reference.py <result.xml> <vendor-result.csv>
