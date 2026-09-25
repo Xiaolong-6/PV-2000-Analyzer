@@ -34,9 +34,28 @@ function rangeTag(text,name,lo,hi){
   const block=tag(text,name,'');
   return{min:numTag(block,'Min',lo),max:numTag(block,'Max',hi)};
 }
-function vector(text,name){
+function vectors(text,name){
   const block=tag(text,name,'');
-  return[...block.matchAll(/<double>([^<]+)<\/double>/g)].map(m=>Number(m[1]));
+  const wrapped=[...block.matchAll(/<([A-Za-z_][\\w.:-]*)[^>]*>([\\s\\S]*?)<\\/\\1>/g)]
+    .filter(row=>/<double>/.test(row[2]))
+    .map(row=>[...row[2].matchAll(/<double>([^<]+)<\\/double>/g)].map(m=>Number(m[1])));
+  if(wrapped.length)return wrapped;
+  const direct=[...block.matchAll(/<double>([^<]+)<\\/double>/g)].map(m=>Number(m[1]));
+  return direct.length?[direct]:[];
+}
+function vector(text,name){return vectors(text,name)[0]||[]}
+function effectiveLifetime(rows,pointAveraging){
+  if(!rows.length)return[];
+  if(!pointAveraging||rows.length===1)return rows[0].slice();
+  return rows[0].map((_,i)=>{
+    const column=rows.map(row=>Number(row[i]));
+    return column.every(Number.isFinite)?column.reduce((sum,v)=>sum+v,0)/column.length:NaN;
+  });
+}
+function fixedPointCount(text){
+  if(typeAttr(text,'Pattern')!=='FixedPointsPattern')return NaN;
+  const block=tag(text,'PointValues','');
+  return [...block.matchAll(/<(?:SDI\.Math\.)?Point\b/g)].length;
 }
 function transientRows(text){
   const out=[];
@@ -52,10 +71,17 @@ function transientRows(text){
 }
 function parseCase(xmlPath){
   const text=fs.readFileSync(xmlPath,'utf8'),
-    intensity=vector(text,'Intensity'),values=vector(text,'Values'),transients=transientRows(text);
+    intensity=vector(text,'Intensity'),
+    lifetimeVectors=vectors(text,'Values'),
+    pointAveraging=boolTag(text,'DoPointAveraging'),
+    values=effectiveLifetime(lifetimeVectors,pointAveraging),
+    transients=transientRows(text);
   return{
     patternType:typeAttr(text,'Pattern'),
+    fixedPointCount:fixedPointCount(text),
     targetType:typeAttr(text,'Target'),
+    doPointAveraging:String(pointAveraging),
+    pointAverageCount:numTag(text,'PointAverageCount'),
     probe:tag(text,'ProbeSelection',''),
     bias:tag(text,'QssBiasSelection',''),
     waferThickness:numTag(text,'WaferThickness'),
@@ -73,6 +99,8 @@ function parseCase(xmlPath){
     points:intensity.map((x,i)=>({
       intensityMilli:x,
       lifetime:values[i],
+      lifetimeFirst:lifetimeVectors[0]?.[i],
+      lifetimeRepeats:lifetimeVectors.map(row=>row[i]),
       transient:transients[i]||null
     }))
   };
@@ -89,7 +117,9 @@ function vendorResult(csvPath){
   const lines=fs.readFileSync(csvPath,'utf8').replace(/^\uFEFF/,'').split(/\r?\n/),
     hi=lines.findIndex(line=>norm(line).startsWith('point.x[mm]'));
   if(hi<0)throw new Error(csvPath+': point result header missing');
-  const header=lines[hi].split(','),row=lines.slice(hi+1).find(line=>line.trim())?.split(',')||[],
+  const delimiter=(lines[hi].match(/;/g)||[]).length>(lines[hi].match(/,/g)||[]).length?';':',',
+    header=lines[hi].split(delimiter),
+    row=lines.slice(hi+1).find(line=>line.trim())?.split(delimiter)||[],
     names=header.map(norm);
   const value=fn=>{const i=names.findIndex(fn);return i>=0?csvNumber(row[i]):NaN};
   return{
