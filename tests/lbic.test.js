@@ -304,6 +304,18 @@ test('LBIC line profiles honor the shared active mask without changing site inde
   );
 });
 
+test('LBIC private validator separates calculation profile, shared geometry and DL evidence',()=>{
+  const fs=require('node:fs');
+  const src=fs.readFileSync(require.resolve('../scripts/validate_lbic_reference.py'),'utf8');
+  assert.match(src,/from validate_geometry_profiles import resolve_xml_geometry/);
+  assert.match(src,/LBIC-CALC-CURRENT-SCATTERED-002/);
+  assert.match(src,/LBIC-CALC-CURRENT-DIRECT-SCATTERED-001/);
+  assert.match(src,/value if value >= 0 else math\.nan/);
+  assert.match(src,/0\.0 <= value <= 100\.0/);
+  assert.match(src,/LBIC EMPTY/);
+  assert.match(src,/calc=.*geometry=/);
+});
+
 test('LBIC renderer uses the shared Valid-data filter lifecycle across plots and exports',()=>{
   const fs=require('node:fs');
   const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
