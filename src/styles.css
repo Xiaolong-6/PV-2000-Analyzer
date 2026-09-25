@@ -214,3 +214,20 @@
 .dual-qss-position-stage{display:grid;place-items:center;padding:8px 14px}
 .dual-qss-position-stage svg{width:min(100%,360px);height:100%;display:block}
 @media(max-width:1150px){.dual-qss-position-panel .chart-stage{height:290px}}
+
+/* Compact Current dataset summaries */
+.current-dataset-panel{padding:8px 9px}
+.current-dataset-panel h3{margin-bottom:6px}
+.current-dataset-panel .validation{display:flex;gap:0}
+.current-dataset-panel .validation>div{flex:1 1 0;min-width:0;border:0;border-radius:0;padding:2px 9px;text-align:left}
+.current-dataset-panel .validation>div+div{border-left:1px solid var(--border)}
+.current-dataset-panel .validation b{display:block;font-size:15px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.current-dataset-panel .validation span{display:block;margin-top:2px;font-size:8.5px;line-height:1.2;overflow-wrap:anywhere}
+@media(max-width:1200px){
+  .current-dataset-panel .validation{display:grid;grid-template-columns:1fr;gap:0}
+  .current-dataset-panel .validation>div{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:baseline;padding:5px 0;text-align:left;border-left:0;border-top:1px solid var(--border)}
+  .current-dataset-panel .validation>div:first-child{padding-top:2px;border-top:0}
+  .current-dataset-panel .validation b{grid-column:2;grid-row:1;font-size:14px;text-align:right}
+  .current-dataset-panel .validation span{grid-column:1;grid-row:1;margin-top:0;font-size:9px}
+}
+
