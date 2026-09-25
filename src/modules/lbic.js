@@ -763,7 +763,7 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
         <div><b>Iteration ${iterationIndex+1}</b><span>active iteration</span></div>
         <div><b>${Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm`:`Beam ${esc(beamKey)}`}</b><span>active beam</span></div>
         <div><b>${it?.pointCount||0} / ${d.expectedPointCount||'—'}</b><span>points / schedule</span></div>
-        <div><b>${filterState.validCount} / ${filterState.siteCount}</b><span>pass filter</span></div>
+        <div><b id="lDatasetValid">${filterState.validCount} / ${filterState.siteCount}</b><span>pass filter</span></div>
       </div></section>
       <section class="panel"><h3>View ${help('Primary quantities follow the active XML measurement flags. Current-enabled validated scans expose Current / Reflectivity / IQE. Reflectance-only scans default to Reflectivity and do not synthesize Current, EQE or IQE from disabled placeholder fields. Advanced exposes active raw/intermediate channels. New semantic paths still require paired PV-2000 regression.')}</h3><div class="sidebar-control-grid"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label class="sidebar-control-toggle"><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}><span>Advanced raw / intermediate channels</span></label></div></section>
       ${PV.ui.validDataFilterMarkup({
@@ -812,6 +812,8 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
           zoom.xProfile={x:null,y:null};
           zoom.yProfile={x:null,y:null};
           host.querySelector('#lSummaryBody').innerHTML=summaryRows(metrics,controller);
+          const datasetValid=host.querySelector('#lDatasetValid');
+          if(datasetValid)datasetValid.textContent=`${state.validCount} / ${state.siteCount}`;
           redraw();
         }
       });
