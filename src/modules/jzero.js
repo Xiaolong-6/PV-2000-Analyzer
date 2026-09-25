@@ -353,8 +353,9 @@
       ctx.clip();
     }
   }
-  function drawMap(canvas,d,a,key,mask,zoom,onZoom,pointsMode=false){
-    const ctx=canvas.getContext('2d'),m=a.metrics[key],vals=m.values,W=canvas.width=760,H=canvas.height=440,p={l:56,r:82,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b;
+  function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect,pointsMode=false){
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),m=a.metrics[key],vals=m.values,p={l:56,r:82,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b;
+    ctx.font='11px system-ui';
     const nominalHalf=Math.max(d.targetWidth/2||0,d.targetHeight/2||0,d.diameter/2||0,1)*1.06;
     let auto=PV.plot.equalAspectRanges([-nominalHalf,nominalHalf],[-nominalHalf,nominalHalf],plotW,plotH),xr=PV.plot.resolve(auto.x,zoom?.x),yr=PV.plot.resolve(auto.y,zoom?.y);
     const Xp=x=>p.l+(x-xr[0])/(xr[1]-xr[0]||1)*plotW,Yp=y=>p.t+(yr[1]-y)/(yr[1]-yr[0]||1)*plotH;
@@ -366,7 +367,26 @@
     const sx=Math.max(1.2,Math.abs(Xp((d.pitchX||1)/2)-Xp(-(d.pitchX||1)/2))),sy=Math.max(1.2,Math.abs(Yp((d.pitchY||1)/2)-Yp(-(d.pitchY||1)/2)));
     for(let i=0;i<d.coords.length;i++){
       const pt=d.coords[i],v=vals[i];if(!pt||!Number.isFinite(v)||!mask[i])continue;
-      const x=Xp(pt.x),y=Yp(pt.y);if(pointsMode){ctx.beginPath();ctx.arc(x,y,2.1,0,2*Math.PI);ctx.fillStyle=color((v-lo)/(hi-lo||1));ctx.fill()}else{ctx.fillStyle=color((v-lo)/(hi-lo||1));ctx.fillRect(x-sx/2-.4,y-sy/2-.4,sx+.8,sy+.8)}
+      const x=Xp(pt.x),y=Yp(pt.y);
+      if(pointsMode){
+        ctx.beginPath();
+        ctx.arc(x,y,i===selected?4.2:2.1,0,2*Math.PI);
+        ctx.fillStyle=color((v-lo)/(hi-lo||1));
+        ctx.fill();
+        if(i===selected){
+          ctx.strokeStyle=css('--yellow');
+          ctx.lineWidth=2;
+          ctx.stroke();
+        }
+      }else{
+        ctx.fillStyle=color((v-lo)/(hi-lo||1));
+        ctx.fillRect(x-sx/2-.4,y-sy/2-.4,sx+.8,sy+.8);
+        if(i===selected){
+          ctx.strokeStyle=css('--yellow');
+          ctx.lineWidth=2;
+          ctx.strokeRect(x-sx/2,y-sy/2,sx,sy);
+        }
+      }
     }
     ctx.restore();strokeTarget(ctx,d,Xp,Yp,false);if(d.edgeExclusion>0)strokeTarget(ctx,d,Xp,Yp,true);
     ctx.fillStyle=css('--muted');
@@ -378,7 +398,7 @@
     ctx.fillText('X [mm]',p.l+plotW/2,H-4);
     ctx.save();ctx.translate(14,p.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Y [mm]',0,0);ctx.restore();
     const bx=W-50,by=p.t+12,bh=plotH-24,bw=13,grad=ctx.createLinearGradient(0,by+bh,0,by);for(let i=0;i<=10;i++)grad.addColorStop(i/10,color(i/10));ctx.fillStyle=grad;ctx.fillRect(bx,by,bw,bh);ctx.fillStyle=css('--muted');ctx.textAlign='left';ctx.fillText(axisFmt(hi),bx+bw+5,by+8);ctx.fillText(axisFmt(lo),bx+bw+5,by+bh);ctx.save();ctx.translate(W-7,by+bh/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText(`${m.short} [${m.unit}]`,0,0);ctx.restore();
-    const tip=PV.ui.setupTooltip(canvas);canvas.onmouseleave=()=>PV.ui.hideTooltip(tip);canvas.onmousemove=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height,x=xr[0]+(mx-p.l)/plotW*(xr[1]-xr[0]),y=yr[1]-(my-p.t)/plotH*(yr[1]-yr[0]);let bi=-1,bd=Infinity;for(let i=0;i<d.coords.length;i++){const pt=d.coords[i];if(!pt)continue;const dd=(pt.x-x)**2+(pt.y-y)**2;if(dd<bd){bd=dd;bi=i}}if(bi<0||bd>Math.max(d.pitchX||2,d.pitchY||2)**2*2){PV.ui.hideTooltip(tip);return}const pt=d.coords[bi],v=vals[bi];PV.ui.showTooltip(tip,e,`<b>Point ${bi+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[bi]?'good':'bad'}">${mask[bi]?'VALID':'EXCLUDED'}</span>`)};
+    const tip=PV.ui.setupTooltip(canvas);canvas.onmouseleave=()=>PV.ui.hideTooltip(tip);canvas.onmousemove=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height,x=xr[0]+(mx-p.l)/plotW*(xr[1]-xr[0]),y=yr[1]-(my-p.t)/plotH*(yr[1]-yr[0]);let bi=-1,bd=Infinity;for(let i=0;i<d.coords.length;i++){const pt=d.coords[i];if(!pt)continue;const dd=(pt.x-x)**2+(pt.y-y)**2;if(dd<bd){bd=dd;bi=i}}if(bi<0||bd>Math.max(d.pitchX||2,d.pitchY||2)**2*2){PV.ui.hideTooltip(tip);return}const pt=d.coords[bi],v=vals[bi];PV.ui.showTooltip(tip,e,`<b>Point ${bi+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[bi]?'good':'bad'}">${mask[bi]?'VALID':'EXCLUDED'}</span>`)};canvas.onclick=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;let bi=-1,bd=Infinity;for(let i=0;i<d.coords.length;i++){const pt=d.coords[i];if(!pt)continue;const dd=(Xp(pt.x)-mx)**2+(Yp(pt.y)-my)**2;if(dd<bd){bd=dd;bi=i}}if(bi>=0&&bd<500)onSelect?.(bi)};
     PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
   }
   function histogram(values,mask,bins){
@@ -387,7 +407,8 @@
     valid.forEach(v=>{let i=Math.floor((v-lo)/w);if(i===bins)i--;c[Math.max(0,Math.min(bins-1,i))]++});return c.map((count,i)=>({lo:lo+i*w,hi:lo+(i+1)*w,count}));
   }
   function drawHist(canvas,a,key,mask,bins,swapped,zoom,onZoom){
-    const rows=histogram(a.metrics[key].values,mask,bins),ctx=canvas.getContext('2d'),W=canvas.width=760,H=canvas.height=440,p={l:66,r:20,t:24,b:52},max=Math.max(1,...rows.map(r=>r.count));
+    const rows=histogram(a.metrics[key].values,mask,bins),frame=PV.plot.canvasFrame(canvas),ctx=frame.ctx,W=frame.W,H=frame.H,p={l:66,r:20,t:24,b:52},max=Math.max(1,...rows.map(r=>r.count));
+    ctx.font='11px system-ui';
     const qlo=rows[0]?.lo??0,qhi=rows.at(-1)?.hi??1,autoX=swapped?[0,max*1.08]:[qlo,qhi],autoY=swapped?[qlo,qhi]:[0,max*1.08],xr=PV.plot.resolve(autoX,zoom?.x),yr=PV.plot.resolve(autoY,zoom?.y),Xv=x=>p.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),Yv=y=>p.t+(yr[1]-y)/(yr[1]-yr[0]||1)*(H-p.t-p.b);
     ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);
     ctx.strokeStyle=css('--grid2');
@@ -409,6 +430,7 @@
     const onePoint=d.coords.length===1,
       defaultMetric=a.metrics.j0.values.some(Number.isFinite)?'j0':'tau1';
     let metricKey=defaultMetric,
+      selected=0,
       histBins=30,
       histSwapped=true,
       pointsMode=onePoint,
@@ -419,6 +441,7 @@
         metricKey:defaultMetric
       });
     const options=()=>Object.values(a.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
+    const selectedHtml=()=>{const state=filterController.snapshot(),pt=d.coords[selected],support=state.selection.supportMask[selected],active=state.selection.activeMask[selected],status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';return `<dl class="meta">${meta('Point',selected+1)}${meta('Valid-data state',status)}${meta('Coordinate',pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—')}${Object.values(a.metrics).map(m=>meta(m.short,Number.isFinite(m.values[selected])?`${fmt(m.values[selected],5)} ${m.unit}`:'—')).join('')}</dl>`};
     const meta=(k,v,h='')=>`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
     const target=()=>{
       if(d.targetType==='PseudoSquareCell')return `${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm pseudo-square · Ø${fmt(d.diameter)} mm mask · edge ${fmt(d.edgeExclusion)} mm`;
@@ -465,11 +488,10 @@
         <section class="panel"><h3>Results summary ${help('Statistics use only points that pass the active valid-data filter. Stdev is sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${n}</b><span>XML sites</span></div><div><b>${d.pairedSiteCount} / ${n}</b><span>paired QSS sites</span></div><div><b>${d.coords.length} / ${Number.isFinite(expected)?expected:n}</b><span>coordinates / schedule</span></div><div><b>${d.iterations} / 2</b><span>iterations acquired</span></div><div><b>${validN} / ${n}</b><span>pass filter</span></div></div></section>
         <details class="panel"><summary>Acquisition metadata</summary><dl class="meta meta-detail">${meta('Result time',d.end)}${meta('Elapsed',d.elapsed)}${meta('Laser power',fmt(d.laserPower))}${meta('uPCD averaging 1 / 2',`${fmt(d.avgMode,0)} / ${fmt(d.secondAvgMode,0)}`)}${meta('Evaluation mode',d.evaluationMode||'—')}${meta('Chuck temperature 1 / 2',`${fmt(d.temperatures[0])} / ${fmt(d.temperatures[1])} °C`)}${meta('Measurement velocity 1 / 2',`${fmt(d.measurementVelocities[0])} / ${fmt(d.measurementVelocities[1])}`)}${meta('Tau steady-state factor 1 / 2',`${fmt(d.tauSteadyStateFactors[0],6)} / ${fmt(d.tauSteadyStateFactors[1],6)}`)}${meta('QDC 1 / 2',`${fmt(d.qdcValues[0],6)} / ${fmt(d.qdcValues[1],6)}`)}${meta('Autosetting',d.autoset||'—')}${meta('Rastering',d.doRastering||'—')}${meta('Save transient',d.saveTransient||'—')}</dl></details>
-      </aside><section class="plots"><div class="panel chart"><header><b>${onePoint?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="jMetric">${options()}</select>${onePoint?'':`<select id="jMapMode"><option value="filled">Filled</option><option value="points">Points</option></select>`}${PV.plot.axisControls('jMapAxes')}<button id="jExportMap">Export</button></header><div class="canvas-wrap"><canvas id="jMap"></canvas></div></div></section><section class="plots"><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('jHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('jHistBins',histBins)}<button id="jExportHist">Export</button></header><div class="canvas-wrap"><canvas id="jHist"></canvas></div></div></section></div>`;
+      </aside><section class="plots overview"><div class="panel chart"><header><b>${onePoint?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="jMetric">${options()}</select>${onePoint?'':`<select id="jMapMode"><option value="filled">Filled</option><option value="points">Points</option></select>`}${PV.plot.axisControls('jMapAxes')}<button id="jExportMap">Export</button></header><div class="canvas-wrap"><canvas id="jMap"></canvas></div></div>${onePoint?'':`<div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('jHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('jHistBins',histBins)}<button id="jExportHist">Export</button></header><div class="canvas-wrap"><canvas id="jHist"></canvas></div></div>`}</section><section class="plots detail"><section class="panel"><h3>${onePoint?'Measurement point':'Selected site'}</h3><div id="jSelected">${selectedHtml()}</div></section></section></div>`;
       host.querySelector('#jMetric').value=metricKey;if(!onePoint)host.querySelector('#jMapMode').value=pointsMode?'points':'filled';
-      host.querySelector('#jMetric').onchange=e=>{metricKey=e.target.value;zoom={map:{x:null,y:null},hist:{x:null,y:null}};redraw()};
       if(!onePoint)host.querySelector('#jMapMode').onchange=e=>{pointsMode=e.target.value==='points';redraw()};
-      PV.ui.bindValidDataFilter(host,{prefix:'jFilter',controller:filterController,onChange:()=>{zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});redraw();
+      PV.ui.bindValidDataFilter(host,{prefix:'jFilter',controller:filterController,linkedSelect:'#jMetric',onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});redraw();
     }
     function exportMetric(filterState,displayMask){
       const m=a.metrics[metricKey],filterMetric=a.metrics[filterState.metricKey];
@@ -486,31 +508,26 @@
     function redraw(){
       const filterState=filterController.snapshot(),
         displayMask=filterController.metricMask(a.metrics[metricKey]),
-        rows=drawHist(
-          host.querySelector('#jHist'),a,metricKey,displayMask,histBins,histSwapped,zoom.hist,
-          next=>{zoom.hist=next;redraw()}
-        );
+        histCanvas=host.querySelector('#jHist'),
+        rows=histCanvas?drawHist(host.querySelector('#jHist'),a,metricKey,displayMask,histBins,histSwapped,zoom.hist,next=>{zoom.hist=next;redraw()}):[];
       drawMap(
-        host.querySelector('#jMap'),d,a,metricKey,displayMask,zoom.map,
-        next=>{zoom.map=next;redraw()},pointsMode
+        host.querySelector('#jMap'),d,a,metricKey,displayMask,selected,zoom.map,
+        next=>{zoom.map=next;redraw()},i=>{selected=i;host.querySelector('#jSelected').innerHTML=selectedHtml();redraw()},pointsMode
       );
       PV.plot.bindAxisControls(host,'jMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
-      PV.plot.bindAxisControls(host,'jHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
+      if(histCanvas){PV.plot.bindAxisControls(host,'jHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
         swapped:histSwapped,
         onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
       });
-      PV.plot.bindBinControls(host,'jHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
+      PV.plot.bindBinControls(host,'jHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});}
       host.querySelector('#jExportMap').onclick=()=>exportMetric(filterState,displayMask);
-      host.querySelector('#jExportHist').onclick=()=>{
+      if(histCanvas)host.querySelector('#jExportHist').onclick=()=>{
         const m=a.metrics[metricKey];
-        PV.exporter.csv(
-          `${safe(d.resultName)}_${metricKey}_histogram.csv`,
-          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],
-          rows.map(r=>[r.lo,r.hi,r.count,a.metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
-        );
+        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],rows.map(r=>[r.lo,r.hi,r.count,a.metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper]));
       };
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});shell();
+    PV.plot.observeResize(host,redraw);
   }
   PV.modules=PV.modules||{};
   PV.modules.jzero={

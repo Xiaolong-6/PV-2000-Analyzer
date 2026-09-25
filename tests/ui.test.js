@@ -68,3 +68,12 @@ test('shared valid-data filter UI preserves defaults and supports QSS wording ov
   assert.match(custom,/title="QSS reset title"/);
   assert.match(custom,/title="QSS apply title"/);
 });
+
+
+test('valid-data filter binder supports a linked displayed-metric select',()=>{
+  const src=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
+  assert.match(src,/linkedSelect=null/);
+  assert.match(src,/linked\.value=controller\.snapshot\(\)\.metricKey/);
+  assert.match(src,/controller\.setMetric\(linked\.value\)/);
+  assert.match(src,/if\(linked&&linked\.value!==state\.metricKey\)linked\.value=state\.metricKey/);
+});

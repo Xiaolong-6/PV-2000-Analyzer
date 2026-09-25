@@ -291,12 +291,10 @@
     }
     return nearestSiteValid&&nearestValidSq<=maxDist*maxDist&&den?num/den:NaN;
   }
-  function drawMap(canvas,d,a,key,mode,mask,zoom,onZoom,supportMask=null){
-    const ctx=canvas.getContext('2d'),
+  function drawMap(canvas,d,a,key,mode,mask,selected,zoom,onZoom,onSelect,supportMask=null){
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       vals=m.values,
-      W=canvas.width=760,
-      H=canvas.height=420,
       p={l:54,r:76,t:28,b:46},
       geometry=targetGeometry(d),
       extent=(geometry?.extent||d.diameter/2||50)*1.06,
@@ -328,24 +326,19 @@
       ctx.stroke()}
     ctx.save();ctx.beginPath();ctx.rect(cx-R,cy-R,2*R,2*R);ctx.clip();
     if(mode==='smooth'&&d.coords.length===vals.length&&validVals.length>=3){
-      const img=ctx.createImageData(W,H),
-        step=3,
+      const step=3,
         maxDist=2.2*Math.max(d.pitchX||5,d.pitchY||5);
-        for(let py=Math.floor(cy-R);py<=Math.ceil(cy+R);py+=step){
+      for(let py=Math.floor(cy-R);py<=Math.ceil(cy+R);py+=step){
         for(let px=Math.floor(cx-R);px<=Math.ceil(cx+R);px+=step){
           const x=xr[0]+(px-(cx-R))/(2*R)*(xr[1]-xr[0]),
-          y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
+            y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
           if(!insideScheduled(geometry,x,y))continue;
           const v=smoothValueAt(x,y,d.coords,vals,mask,maxDist);
           if(!Number.isFinite(v))continue;
-          const t=(v-lo)/(hi-lo||1),
-          rgb=color(t).match(/\d+/g).map(Number);
-          for(let yy=py;yy<Math.min(H,py+step);yy++)for(let xx=px;xx<Math.min(W,px+step);xx++){
-            const o=(yy*W+xx)*4;
-            img.data[o]=rgb[0];
-            img.data[o+1]=rgb[1];
-            img.data[o+2]=rgb[2];
-            img.data[o+3]=255}}}ctx.putImageData(img,0,0)
+          ctx.fillStyle=color((v-lo)/(hi-lo||1));
+          ctx.fillRect(px,py,step,step);
+        }
+      }
     }
     for(let i=0;i<d.coords.length;i++){
       const pt=d.coords[i],
@@ -354,7 +347,7 @@
       const x=X(pt.x),
       y=Y(pt.y);
       if(x<cx-R||x>cx+R||y<cy-R||y>cy+R)continue;
-      if(mode==='points'||!mask[i]){ctx.beginPath();
+      if(mode==='points'||validVals.length<3||!mask[i]){ctx.beginPath();
         ctx.arc(x,y,mask[i]?5:3.2,0,2*Math.PI);
         ctx.fillStyle=mask[i]?color((v-lo)/(hi-lo||1)):css('--soft');
         ctx.globalAlpha=mask[i]?1:.45;
@@ -369,6 +362,11 @@
           ctx.lineTo(x-3,y+3);
           ctx.stroke()}}}
     ctx.restore();
+    const selectedPoint=d.coords[selected];
+    if(selectedPoint){
+      const sx=X(selectedPoint.x),sy=Y(selectedPoint.y);
+      if(sx>=cx-R&&sx<=cx+R&&sy>=cy-R&&sy<=cy+R){ctx.beginPath();ctx.arc(sx,sy,7,0,2*Math.PI);ctx.strokeStyle=css('--yellow');ctx.lineWidth=2;ctx.stroke()}
+    }
     if(geometry){
       const traceBoundary=boundary=>{
         ctx.beginPath();
@@ -459,7 +457,22 @@
         const available=!supportMask||supportMask[best],
           state=available?(mask[best]?'VALID':'FILTERED'):'UNAVAILABLE';
         showTip(tip,e,`<b>Point ${best+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[best]?'good':'bad'}">${state}</span>`)}else hideTip(tip)};
-      PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+      canvas.onclick=e=>{
+        const rect=canvas.getBoundingClientRect(),
+          mx=(e.clientX-rect.left)*W/rect.width,
+          my=(e.clientY-rect.top)*H/rect.height;
+        let best=-1,bestD=Infinity;
+        d.coords.forEach((pt,i)=>{
+          if(!pt)return;
+          const dd=(X(pt.x)-mx)**2+(Y(pt.y)-my)**2;
+          if(dd<bestD){
+            bestD=dd;
+            best=i;
+          }
+        });
+        if(best>=0&&bestD<500)onSelect?.(best);
+      };
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
     return{lo,hi};
   }
@@ -474,11 +487,9 @@
       let j=Math.floor((x.v-lo)/(hi-lo||1)*bins);j=Math.max(0,Math.min(bins-1,j));out[j][mask[x.i]?'valid':'invalid']++});
     return out}
   function drawHist(canvas,a,key,mask,filterKey,filterLo,filterHi,binCount=30,swapped=true,zoom,onZoom,supportMask=null){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       bins=histogram(m.values,mask,binCount,supportMask),
-      W=canvas.width=760,
-      H=canvas.height=300,
       p={l:58,r:18,t:24,b:48};
       ctx.clearRect(0,0,W,H);
       ctx.fillStyle=css('--chart-bg');
@@ -502,7 +513,7 @@
       histYRange=swapped?mr:cr,
       histXPos=v=>p.l+(swapped?countPos(v):metricPos(v))*plotW,
       histYPos=v=>H-p.b-(swapped?metricPos(v):countPos(v))*plotH;
-      ctx.font='10px system-ui';
+      ctx.font='11px system-ui';
       ctx.strokeStyle=css('--grid2');
       ctx.fillStyle=css('--muted');
       ctx.textAlign='center';
@@ -582,12 +593,10 @@
       
   }
   function drawProfile(canvas,d,a,key,mask,zoom,onZoom,supportMask=null){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       vals=m.values.filter((v,i)=>Number.isFinite(v)&&(!supportMask||supportMask[i])),
       all=a.metrics[key].values,
-      W=canvas.width=760,
-      H=canvas.height=300,
       p={l:62,r:18,t:24,b:48},
       autoX=[1,Math.max(1,all.length)],
       autoY=vals.length?[Math.min(...vals),Math.max(...vals)]:[0,1],
@@ -601,7 +610,7 @@
       
     ctx.strokeStyle=css('--grid');
       ctx.fillStyle=css('--muted');
-      ctx.font='10px system-ui';
+      ctx.font='11px system-ui';
       for(const yv of niceTicks(yr[0],yr[1],5)){
       const y=Y(yv);
       ctx.beginPath();
@@ -670,6 +679,7 @@
     let analysisOptions={vocModel:'pv2000',srvEnabled:false,surfaceMode:'planar',bulkLifetimeUs:Infinity,planarSrv:5,minLifetimeUs:0},
       excludeInvalid=true,
       metricKey='lifetime',
+      selected=0,
       histSwapped=true,
       histBins=30,
       mapMode='smooth',
@@ -703,9 +713,23 @@
       }).join('');
     }
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
+    function selectedHtml(){
+      const state=filterController.snapshot(),
+        pt=d.coords[selected],
+        support=state.selection.supportMask[selected],
+        active=state.selection.activeMask[selected],
+        status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE',
+        coordinate=pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—',
+        values=Object.values(visibleMetrics()).map(m=>{
+          const value=Number.isFinite(m.values[selected])?`${fmt(m.values[selected])} ${m.unit}`:'—';
+          return metaRow(m.short,value);
+        }).join('');
+      return `<dl class="meta">${metaRow('Point',String(selected+1))}${metaRow('Valid-data state',status)}${metaRow('Coordinate',coordinate)}${values}</dl>`;
+    }
     function renderShell(){
       const filterState=filterController.snapshot(),
-        validN=filterState.validCount;
+        validN=filterState.validCount,
+        onePoint=d.values.length===1;
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}\
@@ -771,24 +795,20 @@ ${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configure
 ${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}\
 ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl>\
 </details>
-      </aside><section class="plots">
-        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option>${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}</select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
-      </section><section class="plots">
-        <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
-
-      </section></div>`;
+      </aside><section class="plots overview">
+        <div class="panel chart"><header><b>${onePoint?'Measurement position':'Wafer map'}</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option>${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}</select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
+        ${onePoint?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
+        <div class="panel chart"><header><b>Acquisition profile</b>${help('This is a whole-dataset acquisition-order profile. Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>`}
+      </section><section class="plots detail"><section class="panel"><h3>${d.values.length===1?'Measurement point':'Selected site'}</h3><div id="qSelected">${selectedHtml()}</div></section></section></div>`;
       host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;
-      host.querySelector('#qMetric').onchange=e=>{metricKey=e.target.value;
-        zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
-        redraw()};
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
         redraw()};
         
       PV.ui.bindValidDataFilter(host,{
         prefix:'qFilter',
         controller:filterController,
-        onChange:()=>renderShell(),
+        linkedSelect:'#qMetric',
+        onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};renderShell()},
         onError:message=>alert(
           message==='Valid-data filter requires finite lower and upper bounds.'
             ?'Enter finite lower and upper limits.'
@@ -824,11 +844,13 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         const nextMetrics=visibleMetrics(),
           nextFilterMetric=nextMetrics[previousFilterMetric]?previousFilterMetric:'lifetime';
         if(!nextMetrics[metricKey])metricKey='lifetime';
+        const synchronizedMetric=nextMetrics[metricKey]?metricKey:nextFilterMetric;
+        metricKey=synchronizedMetric;
         filterController=Sel.createFilter({
           metrics:nextMetrics,
           siteCount:d.values.length,
           intrinsicMask:supportMask,
-          metricKey:nextFilterMetric
+          metricKey:synchronizedMetric
         });
         zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
         renderShell();
@@ -843,25 +865,37 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         filterKey=filterState.metricKey,
         filterLo=filterState.lower,
         filterHi=filterState.upper,
-        bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask);
-        drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,zoom.map,n=>{zoom.map=n;redraw()},supportMask);
-        drawProfile(host.querySelector('#qProfile'),d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
-        PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
+        histCanvas=host.querySelector('#qHist'),
+        profileCanvas=host.querySelector('#qProfile'),
+        bins=histCanvas
+          ?drawHist(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask)
+          :[];
+      drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,selected,zoom.map,n=>{zoom.map=n;redraw()},i=>{
+        selected=i;
+        host.querySelector('#qSelected').innerHTML=selectedHtml();
+        redraw();
+      },supportMask);
+      if(profileCanvas)drawProfile(profileCanvas,d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
+      PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
+      if(histCanvas){
         PV.plot.bindAxisControls(host,'qHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
           swapped:histSwapped,
           onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
         });
         PV.plot.bindBinControls(host,'qHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
-        PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
-        
+      }
+      if(profileCanvas)PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
       host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
-        host.querySelector('#qExportProfile').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
-        host.querySelector('#qExportHist').onclick=()=>{
+      const profileExport=host.querySelector('#qExportProfile');
+      if(profileExport)profileExport.onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
+      const histExport=host.querySelector('#qExportHist');
+      if(histExport)histExport.onclick=()=>{
         const unit=a.metrics[metricKey].unit;
-        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]))};
-        
+        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]));
+      };
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
+    PV.plot.observeResize(host,redraw);
   }
   PV.modules=PV.modules||{};
     PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,pv2000SmaxResult,generation,impliedVoc,pv2000ImpliedVocResult,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};

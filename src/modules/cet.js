@@ -292,8 +292,8 @@
         y=yRange[0]+(yRange[1]-yRange[0])*i/4,
         px=Xp(x),
         py=Yp(y);
-      out+=`<line x1="${px}" x2="${px}" y1="${margin.t}" y2="${height-margin.b}" stroke="var(--grid2)"/><text x="${px}" y="${height-14}" text-anchor="middle" fill="var(--muted)" font-size="9">${esc(xFmt(x))}</text>`;
-      out+=`<line x1="${margin.l}" x2="${width-margin.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${margin.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${esc(yFmt(y))}</text>`;
+      out+=`<line x1="${px}" x2="${px}" y1="${margin.t}" y2="${height-margin.b}" stroke="var(--grid2)"/><text x="${px}" y="${height-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${esc(xFmt(x))}</text>`;
+      out+=`<line x1="${margin.l}" x2="${width-margin.r}" y1="${py}" y2="${py}" stroke="var(--grid)"/><text x="${margin.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="11">${esc(yFmt(y))}</text>`;
     }
     return{Xp,Yp,out};
   }
@@ -312,7 +312,7 @@
       filterController=Sel.createFilter({
         metrics:analysis.metrics,
         siteCount:data.sites.length,
-        metricKey:'r2'
+        metricKey:'eot'
       });
 
     const metricOptions=()=>Object.values(analysis.metrics)
@@ -354,31 +354,20 @@
           helpText:'Choose EOT, Cd or R² as the filter metric. One site-level active mask is shared by result summaries, map, distribution and exports; quantity-specific unavailable values remain excluded from that quantity.'
         })}
         <section class="panel"><h3>Results summary ${help('Average, median, sample standard deviation, minimum and maximum use the active valid-data population for each quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
-        <section class="panel"><h3>Current site</h3><div class="site-controls"><button id="cetPrev" title="Previous site">←</button><select id="cetSite">${data.sites.map((_,index)=>`<option value="${index}">Site ${index+1}</option>`).join('')}</select><button id="cetNext" title="Next site">→</button><span class="coord">${esc(point)}</span></div><dl class="meta" style="margin-top:8px">
-          ${meta('EOT',Number.isFinite(current.eot)?fmt(current.eot,4)+' Å':'—')}
-          ${meta('Cd',Number.isFinite(current.cd)?fmt(current.cd,4)+' nF/cm²':'—')}
-          ${meta('R²',fmt(current.r2,6))}
-          ${meta('Fit points',String(current.fitCount))}
-          ${meta('Slope',Number.isFinite(current.slope)?current.slope.toExponential(6)+' V·cm²/q':'—')}
-        </dl></section>
+
+        <details class="panel"><summary>Compatibility model</summary><p class="note meta-detail">For each site, Qc[i] = i × Process.CoronaCharge. The mean illuminated Vcpd vector is offset-corrected and fitted linearly versus Qc. The historical compatibility constants used here are q = 1.602×10⁻¹⁹ C and EOT[Å] = 34.5 / Cd_internal. Runtime remains XML-only; paired CSV is validation evidence only.</p></details>
       </aside>
-      <section class="plots">
-        <div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer / cell map'}</b><span class="grow"></span><select id="cetMetric">${metricOptions()}</select>${PV.plot.axisControls('cetMapAxes')}<button id="cetExportMap">Export</button></header><div class="chart-stage map-stage"><svg id="cetMap" viewBox="0 0 620 315"></svg></div></div>
-        <div class="panel chart"><header><b>Current-site Vcpd light–Qc fit</b><span class="chart-meta">R² ${fmt(current.r2,6)}</span><span class="grow"></span>${PV.plot.axisControls('cetFitAxes')}<button id="cetExportFit">Export</button></header><div class="chart-stage"><svg id="cetFit" viewBox="0 0 620 285"></svg></div></div>
+      <section class="plots overview">
+        <div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer / cell map'}</b><span class="grow"></span><select id="cetMetric">${metricOptions()}</select>${PV.plot.axisControls('cetMapAxes')}<button id="cetExportMap">Export</button></header><div class="chart-stage map-stage"><svg id="cetMap" viewBox="0 0 640 360"></svg></div></div>
+        ${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('cetHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('cetHistBins',histBins)}<button id="cetExportHist">Export</button></header><div class="chart-stage"><svg id="cetHist" viewBox="0 0 640 360"></svg></div></div>`}
       </section>
-      <section class="plots">
-        <div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('cetHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('cetHistBins',histBins)}<button id="cetExportHist">Export</button></header><div class="chart-stage"><svg id="cetHist" viewBox="0 0 620 285"></svg></div></div>
-        <section class="panel"><h3>Compatibility model</h3><p class="note">For each site, Qc[i] = i × Process.CoronaCharge. The mean illuminated Vcpd vector is offset-corrected and fitted linearly versus Qc. The historical compatibility constants used here are q = 1.602×10⁻¹⁹ C and EOT[Å] = 34.5 / Cd_internal. Runtime remains XML-only; paired CSV is validation evidence only.</p></section>
+      <section class="plots detail">
+        <section class="panel"><h3>${data.sites.length===1?'Measurement point':'Selected site'}</h3><div class="site-controls"><button id="cetPrev" title="Previous site">←</button><select id="cetSite">${data.sites.map((_,index)=>`<option value="${index}">Site ${index+1}</option>`).join('')}</select><button id="cetNext" title="Next site">→</button><span class="coord">${esc(point)}</span></div><dl class="meta" style="margin-top:8px">${meta('EOT',Number.isFinite(current.eot)?fmt(current.eot,4)+' Å':'—')}${meta('Cd',Number.isFinite(current.cd)?fmt(current.cd,4)+' nF/cm²':'—')}${meta('R²',fmt(current.r2,6))}${meta('Fit points',String(current.fitCount))}${meta('Slope',Number.isFinite(current.slope)?current.slope.toExponential(6)+' V·cm²/q':'—')}</dl></section>
+        <div class="panel chart"><header><b>Current-site Vcpd light–Qc fit</b><span class="chart-meta">R² ${fmt(current.r2,6)}</span><span class="grow"></span>${PV.plot.axisControls('cetFitAxes')}<button id="cetExportFit">Export</button></header><div class="chart-stage"><svg id="cetFit" viewBox="0 0 640 360"></svg></div></div>
       </section></div>`;
 
       host.querySelector('#cetMetric').value=metricKey;
       host.querySelector('#cetSite').value=String(site);
-      host.querySelector('#cetMetric').onchange=event=>{
-        metricKey=event.target.value;
-        zoom.map={x:null,y:null};
-        zoom.hist={x:null,y:null};
-        redraw();
-      };
       host.querySelector('#cetSite').onchange=event=>{
         site=Number(event.target.value);
         zoom.fit={x:null,y:null};
@@ -393,7 +382,9 @@
       PV.ui.bindValidDataFilter(host,{
         prefix:'cetFilter',
         controller:filterController,
-        onChange:()=>{
+        linkedSelect:'#cetMetric',
+        onChange:state=>{
+          metricKey=state.metricKey;
           zoom.map={x:null,y:null};
           zoom.hist={x:null,y:null};
           shell();
@@ -410,7 +401,7 @@
         active=values.filter((value,index)=>mask[index]&&Number.isFinite(value)),
         lo=active.length?Math.min(...active):0,
         hi=active.length?Math.max(...active):1,
-        width=620,height=315,margin={l:50,r:24,t:28,b:42},
+        width=640,height=360,margin={l:50,r:24,t:28,b:42},
         geometry=data.geometryModel,
         nominal=geometry.nominal,
         pointBounds=GEO.bounds(data.coords),
@@ -453,9 +444,9 @@
           color=finite?mapColor(t):'#777',
           pass=mask[index],
           x=Xp(point.x),y=Yp(point.y);
-        out+=`<g class="map-site" data-site="${index}" opacity="${pass?1:.28}"><title>Site ${index+1}: ${metric.short} ${finite?fmt(value,5):'—'} ${metric.unit}; X ${fmt(point.x,2)} mm, Y ${fmt(point.y,2)} mm${pass?'':' · excluded'}</title><circle cx="${x}" cy="${y}" r="12" fill="${color}" stroke="${index===site?'var(--text)':'var(--border)'}" stroke-width="${index===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">${index+1}</text></g>`;
+        out+=`<g class="map-site" data-site="${index}" opacity="${pass?1:.28}"><title>Site ${index+1}: ${metric.short} ${finite?fmt(value,5):'—'} ${metric.unit}; X ${fmt(point.x,2)} mm, Y ${fmt(point.y,2)} mm${pass?'':' · excluded'}</title><circle cx="${x}" cy="${y}" r="12" fill="${color}" stroke="${index===site?'var(--text)':'var(--border)'}" stroke-width="${index===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">${index+1}</text></g>`;
       });
-      out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="9">X [mm]</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="9">Y [mm]</text>`;
+      out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="11">X [mm]</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="11">Y [mm]</text>`;
       svg.innerHTML=out;
       svg.querySelectorAll('[data-site]').forEach(node=>node.onclick=()=>{
         site=Number(node.dataset.site);
@@ -488,13 +479,14 @@
     }
 
     function drawHistogram(){
-      const svg=host.querySelector('#cetHist'),
-        metric=analysis.metrics[metricKey],
+      const svg=host.querySelector('#cetHist');
+      if(!svg)return;
+      const metric=analysis.metrics[metricKey],
         mask=filterController.metricMask(metric),
         rows=histogramRows(metric,mask,histBins),
-        width=620,height=285,margin={l:62,r:18,t:22,b:42};
+        width=640,height=360,margin={l:62,r:18,t:22,b:42};
       if(!rows.length){
-        svg.innerHTML='<text x="310" y="142" text-anchor="middle" fill="var(--muted)" font-size="11">No active values</text>';
+        svg.innerHTML='<text x="320" y="180" text-anchor="middle" fill="var(--muted)" font-size="12">No active values</text>';
         return;
       }
       const qlo=rows[0].lo,qhi=rows[rows.length-1].hi,max=Math.max(1,...rows.map(row=>row.count)),
@@ -514,7 +506,7 @@
           out+=`<rect x="${Math.min(x0,x1)+1}" y="${Math.min(y0,y1)}" width="${Math.max(1,Math.abs(x1-x0)-2)}" height="${Math.abs(y1-y0)}" fill="var(--blue)"/>`;
         }
       }
-      out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="9">${histSwapped?'Count':esc(metric.short+' ['+metric.unit+']')}</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="9">${histSwapped?esc(metric.short+' ['+metric.unit+']'):'Count'}</text>`;
+      out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="11">${histSwapped?'Count':esc(metric.short+' ['+metric.unit+']')}</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="11">${histSwapped?esc(metric.short+' ['+metric.unit+']'):'Count'}</text>`;
       svg.innerHTML=out;
       PV.plot.bind(svg,{
         W:width,H:height,
@@ -541,9 +533,9 @@
       const svg=host.querySelector('#cetFit'),
         current=data.sites[site],
         points=current.qc.map((x,index)=>({x,y:current.vcpdLight[index]})).filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y)),
-        width=620,height=285,margin={l:58,r:18,t:22,b:40};
+        width=640,height=360,margin={l:58,r:18,t:22,b:40};
       if(!points.length){
-        svg.innerHTML='<text x="310" y="142" text-anchor="middle" fill="var(--muted)" font-size="11">No process Vcpd light data</text>';
+        svg.innerHTML='<text x="320" y="180" text-anchor="middle" fill="var(--muted)" font-size="12">No process Vcpd light data</text>';
         return;
       }
       const xs=points.map(point=>point.x),ys=points.map(point=>point.y),
@@ -567,7 +559,7 @@
           y1=current.intercept+current.slope*x1;
         out+=`<line x1="${Xp(x0)}" y1="${Yp(y0)}" x2="${Xp(x1)}" y2="${Yp(y1)}" stroke="var(--green)" stroke-width="2"/>`;
       }
-      out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="9">Qc [q/cm²]</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="9">Vcpd light [V]</text>`;
+      out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="11">Qc [q/cm²]</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="11">Vcpd light [V]</text>`;
       svg.innerHTML=out;
       PV.plot.bind(svg,{
         W:width,H:height,
@@ -603,7 +595,8 @@
           ])
         );
       };
-      host.querySelector('#cetExportHist').onclick=()=>{
+      const histExport=host.querySelector('#cetExportHist');
+      if(histExport)histExport.onclick=()=>{
         const metric=analysis.metrics[metricKey],
           rows=histogramRows(metric,filterController.metricMask(metric),histBins);
         PV.exporter.csv(

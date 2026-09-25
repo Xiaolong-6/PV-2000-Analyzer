@@ -77,6 +77,7 @@
   function bindValidDataFilter(host,{
     prefix,
     controller,
+    linkedSelect=null,
     onChange,
     onError=message=>alert(message)
   }={}){
@@ -84,7 +85,8 @@
       metric=get('Metric'),
       lo=get('Lo'),
       hi=get('Hi'),
-      count=get('Count');
+      count=get('Count'),
+      linked=typeof linkedSelect==='string'?host.querySelector(linkedSelect):linkedSelect;
     if(!metric||!lo||!hi)return;
 
     function sync(state){
@@ -92,12 +94,19 @@
       lo.value=Number.isFinite(state.lower)?state.lower:'';
       hi.value=Number.isFinite(state.upper)?state.upper:'';
       if(count)count.textContent=state.validCount;
+      if(linked&&linked.value!==state.metricKey)linked.value=state.metricKey;
       onChange?.(state);
     }
 
     metric.onchange=()=>{
       try{sync(controller.setMetric(metric.value))}catch(error){onError(error.message)}
     };
+    if(linked){
+      linked.value=controller.snapshot().metricKey;
+      linked.onchange=()=>{
+        try{sync(controller.setMetric(linked.value))}catch(error){onError(error.message)}
+      };
+    }
     get('Central').onclick=()=>{
       try{sync(controller.central(.01,.99))}catch(error){onError(error.message)}
     };
@@ -107,6 +116,7 @@
     get('Apply').onclick=()=>{
       try{sync(controller.apply(Number(lo.value),Number(hi.value)))}catch(error){onError(error.message)}
     };
+    return{sync};
   }
 
   PV.ui={escapeHtml,help,cssVar,setupTooltip,showTooltip,hideTooltip,validDataFilterMarkup,bindValidDataFilter};

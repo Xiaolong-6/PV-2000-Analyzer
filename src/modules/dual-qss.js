@@ -435,7 +435,7 @@
           ?`<rect x="${cx-g.innerHalfWidth*scale}" y="${cy-g.innerHalfHeight*scale}" width="${2*g.innerHalfWidth*scale}" height="${2*g.innerHalfHeight*scale}" fill="none" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5,4"/>`
           :'',
       label=g.kind==='round'?`Ø${fmt(g.radius*2,0)} mm`:`${fmt(g.halfWidth*2,0)} × ${fmt(g.halfHeight*2,0)} mm`;
-    return`<div class="panel chart dual-qss-position-panel"><header><b>Measurement position</b>${help('OnePointPattern is a single scheduled measurement, not a spatial heatmap. Geometry validation is independent from QSS-INJ-RESULT-001 calculation parity.')}</header><div class="chart-stage dual-qss-position-stage"><svg viewBox="0 0 220 205" role="img" aria-label="Single measurement position on nominal target">${nominal}${scheduled}<line x1="${cx-R}" x2="${cx+R}" y1="${cy}" y2="${cy}" stroke="var(--grid2)"/><line x1="${cx}" x2="${cx}" y1="${cy-R}" y2="${cy+R}" stroke="var(--grid2)"/><circle cx="${px}" cy="${py}" r="6" fill="var(--blue)" stroke="var(--text)" stroke-width="1.5"/><text x="${cx}" y="199" text-anchor="middle" fill="var(--muted)" font-size="10">${label}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''} · point (${fmt(g.coord.x,1)}, ${fmt(g.coord.y,1)}) mm</text></svg></div></div>`;
+    return`<div class="panel chart dual-qss-position-panel"><header><b>Measurement position</b>${help('OnePointPattern is a single scheduled measurement, not a spatial heatmap. Geometry validation is independent from QSS-INJ-RESULT-001 calculation parity.')}</header><div class="chart-stage dual-qss-position-stage"><svg viewBox="0 0 220 205" role="img" aria-label="Single measurement position on nominal target">${nominal}${scheduled}<line x1="${cx-R}" x2="${cx+R}" y1="${cy}" y2="${cy}" stroke="var(--grid2)"/><line x1="${cx}" x2="${cx}" y1="${cy-R}" y2="${cy+R}" stroke="var(--grid2)"/><circle cx="${px}" cy="${py}" r="6" fill="var(--blue)" stroke="var(--text)" stroke-width="1.5"/><text x="${cx}" y="199" text-anchor="middle" fill="var(--muted)" font-size="11">${label}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''} · point (${fmt(g.coord.x,1)}, ${fmt(g.coord.y,1)}) mm</text></svg></div></div>`;
   }
   function analyze(d){
     const life=d.points.map(p=>lifetimeValue(p)),
@@ -472,7 +472,7 @@
     ctx.strokeStyle=css('--soft');
     ctx.strokeRect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
     ctx.fillStyle=css('--muted');
-    ctx.font='10px system-ui';
+    ctx.font='11px system-ui';
     ctx.textAlign='center';
     xt.forEach(t=>ctx.fillText(afmt(t),X(t),H-18));
     ctx.fillText(xLabel,(p.l+W-p.r)/2,H-3);
@@ -488,9 +488,7 @@
   }
   const colors=['--blue','--red','--green','--purple','--yellow','--soft'];
   function drawCurve(canvas,sets,selSet,selPoint,logX,lifetimeSource,zoom,onZoom,onSelect){
-    const ctx=canvas.getContext('2d'),
-      W=canvas.width=820,
-      H=canvas.height=390,
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       p={l:68,r:20,t:28,b:52},
       life=q=>lifetimeValue(q,lifetimeSource),
       xs=sets.flatMap(s=>s.data.points.map(q=>q.intensityMilli)),
@@ -539,9 +537,10 @@
   }
   function drawTransient(canvas,pnt,zoom,onZoom){
     const pts=pnt?.transient?.points||[],
-      ctx=canvas.getContext('2d'),
-      W=canvas.width=820,
-      H=canvas.height=320,
+      frame=PV.plot.canvasFrame(canvas),
+      ctx=frame.ctx,
+      W=frame.W,
+      H=frame.H,
       p={l:68,r:20,t:28,b:52};
     ctx.fillStyle=css('--chart-bg');
     ctx.fillRect(0,0,W,H);
@@ -668,16 +667,12 @@ ${row('Samples',t?.points?.length||0)}</dl>`;
 <section class="panel">\
 <h3>Results summary</h3>\
 <dl class="meta">${resultSummaryHtml(a)}</dl>${a.vendorResult?.available?'<button id="dqExportResults">Export result table</button>':''}</section>\
-<section class="panel">\
-<h3>Selected injection point</h3>\
-<div id="dqSelected">${selectedHtml()}</div>\
-</section>\
 <details class="panel">\
 <summary>Acquisition metadata</summary>\
 <dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Within QSS-INJ-RESULT-001, Basore and K-S J0 are reconstructed on the paired non-Auger path; vendor zero results retain the legacy Ud. state.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl>\
 </details>\
 </aside>\
-<section class="plots">\
+<section class="plots overview">\
 <div class="panel chart">\
 <header>\
 <b>Lifetime vs QSS intensity</b>${help('Lifetime is read only from the imported XML: TransientInfo@LifeTime is used when available, with XML Values as a fallback. PV-2000 CSV/raw exports are development-validation evidence and are never runtime inputs.')}<span id="dqCurveLegend" class="dual-qss-inline-legend">\
@@ -694,8 +689,9 @@ ${row('Samples',t?.points?.length||0)}</dl>`;
 </canvas>\
 </div>\
 </div>\
+${positionHtml(d)}\
 </section>\
-<section class="plots">${positionHtml(d)}<div class="panel chart">\
+<section class="plots detail"><section class="panel"><h3>Selected injection point</h3><div id="dqSelected">${selectedHtml()}</div></section><div class="panel chart">\
 <header>\
 <b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow">\
 </span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button>\
@@ -744,6 +740,7 @@ ${row('Samples',t?.points?.length||0)}</dl>`;
       if(exportResult)exportResult.onclick=()=>exportResults(d,a);
     }
     redraw();
+    PV.plot.observeResize(host,redraw);
   }
   PV.modules=PV.modules||{};
   PV.modules.dualQss={

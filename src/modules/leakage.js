@@ -124,8 +124,8 @@
     }};
   }
 
-  function positionSvg(data){
-    const geometry=data.geometryModel||{},point=data.sites?.[0]?.coord,W=620,H=315,m={l:50,r:22,t:24,b:42},
+  function positionSvg(data,siteIndex=0){
+    const geometry=data.geometryModel||{},point=data.sites?.[siteIndex]?.coord,W=640,H=360,m={l:56,r:24,t:28,b:46},
       nominal=geometry.nominal,scheduled=geometry.scheduled,shape=geometry.shape;
     let half=1;
     if(shape==='circle'&&Number.isFinite(nominal?.radius))half=nominal.radius*1.08;
@@ -138,8 +138,8 @@
     let out=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Measurement position"><rect width="${W}" height="${H}" fill="var(--chart-bg)"/>`;
     for(let i=0;i<=4;i++){
       const x=xr[0]+(xr[1]-xr[0])*i/4,y=yr[0]+(yr[1]-yr[0])*i/4,px=xp(x),py=yp(y);
-      out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-15}" text-anchor="middle" fill="var(--muted)" font-size="9">${fmt(x,1)}</text>`;
-      out+=`<line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid2)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="9">${fmt(y,1)}</text>`;
+      out+=`<line x1="${px}" x2="${px}" y1="${m.t}" y2="${H-m.b}" stroke="var(--grid2)"/><text x="${px}" y="${H-15}" text-anchor="middle" fill="var(--muted)" font-size="11">${fmt(x,1)}</text>`;
+      out+=`<line x1="${m.l}" x2="${W-m.r}" y1="${py}" y2="${py}" stroke="var(--grid2)"/><text x="${m.l-6}" y="${py+3}" text-anchor="end" fill="var(--muted)" font-size="11">${fmt(y,1)}</text>`;
     }
     const boundary=(b,dashed=false)=>{
       if(!b)return'';
@@ -149,9 +149,63 @@
       return'';
     };
     out+=boundary(nominal,false)+boundary(scheduled,true);
-    if(point)out+=`<circle cx="${xp(point.x)}" cy="${yp(point.y)}" r="5" fill="var(--blue)" stroke="var(--chart-bg)" stroke-width="2"/><text x="${xp(point.x)+9}" y="${yp(point.y)-9}" fill="var(--text)" font-size="10">(${fmt(point.x,1)}, ${fmt(point.y,1)}) mm</text>`;
-    out+=`<text x="${W/2}" y="${H-3}" text-anchor="middle" fill="var(--muted)" font-size="10">X [mm]</text><text transform="translate(13 ${H/2}) rotate(-90)" text-anchor="middle" fill="var(--muted)" font-size="10">Y [mm]</text></svg>`;
+    if(point)out+=`<circle cx="${xp(point.x)}" cy="${yp(point.y)}" r="5" fill="var(--blue)" stroke="var(--chart-bg)" stroke-width="2"/><text x="${xp(point.x)+9}" y="${yp(point.y)-9}" fill="var(--text)" font-size="11">(${fmt(point.x,1)}, ${fmt(point.y,1)}) mm</text>`;
+    out+=`<text x="${W/2}" y="${H-3}" text-anchor="middle" fill="var(--muted)" font-size="11">X [mm]</text><text transform="translate(13 ${H/2}) rotate(-90)" text-anchor="middle" fill="var(--muted)" font-size="11">Y [mm]</text></svg>`;
     return out;
+  }
+
+  function drawRaw(canvas,data,siteIndex,zoom,onZoom){
+    const frame=PV.plot.canvasFrame(canvas),ctx=frame.ctx,W=frame.W,H=frame.H,
+      site=data.sites[siteIndex],p={l:62,r:18,t:26,b:50},
+      series=[];
+    if(site&&data.measurePositive&&site.positiveRaw?.length)series.push({label:'Positive',values:site.positiveRaw,dt:data.positiveSettings.intervalSeconds,stroke:'--red'});
+    if(site&&data.measureNegative&&site.negativeRaw?.length)series.push({label:'Negative',values:site.negativeRaw,dt:data.negativeSettings.intervalSeconds,stroke:'--blue'});
+    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--chart-bg').trim();ctx.fillRect(0,0,W,H);ctx.font='11px system-ui';
+    const points=series.flatMap(s=>s.values.map((v,i)=>({x:i*s.dt,y:v-data.offset,s}))).filter(q=>Number.isFinite(q.x)&&Number.isFinite(q.y));
+    if(!points.length){ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim();ctx.textAlign='center';ctx.fillText('No stored leakage readings.',W/2,H/2);return}
+    const range=values=>{let lo=Math.min(...values),hi=Math.max(...values);if(lo===hi){lo-=.5;hi+=.5}const pad=(hi-lo)*.04;return[lo-pad,hi+pad]},
+      autoX=range(points.map(q=>q.x)),autoY=range(points.map(q=>q.y)),
+      xr=PV.plot.resolve(autoX,zoom.x),yr=PV.plot.resolve(autoY,zoom.y),
+      Xp=x=>p.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),Yp=y=>H-p.b-(y-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b),
+      css=name=>getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    ctx.strokeStyle=css('--grid2');ctx.fillStyle=css('--muted');
+    for(let i=0;i<=4;i++){
+      const x=xr[0]+(xr[1]-xr[0])*i/4,
+        y=yr[0]+(yr[1]-yr[0])*i/4,
+        px=Xp(x),
+        py=Yp(y);
+      ctx.beginPath();
+      ctx.moveTo(px,p.t);
+      ctx.lineTo(px,H-p.b);
+      ctx.stroke();
+      ctx.textAlign='center';
+      ctx.fillText(fmt(x,2),px,H-19);
+      ctx.beginPath();
+      ctx.moveTo(p.l,py);
+      ctx.lineTo(W-p.r,py);
+      ctx.stroke();
+      ctx.textAlign='right';
+      ctx.fillText(fmt(y,4),p.l-7,py+4);
+    }
+    for(const s of series){
+      ctx.strokeStyle=css(s.stroke);
+      ctx.lineWidth=1.7;
+      ctx.beginPath();
+      let started=false;
+      s.values.forEach((v,i)=>{
+        const y=v-data.offset;
+        if(!Number.isFinite(y))return;
+        const x=Xp(i*s.dt),py=Yp(y);
+        if(started)ctx.lineTo(x,py);
+        else{
+          ctx.moveTo(x,py);
+          started=true;
+        }
+      });
+      ctx.stroke();
+    }
+    ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.fillText('Time [s]',(p.l+W-p.r)/2,H-3);ctx.save();ctx.translate(13,(p.t+H-p.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText('Vcpd - offset [V]',0,0);ctx.restore();
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
   }
 
   function render(host,data,analysis){
@@ -159,18 +213,56 @@
       host.innerHTML='<section class="panel"><h3>LeakageMeasurement</h3><p class="note">No leakage site data found.</p></section>';
       return;
     }
+    let site=0,zoom={raw:{x:null,y:null}};
     const stats=Object.values(analysis.metrics).map(metric=>{
       const s=Q.summary(metric);
       return '<tr><td>'+esc(metric.short)+'</td><td>'+fmt(s.mean)+'</td><td>'+fmt(s.median)+'</td><td>'+fmt(s.stdev)+'</td><td>'+fmt(s.min)+'</td><td>'+fmt(s.max)+'</td></tr>';
     }).join('');
-    const siteRows=data.sites.map((site,index)=>'<tr><td>'+(index+1)+'</td><td>'+fmt(site.coord?.x,3)+'</td><td>'+fmt(site.coord?.y,3)+'</td><td>'+fmt(site.vsassPositive)+'</td><td>'+fmt(site.vsassNegative)+'</td><td>'+fmt(site.li)+'</td></tr>').join('');
     host.innerHTML='<div class="module-grid leakage-module"><aside class="side"><section class="panel"><h3>Measurement</h3><dl class="meta">'+
       '<dt>Result</dt><dd>'+esc(data.resultName)+'</dd><dt>Recipe</dt><dd>'+esc(data.name)+'</dd><dt>Substrate</dt><dd>'+esc(data.substrateId)+'</dd>'+
       '<dt>Pattern</dt><dd>'+esc(data.patternName||data.patternType)+'</dd><dt>Calculation profile</dt><dd>'+esc(data.calculationProfile?.id||'inferred')+'</dd>'+
       '<dt>Geometry profile</dt><dd>'+esc(data.geometryProfile?.id||'inferred')+'</dd><dt>Vcpd offset</dt><dd>'+fmt(data.offset,6)+' V</dd></dl></section>'+
-      '<section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>'+stats+'</tbody></table></div></section></aside>'+
-      '<section class="plots"><div class="panel chart"><header><b>Measurement position</b><span class="grow"></span></header><div class="chart-stage map-stage">'+positionSvg(data)+'</div></div><section class="panel"><h3>Site results</h3><div class="table-wrap"><table><thead><tr><th>#</th><th>X [mm]</th><th>Y [mm]</th><th>VSASS+ [V]</th><th>VSASS- [V]</th><th>LI [V]</th></tr></thead><tbody>'+siteRows+'</tbody></table></div></section>'+
-      '<section class="panel"><h3>Compatibility model</h3><p class="note">PV-2000-compatible VSASS uses mean Vcpd-offset subtraction, the local samples around 1.2 s, and natural-cubic interpolation at 1.2 s minus the stored polarity delay. Calculation validation and geometry validation are tracked independently.</p></section></section></div>';
+      '<section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>'+stats+'</tbody></table></div></section><details class="panel"><summary>Compatibility model</summary><p class="note meta-detail">PV-2000-compatible VSASS uses mean Vcpd-offset subtraction, the local samples around 1.2 s, and natural-cubic interpolation at 1.2 s minus the stored polarity delay. Calculation validation and geometry validation are tracked independently.</p></details></aside>'+
+      '<section class="plots overview"><div class="panel chart"><header><b>Measurement position</b><span class="grow"></span></header><div class="chart-stage map-stage" id="leakagePosition">'+positionSvg(data,site)+'</div></div></section><section class="plots detail"><section class="panel"><h3>'+(data.sites.length===1?'Measurement point':'Selected site')+'</h3><div class="site-controls"><button id="leakPrev">←</button><select id="leakSite">'+data.sites.map((_,i)=>'<option value="'+i+'">Site '+(i+1)+'</option>').join('')+'</select><button id="leakNext">→</button></div><dl class="meta"><dt>Position</dt><dd id="leakPositionText"></dd><dt>VSASS+</dt><dd id="leakPositive"></dd><dt>VSASS-</dt><dd id="leakNegative"></dd><dt>LI</dt><dd id="leakLi"></dd></dl></section><div class="panel chart"><header><b>Raw leakage readings</b><span class="grow"></span>'+PV.plot.axisControls('leakRawAxes')+'</header><div class="canvas-wrap"><canvas id="leakRaw"></canvas></div></div></section>'+
+      '</div>';
+    const redraw=()=>{
+      const current=data.sites[site]||{},pt=current.coord;
+      host.querySelector('#leakSite').value=String(site);
+      host.querySelector('#leakPositionText').textContent=pt?`${fmt(pt.x,3)}, ${fmt(pt.y,3)} mm`:'—';
+      host.querySelector('#leakPositive').textContent=`${fmt(current.vsassPositive)} V`;
+      host.querySelector('#leakNegative').textContent=`${fmt(current.vsassNegative)} V`;
+      host.querySelector('#leakLi').textContent=`${fmt(current.li)} V`;
+      host.querySelector('#leakagePosition').innerHTML=positionSvg(data,site);
+      drawRaw(host.querySelector('#leakRaw'),data,site,zoom.raw,n=>{
+        zoom.raw=n;
+        redraw();
+      });
+      PV.plot.bindAxisControls(host,'leakRawAxes',zoom.raw,n=>{
+        zoom.raw=n;
+        redraw();
+      });
+    };
+    host.querySelector('#leakSite').onchange=e=>{
+      site=Number(e.target.value);
+      zoom.raw={x:null,y:null};
+      redraw();
+    };
+    host.querySelector('#leakPrev').onclick=()=>{
+      if(site>0){
+        site--;
+        zoom.raw={x:null,y:null};
+        redraw();
+      }
+    };
+    host.querySelector('#leakNext').onclick=()=>{
+      if(site<data.sites.length-1){
+        site++;
+        zoom.raw={x:null,y:null};
+        redraw();
+      }
+    };
+    redraw();
+    PV.plot.observeResize(host,redraw);
   }
 
   PV.modules=PV.modules||{};

@@ -66,7 +66,7 @@ test('Dual QSS measurement-position visualization stays out of the sidebar',()=>
 
 test('Dual QSS initial render draws immediately without a control change',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
-  assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\n    \}\n    redraw\(\);\n  \}/);
+  assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\n    \}\n    redraw\(\);\n    PV\.plot\.observeResize\(host,redraw\);\n  \}/);
 });
 
 test('Dit results summary is card-based and does not depend on a wide three-column table',()=>{
@@ -75,7 +75,9 @@ test('Dit results summary is card-based and does not depend on a wide three-colu
   assert.match(src,/results-summary-panel/);
   assert.match(src,/result-card-values/);
   assert.doesNotMatch(src,/Results summary[^]*<table><thead><tr><th>Parameter<\/th><th>Valid-site mean<\/th><th>Current site<\/th>/);
-  assert.match(css,/\.dit-module \.result-card-values\{[^}]*grid-template-columns:minmax\(0,1\.45fr\) minmax\(0,\.55fr\)/);
+  assert.match(css,/\.dit-module \.result-card-values\{[^}]*grid-template-columns:1fr/);
+  const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Measurement metadata'));
+  assert.doesNotMatch(summary,/Current site/);
 });
 
 test('desktop zoom does not use portrait-only mobile fallback on fine pointers',()=>{
@@ -122,13 +124,13 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
       last=next;
     }
   };
-  ordered(sources.dit,['<h3>Measurement ','Analysis controls','validDataFilterMarkup','Results summary','<h3>Selected site ','Measurement metadata']);
+  ordered(sources.dit,['<h3>Measurement ','Analysis controls','validDataFilterMarkup','Results summary','Measurement metadata']);
   ordered(sources.qss,['<h3>Measurement ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset ','<summary>Full metadata']);
-  ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<h3>Selected injection point</h3>','<summary>Acquisition metadata</summary>']);
+  ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
-  ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected site ','<summary>Acquisition metadata</summary>']);
-  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected pixel</h3>','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
-  ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
+  ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
+  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
+  ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ']);
 });
 
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
@@ -335,7 +337,7 @@ test('QSS runtime omits fixed reference-validation card and exposes manual axes 
   assert.match(qss,/axisControls\('qMapAxes'\)/);
   assert.match(qss,/axisControls\('qHistAxes'/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
-  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots">'));
+  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots overview">'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
 });
 
@@ -348,12 +350,13 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   assert.match(lbic,/axisControls\('lHistAxes'/);
   assert.match(lbic,/axisControls\('lXProfileAxes'/);
   assert.match(lbic,/axisControls\('lYProfileAxes'/);
-  assert.match(lbic,/class="lbic-workspace"/);
-  assert.ok(lbic.indexOf('Selected pixel')<lbic.indexOf('</aside><section class="lbic-workspace">'));
-  assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="lbic-workspace">'));
-  assert.match(lbic,/H=canvas\.height=430,p=\{l:64,r:18,t:24,b:52\}/);
+  assert.match(lbic,/class="plots overview"/);
+  assert.match(lbic,/class="plots detail"/);
+  assert.ok(lbic.indexOf('Selected pixel')>lbic.indexOf('</aside><section class="plots overview">'));
+  assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="plots overview">'));
+  assert.match(lbic,/PV\.plot\.canvasFrame\(canvas\)/);
+  assert.match(lbic,/surface:'compact'/);
   assert.match(css,/\.lbic-module \.canvas-wrap\{min-height:0\}/);
-  assert.match(css,/\.lbic-module \.lbic-workspace\{grid-column:2 \/ 4/);
 });
 
 test('Dit numeric line plots expose manual X and Y limits',()=>{
@@ -385,7 +388,7 @@ test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shar
   assert.match(src,/axisControls\('qHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(src,/binControls\('qHistBins',histBins\)/);
   assert.match(src,/bindBinControls\(host,'qHistBins',histBins/);
-  assert.match(src,/drawHist\(host\.querySelector\('#qHist'\),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
+  assert.match(src,/histCanvas\s*\?drawHist\(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
   assert.doesNotMatch(src,/id="qSwapHistAxes"/);
 });
 
@@ -402,7 +405,7 @@ test('ISC keeps validated quantities, geometry-aware map and standardized Distri
   assert.match(isc,/axisControls\('iHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(isc,/binControls\('iHistBins',histBins\)/);
   assert.match(isc,/bindBinControls\(host,'iHistBins',histBins/);
-  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,displayMask,histBins,histSwapped/);
+  assert.match(isc,/histCanvas\?drawHist\(histCanvas,a,metricKey,displayMask,histBins,histSwapped/);
   assert.doesNotMatch(isc,/id="iSwapHistAxes"/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
@@ -453,4 +456,93 @@ test('QSS Distribution uses valid counts only and axis swap cannot change filter
   assert.ok(start>=0&&end>start);
   const swapBlock=src.slice(start,end);
   assert.doesNotMatch(swapBlock,/mask\s*=|filterKey\s*=|filterLo\s*=|filterHi\s*=/);
+});
+
+
+test('ISC establishes semantic desktop columns and keeps selected-site detail out of the dataset sidebar',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  const asideEnd=src.indexOf('</aside>');
+  const selected=src.indexOf("?'Measurement point':'Selected site'");
+  assert.match(src,/section class="plots overview"/);
+  assert.match(src,/section class="plots detail"/);
+  assert.ok(asideEnd>=0&&selected>asideEnd);
+  assert.match(src,/linkedSelect:'#iMetric'/);
+  assert.match(src,/metricKey=state\.metricKey/);
+});
+
+
+test('JZero, SPV and LBIC follow overview/detail columns and synchronize active quantity with filtering',()=>{
+  for(const file of ['jzero.js','spv.js','lbic.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/class="plots overview"/);
+    assert.match(src,/class="plots detail"/);
+    assert.match(src,/linkedSelect:/);
+  }
+  const spv=fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.ok(spv.indexOf('Selected site')>spv.indexOf('</aside>'));
+  assert.ok(lbic.indexOf('Selected pixel')>lbic.indexOf('</aside>'));
+});
+
+
+test('CET and DIT separate overview from selected-point detail and link filter/display quantities',()=>{
+  for(const file of ['cet.js','dit.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/class="plots overview"/);
+    assert.match(src,/class="plots detail"/);
+    assert.match(src,/linkedSelect:/);
+  }
+  const cet=fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8');
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.ok(cet.indexOf("'Selected site'")>cet.indexOf('</aside>')||cet.indexOf("?'Measurement point':'Selected site'")>cet.indexOf('</aside>'));
+  assert.ok(dit.indexOf("?'Measurement point':'Selected site'")>dit.indexOf('</aside>'));
+  assert.match(cet,/metricKey:'eot'/);
+});
+
+
+test('QSS, Dual QSS and Leakage respect overview/detail semantics',()=>{
+  for(const file of ['qss-upcd.js','dual-qss.js','leakage.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/class="plots overview"/);
+    assert.match(src,/class="plots detail"/);
+  }
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const dual=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
+  const leakage=fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8');
+  assert.match(qss,/linkedSelect:'#qMetric'/);
+  assert.ok(qss.indexOf("'Selected site'")>qss.indexOf('</aside>')||qss.indexOf("?'Measurement point':'Selected site'")>qss.indexOf('</aside>'));
+  assert.ok(dual.indexOf('<h3>Selected injection point</h3>')>dual.indexOf('</aside>'));
+  assert.match(leakage,/Raw leakage readings/);
+  assert.match(leakage,/PV\.plot\.canvasFrame\(canvas\)/);
+});
+
+test('one-point analyzers suppress population-only plots and use measurement-point wording',()=>{
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  const spv=fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8');
+  assert.match(qss,/onePoint=d\.values\.length===1/);
+  assert.match(qss,/onePoint\?'Measurement position':'Wafer map'/);
+  assert.match(qss,/onePoint\?'':`<div class="panel chart"><header><b>Distribution/);
+  assert.match(isc,/d\.sites\.length===1\?'Measurement position'/);
+  assert.match(isc,/d\.sites\.length===1\?'Measurement point':'Selected site'/);
+  assert.match(spv,/data\.sites\.length===1\?'Measurement position':'Wafer map'/);
+  assert.match(spv,/data\.sites\.length===1\?'':`<div class="panel chart"><header><b>Distribution/);
+});
+
+test('QSS smooth rendering is compatible with high-DPI canvas transforms',()=>{
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.doesNotMatch(qss,/createImageData|putImageData/);
+  assert.match(qss,/ctx\.fillRect\(px,py,step,step\)/);
+});
+
+test('DIT analysis rebuild keeps the displayed map metric and filter metric synchronized',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/const key=metrics\[preferredKey\]\?preferredKey:'Qtot';\n      mapKey=key;/);
+  assert.match(src,/linkedSelect:'#ditMapMetric'/);
+});
+
+test('LBIC stacked local profiles use a horizontal divider at wide and medium widths',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.lbic-module \.lbic-profile-columns\{[^}]*grid-template-columns:1fr/);
+  assert.match(css,/\.lbic-module \.profile-pane\+\.profile-pane\{[^}]*border-left:0;[^}]*border-top:1px solid var\(--border\)/);
 });

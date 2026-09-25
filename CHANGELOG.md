@@ -1,11 +1,76 @@
 # Changelog
 
+## v20260925.14.6 — 2026-09-25 (branch)
+
+- Final pre-merge review aligned the durable architecture wording with QSS: whole-dataset acquisition-order profiles are overview surfaces, while selected-point traces remain local detail.
+- Fixed the LBIC right-column stacked X/Y profiles to use a horizontal divider at wide widths instead of retaining the obsolete two-column left border.
+
+## v20260925.14.5 — 2026-09-25 (branch)
+
+- Completed the analysis-workspace UI refactor across all dedicated analyzers: semantic desktop columns, responsive plot surfaces, readable plot typography, and bidirectional displayed-quantity / Valid-data-filter synchronization.
+- Completed the one-point audit: QSS-uPCD, ISC/VCPD, SPV, JZero and CET suppress population-only plots where appropriate and use Measurement point / Measurement position semantics.
+- Fixed QSS high-DPI smooth-map rendering, DIT dynamic map/filter synchronization after analysis rebuilds, and moved DIT point-specific result values out of the aggregate left-sidebar summary.
+- Final cross-family source/CI audit passed; archived the dated implementation plan under `docs/archive/` and kept only the durable workspace contract in architecture/developer documentation.
+
+## v20260925.14.4 — 2026-09-25 (branch)
+
+- Updated regression expectations for the deliberate synchronized active-quantity behavior and semantic overview/detail class names.
+- Raised the remaining 8 px CET/DIT map-site labels to 10 px so no scientific SVG keeps the pre-refactor micro-label size.
+
+## v20260925.14.3 — 2026-09-25 (branch)
+
+- Split dense UI event/render code introduced by the workspace migration so the strengthened source-density gate can inspect it normally.
+- No scientific or interaction semantics changed in this cleanup.
+
+## v20260925.14.1 — 2026-09-25 (branch)
+
+- Merged the latest main baseline (`v20260925.14`) into the workspace-UI branch while preserving the new DIT result-Vsb semantics alongside the UI refactor.
+
 ## v20260925.14 — 2026-09-25
 
 - Resolved the remaining DIT N-type Vsb ambiguity by recovering the vendor result-path semantics: `CreateDataValues()` exports direct `Vsb = VDark - VLight_result`, while `StartDitCalculation()` separately applies the N-type sign transform to Standard-COCOS analysis arrays.
 - Added an explicit runtime `ResultVsb` quantity and exposed **PV-2000 result Vsb** separately from **Analysis Vsb** without changing the existing doping-aware Standard COCOS calculation.
 - Promoted final-result Vsb to a strict paired gate alongside VDark, corrected VLight and Initial Qc for the 13-file / 43-site DIT result corpus; maximum absolute Vsb error is **8.04e-16 V**.
 - Narrowed the remaining DIT evidence wall to downstream Vfb/Qtot/Qit/Qsc/Dit historical/current parity; no flatband or Dit formula was widened.
+
+## v20260925.13.6 — 2026-09-25 (branch)
+
+- Migrated QSS-uPCD, Dual QSS and Leakage to the semantic workspace contract.
+- QSS now links the displayed quantity to the Valid-data filter, keeps Map/Distribution/acquisition-order profile as whole-dataset views, and adds map-driven selected-site detail on the right.
+- Dual QSS keeps the injection sweep and measurement-position overview together while moving Selected injection point + stored transient into local detail; its Canvas plots now use shared responsive/high-DPI sizing.
+- Leakage now separates measurement position from point detail and exposes the stored positive/negative offset-corrected raw readings as a local scientific plot instead of leaving its profile capability undisplayed.
+
+## v20260925.13.5 — 2026-09-25 (branch)
+
+- Migrated CET and DIT to the semantic workspace. Whole-sample map/distribution content stays in the middle, while current/selected point cards and point-specific fit/COCOS curves move to the right.
+- CET now starts filtering the displayed EOT quantity, synchronizes Filter metric with the map selector, and omits the one-sample Distribution.
+- DIT synchronizes the Valid-data filter with the wafer-map quantity while keeping Vcpd–Qc, Dit–Vsb, Vsb–Qc and flatband details tied to the selected point.
+- Normalized CET/DIT vector plots to a common 640×360 logical surface and raised vector-axis typography from 9 px to the shared readable baseline.
+
+## v20260925.13.4 — 2026-09-25 (branch)
+
+- Migrated JZero, SPV and LBIC to the semantic workspace: whole-sample Map/Distribution in the middle and selected point/pixel detail on the right.
+- Added map-driven point selection to JZero and SPV; one-point JZero no longer renders a meaningless one-sample Distribution.
+- Linked JZero/SPV/LBIC displayed quantities bidirectionally to the Valid-data filter while preserving shared selection-core cross-metric capability.
+- Migrated their Canvas plots to the shared responsive/high-DPI surface; LBIC X/Y local profiles use the compact surface in the detail column.
+
+## v20260925.13.3 — 2026-09-25 (branch)
+
+- Added shared responsive/high-DPI Canvas sizing and resize-redraw helpers in the plot core.
+- Migrated ISC/VCPD and QSS-uPCD Canvas plots away from fixed 760×300/420 display assumptions; standard plots now use the same responsive surface sizing.
+- Raised Canvas axis/tick typography to the shared readable baseline and enlarged SVG chart legend/metadata text pending vector-family migration.
+
+## v20260925.13.2 — 2026-09-25 (branch)
+
+- Added the shared Valid-data-filter/displayed-metric linking hook and migrated ISC/VCPD as the reference implementation.
+- Reorganized ISC/VCPD into semantic desktop columns: dataset/filter/summary state on the left, Map + Distribution in the overview column, and Selected site + Raw readings in the local-detail column.
+- Updated architecture/agent guidance and structural tests so selected-point detail is no longer treated as sidebar content.
+
+## v20260925.13.1 — 2026-09-25 (branch)
+
+- Opened the analysis-workspace UI refactor and recorded the implementation/audit plan before code changes.
+- Defined the desktop semantic columns as dataset/analysis state (left), whole-sample overview (middle), and selected-point/local detail (right).
+- Defined the visualization normalization target: shared plot sizing/typography, bidirectional active-metric/filter synchronization, and a full dedicated-analyzer content audit.
 
 ## v20260925.13 — 2026-09-25
 
