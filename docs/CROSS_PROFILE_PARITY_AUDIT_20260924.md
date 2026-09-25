@@ -217,7 +217,7 @@ At the date of this audit, calculated DL was unsupported. The later 2026-09-25 f
 
 ### P4 — DIT
 
-Corrected final-result VLight and direct result-table Vsb are now resolved independently across all 43 sites. Recovered vendor IL shows `CreateDataValues()` exports direct `Vsb = VDark - VLight_result`, while `StartDitCalculation()` separately applies the N-type sign transform to Standard-COCOS analysis arrays. The apparent N-type sign conflict is therefore a quantity-semantic distinction, not evidence to change the doping-aware analysis convention. Flatband/Qtot/Qit/Qsc/Dit remain version/profile-sensitive. Geometry evidence may be promoted independently.
+Completed for the current managed DLL. Corrected final-result VLight and direct result-table Vsb are resolved across all 43 sites. Recovered vendor IL shows `CreateDataValues()` exports direct `Vsb = VDark - VLight_result`, while `StartDitCalculation()` separately applies the N-type sign transform to Standard-COCOS analysis arrays. The downstream managed-DLL result path is now reproduced as `DIT-RESULT-STANDARD-DLL-002`: Vfb, Qsc, Qtot, Qit and Minimum Dit have zero availability mismatches across the same 13 paired files / 43 sites, with browser-runtime errors at floating-point/export precision. Historical PV-2000 releases remain version-scoped and are not generalized from this profile. Geometry evidence remains independently promotable.
 
 ### P5 — Dual QSS
 
