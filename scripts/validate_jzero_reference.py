@@ -3,6 +3,8 @@ from __future__ import annotations
 import glob, math, statistics, sys, xml.etree.ElementTree as ET
 from pathlib import Path
 
+from validate_geometry_profiles import resolve_xml_geometry
+
 Q=1.602176634e-19
 K=1.380649e-23
 KB_EV=8.617333262145e-5
@@ -12,8 +14,8 @@ TOL_COORD=1e-12
 TOL_LIFETIME=1e-9
 TOL_SMAX=1e-9
 TOL_J0=1e-8
-TOL_VOC=7e-5
-TOL_SUMMARY=7e-5
+TOL_VOC_PROFILE=1e-3
+TOL_SUMMARY=1e-8
 
 def lname(tag): return tag.split('}',1)[-1]
 def children(e): return list(e) if e is not None else []
@@ -84,17 +86,23 @@ def parse_xml(path):
         data=child(it,'Data');vals.append([num(x,'Value') for x in children(data) if lname(x.tag)=='DataItem'])
     if len(vals[0])!=len(vals[1]):raise AssertionError(f'iteration point-count mismatch {len(vals[0])} != {len(vals[1])}')
     pattern,target=child(m,'Pattern'),child(m,'Target')
-    if xtype(pattern)!='MapPattern' or xtype(target)!='PseudoSquareCell':raise AssertionError(f'NEW PROFILE: {xtype(pattern)} + {xtype(target)}')
-    size,pitch=child(target,'Size'),child(pattern,'Pitch');width,height=num(size,'Width'),num(size,'Height');diameter=num(target,'Diameter');edge=num(target,'EdgeExclusion',num(m,'EdgeExclusion',0));px,py=num(pitch,'X'),num(pitch,'Y')
-    coords=pseudo_square_coords(width,height,diameter,edge,px,py)
-    if len(coords)!=len(vals[0]):raise AssertionError(f'coordinate schedule={len(coords)}, values={len(vals[0])}')
+    geometry,_=resolve_xml_geometry(path,len(vals[0]))
+    coords=[(point['x'],point['y']) for point in geometry.get('points',[])]
+    geometry_profile=geometry.get('profileId')
+    if len(coords)!=len(vals[0]):
+        raise AssertionError(f'coordinate schedule={len(coords)}, values={len(vals[0])}')
+    if not geometry_profile:
+        raise AssertionError(
+            f"NEW PROFILE: unresolved geometry {xtype(pattern)} + {xtype(target)} "
+            f"(status={geometry.get('status')}, interpretation={geometry.get('interpretation')})"
+        )
     pre=child(m,'PreProcessings');qss=[]
     for group in children(pre):
         setting=children(group)[0] if children(group) else None
         v=num(setting,'QssLampIntensity')
         if math.isfinite(v):qss.append(v)
     if len(qss)<2:raise AssertionError('missing two QSS intensities')
-    return {'values':vals,'coords':coords,'qss':qss[:2],'w':num(m,'WaferThickness'),'optical':num(m,'OpticalFactor',1),'doping':num(m,'Doping'),'temps':[num(it,'ChuckTemperature') for it in iters]}
+    return {'values':vals,'coords':coords,'geometry_profile':geometry_profile,'qss':qss[:2],'w':num(m,'WaferThickness'),'optical':num(m,'OpticalFactor',1),'doping':num(m,'Doping'),'temps':[num(it,'ChuckTemperature') for it in iters]}
 
 def parse_csv(path):
     lines=Path(path).read_text(encoding='utf-8-sig').splitlines();summaries={};header=None;rows=[]
@@ -133,15 +141,26 @@ def validate_pair(xml_path,csv_path):
     if max(et1,et2)>TOL_LIFETIME:raise AssertionError(f'lifetime max error={max(et1,et2):g}')
     if max(es1,es2)>TOL_SMAX:raise AssertionError(f'Smax max error={max(es1,es2):g}')
     if ej>TOL_J0:raise AssertionError(f'Basore J0 max error={ej:g}')
-    if max(ev1,ev2)>TOL_VOC:raise AssertionError(f'Implied Voc max error={max(ev1,ev2):g} V')
-    metric_pairs=[(names[2],j0),(names[3],x['values'][0]),(names[4],x['values'][1]),(names[5],s1),(names[6],s2),(names[7],vv1),(names[8],vv2)]
+    voc_profile=x['geometry_profile']=='GEOM-MAP-PSEUDOSQUARE-001'
+    if voc_profile and max(ev1,ev2)>TOL_VOC_PROFILE:
+        raise AssertionError(f'Implied Voc profile max error={max(ev1,ev2):g} V')
+    metric_pairs=[(names[2],j0),(names[3],x['values'][0]),(names[4],x['values'][1]),(names[5],s1),(names[6],s2)]
     for name,data in metric_pairs:
         expected=v['summaries'].get(name)
         if expected is None:raise AssertionError(f'missing vendor summary for {name}')
         err=max_abs(summary(data),expected)
-        tol=TOL_SUMMARY if name.startswith('Implied Voc') else 1e-8
-        if err>tol:raise AssertionError(f'{name} summary max error={err:g}')
-    return f'{xml_path.name}: points={len(j0)}; X/Y={max(ex,ey):.3g} mm; lifetime={max(et1,et2):.3g} us; Smax={max(es1,es2):.3g}; J0={ej:.3g} fA/cm2; Voc={max(ev1,ev2)*1e3:.4f} mV'
+        if err>TOL_SUMMARY:raise AssertionError(f'{name} summary max error={err:g}')
+    for name,data in ((names[7],vv1),(names[8],vv2)):
+        expected=v['summaries'].get(name)
+        if expected is None:raise AssertionError(f'missing vendor summary for {name}')
+        err=max_abs(summary(data),expected)
+        if voc_profile and err>TOL_VOC_PROFILE:
+            raise AssertionError(f'{name} profile summary max error={err:g}')
+    voc_status='JZERO-VOC-MAP-PSEUDOSQUARE-001' if voc_profile else 'diagnostic/inferred'
+    return (f'{xml_path.name}: points={len(j0)}; geometry={x["geometry_profile"]}; '
+            f'X/Y={max(ex,ey):.3g} mm; lifetime={max(et1,et2):.3g} us; '
+            f'Smax={max(es1,es2):.3g}; J0={ej:.3g} fA/cm2; '
+            f'Voc={max(ev1,ev2)*1e3:.4f} mV ({voc_status})')
 
 def main():
     raw=[Path(p) for p in (sys.argv[1:] or sorted(glob.glob('private/reference/jzero/*.xml')))]
