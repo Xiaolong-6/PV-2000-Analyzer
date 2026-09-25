@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.3.1 — 2026-09-25 (feature branch)
+## v20260925.4 — 2026-09-25
 
 - Expanded CET calculation evidence using seven new nonempty XML/vendor CSV pairs (19 sites) across six independently validated geometry combinations. Five finite EOT/Cd sites and all 19 R² results agree pointwise; an eighth zero-site pair remains empty evidence only.
 - Migrated the CET private validator from a NinePoint/SquareCell gate to the shared geometry resolver while preserving quantity-specific unavailable values and summaries.
