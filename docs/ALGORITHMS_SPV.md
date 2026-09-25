@@ -59,7 +59,31 @@ The paired P-type path uses the historical minority-electron mobility constant `
 
 A validation profile describes an algorithm branch, not one instrument setting tuple. Ordinary numeric changes such as wavelength, temperature, multiplier, or positive oxide-thickness magnitude remain inputs to the same standard formula.
 
-Categorical changes that currently remain outside `SPV-CALC-STANDARD-001` include:
+The standard profiles remain separate from the paired Enhanced N-type path `SPV-CALC-ENHANCED-N-003`.
+
+For Enhanced mode, the ordinary signal preprocessing is retained, then the simple two-depth closed form is replaced by a finite-wafer/back-surface root solution. Convert wafer thickness and penetration depths from µm to cm. For candidate diffusion length `L`, back-surface velocity `S`, wafer thickness `W`, corrected signal ratio `R`, and penetration depths `Z6/Z8`:
+
+```text
+D = 36.4 cm²/s for P-type
+D = 12.2 cm²/s for N-type
+A = D / L
+
+S != 0:
+B = ((A/S)sinh(W/L) + cosh(W/L))
+    / (sinh(W/L) + (A/S)cosh(W/L))
+
+S = 0:
+B = tanh(W/L)
+
+f(L) =
+  ((1 - (Z6/L)^2) / (1 - (Z8/L)^2))
+  * ((1 - B Z8/L) / (1 - B Z6/L))
+  - R
+```
+
+The reference build searches approximately `L=0.001..3 cm`, converts the accepted root back to µm, and applies the existing `0 < DL <= 2500 µm` result gate. The paired N-type case validates this path across 69 sites: 28 finite values reproduce within **2.11e-7 µm DL** / **1.46e-7 µs Tau**, with zero availability mismatches.
+
+Categorical changes that remain outside the currently paired SPV profiles include:
 
 - enhanced finite-wafer mode;
 - texture correction enabled;
