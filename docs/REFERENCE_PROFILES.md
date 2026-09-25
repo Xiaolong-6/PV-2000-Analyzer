@@ -235,7 +235,7 @@ The QSS XMLs in this corpus do **not** provide a trustworthy material identifier
 
 Examples include:
 
-- a QSS map pattern or coordinate encoding outside the validated QSS-MAP-001 and QSS-MAP-002 families (ordinary numeric geometry changes inside either established coordinate rule are not automatically a new profile);
+- a QSS map pattern or coordinate encoding not covered by a resolved shared geometry profile or the paired QSS Map/SquareRegion/HighDensity-Round evidence (ordinary numeric geometry changes inside an established coordinate rule are not automatically a new calculation profile);
 - a new XML path for lifetime/injection data;
 - a different raw-controller or final-result sentinel/blanking convention from the established XML `-1 µs` → result `Ud. / 0 / 0` lifetime/Smax/Voc behavior;
 - a configuration whose Smax or Implied Voc calculation fields differ materially;
