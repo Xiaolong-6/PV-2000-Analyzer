@@ -122,13 +122,13 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
       last=next;
     }
   };
-  ordered(sources.dit,['<h3>Measurement ','Analysis controls','validDataFilterMarkup','Results summary','<h3>Selected site ','Measurement metadata']);
+  ordered(sources.dit,['<h3>Measurement ','Analysis controls','validDataFilterMarkup','Results summary','Measurement metadata']);
   ordered(sources.qss,['<h3>Measurement ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset ','<summary>Full metadata']);
   ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<h3>Selected injection point</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
   ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
-  ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
+  ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ']);
 });
 
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
@@ -480,4 +480,19 @@ test('JZero, SPV and LBIC follow overview/detail columns and synchronize active 
   const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
   assert.ok(spv.indexOf('Selected site')>spv.indexOf('</aside>'));
   assert.ok(lbic.indexOf('Selected pixel')>lbic.indexOf('</aside>'));
+});
+
+
+test('CET and DIT separate overview from selected-point detail and link filter/display quantities',()=>{
+  for(const file of ['cet.js','dit.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/class="plots overview"/);
+    assert.match(src,/class="plots detail"/);
+    assert.match(src,/linkedSelect:/);
+  }
+  const cet=fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8');
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.ok(cet.indexOf("'Selected site'")>cet.indexOf('</aside>')||cet.indexOf("?'Measurement point':'Selected site'")>cet.indexOf('</aside>'));
+  assert.ok(dit.indexOf("?'Measurement point':'Selected site'")>dit.indexOf('</aside>'));
+  assert.match(cet,/metricKey:'eot'/);
 });

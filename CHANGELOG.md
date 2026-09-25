@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.13.5 — 2026-09-25 (branch)
+
+- Migrated CET and DIT to the semantic workspace. Whole-sample map/distribution content stays in the middle, while current/selected point cards and point-specific fit/COCOS curves move to the right.
+- CET now starts filtering the displayed EOT quantity, synchronizes Filter metric with the map selector, and omits the one-sample Distribution.
+- DIT synchronizes the Valid-data filter with the wafer-map quantity while keeping Vcpd–Qc, Dit–Vsb, Vsb–Qc and flatband details tied to the selected point.
+- Normalized CET/DIT vector plots to a common 640×360 logical surface and raised vector-axis typography from 9 px to the shared readable baseline.
+
 ## v20260925.13.4 — 2026-09-25 (branch)
 
 - Migrated JZero, SPV and LBIC to the semantic workspace: whole-sample Map/Distribution in the middle and selected point/pixel detail on the right.
