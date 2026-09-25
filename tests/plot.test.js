@@ -109,3 +109,11 @@ test('canvasFrame sizes scientific canvases in CSS pixels and scales backing pix
 test('shared plot core exposes a resize observer lifecycle for responsive redraws',()=>{
   assert.equal(typeof P.observeResize,'function');
 });
+
+
+test('axis controls delegate numeric display/read semantics to the shared UI helper when available',()=>{
+  const src=require('node:fs').readFileSync(require.resolve('../src/core/plot.js'),'utf8');
+  assert.match(src,/PV\.ui\?\.setNumericInputValue/);
+  assert.match(src,/PV\.ui\?\.readNumericInputValue/);
+  assert.doesNotMatch(src,/input\(loKey\)\.value=r\?String\(r\[0\]\)/);
+});

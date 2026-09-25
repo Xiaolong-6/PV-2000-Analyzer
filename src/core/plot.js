@@ -1,6 +1,13 @@
 (function(root){
   const PV=root.PV2000=root.PV2000||{};
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),
+    setNumericInput=(input,value)=>{
+      if(PV.ui?.setNumericInputValue)PV.ui.setNumericInputValue(input,value);
+      else if(input)input.value=Number.isFinite(value)?String(value):'';
+    },
+    readNumericInput=input=>PV.ui?.readNumericInputValue
+      ?PV.ui.readNumericInputValue(input)
+      :Number(input?.value);
   function finiteRange(r){return Array.isArray(r)&&r.length===2&&r.every(Number.isFinite)&&r[1]>r[0]}
   function resolve(auto,state){return finiteRange(state)?state.slice():auto.slice()}
   function equalAspectRanges(xRange,yRange,plotW,plotH){
@@ -35,9 +42,11 @@
   function bindAxisControls(root,id,state,onChange,{xLog=false,yLog=false,swapped=false,onSwap=null}={}){
     const box=root?.querySelector(`[data-axis-controls="${id}"]`);if(!box)return;
     const input=k=>box.querySelector(`[data-axis="${k}"]`),
-      set=(axis,loKey,hiKey)=>{const r=finiteRange(state?.[axis])?state[axis]:null;
-      input(loKey).value=r?String(r[0]):'';
-      input(hiKey).value=r?String(r[1]):''};
+      set=(axis,loKey,hiKey)=>{
+        const r=finiteRange(state?.[axis])?state[axis]:null;
+        setNumericInput(input(loKey),r?r[0]:NaN);
+        setNumericInput(input(hiKey),r?r[1]:NaN);
+      };
       set('x','xmin','xmax');
       set('y','ymin','ymax');
       
@@ -46,8 +55,8 @@
       b=input(hiKey).value.trim();
       if(!a&&!b)return null;
       if(!a||!b)throw new Error(`${label}: enter both lower and upper limits, or leave both blank for Auto.`);
-      const lo=Number(a),
-      hi=Number(b);
+      const lo=readNumericInput(input(loKey)),
+        hi=readNumericInput(input(hiKey));
       if(!Number.isFinite(lo)||!Number.isFinite(hi)||!(hi>lo))throw new Error(`${label}: upper limit must be greater than lower limit.`);
       if(log&&!(lo>0))throw new Error(`${label}: logarithmic limits must be positive.`);
       return[lo,hi]};

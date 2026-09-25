@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.16 — 2026-09-25
+
+- Compact large/small editable numeric values in Valid-data filter and manual-axis text boxes using scientific notation instead of long digit strings.
+- Normal-scale values remain ordinary decimal text. Programmatically populated inputs retain their exact underlying numeric value until the user edits the field, so display formatting alone does not silently change filter or axis semantics.
+- Added shared numeric-input formatter/set/read helpers and regression coverage for scientific display plus exact-value preservation.
+
+
 ## v20260925.15.2 — 2026-09-25 (branch)
 
 - Fixed `HighDensityPattern + RoundWafer` schedule reconstruction to apply the vendor-compatible strict circle test directly to stored floating-point coefficients, without subtracting an artificial epsilon from the radius.
