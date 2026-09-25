@@ -42,6 +42,29 @@ test('paired SPV valid point reproduces vendor DL and Tau',()=>{
   assert.equal(result.spv6,3.174);
 });
 
+test('paired SPV Enhanced N-type point reproduces finite-wafer vendor DL and Tau',()=>{
+  const settings={
+    spv8Global:0.26814333333333334,
+    spv8ReducedGlobal:0.15328,
+    linearityRatioOk:2.00009,
+    wavelength8:778,wavelength6:933,
+    chuckTemperature:23.668503213957759,
+    ledTemperature:24.488827670645854,
+    temperatureCorrection8:0,temperatureCorrection6:0,
+    oxideThickness:20,reflectivity8:0,reflectivity6:0,
+    useTextureCorrection:false,textureCorrection:.74,
+    useEnhancedMode:true,waferThickness:625,bsrVelocity:10,isPType:false
+  };
+  const result=PV2000.modules.spv.calculatePoint(0.36846,0.3424,settings);
+  assert.ok(Math.abs(result.dl-352.197526652801)<1e-6);
+  assert.ok(Math.abs(result.tau-103.774531801151)<1e-6);
+  assert.equal(result.undefinedValue,false);
+  const unavailable=PV2000.modules.spv.calculatePoint(0.6,0.6,settings);
+  assert.ok(Number.isNaN(unavailable.dl));
+  assert.ok(Number.isNaN(unavailable.tau));
+  assert.equal(unavailable.undefinedValue,true);
+});
+
 test('SPV invalid DL leaves raw channels available',()=>{
   const settings={
     spv8Global:2.1305833333333335,spv8ReducedGlobal:1.4516666666666669,linearityRatioOk:2.00009,
@@ -92,13 +115,17 @@ test('ordinary numeric settings stay inside the standard SPV profile',()=>{
   assert.equal(p?.id,'SPV-CALC-STANDARD-001');
 });
 
-test('categorical SPV branch changes do not inherit standard validation',()=>{
+test('categorical SPV branches remain profile-scoped',()=>{
   const base={
     type:'SPVMeasurement',sites:[{}],parseSignals:false,linearityRatioMethod:'UseMeasuredLR',useEnhancedMode:false,
     useTextureCorrection:false,dopingType:'PType',multiplier:1000,
-    wavelength8:778,wavelength6:933,oxideThickness:4
+    wavelength8:778,wavelength6:933,oxideThickness:4,
+    waferThickness:625,bsrVelocity:10
   };
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useEnhancedMode:true}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{
+    ...base,useEnhancedMode:true,dopingType:'NType',oxideThickness:20
+  })?.id,'SPV-CALC-ENHANCED-N-003');
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useTextureCorrection:true}),null);
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,dopingType:'NType'}),null);
   assert.equal(PV2000.profiles.resolveCalculation('spv',{
@@ -137,10 +164,12 @@ test('manual linearity-ratio branch stays outside paired SPV validation',()=>{
 });
 
 
-test('SPV validator keeps enhanced-mode evidence diagnostic instead of standard PASS',()=>{
+test('SPV validator promotes paired Enhanced mode through the finite-wafer oracle',()=>{
   const src=fs.readFileSync(require.resolve('../scripts/validate_spv_reference.py'),'utf8');
-  assert.match(src,/def is_enhanced\(xml_path\)/);
-  assert.match(src,/SPV ENHANCED DIAGNOSTIC/);
-  assert.match(src,/separate enhanced calculation profile remains unvalidated/);
+  assert.match(src,/def enhanced_equation/);
+  assert.match(src,/def enhanced_dl/);
+  assert.match(src,/SPV ENHANCED PASS/);
+  assert.match(src,/wafer_thickness/);
+  assert.match(src,/bsr_velocity/);
   assert.match(src,/if enhanced or is_enhanced\(xml_path\)/);
 });
