@@ -553,8 +553,8 @@
   }
   function drawHist(canvas,metric,mask,binCount=30,swapped=true,zoom,onZoom){
     const activeValues=metric.values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
-      bins=S.histogram(activeValues,binCount),frame=PV.plot.canvasFrame(canvas),ctx=frame.ctx,W=frame.W,H=frame.H,p={l:64,r:18,t:24,b:52};
-    ctx.clearRect(0,0,W,H);ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);if(!bins.length)return bins;
+      bins=S.histogram(activeValues,binCount),frame=PV.plot.canvasFrame(canvas),context=frame.context,W=frame.W,H=frame.H,p={l:64,r:18,t:24,b:52};
+    context.clearRect(0,0,W,H);context.fillStyle=css('--chart-bg');context.fillRect(0,0,W,H);if(!bins.length)return bins;
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
       autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
       mr=PV.plot.resolve(autoMetric,swapped?zoom?.y:zoom?.x),
@@ -565,33 +565,33 @@
       plotH=H-p.t-p.b;
       
     const xPos=v=>p.l+(v-xr[0])/(xr[1]-xr[0]||1)*plotW,yPos=v=>H-p.b-(v-yr[0])/(yr[1]-yr[0]||1)*plotH,metricPos=v=>(v-mr[0])/(mr[1]-mr[0]||1),countPos=v=>(v-cr[0])/(cr[1]-cr[0]||1);
-    ctx.font='11px system-ui';ctx.strokeStyle=css('--grid2');ctx.fillStyle=css('--muted');
-    for(const v of niceTicks(xr[0],xr[1],5)){const x=xPos(v);ctx.beginPath();ctx.moveTo(x,p.t);ctx.lineTo(x,H-p.b);ctx.stroke();ctx.textAlign='center';ctx.fillText(axisFmt(v),x,H-20)}
-    ctx.strokeStyle=css('--grid');for(const v of niceTicks(yr[0],yr[1],5)){const y=yPos(v);ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(W-p.r,y);ctx.stroke();ctx.textAlign='right';ctx.fillText(axisFmt(v),p.l-7,y+3)}
-    ctx.save();ctx.beginPath();ctx.rect(p.l,p.t,plotW,plotH);ctx.clip();
+    context.font='11px system-ui';context.strokeStyle=css('--grid2');context.fillStyle=css('--muted');
+    for(const v of niceTicks(xr[0],xr[1],5)){const x=xPos(v);context.beginPath();context.moveTo(x,p.t);context.lineTo(x,H-p.b);context.stroke();context.textAlign='center';context.fillText(axisFmt(v),x,H-20)}
+    context.strokeStyle=css('--grid');for(const v of niceTicks(yr[0],yr[1],5)){const y=yPos(v);context.beginPath();context.moveTo(p.l,y);context.lineTo(W-p.r,y);context.stroke();context.textAlign='right';context.fillText(axisFmt(v),p.l-7,y+3)}
+    context.save();context.beginPath();context.rect(p.l,p.t,plotW,plotH);context.clip();
     bins.forEach(b=>{
       const mid=(b.lo+b.hi)/2,
-      t=(mid-autoMetric[0])/(autoMetric[1]-autoMetric[0]||1);ctx.fillStyle=color(t);if(swapped){
+      t=(mid-autoMetric[0])/(autoMetric[1]-autoMetric[0]||1);context.fillStyle=color(t);if(swapped){
         const y1=H-p.b-metricPos(b.lo)*plotH,
         y2=H-p.b-metricPos(b.hi)*plotH,
         x0=p.l+countPos(0)*plotW,
-        x1=p.l+countPos(b.count)*plotW;ctx.fillRect(Math.min(x0,x1),Math.min(y1,y2),Math.abs(x1-x0),Math.max(1,Math.abs(y2-y1)-1))}else{
+        x1=p.l+countPos(b.count)*plotW;context.fillRect(Math.min(x0,x1),Math.min(y1,y2),Math.abs(x1-x0),Math.max(1,Math.abs(y2-y1)-1))}else{
         const x1=p.l+metricPos(b.lo)*plotW,
         x2=p.l+metricPos(b.hi)*plotW,
         y0=H-p.b-countPos(0)*plotH,
-        y1=H-p.b-countPos(b.count)*plotH;ctx.fillRect(Math.min(x1,x2),Math.min(y0,y1),Math.max(1,Math.abs(x2-x1)-1),Math.abs(y1-y0))}});
+        y1=H-p.b-countPos(b.count)*plotH;context.fillRect(Math.min(x1,x2),Math.min(y0,y1),Math.max(1,Math.abs(x2-x1)-1),Math.abs(y1-y0))}});
       
-    ctx.restore();
-      ctx.strokeStyle=css('--soft');
-      ctx.strokeRect(p.l,p.t,plotW,plotH);
-      ctx.fillStyle=css('--muted');
-      ctx.textAlign='center';
-      ctx.fillText(swapped?'Count':`${metric.short} [${metric.unit||'a.u.'}]`,(p.l+W-p.r)/2,H-4);
-      ctx.save();
-      ctx.translate(13,(p.t+H-p.b)/2);
-      ctx.rotate(-Math.PI/2);
-      ctx.fillText(swapped?`${metric.short} [${metric.unit||'a.u.'}]`:'Count',0,0);
-      ctx.restore();
+    context.restore();
+      context.strokeStyle=css('--soft');
+      context.strokeRect(p.l,p.t,plotW,plotH);
+      context.fillStyle=css('--muted');
+      context.textAlign='center';
+      context.fillText(swapped?'Count':`${metric.short} [${metric.unit||'a.u.'}]`,(p.l+W-p.r)/2,H-4);
+      context.save();
+      context.translate(13,(p.t+H-p.b)/2);
+      context.rotate(-Math.PI/2);
+      context.fillText(swapped?`${metric.short} [${metric.unit||'a.u.'}]`:'Count',0,0);
+      context.restore();
       
     PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});return bins;
   }
