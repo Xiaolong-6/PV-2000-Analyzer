@@ -136,7 +136,10 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
 
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/@media\(max-width:1200px\)\{\.module-grid\{grid-template-columns:minmax\(260px,300px\) minmax\(0,1fr\)\}\.module-grid>\.side\{grid-column:1;grid-row:1 \/ span 2;display:flex\}\.module-grid>\.plots\{grid-column:2;position:static[^}]*overflow:visible/);
+  assert.match(css,/@media\(max-width:1200px\)\{#app:not\(\.hidden\)\{[^}]*display:block[^}]*overflow:visible/);
+  assert.match(css,/\.module-grid\{height:auto;grid-template-columns:minmax\(260px,300px\) minmax\(0,1fr\);align-items:start\}/);
+  assert.match(css,/\.module-grid>\.side\{grid-column:1;grid-row:1 \/ span 2;display:flex;position:sticky/);
+  assert.match(css,/\.module-grid>\.plots\{grid-column:2;position:static[^}]*overflow:visible/);
   assert.doesNotMatch(css,/\.side\{grid-column:1\/-1;display:grid;grid-template-columns:1fr 1fr\}/);
 });
 
@@ -430,7 +433,7 @@ test('all plot Axes controls are rendered in chart headers immediately before ex
   assert.match(dit,/axisControls\('ditDitAxes'\)\}<button id="e2"/);
   assert.match(dit,/axisControls\('ditVsbAxes'\)\}<button id="e3"/);
   assert.match(dit,/axisControls\('ditMapAxes'\)\}\s*<button id="e4"/);
-  assert.match(qss,/axisControls\('qMapAxes'\)\}<button id="qExportMap"/);
+  assert.match(qss,/axisControls\('qMapAxes'\)\}\s*<button id="qExportMap"/);
   assert.match(qss,/binControls\('qHistBins',histBins\)\}<button id="qExportHist"/);
   assert.match(qss,/axisControls\('qProfileAxes'\)\}<button id="qExportProfile"/);
   assert.match(lbic,/axisControls\('lMapAxes'\)\}<button id="lExportMap"/);
