@@ -213,7 +213,7 @@ test('QSS default shared filter exactly preserves pre-migration intrinsic-suppor
   assert.deepEqual(state.selection.supportMask,[false,true,true,false]);
 });
 
-test('QSS Raw/PV-2000 style remains distinct from user filtering',()=>{
+test('QSS raw XML/controller mode remains distinct from user filtering',()=>{
   const Q=PV2000.modules.qss,values=[-1,50,100],
     support=Q.intrinsicLifetimeMask(values,false),
     metrics={lifetime:{key:'lifetime',values}},
