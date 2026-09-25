@@ -13,7 +13,7 @@ This page is the repository-level index of dedicated analyzer support. “Implem
 | `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB, repeated-reading inspection, map/distribution/filter/export | paired `MapPattern + SquareCell` path validated |
 | `VcpdMeasurement` | VCPD | Vcpd Dark, map/distribution/filter/export | paired `MapPattern + RoundWafer` path validated |
 | `CETMeasurement` | CET / EOT | EOT, Cd, R², fixed-point geometry, Vcpd-light/Qc fit, filter/map/distribution/export | `CET-CALC-001` calculation + `GEOM-NINEPOINT-SQUARE-001` geometry; historical pair `CET-9PT-SQUARE-001` supplies both evidence axes |
-| `LBICMeasurement` | LBIC | dynamic beam/channel analysis, Current/Reflectivity/IQE where applicable, map/distribution/X/Y profiles/filter/export | `LBIC-SINGLE-001`, `LBIC-MULTI-002`, `LBIC-REFLECTANCE-003` |
+| `LBICMeasurement` | LBIC | dynamic beam/channel analysis, Current/Reflectivity/IQE where applicable, map/distribution/X/Y profiles/filter/export | decoupled `LBIC-CALC-*` channel profiles + shared geometry; historical `LBIC-SINGLE-001` / `LBIC-MULTI-002` / `LBIC-REFLECTANCE-003` bundles retained; `LBIC-CALC-DL-MULTIWAVELENGTH-005` finite only for current+scattered |
 | `SPVMeasurement` | SPV / Diffusion Length | DL, Tau, raw SPV8/SPV6 channels and canonical map coordinates | `SPV-CALC-STANDARD-001`; paired 4 mm RoundWafer maps validate the standard non-enhanced/non-texture path |
 | `LeakageMeasurement` | Leakage | VSASS+, VSASS-, LI with canonical one-point geometry | `LEAKAGE-CALC-VSASS-001`; two paired one-point cases validate the vendor natural-cubic extraction and undefined-branch behavior |
 
