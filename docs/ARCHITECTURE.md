@@ -383,11 +383,13 @@ Dedicated analyzers use semantic workspace columns rather than module-specific p
 
 On wide desktop layouts:
 
-- **left — dataset / analysis state:** Measurement identity, current dataset/acquisition context, Analysis controls, Valid-data filter, Results summary and collapsed provenance/full metadata;
+- **left — dataset / analysis state:** compact Measurement identity, Current dataset/acquisition context, Analysis/View controls, Valid-data filter, Results summary and collapsed acquisition/validation/provenance metadata;
 - **middle — population / whole-sample overview:** Map or measurement-position overview, Distribution and other dataset-level spatial/statistical views;
 - **right — point / local detail:** Selected site, Selected pixel or Measurement point plus raw readings, selected-point transients, point-specific fits/curves and local line profiles. A whole-dataset acquisition-order profile remains an overview surface rather than being moved here. When a point exposes several equally important local plots, keep them simultaneously available in the independently scrollable local-detail pane unless a family has a stronger domain-specific reason to use another presentation.
 
 Selected-site/pixel detail does not belong in the left sidebar. A true one-point family should use **Measurement point** instead of implying a selection action.
+
+The **Measurement** panel is deliberately a compact identity block, not a generic metadata bucket. It should contain the result/recipe/substrate/status and the minimum pattern/target/sample descriptors needed to identify what was measured. Active run state (iteration, beam, point counts, completeness, coordinate availability, filter-valid counts) belongs in **Current dataset**. Timing, calibration constants, offsets, instrument modes, validation profile IDs and other audit/provenance fields belong in collapsed **Acquisition metadata**, **Full metadata** or **Validation / provenance** sections.
 
 At medium widths (<=1200 CSS px), the left dataset sidebar remains dedicated while the overview/detail regions stack into the second column. Narrow/mobile layouts collapse to one column in semantic order. Fine-pointer portrait desktop layouts must not be forced into the mobile layout solely by orientation.
 

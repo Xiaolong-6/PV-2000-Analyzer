@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260925.19.1 — 2026-09-25 (branch)
+
+- Audited every dedicated analyzer left sidebar against one semantic information contract instead of treating Measurement as a generic metadata bucket.
+- Measurement is now a compact identity block; active point/iteration/beam/completeness information lives in Current dataset; timestamps, offsets, acquisition settings and validation/provenance remain collapsed below Results summary.
+- DIT now exposes Recipe/Substrate/Status/Pattern/Target directly in Measurement, adds Current dataset counts, renames the old catch-all Measurement metadata panel to Acquisition metadata, and keeps charge-sequence recipe details in their own collapsed section.
+- Applied the same separation to QSS, Dual QSS, JZero, ISC/VCPD, LBIC, CET/EOT, SPV/Diffusion Length and Leakage.
+- Expanded layout regression coverage to all nine dedicated analyzer modules and added a guard that prevents lower-priority audit metadata from drifting back into Measurement.
+
+
 ## v20260925.19 — 2026-09-25
 
 - Reworked the wide analyzer shell so toolbar, content and project footer fit exactly inside the viewport. The footer now occupies the bottom shell row and the body no longer contributes a second vertical scrollbar.

@@ -6,15 +6,16 @@ Dedicated analyzers share a common interaction model where the measurement scien
 
 A typical analyzer presents these sections in roughly this order:
 
-1. **Measurement** — XML measurement type and core recipe/acquisition identity.
-2. **Current dataset** — active iteration, beam, injection condition or other current context.
-3. **Analysis controls** — Analyzer-side interpretation/calculation choices.
+1. **Measurement** — compact identity: result, recipe, substrate/status, pattern/target and essential sample descriptors.
+2. **Current dataset** — active iteration/beam plus point counts, completeness, coordinate availability and current valid population.
+3. **Analysis / View controls** — Analyzer-side interpretation or display choices.
 4. **Valid-data filter** — user-selected range applied after intrinsic support/availability.
 5. **Results summary** — statistics for the active supported/filter-selected population.
-6. **Selected site / pixel** — detailed values or raw readings for the current point.
-7. **Full metadata** — lower-priority XML/acquisition details.
+6. **Acquisition / Full metadata / Validation** — lower-priority XML settings, timing, calibration constants and provenance, normally collapsed.
 
-A family can omit sections that do not apply. The Generic XML Inspector is a fallback and is not required to follow the scientific-analyzer hierarchy.
+Selected site / pixel / measurement-point detail is shown in the right local-detail column rather than mixed into the left sidebar.
+
+The **Measurement** panel is intentionally not a catch-all metadata dump. Timestamps, offsets, instrument modes, validation profile IDs and similar audit fields belong in the collapsed metadata/provenance sections. A family can omit sections that do not apply. The Generic XML Inspector is a fallback and is not required to follow the scientific-analyzer hierarchy.
 
 ## Raw data, scientific validity and user filtering
 
