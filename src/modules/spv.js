@@ -247,7 +247,7 @@
         <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${data.sites.length}</b><span>XML sites</span></div><div><b>${finiteDl}</b><span>finite DL/Tau</span></div><div><b>${data.coords.length}</b><span>coordinates</span></div><div><b>${state.validCount}</b><span>pass filter</span></div></div></section>
         <details class="panel"><summary>Compatibility model</summary><p class="note meta-detail">Paired PV-2000 output validates the standard two-wavelength profiles and the finite-wafer/back-surface Enhanced N-type profile. Parsed-signal, texture-corrected, manual-linearity and Enhanced P-type branches remain outside the validated envelope.</p></details>
-      </aside><section class="plots overview"><div class="panel chart"><header><b>Wafer map</b><span class="grow"></span><select id="spvMetric">${options()}</select>${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div></section>
+      </aside><section class="plots overview"><div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="spvMetric">${options()}</select>${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div>${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div>`}</section>
       <section class="plots detail"><section class="panel"><h3>${data.sites.length===1?'Measurement point':'Selected site'}</h3><div class="site-controls"><button id="spvPrev">←</button><select id="spvSite">${data.sites.map((_,i)=>`<option value="${i}">Site ${i+1}</option>`).join('')}</select><button id="spvNext">→</button></div><dl class="meta"><dt>Position</dt><dd>${current.coord?`${fmt(current.coord.x,2)}, ${fmt(current.coord.y,2)} mm`:'—'}</dd><dt>DL</dt><dd>${fmt(current.dl)} µm</dd><dt>Tau</dt><dd>${fmt(current.tau)} µs</dd><dt>SPV8</dt><dd>${fmt(current.spv8)} mV</dd><dt>SPV6</dt><dd>${fmt(current.spv6)} mV</dd></dl></section></section></div>`;
       host.querySelector('#spvMetric').value=metricKey;host.querySelector('#spvSite').value=String(site);
       host.querySelector('#spvSite').onchange=e=>{site=Number(e.target.value);shell()};
@@ -263,13 +263,17 @@
     }
     function redraw(){
       const state=filterController.snapshot(),metric=analysis.metrics[metricKey],mask=filterController.metricMask(metric),
-        rows=drawHist(host.querySelector('#spvHist'),metric,mask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()});
+        histCanvas=host.querySelector('#spvHist'),
+        rows=histCanvas?drawHist(histCanvas,metric,mask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}):[];
       drawMap(host.querySelector('#spvMap'),data,metric,mask,site,zoom.map,n=>{zoom.map=n;redraw()},i=>{site=i;shell()});
       PV.plot.bindAxisControls(host,'spvMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
-      PV.plot.bindAxisControls(host,'spvHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{swapped:histSwapped,onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};shell()}});
-      PV.plot.bindBinControls(host,'spvHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
+      if(histCanvas){
+        PV.plot.bindAxisControls(host,'spvHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{swapped:histSwapped,onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};shell()}});
+        PV.plot.bindBinControls(host,'spvHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
+      }
       host.querySelector('#spvExportMap').onclick=()=>exportMetric(state,mask);
-      host.querySelector('#spvExportHist').onclick=()=>PV.exporter.csv(`${safe(data.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count'],rows.map(r=>[r.lo,r.hi,r.count]));
+      const histExport=host.querySelector('#spvExportHist');
+      if(histExport)histExport.onclick=()=>PV.exporter.csv(`${safe(data.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count'],rows.map(r=>[r.lo,r.hi,r.count]));
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});
     shell();
