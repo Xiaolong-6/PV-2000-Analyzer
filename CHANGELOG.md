@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.13.4 — 2026-09-25 (branch)
+
+- Migrated JZero, SPV and LBIC to the semantic workspace: whole-sample Map/Distribution in the middle and selected point/pixel detail on the right.
+- Added map-driven point selection to JZero and SPV; one-point JZero no longer renders a meaningless one-sample Distribution.
+- Linked JZero/SPV/LBIC displayed quantities bidirectionally to the Valid-data filter while preserving shared selection-core cross-metric capability.
+- Migrated their Canvas plots to the shared responsive/high-DPI surface; LBIC X/Y local profiles use the compact surface in the detail column.
+
 ## v20260925.13.3 — 2026-09-25 (branch)
 
 - Added shared responsive/high-DPI Canvas sizing and resize-redraw helpers in the plot core.

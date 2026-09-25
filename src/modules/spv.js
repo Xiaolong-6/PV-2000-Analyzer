@@ -168,19 +168,19 @@
     const v=values.filter(Number.isFinite);if(!v.length)return[0,1];
     let lo=Math.min(...v),hi=Math.max(...v);if(lo===hi){lo-=.5;hi+=.5}return[lo,hi];
   }
-  function drawMap(canvas,data,metric,mask,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),W=canvas.width=760,H=canvas.height=440,p={l:56,r:78,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b,
+  function drawMap(canvas,data,metric,mask,selected,zoom,onZoom,onSelect){
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),p={l:56,r:78,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b,
       radius=Math.max(data.diameter/2||0,data.geometryModel.nominal?.radius||0,1)*1.06,
       auto=PV.plot.equalAspectRanges([-radius,radius],[-radius,radius],plotW,plotH),
       xr=PV.plot.resolve(auto.x,zoom.x),yr=PV.plot.resolve(auto.y,zoom.y),
       xp=x=>p.l+(x-xr[0])/(xr[1]-xr[0]||1)*plotW,yp=y=>p.t+(yr[1]-y)/(yr[1]-yr[0]||1)*plotH,
       active=metric.values.filter((v,i)=>mask[i]&&Number.isFinite(v)),vr=finiteRange(active),lo=vr[0],hi=vr[1];
-    ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);ctx.strokeStyle=css('--grid2');ctx.lineWidth=1;
+    ctx.font='11px system-ui';ctx.fillStyle=css('--chart-bg');ctx.fillRect(0,0,W,H);ctx.strokeStyle=css('--grid2');ctx.lineWidth=1;
     ticks(xr[0],xr[1]).forEach(t=>{ctx.beginPath();ctx.moveTo(xp(t),p.t);ctx.lineTo(xp(t),H-p.b);ctx.stroke()});
     ticks(yr[0],yr[1]).forEach(t=>{ctx.beginPath();ctx.moveTo(p.l,yp(t));ctx.lineTo(W-p.r,yp(t));ctx.stroke()});
     const sx=Math.max(1.5,Math.abs(xp((data.pitchX||1)/2)-xp(-(data.pitchX||1)/2))),
       sy=Math.max(1.5,Math.abs(yp((data.pitchY||1)/2)-yp(-(data.pitchY||1)/2)));
-    data.coords.forEach((pt,i)=>{const v=metric.values[i];if(!pt||!mask[i]||!Number.isFinite(v))return;ctx.fillStyle=color((v-lo)/(hi-lo||1));ctx.fillRect(xp(pt.x)-sx/2,yp(pt.y)-sy/2,sx,sy)});
+    data.coords.forEach((pt,i)=>{const v=metric.values[i];if(!pt||!mask[i]||!Number.isFinite(v))return;const x=xp(pt.x),y=yp(pt.y);ctx.fillStyle=color((v-lo)/(hi-lo||1));ctx.fillRect(x-sx/2,y-sy/2,sx,sy);if(i===selected){ctx.strokeStyle=css('--yellow');ctx.lineWidth=2;ctx.strokeRect(x-sx/2,y-sy/2,sx,sy)}});
     if(data.geometryModel.shape==='circle'){
       ctx.strokeStyle=css('--text');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(xp(0),yp(0),Math.abs(xp(data.diameter/2)-xp(0)),0,2*Math.PI);ctx.stroke();
       const er=data.geometryModel.scheduled?.radius;if(Number.isFinite(er)){ctx.strokeStyle=css('--muted');ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(xp(0),yp(0),Math.abs(xp(er)-xp(0)),0,2*Math.PI);ctx.stroke();ctx.setLineDash([])}
@@ -190,6 +190,7 @@
     ctx.textAlign='center';ctx.fillText('X [mm]',p.l+plotW/2,H-5);ctx.save();ctx.translate(14,p.t+plotH/2);ctx.rotate(-Math.PI/2);ctx.fillText('Y [mm]',0,0);ctx.restore();
     const bx=W-46,by=p.t+12,bh=plotH-24,bw=12,g=ctx.createLinearGradient(0,by+bh,0,by);for(let i=0;i<=10;i++)g.addColorStop(i/10,color(i/10));ctx.fillStyle=g;ctx.fillRect(bx,by,bw,bh);
     ctx.fillStyle=css('--muted');ctx.textAlign='left';ctx.fillText(fmt(hi,3),bx+bw+4,by+8);ctx.fillText(fmt(lo,3),bx+bw+4,by+bh);
+    canvas.onclick=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;let bi=-1,bd=Infinity;data.coords.forEach((pt,i)=>{if(!pt)return;const dd=(xp(pt.x)-mx)**2+(yp(pt.y)-my)**2;if(dd<bd){bd=dd;bi=i}});if(bi>=0&&bd<500)onSelect?.(bi)};
     PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
   }
   function histogram(values,mask,bins){
@@ -200,7 +201,7 @@
     return counts.map((count,i)=>({lo:lo+i*w,hi:lo+(i+1)*w,count}));
   }
   function drawHist(canvas,metric,mask,bins,swapped,zoom,onZoom){
-    const rows=histogram(metric.values,mask,bins),ctx=canvas.getContext('2d'),W=canvas.width=760,H=canvas.height=400,p={l:66,r:20,t:24,b:52},
+    const rows=histogram(metric.values,mask,bins),frame=PV.plot.canvasFrame(canvas),ctx=frame.ctx,W=frame.W,H=frame.H,p={l:66,r:20,t:24,b:52},
       max=Math.max(1,...rows.map(r=>r.count)),qlo=rows[0]?.lo??0,qhi=rows.at(-1)?.hi??1,
       xr=PV.plot.resolve(swapped?[0,max*1.08]:[qlo,qhi],zoom.x),yr=PV.plot.resolve(swapped?[qlo,qhi]:[0,max*1.08],zoom.y),
       xp=x=>p.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),yp=y=>p.t+(yr[1]-y)/(yr[1]-yr[0]||1)*(H-p.t-p.b);
@@ -220,7 +221,7 @@
   function render(host,data,analysis){
     if(!data.sites.length){host.innerHTML='<section class="panel"><h3>SPVMeasurement</h3><p class="note">No SPV site data found.</p></section>';return}
     let metricKey='dl',site=0,histBins=30,histSwapped=true,zoom={map:{x:null,y:null},hist:{x:null,y:null}},
-      filterController=Sel.createFilter({metrics:analysis.metrics,siteCount:data.sites.length,metricKey:'spv8'});
+      filterController=Sel.createFilter({metrics:analysis.metrics,siteCount:data.sites.length,metricKey:'dl'});
     const options=()=>Object.values(analysis.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
     const summaryRows=()=>Object.values(analysis.metrics).map(m=>{const st=S.summary(m.values.filter((v,i)=>filterController.metricMask(m)[i]&&Number.isFinite(v)));
       return `<tr><td>${esc(m.short)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
@@ -233,16 +234,15 @@
         <section class="panel"><h3>Measurement</h3><dl class="meta"><dt>Result</dt><dd>${esc(data.resultName)}</dd><dt>Recipe</dt><dd>${esc(data.name)}</dd><dt>Substrate</dt><dd>${esc(data.substrateId)}</dd><dt>Status</dt><dd>${esc(data.status)}</dd><dt>Pattern</dt><dd>${esc(data.patternName||data.patternType)}</dd><dt>Calculation</dt><dd>${esc(calc)}</dd><dt>Geometry</dt><dd>${esc(geom)}</dd><dt>Channels</dt><dd>${fmt(data.wavelength8,0)} / ${fmt(data.wavelength6,0)} nm</dd><dt>Chuck temperature</dt><dd>${fmt(data.chuckTemperature,2)} °C</dd></dl></section>
         ${PV.ui.validDataFilterMarkup({prefix:'spvFilter',metrics:analysis.metrics,state,helpText:'One site-level mask is shared by summaries, map, Distribution and export. DL/Tau availability remains quantity-specific, so raw SPV8/SPV6 sites are not discarded merely because DL is undefined.'})}
         <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
-        <section class="panel"><h3>Selected site</h3><div class="site-controls"><button id="spvPrev">←</button><select id="spvSite">${data.sites.map((_,i)=>`<option value="${i}">Site ${i+1}</option>`).join('')}</select><button id="spvNext">→</button></div><dl class="meta"><dt>Position</dt><dd>${current.coord?`${fmt(current.coord.x,2)}, ${fmt(current.coord.y,2)} mm`:'—'}</dd><dt>DL</dt><dd>${fmt(current.dl)} µm</dd><dt>Tau</dt><dd>${fmt(current.tau)} µs</dd><dt>SPV8</dt><dd>${fmt(current.spv8)} mV</dd><dt>SPV6</dt><dd>${fmt(current.spv6)} mV</dd></dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${data.sites.length}</b><span>XML sites</span></div><div><b>${finiteDl}</b><span>finite DL/Tau</span></div><div><b>${data.coords.length}</b><span>coordinates</span></div><div><b>${state.validCount}</b><span>pass filter</span></div></div></section>
-      </aside><section class="plots"><div class="panel chart"><header><b>Wafer map</b><span class="grow"></span><select id="spvMetric">${options()}</select>${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div></section>
-      <section class="plots"><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div><section class="panel"><h3>Compatibility model</h3><p class="note">Paired PV-2000 output validates the standard two-wavelength profiles and the finite-wafer/back-surface Enhanced N-type profile. Parsed-signal, texture-corrected, manual-linearity and Enhanced P-type branches remain outside the validated envelope.</p></section></section></div>`;
+        <details class="panel"><summary>Compatibility model</summary><p class="note meta-detail">Paired PV-2000 output validates the standard two-wavelength profiles and the finite-wafer/back-surface Enhanced N-type profile. Parsed-signal, texture-corrected, manual-linearity and Enhanced P-type branches remain outside the validated envelope.</p></details>
+      </aside><section class="plots overview"><div class="panel chart"><header><b>Wafer map</b><span class="grow"></span><select id="spvMetric">${options()}</select>${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div></section>
+      <section class="plots detail"><section class="panel"><h3>${data.sites.length===1?'Measurement point':'Selected site'}</h3><div class="site-controls"><button id="spvPrev">←</button><select id="spvSite">${data.sites.map((_,i)=>`<option value="${i}">Site ${i+1}</option>`).join('')}</select><button id="spvNext">→</button></div><dl class="meta"><dt>Position</dt><dd>${current.coord?`${fmt(current.coord.x,2)}, ${fmt(current.coord.y,2)} mm`:'—'}</dd><dt>DL</dt><dd>${fmt(current.dl)} µm</dd><dt>Tau</dt><dd>${fmt(current.tau)} µs</dd><dt>SPV8</dt><dd>${fmt(current.spv8)} mV</dd><dt>SPV6</dt><dd>${fmt(current.spv6)} mV</dd></dl></section></section></div>`;
       host.querySelector('#spvMetric').value=metricKey;host.querySelector('#spvSite').value=String(site);
-      host.querySelector('#spvMetric').onchange=e=>{metricKey=e.target.value;zoom={map:{x:null,y:null},hist:{x:null,y:null}};redraw()};
       host.querySelector('#spvSite').onchange=e=>{site=Number(e.target.value);shell()};
       host.querySelector('#spvPrev').onclick=()=>{if(site>0){site--;shell()}};
       host.querySelector('#spvNext').onclick=()=>{if(site<data.sites.length-1){site++;shell()}};
-      PV.ui.bindValidDataFilter(host,{prefix:'spvFilter',controller:filterController,onChange:()=>{zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});
+      PV.ui.bindValidDataFilter(host,{prefix:'spvFilter',controller:filterController,linkedSelect:'#spvMetric',onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});
       redraw();
     }
     function exportMetric(state,mask){
@@ -253,7 +253,7 @@
     function redraw(){
       const state=filterController.snapshot(),metric=analysis.metrics[metricKey],mask=filterController.metricMask(metric),
         rows=drawHist(host.querySelector('#spvHist'),metric,mask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()});
-      drawMap(host.querySelector('#spvMap'),data,metric,mask,zoom.map,n=>{zoom.map=n;redraw()});
+      drawMap(host.querySelector('#spvMap'),data,metric,mask,site,zoom.map,n=>{zoom.map=n;redraw()},i=>{site=i;shell()});
       PV.plot.bindAxisControls(host,'spvMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       PV.plot.bindAxisControls(host,'spvHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{swapped:histSwapped,onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};shell()}});
       PV.plot.bindBinControls(host,'spvHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
@@ -262,6 +262,7 @@
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});
     shell();
+    PV.plot.observeResize(host,redraw);
   }
 
   PV.modules=PV.modules||{};

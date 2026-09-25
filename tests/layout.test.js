@@ -127,7 +127,7 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
   ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<h3>Selected injection point</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
-  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected pixel</h3>','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
+  ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
   ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
 });
 
@@ -348,12 +348,13 @@ test('LBIC distribution and profiles render numeric ticks, manual axes and no fo
   assert.match(lbic,/axisControls\('lHistAxes'/);
   assert.match(lbic,/axisControls\('lXProfileAxes'/);
   assert.match(lbic,/axisControls\('lYProfileAxes'/);
-  assert.match(lbic,/class="lbic-workspace"/);
-  assert.ok(lbic.indexOf('Selected pixel')<lbic.indexOf('</aside><section class="lbic-workspace">'));
-  assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="lbic-workspace">'));
-  assert.match(lbic,/H=canvas\.height=430,p=\{l:64,r:18,t:24,b:52\}/);
+  assert.match(lbic,/class="plots overview"/);
+  assert.match(lbic,/class="plots detail"/);
+  assert.ok(lbic.indexOf('Selected pixel')>lbic.indexOf('</aside><section class="plots overview">'));
+  assert.ok(lbic.indexOf('Channel provenance')<lbic.indexOf('</aside><section class="plots overview">'));
+  assert.match(lbic,/PV\.plot\.canvasFrame\(canvas\)/);
+  assert.match(lbic,/surface:'compact'/);
   assert.match(css,/\.lbic-module \.canvas-wrap\{min-height:0\}/);
-  assert.match(css,/\.lbic-module \.lbic-workspace\{grid-column:2 \/ 4/);
 });
 
 test('Dit numeric line plots expose manual X and Y limits',()=>{
@@ -465,4 +466,18 @@ test('ISC establishes semantic desktop columns and keeps selected-site detail ou
   assert.ok(asideEnd>=0&&selected>asideEnd);
   assert.match(src,/linkedSelect:'#iMetric'/);
   assert.match(src,/metricKey=state\.metricKey/);
+});
+
+
+test('JZero, SPV and LBIC follow overview/detail columns and synchronize active quantity with filtering',()=>{
+  for(const file of ['jzero.js','spv.js','lbic.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/class="plots overview"/);
+    assert.match(src,/class="plots detail"/);
+    assert.match(src,/linkedSelect:/);
+  }
+  const spv=fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8');
+  const lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.ok(spv.indexOf('Selected site')>spv.indexOf('</aside>'));
+  assert.ok(lbic.indexOf('Selected pixel')>lbic.indexOf('</aside>'));
 });
