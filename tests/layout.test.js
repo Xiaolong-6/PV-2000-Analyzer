@@ -1,11 +1,12 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
 
-test('desktop/multicolumn semantic panes have viewport scroll containers',()=>{
+test('wide app shell fixes toolbar/footer and gives all three equal-width panes their own scroll',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*position:sticky[^}]*height:calc\(100dvh - 66px\)[^}]*overflow-y:auto/);
-  assert.match(css,/\.module-grid>\.side>\*,\.module-grid>\.plots>\*\{flex:0 0 auto\}/);
-  assert.doesNotMatch(css,/@media\(max-width:1200px\)\{\.module-grid>\.side\{position:static/);
-  assert.match(css,/@media\(max-width:700px\),\(pointer:coarse\) and \(orientation:portrait\) and \(max-width:950px\)\{\.module-grid>\.side,\.module-grid>\.plots\{position:static/);
+  assert.match(css,/#app:not\(\.hidden\)\{[^}]*height:100dvh[^}]*display:grid[^}]*grid-template-rows:46px minmax\(0,1fr\) auto[^}]*overflow:hidden/);
+  assert.match(css,/#app:not\(\.hidden\)>\.content\{[^}]*max-width:none[^}]*overflow:hidden/);
+  assert.match(css,/\.module-grid\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) minmax\(0,1fr\)[^}]*align-items:stretch/);
+  assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*height:100%[^}]*overflow-y:auto/);
+  assert.match(css,/\.app-footer\{[^}]*margin:0[^}]*background:var\(--bg\)/);
 });
 
 test('measurement domain primitives load before profile and module code',()=>{
@@ -558,26 +559,24 @@ test('LBIC View uses the same compact stacked-label control language as Valid-da
 });
 
 
-test('wide desktop uses equal-width independently scrollable semantic panes',()=>{
+test('wide desktop equal columns are literal equal tracks, not a narrow-sidebar approximation',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid\{[^}]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*position:sticky[^}]*height:calc\(100dvh - 66px\)[^}]*overflow-y:auto/);
-  assert.match(css,/@media\(max-width:1200px\)\{\.module-grid\{[^}]*\}\.module-grid>\.side\{[^}]*\}\.module-grid>\.plots\{[^}]*position:static[^}]*height:auto[^}]*overflow:visible/);
+  assert.match(css,/\.module-grid\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) minmax\(0,1fr\)/);
+  assert.doesNotMatch(css,/grid-template-columns:minmax\(320px,360px\) minmax\(0,1fr\) minmax\(0,1fr\)/);
 });
 
-test('DIT keeps a large overview map and tabbed local point-analysis workspace',()=>{
+test('DIT keeps all three local scientific plots visible in the independently scrollable detail pane',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(src,/detailView='vcpd'/);
-  assert.match(src,/data-dit-view="vcpd"/);
-  assert.match(src,/data-dit-view="dit"/);
-  assert.match(src,/data-dit-view="vsb"/);
-  assert.match(src,/data-dit-view="all"/);
-  assert.match(src,/data-dit-detail="vcpd"/);
+  assert.doesNotMatch(src,/data-dit-view=|data-dit-detail=|detailView=/);
+  assert.match(src,/<b>Vcpd–Qc<\/b>/);
+  assert.match(src,/<b>Dit–Vsb<\/b>/);
+  assert.match(src,/<b>Vsb–Qc<\/b>/);
   assert.match(src,/viewBox="0 0 640 500"/);
   assert.match(src,/paneScroll=\{/);
   assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
   assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
+  assert.doesNotMatch(css,/dit-detail-tabs|data-dit-detail/);
 });
 
 test('right-side selected-site typography matches the sidebar hierarchy',()=>{
