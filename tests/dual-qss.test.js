@@ -282,7 +282,7 @@ test('Dual QSS result validator separates paired single-site calculation parity 
   assert.match(src,/DUAL-QSS DIAGNOSTIC/);
   assert.match(src,/legacy Laser Power \/ Lifetime-only result branch/);
   assert.match(src,/zero acquired result rows/);
-  assert.match(src,/saved lifetime vectors pointwise/);
+  assert.match(src,/saved lifetime\s+vectors pointwise/);
   assert.match(src,/FixedPointsPattern/);
   assert.doesNotMatch(src,/outside QSS-INJ-RESULT-001 OnePoint calculation envelope/);
   assert.match(src,/CalculateJZeroParams=false expects teff\.SS Max \/ Smax Max to be Ud\./);
