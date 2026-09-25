@@ -347,7 +347,7 @@
       const x=X(pt.x),
       y=Y(pt.y);
       if(x<cx-R||x>cx+R||y<cy-R||y>cy+R)continue;
-      if(mode==='points'||!mask[i]){ctx.beginPath();
+      if(mode==='points'||validVals.length<3||!mask[i]){ctx.beginPath();
         ctx.arc(x,y,mask[i]?5:3.2,0,2*Math.PI);
         ctx.fillStyle=mask[i]?color((v-lo)/(hi-lo||1)):css('--soft');
         ctx.globalAlpha=mask[i]?1:.45;
