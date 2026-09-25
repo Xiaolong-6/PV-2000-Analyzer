@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.2.1 — 2026-09-25 (feature branch)
+## v20260925.3 — 2026-09-25
 
 - Modernized ISC and VCPD paired validators to check calculation/quantity results independently of the shared geometry resolver. Nine new ISC pairs (1860 sites) match all three outputs and coordinates, including RoundWafer maps and SquareRegion/SquareCell.
 - Validated VCPD arithmetic means of one, four and sixteen readings/site across three new numeric pairs (1283 sites), with independent geometry parity for Map/RoundWafer, HighDensity/PseudoSquareCell and OnePoint/RoundWafer. A fourth empty acquisition remains outside numeric validation.
