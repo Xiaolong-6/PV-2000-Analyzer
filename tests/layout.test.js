@@ -169,6 +169,26 @@ test('Measurement panels remain compact identity blocks instead of metadata catc
   assert.match(dit,/<summary>Acquisition metadata /);
 });
 
+test('scientific calculation inputs remain visible in collapsed sidebar metadata',()=>{
+  const sidebar=file=>{
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8'),
+      start=src.indexOf('<aside class="side">'),
+      end=src.indexOf('</aside>',start);
+    assert.ok(start>=0&&end>start,`sidebar not found in ${file}`);
+    return src.slice(start,end);
+  };
+  const spv=sidebar('spv.js'),
+    leakage=sidebar('leakage.js');
+  assert.match(spv,/<summary>Acquisition \/ validation<\/summary>/);
+  for(const label of ['LED temperature','Wafer thickness','Back-surface velocity','Enhanced mode','Doping type']){
+    assert.match(spv,new RegExp('<dt>'+label+'</dt>'),`SPV sidebar must expose scientific input: ${label}`);
+  }
+  assert.match(leakage,/<summary>Acquisition \/ validation<\/summary>/);
+  for(const label of ['Material','Physical thickness']){
+    assert.match(leakage,new RegExp('<dt>'+label+'</dt>'),`Leakage sidebar must expose parsed setting: ${label}`);
+  }
+});
+
 test('medium-width layout stacks the two analysis columns while keeping the sidebar dedicated',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/@media\(max-width:1200px\)\{#app:not\(\.hidden\)\{[^}]*display:block[^}]*overflow:visible/);
