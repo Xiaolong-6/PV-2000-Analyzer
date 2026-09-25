@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.14.5 — 2026-09-25 (branch)
+
+- Completed the analysis-workspace UI refactor across all dedicated analyzers: semantic desktop columns, responsive plot surfaces, readable plot typography, and bidirectional displayed-quantity / Valid-data-filter synchronization.
+- Completed the one-point audit: QSS-uPCD, ISC/VCPD, SPV, JZero and CET suppress population-only plots where appropriate and use Measurement point / Measurement position semantics.
+- Fixed QSS high-DPI smooth-map rendering, DIT dynamic map/filter synchronization after analysis rebuilds, and moved DIT point-specific result values out of the aggregate left-sidebar summary.
+- Final cross-family source/CI audit passed; archived the dated implementation plan under `docs/archive/` and kept only the durable workspace contract in architecture/developer documentation.
+
 ## v20260925.14.4 — 2026-09-25 (branch)
 
 - Updated regression expectations for the deliberate synchronized active-quantity behavior and semantic overview/detail class names.

@@ -225,3 +225,58 @@ After the final cross-family audit:
 1. move enduring rules into `docs/ARCHITECTURE.md`, `AGENTS.md`, and user-facing documentation where needed;
 2. append final audit evidence/results to this document;
 3. move this detailed implementation record under `docs/archive/` so the active docs surface keeps only durable contracts.
+
+## Final audit — 2026-09-25
+
+Status: **complete on the feature branch**.
+
+### Implemented contract
+
+- Wide desktop uses three semantic columns: dataset / analysis state, whole-sample overview, and point / local detail.
+- Medium layouts preserve the left dataset sidebar while overview/detail surfaces stack in the analysis column; narrow layouts collapse in semantic order.
+- Selected-site / selected-pixel / measurement-point information is kept out of the dataset sidebar. DIT aggregate Results summary also no longer embeds current-site values.
+- Quantity-driven Map / Distribution / line-profile views are synchronized bidirectionally with Valid-data filter metric selection. The selection core still supports independent cross-metric masks internally.
+- Canvas plots use shared responsive CSS-pixel sizing with device-pixel-ratio backing; SVG families use the common 640×360 logical surface. LBIC X/Y profiles use the explicit compact surface.
+- Plot labels were normalized to a readable baseline: dedicated-analyzer scientific plot text is 10 px minimum in CET/DIT SVG site labels and 11 px minimum in Canvas axes/labels.
+- True one-point branches suppress population-only Distribution/profile surfaces where applicable and use Measurement point / Measurement position wording.
+
+### Family audit result
+
+| Family | Overview / middle | Local detail / right | Metric synchronization | Audit result |
+| --- | --- | --- | --- | --- |
+| DIT | Wafer map / measurement position | Selected/measurement point, Vcpd–Qc, Dit–Vsb, Vsb–Qc, flatband details | Filter ↔ map quantity | Pass |
+| QSS-uPCD | Map, Distribution, acquisition-order profile | Selected/measurement point | Filter ↔ map/distribution/profile quantity | Pass |
+| Dual QSS | Lifetime-vs-intensity comparison + measurement position | Selected injection point + stored transient | Not applicable | Pass |
+| ISC / VCPD | Map + Distribution | Selected/measurement point + raw readings | Filter ↔ map/distribution quantity | Pass |
+| JZero | Map / measurement position + Distribution when multi-site | Selected/measurement point | Filter ↔ map/distribution quantity | Pass |
+| LBIC | Raster map + Distribution | Selected pixel + X/Y local profiles | Filter ↔ map/distribution/profile quantity | Pass |
+| CET | Map + Distribution when multi-site | Selected/measurement point + current-site fit | Filter ↔ map/distribution quantity | Pass |
+| SPV | Map + Distribution when multi-site | Selected/measurement point | Filter ↔ map/distribution quantity | Pass |
+| Leakage | Measurement position | Selected/measurement point + raw leakage readings | Not applicable | Pass |
+
+QSS acquisition profile is intentionally classified as an **overview** surface because it shows the entire acquisition-order series; it is not a selected-site trace.
+
+### Cross-family source audit
+
+- All nine dedicated analyzers expose explicit `plots overview` and `plots detail` regions.
+- No dedicated Canvas analyzer retains fixed numeric `canvas.width = ...` / `canvas.height = ...` display sizing.
+- DIT, QSS-uPCD, ISC/VCPD, JZero, LBIC, CET and SPV use the shared linked displayed/filter metric behavior. Dual QSS and Leakage do not expose an alternate site-level metric filter, so no link is required.
+- Multi-site map selection updates right-hand local detail for DIT, QSS-uPCD, ISC/VCPD, JZero, LBIC, CET and SPV. Dual QSS selects injection points from the comparison curve. Leakage is currently a one-point family.
+- QSS smooth interpolation no longer uses transform-agnostic `ImageData`; it is rendered in logical CSS coordinates and remains correct with high-DPI Canvas transforms.
+- Dynamic DIT analysis rebuilds re-resolve the map/filter quantity together, including the case where optional Midgap Dit is disabled.
+
+### Regression evidence
+
+- Public CI `test-build` passed on implementation commit `c4be628b94ae36c582cf927da0d02bce0a0051b3`, including `npm run check`, documentation checks, the complete Node test suite, validator syntax smoke, and `npm run build`.
+- Source-density checks pass after splitting the new point-selection and redraw logic into inspectable statements.
+- Existing equal-physical-axis map, Distribution Count-axis / Swap / Bins, axes popover, export, and responsive-layout regression tests remain in place; new tests cover semantic columns, linked metrics, one-point plot suppression, responsive Canvas sizing, and QSS high-DPI smooth rendering.
+
+### Scope boundaries
+
+- No scientific equations or validation envelopes were intentionally changed by this UI work. The branch was rebased/merged with main `v20260925.14` and preserved its independently validated DIT result-Vsb changes.
+- Cross-metric filtering remains available in the selection core but is not exposed as a separate advanced UI mode in this refactor.
+- No pixel-golden or browser-screenshot baseline was added. Visual consistency is protected through the shared surface/typography implementation and structural/regression tests rather than brittle screenshot matching.
+
+### Archival decision
+
+The durable workspace contract is now recorded in `docs/ARCHITECTURE.md` and `AGENTS.md`. This implementation plan is archived because all planned phases A–F are complete; future analyzer work should follow the durable contract rather than extending this dated checklist.
