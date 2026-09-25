@@ -93,7 +93,7 @@ The analyzer provides:
 - distribution histogram;
 - selected-site repeated dark/light reading plot;
 - CSV export for the selected map quantity, histogram and selected-site raw readings;
-- shared wheel zoom, axis-only zoom, double-click Auto reset and compact header Axes popovers for manual limits;
+- shared Ctrl/⌘ + wheel zoom, Ctrl/⌘ + wheel axis-only zoom, double-click Auto reset and compact header Axes popovers for manual limits; plain wheel/trackpad motion scrolls the workspace pane;
 - Distribution axis swapping;
 - geometry-aware map framing: solid nominal RoundWafer/SquareCell target boundary and dashed EdgeExclusion-adjusted scheduled boundary, with equal physical X/Y scale.
 
