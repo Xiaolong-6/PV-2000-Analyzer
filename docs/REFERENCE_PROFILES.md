@@ -398,7 +398,9 @@ See `docs/ALGORITHMS_DUAL_QSS.md`.
 
 **Reference material**
 
-Two private **real XML + matching numeric PV-2000 final-result CSV** pairs. Both use `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back` and `UseAugerCorrection=false`. The HighPower sweep contains an acquired 1000 mSun point; the LowPower sweep terminates at 681 mSun.
+The original core consists of two private **real XML + matching numeric PV-2000 final-result CSV** pairs. Both use `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back` and `UseAugerCorrection=false`. The HighPower sweep contains an acquired 1000 mSun point; the LowPower sweep terminates at 681 mSun.
+
+The 100-case harness adds three compatible current-style `OnePointPattern` result rows: two RoundWafer targets and one SquareCell target. These extend the calculation evidence while geometry remains independently resolved through `GEOM-ONEPOINT-CENTER-001`. Four zero-result acquisitions, one legacy Lifetime-only row and two conflicting FixedPoints/PseudoSquare rows are diagnostic only.
 
 **Validated / established**
 
@@ -415,7 +417,7 @@ Two private **real XML + matching numeric PV-2000 final-result CSV** pairs. Both
 
 **Runtime boundary**
 
-The full result path is enabled only for the paired semantic envelope above. `UseAugerCorrection=true`, alternate source selections, a sweep spanning 1000 mSun without an exact acquired 1000-mSun point, and other structural/categorical branches remain unavailable until real paired output validates them.
+The full result path is enabled only for the paired semantic envelope above: `OnePointPattern`, Back/Back source selection and non-Auger processing, with the currently evidenced 1000-mSun placement rules. Target geometry is a separate axis and is not itself a calculation-profile key. `UseAugerCorrection=true`, alternate source selections, a sweep spanning 1000 mSun without an exact acquired 1000-mSun point, and other structural/categorical branches remain unavailable until real paired output validates them.
 
 The broader `QSS-INJ-001` 273-pair corpus still validates the raw injection/transient path; it does not automatically extend this final-result profile to all historical Dual QSS files.
 
@@ -431,11 +433,11 @@ Run the public launcher against the private paired case directories:
 npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 ```
 
-The private workflow executes that runtime directly against both real XML+CSV pairs.
+The private workflow executes the paired runtime regression on the original core cases and the 100-case classifier independently checks all ten harness exports, yielding **3 PASS + 7 diagnostics** without promoting diagnostic branches.
 
 **NEW PROFILE triggers / evidence extensions**
 
-A different pattern/target/source-selection path, `UseAugerCorrection=true`, a multi-iteration schema, another result-table algorithm, or a different 1000-mSun placement rule requires new matching numeric vendor output before the profile is widened.
+A different calculation pattern, source-selection path, `UseAugerCorrection=true`, a multi-iteration schema, another result-table algorithm, or a different 1000-mSun placement rule requires new matching numeric vendor output before the calculation profile is widened. A target-geometry change is evaluated on the independent geometry axis and does not by itself create a new calculation profile.
 
 See `docs/ALGORITHMS_DUAL_QSS.md`.
 
