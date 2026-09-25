@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.22 — 2026-09-25
+
+- Recovered the current managed-DLL JZero Implied-Voc path and replaced the earlier fitted `NI_VOC_300 + ni(T)` reconstruction with exact PV-2000 compatibility semantics: fixed `NiForSilicon=1.22e10 cm^-3`, `ChuckTemperature + 272.15`, rounded `k=1.38066e-23` / `q=1.602e-19`, and `ln(ratio + 1)`.
+- Preserved the vendor fallback behavior of 27 °C for missing/zero chuck temperature and 200 µm for non-positive wafer thickness on the JZero Voc injection path. These historical constants are deliberately compatibility-scoped and must not be silently modernized.
+- Removed the false geometry gate from JZero Voc validation. `JZERO-VOC-COMPAT-001` is now tied to the validated two-iteration calculation path, while geometry remains an independent profile axis.
+- Private managed-IL/harness evidence covers 12 JZero XML/vendor-CSV pairs and 15,886 finite Voc values across Map, HighDensity, NinePoint, SquareRegion and OnePoint geometries; the recovered formula reports 0.000000000 mV maximum error at exported precision.
+- Added public regression oracles from real paired evidence for Map/PseudoSquare, OnePoint/RoundWafer, SquareRegion/SquareCell, NinePoint/SquareCell and HighDensity/RoundWafer, and updated the JZero validator, profile registry, Wiki, measurement matrices, cross-profile audit and handoff documentation.
+
 ## v20260925.21 — 2026-09-25
 
 - Locked the three intentionally different circular-boundary contracts in `src/core/geometry.js`: strict inward-guard Map/Round rastering, inclusive outward-guard PseudoSquare rastering, and strict zero-epsilon HighDensity clipping.

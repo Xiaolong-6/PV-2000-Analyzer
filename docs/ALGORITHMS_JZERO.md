@@ -122,30 +122,49 @@ The fitted `ni,compat` is a **PV-2000 compatibility calibration for this validat
 
 ## Implied Voc compatibility path
 
-The analyzer derives injection level from:
+Injection level remains:
 
 ```text
 Δn = G × τeff.d
 ```
 
-and uses:
+For the current managed PV-2000 DLL, JZero Implied Voc follows a recovered
+legacy compatibility path rather than the general QSS-map physical
+`ni(T)` model:
 
 ```text
-Voc = kT/q × ln( Δn × (N + Δn) / ni(T)² )
+Tcompat = ChuckTemperature_C + 272.15
+Vt      = 1.38066e-23 × Tcompat / 1.602e-19
+ni      = 1.22e10 cm⁻³
+
+Voc = Vt × ln( Δn × (N + Δn) / ni² + 1 )
 ```
 
-with the XML doping concentration and iteration-specific chuck temperature.
+The historical details are intentional compatibility behavior. In the current
+managed DLL, `NiForSilicon(T)` ignores its temperature argument and returns
+`1.22e10 cm⁻³`; the Celsius conversion uses `+272.15`, not the conventional
+`+273.15`; and the DLL uses the rounded constants shown above. `GetTemperatureForIteration()` falls back to **27 °C** when the stored chuck temperature is zero/missing, and the injection conversion falls back to **200 µm** when wafer thickness is non-positive. These details
+must not be "corrected" inside the PV-2000-compatible path because doing so
+changes vendor parity.
 
-The supplied vendor export cannot be reproduced by the current general QSS-µPCD `ni(T)` normalization. The JZero analyzer therefore keeps a separate reference-regressed compatibility normalization for the first and second QSS result channels:
+The earlier public reconstruction fitted two effective `ni,300` values to the
+original warm Map/PseudoSquare reference and then applied a physical silicon
+`ni(T)` correction. That happened to reproduce the approximately 28.5 °C map
+closely, but it produced a systematic approximately 18.7–21.1 mV offset on
+paired data near 23.6–24.2 °C. The apparent geometry dependence was therefore
+a temperature/corpus confounder, not a geometry-dependent algorithm.
 
-```text
-ni,300(first)  = 1.1136399052670412e10 cm⁻³
-ni,300(second) = 1.107764334152709e10 cm⁻³
-```
+Private managed-IL tracing plus the paired harness corpus closes this path as
+`JZERO-VOC-COMPAT-001`. Across 12 harness-generated JZero XML/vendor-CSV
+pairs and 15,886 finite Implied-Voc values, covering Map, HighDensity,
+NinePoint, SquareRegion and OnePoint geometries, the recovered DLL equation is
+pointwise exact at the exported precision; the forensic audit reports
+`0.000000000 mV` maximum absolute error.
 
-using the same silicon temperature dependence as the QSS analyzer.
-
-Across the original 5017 sites, both Implied Voc maps reproduce the vendor export within 0.07 mV maximum absolute error. A second 1221-site `MapPattern + PseudoSquareCell` pair reaches approximately 0.850 mV maximum error, so `JZERO-VOC-MAP-PSEUDOSQUARE-001` is treated as a display-precision quantity profile rather than part of the broad calculation profile. On paired OnePoint, SquareRegion and HighDensity cases, the same compatibility normalization differs by approximately 18.7–21.1 mV. Those Voc outputs therefore remain inferred/diagnostic even though their lifetime/Smax/Basore quantities and geometry validate independently. These normalizations are regression values, not claims about the proprietary PV-2000 internal formula.
+This is a **PV-2000 compatibility equation**, not a recommendation for a modern
+physical silicon intrinsic-carrier model. A physically motivated Voc model
+must remain separately labelled and must not silently replace these legacy
+constants in vendor-comparison mode.
 
 ## UI behavior
 
@@ -186,7 +205,12 @@ The eight successful 100-case numeric pairs establish the **calculation path**:
 - direct XML lifetime → τeff.d;
 - Smax and Basore J0 under `JZERO-CALC-001`.
 
-Implied Voc is deliberately excluded from that broad calculation claim. `JZERO-VOC-MAP-PSEUDOSQUARE-001` is a narrower quantity profile supported by two paired pseudo-square maps.
+Implied Voc is validated separately as `JZERO-VOC-COMPAT-001`. The current
+managed-DLL formula is geometry-independent and is backed by 12 harness
+XML/vendor-CSV pairs / 15,886 finite Voc values across Map, HighDensity,
+NinePoint, SquareRegion and OnePoint geometries. Complete two-iteration
+`JZERO-CALC-001` acquisitions therefore expose the compatible Voc quantity as
+validated without tying that status to one Pattern/Target identity.
 
 Geometry is validated on its own axis. The current paired JZero corpus exercises shared OnePoint, SquareRegion, HighDensity and Map profiles, with maximum observed X/Y error approximately 4.97e-14 mm. The original `MapPattern + PseudoSquareCell` case remains the clearest dense-map geometry reference.
 
@@ -199,7 +223,8 @@ The following remain outside the current vendor-regressed **calculation** envelo
 - a different iteration/result ordering;
 - a different raw data item schema;
 - additional vendor result quantities;
-- a materially different Implied Voc or Basore post-processing path.
+- a materially different Basore post-processing path;
+- a different PV-2000 version whose managed Implied-Voc constants or temperature convention differ from `JZERO-VOC-COMPAT-001`.
 
 Run:
 

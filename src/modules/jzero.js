@@ -1,8 +1,19 @@
 (function(root){
   const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Profiles=PV.profiles;
-  const Q=1.602176634e-19,K=1.380649e-23,KB_EV=8.617333262145e-5;
+  const Q=1.602176634e-19;
   const NI_BASORE_COMPAT=8.626227186463587e9;
-  const NI_VOC_300=[1.1136399052670412e10,1.107764334152709e10];
+  // PV-2000 v1.3 managed-DLL compatibility constants for JZero Implied Voc.
+  // These are intentionally NOT modernized: the vendor path uses a fixed
+  // NiForSilicon(T)=1.22e10 cm^-3, rounded k/q, and T_C + 272.15.
+  // Changing 272.15 to 273.15 or adding a physical ni(T) model breaks vendor parity.
+  const JZERO_VOC_COMPAT=Object.freeze({
+    K:1.38066e-23,
+    Q:1.602e-19,
+    NI_SI:1.22e10,
+    KELVIN_OFFSET:272.15,
+    DEFAULT_TEMP_C:27,
+    DEFAULT_WAFER_UM:200
+  });
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
   const esc=v=>PV.ui.escapeHtml(v),help=t=>PV.ui.help(t),css=n=>PV.ui.cssVar(n);
   const fmt=(v,n=3)=>!Number.isFinite(v)?'—':Math.abs(v)>=1e4||Math.abs(v)<1e-2?v.toExponential(n):v.toFixed(n);
@@ -27,6 +38,7 @@
       md=X.direct(m,'MeasurementData'),
       itd=X.direct(md,'IterationData'),
       iterations=X.children(itd).filter(e=>X.lname(e)==='Iteration'),
+      iterationTypes=iterations.slice(0,2).map(X.attrType),
       values=iterations.slice(0,2).map(iterationValues),
       pattern=X.direct(m,'Pattern'),
       target=X.direct(m,'Target'),
@@ -122,7 +134,8 @@
       evalList=evalNode?X.children(evalNode).map(e=>e.textContent.trim()):[],
       evaluationMode=Number.isInteger(evalIndex)&&evalIndex>=0&&evalIndex<evalList.length?evalList[evalIndex]:'',
       completePair=values.length===2&&values[0].length>0&&values[0].length===values[1].length,
-      validatedCalculation=completePair&&!incompleteStatus,
+      iterationSchemaCompatible=iterationTypes.every(type=>!type||type==='UpcdIterationData'),
+      validatedCalculation=completePair&&!incompleteStatus&&iterationSchemaCompatible,
       resolvedGeometryProfile=geometryModel.geometryStatus==='complete'
         ?Profiles.resolveGeometry({geometryModel})
         :null,
@@ -137,6 +150,7 @@
       siteCount,
       pairedSiteCount,
       iterationSiteCounts:values.map(v=>v.length),
+      iterationTypes,
       geometryModel,
       rawCoefficients,
       calculationProfile:{
@@ -193,16 +207,17 @@
     return [I,W,OF].every(Number.isFinite)&&I>0&&W>0&&OF>0?2.38e17*I/W*OF:NaN;
   }
   function smax(tauUs,Wum){return tauUs>0&&Wum>0?(Wum*1e-4)/(2*tauUs*1e-6):NaN}
-  function egSi(T){return 1.17-4.73e-4*T*T/(T+636)}
-  function niAtTemperature(ni300,T){
-    const ref=300;
-    return ni300*(T/ref)**1.5*Math.exp(-egSi(T)/(2*KB_EV*T)+egSi(ref)/(2*KB_EV*ref));
-  }
   function impliedVoc(tauUs,intensityMilli,d,index){
-    const G=generation(intensityMilli,d.waferThickness,d.opticalFactor),T=Number.isFinite(d.temperatures[index])?d.temperatures[index]+273.15:300,N=d.doping;
-    if(![tauUs,G,T,N].every(Number.isFinite)||tauUs<=0||G<=0||T<=0||N<=0)return NaN;
-    const dn=G*tauUs*1e-6,ni=niAtTemperature(NI_VOC_300[Math.min(index,1)],T);
-    return K*T/Q*Math.log(dn*(N+dn)/(ni*ni));
+    const rawTempC=d.temperatures?.[index],
+      tempC=Number.isFinite(rawTempC)&&rawTempC!==0?rawTempC:JZERO_VOC_COMPAT.DEFAULT_TEMP_C,
+      Wum=Number.isFinite(d.waferThickness)&&d.waferThickness>0?d.waferThickness:JZERO_VOC_COMPAT.DEFAULT_WAFER_UM,
+      optical=d.opticalFactor,
+      N=d.doping,
+      T=tempC+JZERO_VOC_COMPAT.KELVIN_OFFSET;
+    if(![tauUs,intensityMilli,Wum,optical,T,N].every(Number.isFinite)||tauUs<=0||intensityMilli<=0||T<=0||N<=0)return NaN;
+    const dn=2.38e17*intensityMilli*optical/Wum*tauUs*1e-5,
+      ratio=dn*(N+dn)/(JZERO_VOC_COMPAT.NI_SI*JZERO_VOC_COMPAT.NI_SI);
+    return JZERO_VOC_COMPAT.K*T/JZERO_VOC_COMPAT.Q*Math.log(ratio+1);
   }
   function basoreJ0(tau1Us,tau2Us,d){
     const G1=generation(d.qssMilli[0],d.waferThickness,d.opticalFactor),G2=generation(d.qssMilli[1],d.waferThickness,d.opticalFactor),W=d.waferThickness*1e-4;
@@ -213,9 +228,9 @@
   function analyze(d){
     const calcProfileId=d.calculationProfile?.id||null,
       calcValidation=d.calculationProfile?.status==='validated'?'validated':'inferred',
-      vocValidated=d.geometryProfile?.id==='GEOM-MAP-PSEUDOSQUARE-001'&&calcValidation==='validated',
-      vocProfileId=vocValidated?'JZERO-VOC-MAP-PSEUDOSQUARE-001':null,
-      vocValidation=vocValidated?'reproduced-at-shown-precision':'inferred',
+      vocValidated=calcValidation==='validated',
+      vocProfileId=vocValidated?'JZERO-VOC-COMPAT-001':null,
+      vocValidation=vocValidated?'validated':'inferred',
       tau1=d.values[0]||[],
       tau2=d.values[1]||[],
       n=Math.max(d.siteCount||0,tau1.length,tau2.length),
@@ -293,7 +308,7 @@
         label:`Implied Voc (${sun(0)})`,
         unit:'V',
         values:v1,
-        help:'Implied open-circuit voltage derived from the first QSS lifetime using the JZero compatibility calibration.'
+        help:'PV-2000-compatible Implied Voc from the first QSS lifetime. This intentionally reproduces the managed-DLL legacy constants, including fixed ni and the historical °C + 272.15 temperature offset.'
       },
       voc2:{
         key:'voc2',
@@ -303,7 +318,7 @@
         label:`Implied Voc (${sun(1)})`,
         unit:'V',
         values:v2,
-        help:'Implied open-circuit voltage derived from the second QSS lifetime using the JZero compatibility calibration; unavailable where the second iteration is missing.'
+        help:'PV-2000-compatible Implied Voc from the second QSS lifetime using the managed-DLL legacy constants; unavailable where the second iteration is missing.'
       }
     }};
   }
@@ -543,7 +558,7 @@
     basoreJ0,
     impliedVoc,
     insideTarget,
-    constants:{NI_BASORE_COMPAT,NI_VOC_300}
+    constants:{NI_BASORE_COMPAT,JZERO_VOC_COMPAT}
   };
   PV.registry.register(PV.modules.jzero);
 })(typeof window!=='undefined'?window:globalThis);

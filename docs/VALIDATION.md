@@ -246,22 +246,50 @@ The validator is a development regression gate only; runtime remains XML-only. T
 
 ## Emitter J0 map — calculation / geometry / quantity regression
 
-The original 5017-site `JZeroMeasurement` XML + PV-2000 CSV pair established the two-intensity result path. The 100-case private harness corpus adds **eight successful numeric JZero exports** spanning OnePoint, SquareRegion, HighDensity and Map geometries. The current validator resolves geometry independently, validates the shared two-iteration calculation quantities across all eight pairs, and treats Implied Voc as a narrower quantity profile.
+The original 5017-site `JZeroMeasurement` XML + PV-2000 CSV pair established
+the two-intensity result path. The 100-case private harness corpus adds eight
+successful numeric JZero exports spanning OnePoint, SquareRegion, HighDensity
+and Map geometries for the shared lifetime/Smax/Basore calculation. A later
+managed-IL forensic pass closes Implied Voc across **12 harness-generated
+JZero pairs / 15,886 finite Voc values**.
 
-| Quantity / behavior | 100-case regression result | Status |
+| Quantity / behavior | Regression result | Status |
 |---|---:|---|
-| geometry | 8 / 8 pairs resolve through shared geometry profiles | validated independently |
-| X/Y | max Euclidean error ≈ **4.97e-14 mm** | validated |
+| geometry | paired OnePoint / SquareRegion / HighDensity / NinePoint / Map families resolve independently | validated per geometry profile |
+| X/Y | max Euclidean error ≈ **4.97e-14 mm** on the established geometry corpus | validated |
 | τeff.d, first/second QSS | max abs error ≈ **5.12e-13 µs** | `JZERO-CALC-001` validated |
 | Smax, first/second QSS | max abs error ≈ **4.77e-12 cm/s** | `JZERO-CALC-001` validated |
 | Basore J0 | max abs error ≈ **4.73e-11 fA/cm²** | `JZERO-CALC-001` validated |
-| Implied Voc on `MapPattern + PseudoSquareCell` | two numeric pairs; max abs error ≈ **0.850 mV** | `JZERO-VOC-MAP-PSEUDOSQUARE-001`, reproduced at displayed precision |
-| Implied Voc on the other paired geometries | observed max errors ≈ **18.7–21.1 mV** | diagnostic / inferred; not promoted |
+| Implied Voc | 12 harness pairs / 15,886 finite values; forensic audit max = **0.000000000 mV** | `JZERO-VOC-COMPAT-001` validated |
 | one-site summary Stdev | vendor exports `NaN` | preserved as unavailable |
 
-The original 5017-site reference remains the strongest exact geometry instance: a 156 × 156 mm pseudo-square with 205 mm diameter mask, 7 mm EdgeExclusion and 2 mm pitch, yielding 5017 X-fast, ascending-Y sites from (-64, -70) to (64, 70) mm. Its two Implied-Voc channels reproduce within approximately 0.061 and 0.066 mV. A second 1221-site `MapPattern + PseudoSquareCell` pair extends the same quantity profile to approximately 0.850 mV maximum error.
+The recovered current-DLL Implied-Voc path is:
 
-The broader corpus demonstrates why validation axes are separate. Direct XML lifetime, `Smax = W/(2τ)` and the Basore-Hansen J0 compatibility equation remain stable across the paired geometry families, while the current JZero Implied-Voc calibration does not generalize to the older OnePoint/SquareRegion/HighDensity result paths. Runtime therefore keeps those Voc quantities inferred instead of widening the compatibility claim.
+```text
+Δn      = G × τeff.d
+Tcompat = ChuckTemperature_C + 272.15
+ni      = 1.22e10 cm^-3
+Voc     = (1.38066e-23 × Tcompat / 1.602e-19)
+          × ln( Δn × (Doping + Δn) / ni² + 1 )
+```
+
+The current managed `NiForSilicon(T)` method ignores its temperature argument.
+The `+272.15` offset, rounded `k/q` constants and `+1` logarithm term are
+therefore preserved as compatibility behavior. They are not silently replaced
+with a modern physical `ni(T)` model.
+
+The previous approximately **18.7–21.1 mV** cross-profile discrepancy was
+caused by applying a physical silicon `ni(T)` correction to two normalization
+constants fitted to the original warm pseudo-square map. The old Map cases were
+near 28.4–28.5 °C while many OnePoint/SquareRegion/HighDensity/NinePoint cases
+were near 23.6–24.2 °C. Managed call tracing confirms that Pattern/Target is
+absent from the Voc calculation; the earlier apparent geometry dependence was
+a temperature/corpus confounder.
+
+The original 5017-site reference remains the strongest dense geometry
+instance: a 156 × 156 mm pseudo-square with 205 mm diameter mask, 7 mm
+EdgeExclusion and 2 mm pitch, yielding 5017 X-fast, ascending-Y sites from
+(-64, -70) to (64, 70) mm.
 
 Run:
 
@@ -269,7 +297,9 @@ Run:
 npm run validate:jzero
 ```
 
-The validator looks for matching private pairs under `private/reference/jzero/` or accepts explicit XML paths. Runtime remains XML-only; vendor CSVs are regression evidence only.
+The validator looks for matching private pairs under
+`private/reference/jzero/` or accepts explicit XML paths. Runtime remains
+XML-only; vendor CSVs are regression evidence only.
 
 ## DIT reference
 

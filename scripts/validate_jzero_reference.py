@@ -6,15 +6,18 @@ from pathlib import Path
 from validate_geometry_profiles import resolve_xml_geometry
 
 Q=1.602176634e-19
-K=1.380649e-23
-KB_EV=8.617333262145e-5
 NI_BASORE_COMPAT=8.626227186463587e9
-NI_VOC_300=(1.1136399052670412e10,1.107764334152709e10)
+VOC_K=1.38066e-23
+VOC_Q=1.602e-19
+VOC_NI_SI=1.22e10
+VOC_KELVIN_OFFSET=272.15
+VOC_DEFAULT_TEMP_C=27.0
+VOC_DEFAULT_WAFER_UM=200.0
 TOL_COORD=1e-12
 TOL_LIFETIME=1e-9
 TOL_SMAX=1e-9
 TOL_J0=1e-8
-TOL_VOC_PROFILE=1e-3
+TOL_VOC=1e-9
 TOL_SUMMARY=1e-8
 
 def lname(tag): return tag.split('}',1)[-1]
@@ -68,11 +71,15 @@ def generation(intensity_milli,w_um,optical):
     return 2.38e17*(intensity_milli/1000)/(w_um*1e-4)*optical
 
 def smax(tau_us,w_um): return (w_um*1e-4)/(2*tau_us*1e-6)
-def eg_si(T): return 1.17-4.73e-4*T*T/(T+636)
-def ni_temp(ni300,T): return ni300*(T/300)**1.5*math.exp(-eg_si(T)/(2*KB_EV*T)+eg_si(300)/(2*KB_EV*300))
 def voc(tau_us,intensity_milli,w_um,optical,doping,temp_c,index):
-    G=generation(intensity_milli,w_um,optical);T=temp_c+273.15;dn=G*tau_us*1e-6;ni=ni_temp(NI_VOC_300[index],T)
-    return K*T/Q*math.log(dn*(doping+dn)/(ni*ni))
+    # Current SDI.Data managed-DLL compatibility path. Preserve the vendor
+    # historical constants and fallbacks exactly; 272.15 is intentional.
+    temp_c=temp_c if math.isfinite(temp_c) and temp_c!=0 else VOC_DEFAULT_TEMP_C
+    w_um=w_um if math.isfinite(w_um) and w_um>0 else VOC_DEFAULT_WAFER_UM
+    dn=2.38e17*intensity_milli*optical/w_um*tau_us*1e-5
+    T=temp_c+VOC_KELVIN_OFFSET
+    ratio=dn*(doping+dn)/(VOC_NI_SI*VOC_NI_SI)
+    return VOC_K*T/VOC_Q*math.log(ratio+1)
 def basore(t1_us,t2_us,i1,i2,w_um,optical):
     G1,G2=generation(i1,w_um,optical),generation(i2,w_um,optical);t1,t2=t1_us*1e-6,t2_us*1e-6;W=w_um*1e-4
     slope=((1/t2)**2-(1/t1)**2)/(G2-G1)
@@ -143,9 +150,8 @@ def validate_pair(xml_path,csv_path):
     if max(et1,et2)>TOL_LIFETIME:raise AssertionError(f'lifetime max error={max(et1,et2):g}')
     if max(es1,es2)>TOL_SMAX:raise AssertionError(f'Smax max error={max(es1,es2):g}')
     if ej>TOL_J0:raise AssertionError(f'Basore J0 max error={ej:g}')
-    voc_profile=x['geometry_profile']=='GEOM-MAP-PSEUDOSQUARE-001'
-    if voc_profile and max(ev1,ev2)>TOL_VOC_PROFILE:
-        raise AssertionError(f'Implied Voc profile max error={max(ev1,ev2):g} V')
+    if max(ev1,ev2)>TOL_VOC:
+        raise AssertionError(f'Implied Voc max error={max(ev1,ev2):g} V')
     metric_pairs=[(names[2],j0),(names[3],x['values'][0]),(names[4],x['values'][1]),(names[5],s1),(names[6],s2)]
     for name,data in metric_pairs:
         expected=v['summaries'].get(name)
@@ -156,9 +162,9 @@ def validate_pair(xml_path,csv_path):
         expected=v['summaries'].get(name)
         if expected is None:raise AssertionError(f'missing vendor summary for {name}')
         err=max_abs(summary(data),expected)
-        if voc_profile and err>TOL_VOC_PROFILE:
-            raise AssertionError(f'{name} profile summary max error={err:g}')
-    voc_status='JZERO-VOC-MAP-PSEUDOSQUARE-001' if voc_profile else 'diagnostic/inferred'
+        if err>TOL_VOC:
+            raise AssertionError(f'{name} summary max error={err:g}')
+    voc_status='JZERO-VOC-COMPAT-001'
     return (f'{xml_path.name}: points={len(j0)}; geometry={x["geometry_profile"]}; '
             f'X/Y={max(ex,ey):.3g} mm; lifetime={max(et1,et2):.3g} us; '
             f'Smax={max(es1,es2):.3g}; J0={ej:.3g} fA/cm2; '

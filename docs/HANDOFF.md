@@ -16,7 +16,7 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.21`.
+- Public main: `v20260925.22`.
 - No active feature branch is required to complete the 100-case closure.
 - Final private 100-case matrix against this baseline: **71 scoped PASS + 16 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
@@ -68,7 +68,7 @@ The canonical raw lifetime remains `TransientInfo@LifeTime`, with XML `Values` k
 
 ### JZero
 
-Eight successful 100-case numeric pairs validate the two-intensity lifetime channels, Smax and Basore J0 across OnePoint, SquareRegion, HighDensity and Map geometries. Maximum X/Y error is about 4.97e-14 mm and Basore J0 error about 4.73e-11 fA/cm². Implied Voc is quantity-scoped: two Map/PseudoSquare pairs support `JZERO-VOC-MAP-PSEUDOSQUARE-001` to at most about 0.850 mV, while older OnePoint/SquareRegion/HighDensity paths remain inferred with roughly 18.7–21.1 mV differences.
+Eight successful 100-case numeric pairs validate the two-intensity lifetime channels, Smax and Basore J0 across OnePoint, SquareRegion, HighDensity and Map geometries. Maximum X/Y error is about 4.97e-14 mm and Basore J0 error about 4.73e-11 fA/cm². JZero Implied Voc is now closed separately as `JZERO-VOC-COMPAT-001`: managed-IL tracing recovered fixed `ni=1.22e10 cm^-3`, `T_C+272.15`, rounded `k/q` and the vendor `+1` logarithm term. Across 12 harness-generated pairs / 15,886 finite Voc values spanning Map, HighDensity, NinePoint, SquareRegion and OnePoint geometries, the recovered current-DLL equation is pointwise exact at exported precision. The earlier 18.7–21.1 mV split was a temperature/corpus confounder caused by the old physical `ni(T)` reconstruction.
 
 ### ISC / VCPD
 
