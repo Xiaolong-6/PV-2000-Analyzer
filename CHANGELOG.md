@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.15.2.1 — 2026-09-25 (branch)
+## v20260925.16 — 2026-09-25
 
 - Compact large/small editable numeric values in Valid-data filter and manual-axis text boxes using scientific notation instead of long digit strings.
 - Normal-scale values remain ordinary decimal text. Programmatically populated inputs retain their exact underlying numeric value until the user edits the field, so display formatting alone does not silently change filter or axis semantics.
