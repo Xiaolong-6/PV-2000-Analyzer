@@ -69,7 +69,30 @@ Across their 244 sites, all DL/Tau values are finite and the maximum absolute di
 
 The 59-site acquisition is marked `Terminated`: its first 59 scheduled coordinates agree with the vendor CSV within **1.6e-14 mm**. Its geometry remains **partial** and does not receive a complete geometry profile. The NinePoint and PseudoSquare coordinates agree within **2.1e-14 mm** through their independent complete geometry profiles.
 
-The ninth new pair is `UseEnhancedMode=true` and N-type: 28 of 69 DL/Tau sites are finite in vendor output. Raw SPV8/SPV6 agree to floating-point precision; evaluating the standard path on those sites gives DL/Tau maximum errors of **296.64 µm** and **420.23 µs**. This is evidence for a separate enhanced calculation path, not for applying either standard profile. The paired validator therefore treats this case as an explicit diagnostic/evidence wall; it is intentionally not counted as a standard-profile failure or as validated Enhanced output.
+---
+
+### SPV-CALC-ENHANCED-N-003 — finite-wafer/back-surface Enhanced N-type SPV
+
+One private real XML + matching numeric PV-2000 CSV pair supplies **69 sites** for `UseEnhancedMode=true`, N-type, measured-linearity, non-texture processing with positive oxide thickness. Vendor output contains **28 finite DL/Tau sites** and 41 `Ud.` sites.
+
+The paired path preserves the ordinary SPV preprocessing (linearity, penetration depth, oxide/temperature correction) and replaces the standard closed-form DL step with the recovered finite-wafer/back-surface root model. For candidate diffusion length `L`, wafer thickness `W`, back-surface velocity `S`, corrected SPV ratio `R`, and penetration depths `Z6/Z8`, the model uses N-type minority-carrier diffusion coefficient **12.2 cm²/s** and solves the recovered vendor equation over approximately `0.001..3 cm`.
+
+Paired regression:
+
+- DL: 28 finite values, max absolute error **2.11e-7 µm**;
+- Tau: 28 finite values, max absolute error **1.46e-7 µs**;
+- SPV8/SPV6: floating-point agreement;
+- DL/Tau availability: **0 mismatches** across all 69 sites.
+
+The Tau path uses the same N-type fixed minority-hole mobility already recovered from the vendor helper. Geometry remains an independent profile axis.
+
+**Not validated by this profile**
+
+- Enhanced P-type;
+- `UseTextureCorrection=true`;
+- `ParseSignals=true`;
+- `UseManualLR`;
+- zero-oxide or other optical categorical branches not exercised by this pair.
 
 ---
 
