@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline for this branch: `v20260925.2` (SPV standard expansion and enhanced audit merged in PR #67).
-- Feature branch: `feat/isc-vcpd-corpus-parity`.
-- Scope: geometry-independent paired ISC/VCPD validators and quantity-level promotion from the 100-case private corpus.
-- Private regression: run `scripts/validate_isc_reference.py` on nine ISC XML/CSV pairs and `scripts/validate_vcpd_reference.py` on the three nonempty VCPD pairs; check the one empty pair separately as new/unavailable profile evidence. Reference files stay ignored in `private/`.
+- Main baseline for this branch: `v20260925.3` (ISC/VCPD corpus parity merged in PR #68).
+- Feature branch: `feat/cet-corpus-parity`.
+- Scope: seven nonempty CET calculation/geometry pairs and one zero-site pair from the 100-case private corpus.
+- Private regression: run `scripts/validate_cet_reference.py` on eight matching XML/CSV pairs; the zero-site case is classified as empty. Reference files stay ignored in `private/`.
 
 ## Cross-profile parity / geometry-decoupling audit
 

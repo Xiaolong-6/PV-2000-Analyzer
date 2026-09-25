@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.3.1 — 2026-09-25 (feature branch)
+
+- Expanded CET calculation evidence using seven new nonempty XML/vendor CSV pairs (19 sites) across six independently validated geometry combinations. Five finite EOT/Cd sites and all 19 R² results agree pointwise; an eighth zero-site pair remains empty evidence only.
+- Migrated the CET private validator from a NinePoint/SquareCell gate to the shared geometry resolver while preserving quantity-specific unavailable values and summaries.
+- Restricted CET runtime validation to the paired single-iteration, positive-charge path; updated algorithm notes, reference profiles, handoff and Wiki.
+
 ## v20260925.3 — 2026-09-25
 
 - Modernized ISC and VCPD paired validators to check calculation/quantity results independently of the shared geometry resolver. Nine new ISC pairs (1860 sites) match all three outputs and coordinates, including RoundWafer maps and SquareRegion/SquareCell.

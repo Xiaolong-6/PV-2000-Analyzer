@@ -116,9 +116,11 @@ The paired one-point non-zero coefficient case also establishes the shared targe
 
 Runtime validation is split into `CET-CALC-001` for EOT/Cd/R² calculation semantics and `GEOM-NINEPOINT-SQUARE-001` for the paired NinePointPattern + SquareCell coordinate path. `CET-9PT-SQUARE-001` remains the historical evidence-bundle name, not a runtime geometry+algorithm gate.
 
+The validated calculation path requires one iteration, at least one acquired site and a positive finite `Process.CoronaCharge`. The empty pair does not expand this path.
+
 **Reference material**
 
-One private paired XML + PV-2000 numeric CSV export with **9 sites**. The pair uses `NinePointPattern + SquareCell` and exposes EOT, Cd and R² together with exported X/Y coordinates.
+The original private **9-site** NinePoint/SquareCell pair plus seven new nonempty paired XML/vendor CSV exports (**19 sites**) across FivePoint/RoundWafer, SquareRegion/SquareCell, SquareRegion/RoundWafer, OnePoint/SquareCell, OnePoint/RoundWafer and NinePoint/SquareCell. An eighth new pair has zero acquired sites and establishes empty-export handling only.
 
 **Validated / established**
 
@@ -136,13 +138,15 @@ One private paired XML + PV-2000 numeric CSV export with **9 sites**. The pair u
 
 The private pointwise validator currently reports maximum differences of approximately **2.1e-14 mm** for coordinates, **3.2e-12 Å** for EOT, **6.2e-13 nF/cm²** for Cd and **1.2e-13** for R². Average / median / sample-stdev / min / max summaries also reproduce the vendor CSV at floating-point precision.
 
+The seven new nonempty pairs add five finite EOT/Cd sites and 19 finite R² sites. Their maximum errors are **2.27e-12 Å** (EOT), **5.69e-13 nF/cm²** (Cd), **6.03e-14** (R²) and **2.1e-14 mm** (coordinates); every `Ud.` mask agrees. The one-point and all-unavailable NinePoint cases also confirm quantity-specific summaries. The zero-site case is reported as empty rather than promoted to a numeric profile.
+
 **Supported but not validated by this profile**
 
-The supplied CET XML corpus also contains OnePoint, FixedPoints, RoundWafer NinePoint and one-point SquareRegion examples. These can use the shared canonical geometry/runtime parser where their XML structure is sufficient, but they remain **inferred** until paired vendor output establishes the same coordinate/result semantics.
+FixedPoints and other still-unpaired CET configurations remain inferred. Calculation validation is `CET-CALC-001`; the six observed geometry combinations each use their independent shared geometry profile. The historical `CET-9PT-SQUARE-001` label refers only to the original evidence bundle.
 
 **NEW PROFILE triggers**
 
-Treat a CET case as a new profile or explicit profile extension when it changes the pattern/target coordinate encoding, process/result branch, unit convention, undefined-value rule or EOT/Cd arithmetic.
+Treat a CET case as a new calculation profile when it changes the process/result branch, unit convention, undefined-value rule or EOT/Cd arithmetic. New coordinate encodings require their own paired geometry evidence.
 
 See `docs/ALGORITHMS_CET.md`.
 

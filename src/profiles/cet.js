@@ -10,7 +10,8 @@
     outputQuantities:['cet-eot','cet-cd','cet-r2'],
     matches:data=>
       data?.type==='CETMeasurement'&&
+      data.iterationCount===1&&
       data?.sites?.length>0&&
-      Number.isFinite(data.coronaCharge)
+      Number.isFinite(data.coronaCharge)&&data.coronaCharge>0
   });
 })(typeof window!=='undefined'?window:globalThis);

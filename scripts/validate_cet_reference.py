@@ -10,6 +10,7 @@ import statistics
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from validate_geometry_profiles import resolve_xml_geometry
 
 Q_LEGACY = 1.602e-19
 EOT_FACTOR = 34.5
@@ -115,20 +116,12 @@ def parse_xml(path: Path):
                     eot = EOT_FACTOR / cd_internal
         sites.append({'eot': eot, 'cd': cd, 'r2': r2})
 
-    pattern = child(measurement, 'Pattern')
-    target = child(measurement, 'Target')
-    pattern_type = attr_type(pattern)
-    target_type = attr_type(target)
-    if pattern_type != 'NinePointPattern' or target_type != 'SquareCell':
-        raise ValueError(f'{path.name}: validator currently targets paired NinePointPattern + SquareCell CET profile')
-    size = child(target, 'Size')
-    half_x = number(size, 'Width') / 2 - number(target, 'EdgeExclusion', number(measurement, 'EdgeExclusion', 0.0))
-    half_y = number(size, 'Height') / 2 - number(target, 'EdgeExclusion', number(measurement, 'EdgeExclusion', 0.0))
-    coefficients = []
-    coeff_node=child(pattern, 'Coefficients')
-    for point in (list(coeff_node) if coeff_node is not None else []):
-        coefficients.append((number(point, 'X'), number(point, 'Y')))
-    coords = [(x * half_x, y * half_y) for x, y in coefficients]
+    if not sites:
+        return sites, []
+    geometry, _ = resolve_xml_geometry(path, len(sites))
+    if geometry['status'] not in {'complete', 'partial'}:
+        raise ValueError(f'{path.name}: GEOMETRY NEW PROFILE: {geometry}')
+    coords = [(point['x'], point['y']) for point in geometry['points']]
     if len(coords) != len(sites):
         raise ValueError(f'{path.name}: {len(coords)} coordinates for {len(sites)} sites')
     return sites, coords
@@ -179,6 +172,8 @@ def max_error(a, b):
 
 def summary(values):
     finite = [value for value in values if math.isfinite(value)]
+    if not finite:
+        return [math.nan, 0.0, 0.0, 0.0, 0.0]
     return [
         statistics.mean(finite),
         statistics.median(finite),
@@ -193,6 +188,8 @@ def validate_pair(xml_path: Path, csv_path: Path):
     vendor, vendor_summaries = parse_csv(csv_path)
     if len(sites) != len(vendor):
         raise AssertionError(f'row count {len(sites)} != {len(vendor)}')
+    if not sites:
+        return {'empty': True}, {}
 
     coord_errors = [math.hypot(coords[index][0] - row['x'], coords[index][1] - row['y']) for index, row in enumerate(vendor)]
     errors = {
@@ -232,6 +229,9 @@ def main():
         if not csv_path.exists():
             raise FileNotFoundError(f'Missing matching CSV: {csv_path}')
         errors, summary_errors = validate_pair(xml_path, csv_path)
+        if errors.get('empty'):
+            print(f'CET EMPTY {xml_path.name}: zero acquired sites; no numeric profile promoted')
+            continue
         print(f'CET PASS {xml_path.name}')
         print('  pointwise:', ', '.join(f'{key}={value:.3g}' for key, value in errors.items()))
         print('  summaries:', ', '.join(f'{key}={value:.3g}' for key, value in summary_errors.items()))
