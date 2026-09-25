@@ -43,7 +43,11 @@ The validated calculation envelope is the standard non-enhanced, non-texture, no
 
 The 100-case corpus adds **nine** paired SPV exports. Eight standard pairs cover **3213 sites**: five positive-oxide pairs extend `SPV-CALC-STANDARD-001`, while three zero-oxide/zero-reflectivity pairs establish `SPV-CALC-ZERO-OXIDE-002`. All **1542 finite DL/Tau sites** in these new pairs agree pointwise (new-pair maxima 5.52e-12 µm and 7.15e-13 µs), and no value or raw-channel availability masks differ. Geometry is independently checked: 877-, 1649- and 221-site RoundWafer maps, NinePoint/RoundWafer, OnePoint/RoundWafer and HighDensity/PseudoSquareCell are complete; a terminated 59-site HighDensity/SquareCell acquisition matches the vendor coordinate prefix but stays partial.
 
-The remaining enhanced N-type pair has 69 raw SPV sites and 28 finite vendor DL/Tau values. Raw channels match; the standard formula on those 28 sites differs by as much as 296.64 µm (DL) and 420.23 µs (Tau). It remains an unimplemented enhanced calculation profile. Run `python scripts/validate_spv_reference.py private/spv-01.xml ...` for standard pairs and `python scripts/validate_spv_reference.py --audit-enhanced private/spv-04.xml` for the enhanced audit. CSV is never a runtime input.
+The remaining enhanced N-type pair has 69 raw SPV sites and 28 finite vendor DL/Tau values. Raw channels match; the standard formula on those 28 sites differs by as much as 296.64 µm (DL) and 420.23 µs (Tau). It remains an **unimplemented enhanced calculation profile**. The validator now detects `UseEnhancedMode=true` and reports this pair as an explicit **diagnostic**, rather than failing the standard-profile regression or promoting it to PASS. `--audit-enhanced` remains available for an explicit enhanced audit. CSV is never a runtime input.
+
+## VCPD empty-acquisition diagnostic
+
+The 100-case VCPD set contains one paired export with zero acquired sites and zero point rows. The validator reports it as `VCPD EMPTY` / diagnostic evidence and does not promote a calculation or geometry profile. The three nonempty paired VCPD cases remain the numeric validation evidence.
 
 ## Leakage — paired VSASS / LI regression
 

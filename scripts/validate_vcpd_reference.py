@@ -128,7 +128,15 @@ def parse_xml(path: Path):
     data = child(iteration, "Data")
     items = [x for x in children(data) if lname(x.tag) == "DataItem"]
     if not items:
-        raise AssertionError("NEW PROFILE: no acquired sites; empty export only")
+        return {
+            "empty": True,
+            "xs": [],
+            "ys": [],
+            "values": [],
+            "geometry": {"status": "empty", "profileId": None},
+            "reading_counts": [],
+            "offset": math.nan,
+        }
     geometry, _ = resolve_xml_geometry(path, len(items))
     xs = [point["x"] for point in geometry["points"]]
     ys = [point["y"] for point in geometry["points"]]
@@ -215,6 +223,12 @@ def parse_vendor_csv(path: Path):
 def validate_pair(xml_path: Path, csv_path: Path):
     x = parse_xml(xml_path)
     v = parse_vendor_csv(csv_path)
+    if x.get("empty"):
+        if v["xs"] or v["values"]:
+            raise AssertionError(
+                f"zero XML DataItems but CSV has {len(v['xs'])} point rows"
+            )
+        return f"VCPD EMPTY {xml_path.name}: zero acquired sites; no numeric profile promoted"
     if len(v["xs"]) != len(x["values"]):
         raise AssertionError(
             f"CSV point count={len(v['xs'])}, XML point count={len(x['values'])}"
@@ -264,7 +278,7 @@ def main():
             print(f"{label} {xml_path.name}: {type(exc).__name__}: {exc}")
             ok = False
         else:
-            print("PASS " + msg)
+            print(msg if msg.startswith("VCPD EMPTY") else "PASS " + msg)
     return 0 if ok else 1
 
 

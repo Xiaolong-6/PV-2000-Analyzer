@@ -69,7 +69,7 @@ Across their 244 sites, all DL/Tau values are finite and the maximum absolute di
 
 The 59-site acquisition is marked `Terminated`: its first 59 scheduled coordinates agree with the vendor CSV within **1.6e-14 mm**. Its geometry remains **partial** and does not receive a complete geometry profile. The NinePoint and PseudoSquare coordinates agree within **2.1e-14 mm** through their independent complete geometry profiles.
 
-The ninth new pair is `UseEnhancedMode=true` and N-type: 28 of 69 DL/Tau sites are finite in vendor output. Raw SPV8/SPV6 agree to floating-point precision; evaluating the standard path on those sites gives DL/Tau maximum errors of **296.64 µm** and **420.23 µs**. This is evidence for a separate enhanced calculation path, not for applying either standard profile.
+The ninth new pair is `UseEnhancedMode=true` and N-type: 28 of 69 DL/Tau sites are finite in vendor output. Raw SPV8/SPV6 agree to floating-point precision; evaluating the standard path on those sites gives DL/Tau maximum errors of **296.64 µm** and **420.23 µs**. This is evidence for a separate enhanced calculation path, not for applying either standard profile. The paired validator therefore treats this case as an explicit diagnostic/evidence wall; it is intentionally not counted as a standard-profile failure or as validated Enhanced output.
 
 ---
 

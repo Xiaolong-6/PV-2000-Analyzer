@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.10 — 2026-09-25
+
+- Refined final 100-case validator semantics without changing runtime scientific calculations.
+- VCPD zero-site XML/CSV pairs now report `VCPD EMPTY` as diagnostic evidence instead of `NEW PROFILE`; no numeric calculation or geometry profile is promoted.
+- SPV `UseEnhancedMode=true` pairs now automatically run the enhanced audit path. The known N-type pair remains unvalidated: raw SPV8/SPV6 agree, while the standard DL/Tau formula differs by up to **296.64 µm** and **420.23 µs**.
+- Added regression tests and documentation to keep diagnostic/evidence-wall states distinct from validated PASS results.
+
+
 ## v20260925.9 — 2026-09-25
 
 - Modernized the LBIC paired validator around independent calculation, geometry and quantity-availability axes; no runtime scientific calculation changed.

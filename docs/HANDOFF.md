@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline for this branch: `v20260925.7` (QSS HighDensity/sentinel parity merged in PR #73).
-- Feature branch: `fix/dit-initial-qc-final-result-parity`.
-- Scope: close the DIT final-result direct/bookkeeping evidence without weakening the stronger Standard COCOS calculation rules.
-- Private regression: thirteen successful DIT final-result XML/vendor CSV pairs cover 43 sites; Initial VDark is floating-point exact and Initial Qc requires one additional PreProcess charge step. Reference files stay private.
+- Main baseline before this validation-only branch: `v20260925.9`.
+- Feature branch: `validation/final-evidence-diagnostics`.
+- Scope: finish 100-case validator semantics for known non-numeric/independent branches without changing runtime scientific calculations.
+- QSS, DIT and LBIC closure changes are already merged; this branch reclassifies zero-site VCPD and the paired SPV Enhanced N-type evidence as diagnostics rather than false regression failures.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -24,7 +24,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
 8. **partially completed:** final-result direct/bookkeeping audit validates initial VDark and fixes the Initial Qc off-by-one; corrected-light/N-type/flatband/Dit regenerated-export drift remains an evidence boundary and the stronger original-pair Standard COCOS rules are unchanged;
 9. **completed:** re-audit Dual QSS alternate geometries; keep the result-profile gate because the paired FixedPoints/PseudoSquare evidence conflicts, while preserving the newly proven no-J0 quantity availability rule;
-10. **completed:** Leakage and the paired standard SPV map path are implemented; IntensityScan remains deferred because no trustworthy scientific result export path exists.
+10. **completed:** Leakage and the paired standard SPV map path are implemented; the Enhanced N-type SPV pair is now an explicit diagnostic/evidence wall, and IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
 

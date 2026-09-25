@@ -285,3 +285,12 @@ test('ISC and VCPD render through the shared valid-data filter contract',()=>{
   assert.match(src,/Metric available','Pass valid-data filter','Displayed'/);
   assert.match(src,/validDataFilter:true/);
 });
+
+
+test('VCPD validator classifies zero-site exports as diagnostic evidence',()=>{
+  const fs=require('node:fs');
+  const src=fs.readFileSync(require.resolve('../scripts/validate_vcpd_reference.py'),'utf8');
+  assert.match(src,/VCPD EMPTY/);
+  assert.match(src,/zero acquired sites; no numeric profile promoted/);
+  assert.doesNotMatch(src,/NEW PROFILE: no acquired sites; empty export only/);
+});
