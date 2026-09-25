@@ -244,6 +244,47 @@ Use `scripts/validate_dit_result_reference.py` for this narrow result-table evid
 
 ---
 
+### DIT-RESULT-STANDARD-DLL-002 — current-DLL Standard COCOS final-result quantities
+
+**Measurement type**
+
+`DITMeasurement`
+
+**Reference material**
+
+The same **13 paired final-result XML/vendor-CSV files / 43 sites** used by `DIT-RESULT-INITIAL-001`, evaluated against the recovered current managed result path (`UseCocosII=false`). One additional DIT XML remains a vendor-harness non-output and does not contribute numeric evidence.
+
+**Validated / established**
+
+The recovered path reproduces vendor final-result availability and values for:
+
+- `Vfb`
+- `Qsc`
+- `Qtot`
+- `Qit`
+- Minimum `Dit`
+
+The result path includes the managed-DLL preprocessing semantics rather than the Analyzer's configurable scientific model: repeated-reading outlier rejection, corrected-light reconstruction, doping-dependent charge-axis ordering, natural-cubic interpolation onto a 3× dense charge grid, vendor flatband intersection/availability rules, vendor silicon constants (`ni = 1.45e10 cm^-3`, `eps_r = 11.9`), Qit barrier interpolation, and the discrete variation-method Dit minimum.
+
+Paired browser-runtime parity across the 13 files:
+
+- Vfb: **10 finite values**, max absolute error about **1.03e-13 V**
+- Qsc: **42 finite values**, max absolute error about **5.49e-4 cm^-2**
+- Qtot: **9 finite values**, max absolute error about **3.47e-2 cm^-2**
+- Minimum Dit: **42 finite values**, max absolute error about **3.81e-1 cm^-2 eV^-1**
+- Qit: **5 finite values**, max absolute error about **2.93e-3 cm^-2**
+- availability mismatches: **0** for every quantity
+
+A separate private Python oracle independently reconstructs the same managed path and also passes all 13 pairs.
+
+**Scope boundary**
+
+This profile is a **PV-2000 current-DLL compatibility result path**. It is intentionally separate from the Analyzer's user-selectable Standard COCOS scientific quantities, optional Ge model, PCHIP Midgap Dit and inferred COCOS-II path. The Analyzer therefore exposes these fields separately as `PV-2000 result` quantities rather than silently replacing the configurable analysis results.
+
+It does not establish that older PV-2000 releases used identical downstream bookkeeping/interpolation. Historical paired data can differ and remain version-scoped.
+
+---
+
 ### QSS-MAP-001 — QSS-µPCD MapPattern + RoundWafer family
 
 **Measurement type**

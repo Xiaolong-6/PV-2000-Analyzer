@@ -94,6 +94,45 @@ test('DIT final-result VLight and Vsb stay separate from signed analysis Vsb', (
   assert.ok(Number.isNaN(resultVsb(NaN, 0.2, factor)));
 });
 
+test('DIT current-DLL process averaging rejects the recovered number of outliers', () => {
+  const count = PV2000.modules.dit.vendorOutlierCount(Array(24).fill(0));
+  assert.equal(count, 5);
+  assert.equal(PV2000.modules.dit.vendorOutlierCount(Array(4).fill(0)), 0);
+  assert.equal(PV2000.modules.dit.vendorRejectedMean([1, 1, 1, 1, 1, 100]), 1);
+});
+
+test('DIT current-DLL Qsc uses vendor constants independently of Analyzer material', () => {
+  const actual = PV2000.modules.dit.vendorDitQsc(0.030737996, 4.5e13, 'n', 300);
+  assert.ok(Math.abs(actual - 4092731217.2081) < 1e-3);
+  assert.equal(PV2000.modules.dit.vendorDitModel.niCm3, 1.45e10);
+  assert.equal(PV2000.modules.dit.vendorDitModel.epsR, 11.9);
+});
+
+test('DIT current-DLL downstream result path withholds insufficient process data', () => {
+  const result = PV2000.modules.dit.vendorResultDownstream(
+    {
+      VDark: 0.4,
+      VLight: 0.35,
+      resultProcess: { dark: [0.4, 0.39], light: [0.35, 0.34] },
+      chuckTemperature: 0
+    },
+    {
+      useCocosII: false,
+      factor: 1.2,
+      doping: 1e15,
+      dopingType: 'p',
+      vsbThreshold: 0.03,
+      qitMin: -0.25,
+      qitMax: -0.05,
+      process: { charge: -1e11 }
+    }
+  );
+  assert.equal(result.profileId, 'DIT-RESULT-STANDARD-DLL-002');
+  for (const key of ['Vfb', 'Qsc', 'Qtot', 'Qit', 'Dit']) {
+    assert.ok(Number.isNaN(result[key]));
+  }
+});
+
 test('DIT final-result validator hard-gates direct result Vsb independently', () => {
   const fs = require('node:fs');
   const src = fs.readFileSync(require.resolve('../scripts/validate_dit_result_reference.py'), 'utf8');

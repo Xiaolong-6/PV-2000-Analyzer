@@ -546,3 +546,13 @@ test('LBIC stacked local profiles use a horizontal divider at wide and medium wi
   assert.match(css,/\.lbic-module \.lbic-profile-columns\{[^}]*grid-template-columns:1fr/);
   assert.match(css,/\.lbic-module \.profile-pane\+\.profile-pane\{[^}]*border-left:0;[^}]*border-top:1px solid var\(--border\)/);
 });
+
+test('LBIC View uses the same compact stacked-label control language as Valid-data filter',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(src,/class="sidebar-control-grid"/);
+  assert.match(src,/class="sidebar-control-toggle"/);
+  assert.match(css,/\.sidebar-control-grid\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.sidebar-control-grid label,\.filter-grid label\{[^}]*flex-direction:column/);
+  assert.match(css,/\.sidebar-control-grid input,\.sidebar-control-grid select,\.filter-grid input,\.filter-grid select\{[^}]*height:30px/);
+});
