@@ -78,7 +78,7 @@ The project records both the scientific relation and the compatibility status.
 
 The current implemented analyzers include several explicitly named profile families, for example:
 
-- `QSS-INJ-RESULT-001` — Dual-QSS non-Auger Back/Back `OnePointPattern` final-result path, anchored by the original two-pair core and extended by three compatible 100-case OnePoint rows; target geometry is validated independently and conflicting FixedPoints rows remain diagnostic;
+- `QSS-INJ-RESULT-001` — Dual-QSS non-Auger Back/Back single-site final-result path, anchored by the original two-pair OnePoint core, extended by three compatible 100-case OnePoint rows and two one-site FixedPoints rows; `DoPointAveraging` selects first-vector versus pointwise-mean lifetime input, while target geometry is validated independently;
 - `JZERO-CALC-001` for the two-intensity Emitter-J0 lifetime/Smax/Basore path, independent shared geometry profiles, and `JZERO-VOC-COMPAT-001` for the recovered current-DLL Implied-Voc compatibility equation across the cross-profile harness corpus;
 - separate ISC and VCPD paired map profiles;
 - `CET-9PT-SQUARE-001` — CET NinePointPattern + SquareCell;
