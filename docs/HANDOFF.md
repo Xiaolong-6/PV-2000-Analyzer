@@ -1,5 +1,9 @@
 # Agent handoff — 2026-09-25
 
+## Current dataset adaptive summary layout (v20260925.24.6 branch)
+
+Dedicated analyzer **Current dataset** panels now use one compact count-adaptive presentation. Wide sidebars divide the row evenly across the analyzer's actual metric count (currently 3 in Dual QSS, 4 in most analyzers and 5 in JZero), so there is no empty fourth slot or orphan fifth item. At the medium two-column workspace, the panel becomes compact label/value rows rather than a forced card grid. The inner metric cards were removed only for Current dataset; other validation/status components keep their existing treatment. ISC/VCPD displays the completed acquisition schedule as **Complete**.
+
 ## Geometry boundary-contract hardening (v20260925.21)
 
 The canonical geometry core deliberately keeps three different circular predicates. `roundGrid()` is strict with an inward `1e-9` guard; `pseudoSquareGrid()` is inclusive with an outward `1e-9` guard; HighDensity circular clipping is strict with no epsilon. The HighDensity rule is directly parity-sensitive: the 35 × 35 RoundWafer coefficient template resolves to 893 sites only when the stored floating-point coefficients are tested directly without subtracting an artificial epsilon. Dedicated regression tests now lock all three edge semantics, and architecture documentation warns against merging them into one helper without new paired boundary evidence.
