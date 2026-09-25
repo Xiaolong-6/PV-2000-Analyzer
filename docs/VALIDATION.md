@@ -209,9 +209,9 @@ See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
 
 ## Dual QSS numeric final-result parity — QSS-INJ-RESULT-001
 
-The original core evidence is two real `DualQssMeasurement` XML files with matching **numeric PV-2000 final-result CSV exports**, both `OnePointPattern + RoundWafer`, Back/Back source selection and non-Auger. The 100-case harness adds three compatible current-style `OnePointPattern` result rows, including one `SquareCell` target; target geometry is therefore validated independently from the OnePoint calculation envelope.
+The original core evidence is two real `DualQssMeasurement` XML files with matching **numeric PV-2000 final-result CSV exports**, both `OnePointPattern + RoundWafer`, Back/Back source selection and non-Auger. The 100-case harness adds three compatible current-style `OnePointPattern` result rows plus two one-site `FixedPointsPattern + PseudoSquareCell` rows. Target geometry remains independent from the calculation profile.
 
-The independent private reconstruction starts from XML only and reproduces vendor QDC internals plus all nine final scalar outputs. The public runtime validator then executes the browser implementation against the same two XML+CSV pairs.
+The independent private reconstruction starts from XML only and reproduces vendor QDC internals plus all nine final scalar outputs. Managed-IL tracing additionally recovered the saved-vector point-averaging rule used by the two FixedPoints cases. The public runtime validator executes the browser implementation against the paired XML+CSV evidence.
 
 | Quantity / behavior | Paired regression | Status |
 |---|---:|---|
@@ -227,6 +227,8 @@ The independent private reconstruction starts from XML only and reproduces vendo
 | Implied Voc (1 Sun) | max abs error ≈ **4.4e-16 V** | validated |
 | K-S J0 | max abs error ≈ **7.3e-12 fA/cm²** | validated |
 
+Point averaging is now a validated input semantic. With `DoPointAveraging=false`, PV-2000 uses `Values[0][i]`; with `DoPointAveraging=true`, it uses `Average(Values[*][i])` through `QssDataItem.GetLifeTimeAsVector(i)`. The previously discrepant 3avg FixedPoints pair becomes pointwise compatible after this input correction: teff.d exact, teff.SS error ≈ **1.14e-13 µs**, teff.SS Max ≈ **2.27e-13 µs**, Basore J0 ≈ **2.84e-14 fA/cm²**, Δn relative error ≈ **2.17e-15**, and K-S J0 ≈ **7.82e-13 fA/cm²**.
+
 Current pair values include HighPower `teff.SS=280.94342922609 µs`, `teff.SS Max=893.70740338579 µs`, Basore J0 `199.548389124001 fA/cm²`, K-S J0 `128.40923475899 fA/cm²`; LowPower `teff.SS=236.991629 µs`, `teff.SS Max=1984.29119677534 µs`, Basore/Δn unavailable and K-S J0 `863.446682273861 fA/cm²`.
 
 Run:
@@ -237,11 +239,11 @@ npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 
 The 100-case harness adds five nonempty Dual QSS final-result rows beyond the original two-pair regression. Three OnePoint rows remain compatible with the established non-Auger Back/Back calculation family. One of them has `CalculateJZeroParams=false`: PV-2000 exports finite teff.d/teff.SS/Δn/Smax/Voc but `Ud.` for `teff.SS Max` and maximum-Smax. The runtime now preserves that quantity-level unavailability instead of exposing internally computable maxima.
 
-Two historical `FixedPointsPattern + PseudoSquareCell` rows give conflicting calculation evidence: one is close to the current reconstruction, while the other differs materially (for example ≈0.43 µs teff.SS, ≈10.16 µs teff.SS Max and ≈1.30 fA/cm² Basore J0). They remain diagnostic and do not widen the OnePoint calculation gate.
+The two historical `FixedPointsPattern + PseudoSquareCell` rows no longer conflict after the saved-vector semantics are preserved. One uses a single lifetime vector with point averaging disabled; the 3avg case stores three lifetime vectors with point averaging enabled. Both reuse the same downstream QSS/J0 reconstruction. Public support is deliberately limited to **one-site** FixedPoints evidence.
 
-The modernized 100-case result validator now reports **3 numeric PASS + 7 diagnostics**: four zero-result acquisitions, one legacy Laser-Power/Lifetime-only branch and the two conflicting FixedPoints rows are explicitly non-promoting diagnostics. The three PASS rows include two RoundWafer targets and one SquareCell target; all resolve through `GEOM-ONEPOINT-CENTER-001`.
+The modernized 100-case result validator now reports **5 numeric PASS + 5 diagnostics**: three OnePoint rows plus two one-site FixedPoints rows pass; four zero-result acquisitions and one legacy Laser-Power/Lifetime-only branch remain explicit diagnostics.
 
-The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or the conflicting historical FixedPoints result branch.
+The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover multi-site FixedPoints, Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or other unpaired result branches.
 
 
 ## Emitter J0 map — calculation / geometry / quantity regression
