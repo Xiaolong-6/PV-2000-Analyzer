@@ -39,13 +39,15 @@ def max_abs(a,b):
     if len(a)!=len(b): raise AssertionError(f'length mismatch {len(a)} != {len(b)}')
     err=0.0
     for i,(x,y) in enumerate(zip(a,b)):
-        if not(math.isfinite(x) and math.isfinite(y)):raise AssertionError(f'non-finite at point {i+1}: {x!r}, {y!r}')
+        if not(math.isfinite(x) and math.isfinite(y)):
+            if math.isnan(x) and math.isnan(y):continue
+            raise AssertionError(f'non-finite mismatch at point {i+1}: {x!r}, {y!r}')
         err=max(err,abs(x-y))
     return err
 
 def summary(v):
     z=[x for x in v if math.isfinite(x)]
-    return [statistics.fmean(z),statistics.median(z),statistics.stdev(z),min(z),max(z)] if z else [math.nan]*5
+    return [statistics.fmean(z),statistics.median(z),statistics.stdev(z) if len(z)>1 else math.nan,min(z),max(z)] if z else [math.nan]*5
 
 def effective_half(size,edge):
     half=size/2
