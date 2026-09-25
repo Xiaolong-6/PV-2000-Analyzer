@@ -83,7 +83,7 @@ test('Dual QSS measurement-position visualization stays out of the sidebar',()=>
 
 test('Dual QSS initial render draws immediately without a control change',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
-  assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\n    \}\n    redraw\(\);\n    PV\.plot\.observeResize\(host,redraw\);\n  \}/);
+  assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\r?\n    \}\r?\n    redraw\(\);\r?\n    PV\.plot\.observeResize\(host,redraw\);\r?\n  \}/);
 });
 
 test('Dit results summary uses compact Selected-site-style rows without repeated labels',()=>{
@@ -612,7 +612,7 @@ test('QSS smooth rendering is compatible with high-DPI canvas transforms',()=>{
 
 test('DIT analysis rebuild keeps the displayed map metric and filter metric synchronized',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
-  assert.match(src,/const key=metrics\[preferredKey\]\?preferredKey:'Qtot';\n      mapKey=key;/);
+  assert.match(src,/const key=metrics\[preferredKey\]\?preferredKey:'Qtot';\r?\n      mapKey=key;/);
   assert.match(src,/linkedSelect:'#ditMapMetric'/);
 });
 
