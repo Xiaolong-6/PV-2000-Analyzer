@@ -377,6 +377,10 @@ The full result path is enabled only for the paired semantic envelope above. `Us
 
 The broader `QSS-INJ-001` 273-pair corpus still validates the raw injection/transient path; it does not automatically extend this final-result profile to all historical Dual QSS files.
 
+The 100-case harness adds ten further Dual QSS exports. Four contain no acquired result row and one is an older laser-power/Lifetime-only branch. Of the five nonempty final-result rows, three OnePoint cases stay inside the current non-Auger Back/Back calculation family. One `CalculateJZeroParams=false` pair proves a quantity-level availability rule: `teff.SS Max` and its corresponding maximum-Smax output are vendor `Ud.` even though `teff.SS (1 Sun)`, Δn, Smax and Implied Voc remain finite. Runtime therefore marks those maximum quantities unavailable when J0 calculation is not requested.
+
+Two `FixedPointsPattern + PseudoSquareCell` pairs are intentionally not used to widen the result-profile geometry gate: one is numerically close to the current reconstruction, while the other differs materially in teff.SS, teff.SS Max, J0 and downstream quantities. That conflicting evidence is a categorical result-path boundary, not a reason to generalize by geometry alone.
+
 **Validation**
 
 Run the public launcher against the private paired case directories:
