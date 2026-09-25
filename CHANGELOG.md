@@ -1,5 +1,15 @@
 # Changelog
 
+## v20260925.9 — 2026-09-25
+
+- Modernized the LBIC paired validator around independent calculation, geometry and quantity-availability axes; no runtime scientific calculation changed.
+- Closed the 100-case LBIC matrix with **9 numeric PASS + 2 zero-site diagnostics**, replacing the previous validator-only **2 FAIL + 9 NEW_PROFILE** result.
+- Added eight current+scattered numeric pairs spanning **27,376 sites** across OnePoint, Map and SquareRegion geometries. Current is exact, finite IQE differs by at most about **9.95e-14 %-point**, and X/Y differs by at most about **4.26e-14 mm**.
+- Added a five-site direct+scattered FivePoint/SquareCell pair with exact Current and Reflectivity/IQE differences at floating-point scale (~**4.26e-14 %-point**).
+- Ran all three 100-case DL-bearing exports through the dedicated DL validator: all seven sites remain vendor `Ud.` exactly. Finite DL evidence remains the existing 961-site current+scattered pair; finite direct+scattered DL remains unvalidated/withheld.
+- Preserved `LBIC-SINGLE-001`, `LBIC-MULTI-002` and `LBIC-REFLECTANCE-003` as historical composite evidence while documenting the decoupled `LBIC-CALC-*` profiles.
+
+
 ## v20260925.8 — 2026-09-25
 
 - Audited **13** paired DIT final-result XML/vendor-CSV exports covering **43 sites**; one additional DIT XML remains outside numeric closure because the vendor harness itself raises `ArgumentOutOfRangeException`.
