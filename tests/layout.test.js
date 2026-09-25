@@ -581,7 +581,7 @@ test('DIT keeps all three local scientific plots visible in the independently sc
 
 test('right-side selected-site typography matches the sidebar hierarchy',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\),\.module-grid>\.plots\.detail>\.dit-detail-sticky>\.panel\{font-size:11px/);
+  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11px/);
   assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
 });
 
