@@ -1,9 +1,17 @@
 #!/usr/bin/env python3
 """Validator for private LBIC XML + matching PV-2000 CSV/XPS references.
 
-Runtime stays XML-only. CSV/XPS files are development references. The validator
-recognizes LBIC-SINGLE-001, LBIC-MULTI-002 and LBIC-REFLECTANCE-003; ordinary
-numeric wavelength, flux and geometry values are not whitelist keys.
+Runtime stays XML-only. Vendor CSV/XPS files are development evidence only.
+
+The validator follows the current architecture:
+- calculation profile comes from active measurement flags / channel semantics;
+- geometry resolves independently through the shared geometry resolver;
+- Current / Reflectivity / IQE availability is checked per quantity;
+- calculated DL remains a separate validator/profile.
+
+Historical LBIC-SINGLE-001 / LBIC-MULTI-002 / LBIC-REFLECTANCE-003 evidence
+remains valid; the CALC profile labels below describe the decoupled runtime
+semantics used by current analyzers.
 """
 from __future__ import annotations
 
@@ -17,6 +25,8 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
+
+from validate_geometry_profiles import resolve_xml_geometry
 
 Q_PV2000 = 1.602e-19
 REFERENCE_CHANNELS = {"Current", "DirectReflection", "ScatteredReflection"}
@@ -96,7 +106,7 @@ def max_abs(a, b, allow_nan=False):
 def summary(values):
     z = [v for v in values if math.isfinite(v)]
     if not z:
-        return [math.nan] * 5
+        return [math.nan, 0.0, 0.0, 0.0, 0.0]
     return [
         statistics.fmean(z),
         statistics.median(z),
@@ -113,39 +123,37 @@ def eqe_percent(current_microamp, photon_flux):
 
 
 def iqe_percent(eqe, optical_reflectivity):
-    if not math.isfinite(eqe) or not math.isfinite(optical_reflectivity) or optical_reflectivity >= 100.0:
+    if not math.isfinite(eqe) or not math.isfinite(optical_reflectivity) or optical_reflectivity == 100.0:
         return math.nan
     value = eqe / (1.0 - optical_reflectivity / 100.0)
-    return value if math.isfinite(value) and value <= 100.0 else math.nan
+    return value if math.isfinite(value) and 0.0 <= value <= 100.0 else math.nan
 
 
-def effective_half(size, edge):
-    half = size / 2.0
-    if not math.isfinite(half) or half <= 0:
-        return math.nan
-    edge = edge if math.isfinite(edge) else 0.0
-    return half - edge if 0 <= edge < half else math.nan
+def calculation_profile(measure_current, measure_direct, measure_diffuse, unit, point_beams):
+    unit_ok = unit.replace("μ", "µ").replace("u", "µ").lower() == "µa"
+    current_placeholder = all(
+        values.get("Current", math.nan) == 0
+        for row in point_beams
+        for values in row.values()
+    ) if point_beams else True
 
-
-def pseudo_square_coords(width, height, diameter, edge, pitch_x, pitch_y):
-    half_w = effective_half(width, edge)
-    half_h = effective_half(height, edge)
-    radius = effective_half(diameter, edge)
-    if not all(math.isfinite(v) for v in (half_w, half_h, radius, pitch_x, pitch_y)):
-        return []
-    if pitch_x <= 0 or pitch_y <= 0:
-        return []
-    nx = math.floor(half_w / pitch_x + 1e-9)
-    ny = math.floor(half_h / pitch_y + 1e-9)
-    r2 = radius * radius
-    out = []
-    for iy in range(-ny, ny + 1):
-        y = iy * pitch_y
-        for ix in range(-nx, nx + 1):
-            x = ix * pitch_x
-            if x * x + y * y <= r2 + 1e-9:
-                out.append((x, y))
-    return out
+    if measure_current is True and unit_ok and measure_direct is True and measure_diffuse is True:
+        return "LBIC-CALC-CURRENT-DIRECT-SCATTERED-001"
+    if measure_current is True and unit_ok and measure_direct is False and measure_diffuse is True:
+        return "LBIC-CALC-CURRENT-SCATTERED-002"
+    if measure_current is True and unit_ok and measure_direct is False and measure_diffuse is False:
+        return "LBIC-CALC-CURRENT-ONLY-003"
+    if (
+        measure_current is False
+        and measure_direct is True
+        and measure_diffuse is True
+        and current_placeholder
+    ):
+        return "LBIC-CALC-REFLECTANCE-ONLY-004"
+    raise AssertionError(
+        "NEW PROFILE: active measurement flags/unit="
+        f"{measure_current!r}/{measure_direct!r}/{measure_diffuse!r}/{unit!r}"
+    )
 
 
 def parse_xml(path: Path):
@@ -186,8 +194,33 @@ def parse_xml(path: Path):
             row[key] = vals
         point_beams.append(row)
 
+    measure_current = flag_state(text(m, "MeasureCurrent", ""))
+    measure_direct = flag_state(text(m, "MeasureDirectReflectance", ""))
+    measure_diffuse = flag_state(text(m, "MeasureScatteredReflectance", ""))
+    unit = text(m, "MicroAmps", "")
+    profile = calculation_profile(
+        measure_current, measure_direct, measure_diffuse, unit, point_beams
+    )
+
+    pattern_type = xtype(child(m, "Pattern"))
+    target_type = xtype(child(m, "Target"))
+
+    if not items:
+        return {
+            "empty": True,
+            "profile": profile,
+            "pattern_type": pattern_type,
+            "target_type": target_type,
+            "coords": [],
+            "geometry_profile": None,
+            "geometry_status": "empty",
+            "geometry_interpretation": "zero acquired sites",
+            "beams": {},
+            "partial": False,
+        }
+
     if not beam_keys:
-        raise AssertionError("no BeamData keys")
+        raise AssertionError("DataItems exist but no BeamData keys")
     for key in beam_keys:
         if channel_sets.get(key) != REFERENCE_CHANNELS:
             raise AssertionError(
@@ -208,104 +241,73 @@ def parse_xml(path: Path):
         key = int(num(child(item, "Key"), "int", -1))
         flux[key] = num(child(item, "Value"), "double")
 
-    measure_current = flag_state(text(m, "MeasureCurrent", ""))
-    measure_direct = flag_state(text(m, "MeasureDirectReflectance", ""))
-    measure_diffuse = flag_state(text(m, "MeasureScatteredReflectance", ""))
-    reflectance_only = measure_current is False and measure_direct is True and measure_diffuse is True
-    current_and_optical = measure_current is True and measure_direct is True and measure_diffuse is True
-    if not (reflectance_only or current_and_optical):
-        raise AssertionError(
-            "NEW PROFILE: active measurement flags="
-            f"{measure_current!r}/{measure_direct!r}/{measure_diffuse!r}"
-        )
-
     for key in beam_keys:
         if key not in lasers:
             raise AssertionError(f"NEW PROFILE: LaserSettings row missing for beam {key}")
-        if not reflectance_only and (not math.isfinite(flux.get(key, math.nan)) or flux[key] <= 0):
-            raise AssertionError(f"NEW PROFILE: missing/invalid FluxCache[{key}]={flux.get(key)!r}")
+        if profile != "LBIC-CALC-REFLECTANCE-ONLY-004":
+            if not math.isfinite(flux.get(key, math.nan)) or flux[key] <= 0:
+                raise AssertionError(f"NEW PROFILE: missing/invalid FluxCache[{key}]={flux.get(key)!r}")
 
-    unit = text(m, "MicroAmps", "")
-    if not reflectance_only and unit.replace("μ", "µ").lower() not in {"µa", "ua"}:
-        raise AssertionError(f"NEW PROFILE: current unit={unit!r}")
-
-    pat = child(m, "Pattern")
-    target = child(m, "Target")
-    pattern_type = xtype(pat)
-    target_type = xtype(target)
-    coords = []
-    profile = ""
-
-    partial = False
-    if pattern_type == "SquareRegionPattern":
-        if len(beam_keys) != 1:
-            raise AssertionError(f"NEW PROFILE: SquareRegionPattern reference expects one beam, got {len(beam_keys)}")
-        dim, reg = child(pat, "Dimension"), child(pat, "Region")
-        nx, ny = int(num(dim, "X", 0)), int(num(dim, "Y", 0))
-        x0, y0 = num(reg, "X"), num(reg, "Y")
-        width, height = num(reg, "Width"), num(reg, "Height")
-        scheduled = nx * ny
-        if len(items) <= 0 or len(items) > scheduled:
-            raise AssertionError(f"Dimension={nx}x{ny}={scheduled}, DataItem count={len(items)}")
-        dx = width / (nx - 1) if nx > 1 else 0.0
-        dy = height / (ny - 1) if ny > 1 else 0.0
-        full_coords = [(x0 + col * dx, y0 + row * dy) for row in range(ny) for col in range(nx)]
-        partial = len(items) < scheduled
-        coords = full_coords[:len(items)]
-        if partial:
-            profile = "LBIC-PARTIAL-INFERRED"
-        else:
-            profile = "LBIC-REFLECTANCE-003" if reflectance_only else "LBIC-SINGLE-001"
-    elif pattern_type == "MapPattern" and target_type == "PseudoSquareCell":
-        if len(beam_keys) < 2:
-            raise AssertionError(f"NEW PROFILE: PseudoSquareCell multi-beam reference expects >=2 beams, got {len(beam_keys)}")
-        pitch = child(pat, "Pitch")
-        size = child(target, "Size")
-        width, height = num(size, "Width"), num(size, "Height")
-        diameter = num(target, "Diameter")
-        edge = num(target, "EdgeExclusion", num(m, "EdgeExclusion", 0.0))
-        pitch_x, pitch_y = num(pitch, "X"), num(pitch, "Y")
-        coords = pseudo_square_coords(width, height, diameter, edge, pitch_x, pitch_y)
-        if len(coords) != len(items):
-            raise AssertionError(
-                f"PseudoSquare schedule={len(coords)}, DataItem count={len(items)} "
-                f"(Size={width}x{height}, Diameter={diameter}, EdgeExclusion={edge}, Pitch={pitch_x}x{pitch_y})"
-            )
-        profile = "LBIC-MULTI-002"
-    else:
-        raise AssertionError(f"NEW PROFILE: pattern={pattern_type!r}, target={target_type!r}")
+    geometry, _ = resolve_xml_geometry(path, len(items))
+    geometry_status = geometry.get("status")
+    geometry_profile = geometry.get("profileId")
+    points = geometry.get("points", [])
+    if geometry_status not in {"complete", "partial"} or len(points) != len(items):
+        raise AssertionError(
+            "NEW PROFILE: unresolved geometry "
+            f"status={geometry_status!r} profile={geometry_profile!r} "
+            f"points={len(points)} DataItems={len(items)}"
+        )
+    coords = [(point["x"], point["y"]) for point in points]
 
     beams = {}
     for key in sorted(beam_keys):
-        current = [row[key]["Current"] for row in point_beams]
-        if reflectance_only and any(value != 0 for value in current):
-            raise AssertionError(
-                f"NEW PROFILE: inactive Current placeholders are nonzero for beam {key}"
-            )
+        stored_current = [row[key]["Current"] for row in point_beams]
         direct = [row[key]["DirectReflection"] for row in point_beams]
         scattered = [row[key]["ScatteredReflection"] for row in point_beams]
-        optical = [a + b for a, b in zip(direct, scattered)]
-        reflectivity = [max(0.0, min(100.0, r)) for r in optical]
-        beam = {
-            "laser": lasers[key],
-            "reflectivity": reflectivity,
-        }
-        if not reflectance_only:
-            eqe = [eqe_percent(v, flux[key]) for v in current]
-            iqe = [iqe_percent(qe, r) for qe, r in zip(eqe, optical)]
-            beam.update({
-                "photon_flux": flux[key],
-                "current": current,
-                "iqe": iqe,
-            })
+        current = [value if value >= 0 else math.nan for value in stored_current]
+
+        if profile in {
+            "LBIC-CALC-CURRENT-DIRECT-SCATTERED-001",
+            "LBIC-CALC-REFLECTANCE-ONLY-004",
+        }:
+            optical = [a + b for a, b in zip(direct, scattered)]
+        elif profile == "LBIC-CALC-CURRENT-SCATTERED-002":
+            optical = scattered[:]
+        else:
+            optical = None
+
+        beam = {"laser": lasers[key]}
+        if profile != "LBIC-CALC-REFLECTANCE-ONLY-004":
+            beam["current"] = current
+        if optical is not None:
+            beam["reflectivity"] = [
+                max(0.0, min(100.0, value)) if math.isfinite(value) else math.nan
+                for value in optical
+            ]
+        if profile in {
+            "LBIC-CALC-CURRENT-DIRECT-SCATTERED-001",
+            "LBIC-CALC-CURRENT-SCATTERED-002",
+        }:
+            eqe = [eqe_percent(value, flux[key]) for value in stored_current]
+            beam["iqe"] = [
+                iqe_percent(qe, reflectivity)
+                for qe, reflectivity in zip(eqe, optical)
+            ]
+            beam["photon_flux"] = flux[key]
         beams[key] = beam
 
     return {
+        "empty": False,
         "profile": profile,
+        "pattern_type": pattern_type,
+        "target_type": target_type,
         "coords": coords,
+        "geometry_profile": geometry_profile,
+        "geometry_status": geometry_status,
+        "geometry_interpretation": geometry.get("interpretation"),
         "beams": beams,
-        "reflectance_only": reflectance_only,
-        "partial": partial,
+        "partial": geometry_status == "partial",
     }
 
 
@@ -349,24 +351,13 @@ def parse_vendor_csv(path: Path):
     return {"header": header, "rows": point_rows, "xs": xs, "ys": ys, "summaries": summaries}
 
 
-def vendor_beam(vendor, wavelength):
-    prefix = f"Laser {wavelength:g}nm "
-    header = vendor["header"]
-
-    def col(metric):
-        needle = prefix + metric + " ["
-        matches = [i for i, value in enumerate(header) if value.startswith(needle)]
-        if len(matches) != 1:
-            raise AssertionError(f"expected one CSV column starting {needle!r}, got {matches}")
-        return matches[0]
-
-    ic, ir, ii = col("Current"), col("Reflectivity"), col("IQE")
-    return {
-        "current": [finite_float(r[ic]) for r in vendor["rows"]],
-        "reflectivity": [finite_float(r[ir]) for r in vendor["rows"]],
-        "iqe": [finite_float(r[ii]) for r in vendor["rows"]],
-    }
-
+def vendor_metric(vendor, wavelength, metric):
+    prefix = f"Laser {wavelength:g}nm {metric} ["
+    matches = [i for i, value in enumerate(vendor["header"]) if value.startswith(prefix)]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one CSV column starting {prefix!r}, got {matches}")
+    index = matches[0]
+    return [finite_float(row[index]) for row in vendor["rows"]]
 
 
 def normalize_filename(value: str):
@@ -414,8 +405,12 @@ def parse_vendor_xps_summary(path: Path):
 
 def validate_reflectance_xps(xml_path: Path, xps_paths):
     x = parse_xml(xml_path)
-    if x["profile"] != "LBIC-REFLECTANCE-003":
-        raise AssertionError(f"expected LBIC-REFLECTANCE-003, got {x['profile']}")
+    if x["profile"] != "LBIC-CALC-REFLECTANCE-ONLY-004":
+        raise AssertionError(
+            f"expected LBIC-CALC-REFLECTANCE-ONLY-004, got {x['profile']}"
+        )
+    if x["empty"]:
+        raise AssertionError("reflectance XPS reference has zero acquired sites")
     if len(x["beams"]) != 1:
         raise AssertionError(f"expected one reflectance beam, got {len(x['beams'])}")
 
@@ -435,19 +430,31 @@ def validate_reflectance_xps(xml_path: Path, xps_paths):
         checked += 1
 
     return (
-        f"{xml_path.name}: LBIC-REFLECTANCE-003; points={len(x['coords'])}; "
-        f"XPS={checked}; Reflectivity summary max error={worst:.4g} %-point"
+        f"{xml_path.name}: LBIC-CALC-REFLECTANCE-ONLY-004; "
+        f"geometry={x['geometry_profile'] or x['geometry_status']}; "
+        f"points={len(x['coords'])}; XPS={checked}; "
+        f"Reflectivity summary max error={worst:.4g} %-point"
     )
 
 
 def validate_pair(xml_path: Path, csv_path: Path):
     x = parse_xml(xml_path)
     v = parse_vendor_csv(csv_path)
+
+    if x["empty"]:
+        if v["rows"]:
+            raise AssertionError(f"zero XML DataItems but CSV has {len(v['rows'])} point rows")
+        return (
+            f"LBIC EMPTY {xml_path.name}: profile={x['profile']}; "
+            f"pattern={x['pattern_type']} target={x['target_type']}; "
+            "zero acquired sites; no numeric profile promoted"
+        )
+
     xs = [p[0] for p in x["coords"]]
     ys = [p[1] for p in x["coords"]]
     n = len(xs)
     if len(v["xs"]) != n:
-        raise AssertionError(f"CSV point count={len(v['xs'])}, XML schedule={n}")
+        raise AssertionError(f"CSV point count={len(v['xs'])}, XML geometry points={n}")
 
     ex = max_abs(xs, v["xs"])
     ey = max_abs(ys, v["ys"])
@@ -457,34 +464,60 @@ def validate_pair(xml_path: Path, csv_path: Path):
     beam_messages = []
     for key, beam in x["beams"].items():
         wavelength = beam["laser"]["wavelength"]
-        vb = vendor_beam(v, wavelength)
-        ec = max_abs(beam["current"], vb["current"])
-        er = max_abs(beam["reflectivity"], vb["reflectivity"])
-        ei = max_abs(beam["iqe"], vb["iqe"], allow_nan=True)
-        if ec > TOL_CURRENT:
-            raise AssertionError(f"beam {key} Current max error={ec:g}")
-        if er > TOL_REFLECTIVITY:
-            raise AssertionError(f"beam {key} Reflectivity max error={er:g}")
-        if ei > TOL_IQE:
-            raise AssertionError(f"beam {key} IQE max error={ei:g}")
+        checks = []
 
-        for metric in ("current", "reflectivity", "iqe"):
-            expected = v["summaries"].get((wavelength, metric))
-            if expected is None:
-                raise AssertionError(f"missing {wavelength:g} nm {metric} vendor summary")
-            es = max_abs(summary(beam[metric]), expected, allow_nan=True)
-            if es > TOL_SUMMARY:
-                raise AssertionError(f"beam {key} {metric} summary max error={es:g}")
+        if "current" in beam:
+            expected = vendor_metric(v, wavelength, "Current")
+            error = max_abs(beam["current"], expected, allow_nan=True)
+            if error > TOL_CURRENT:
+                raise AssertionError(f"beam {key} Current max error={error:g}")
+            expected_summary = v["summaries"].get((wavelength, "current"))
+            if expected_summary is None:
+                raise AssertionError(f"missing {wavelength:g} nm current vendor summary")
+            summary_error = max_abs(summary(beam["current"]), expected_summary, allow_nan=True)
+            if summary_error > TOL_SUMMARY:
+                raise AssertionError(f"beam {key} current summary max error={summary_error:g}")
+            checks.append(f"Current={error:.3g}")
 
-        valid_iqe = sum(math.isfinite(value) for value in vb["iqe"])
-        beam_messages.append(
-            f"{wavelength:g}nm:Current={ec:.3g},R={er:.3g},IQE={ei:.3g},"
-            f"validIQE={valid_iqe}/{n}"
-        )
+        if "reflectivity" in beam:
+            expected = vendor_metric(v, wavelength, "Reflectivity")
+            error = max_abs(beam["reflectivity"], expected, allow_nan=True)
+            if error > TOL_REFLECTIVITY:
+                raise AssertionError(f"beam {key} Reflectivity max error={error:g}")
+            expected_summary = v["summaries"].get((wavelength, "reflectivity"))
+            if expected_summary is None:
+                raise AssertionError(f"missing {wavelength:g} nm reflectivity vendor summary")
+            summary_error = max_abs(summary(beam["reflectivity"]), expected_summary, allow_nan=True)
+            if summary_error > TOL_SUMMARY:
+                raise AssertionError(f"beam {key} reflectivity summary max error={summary_error:g}")
+            checks.append(f"R={error:.3g}")
 
+        if "iqe" in beam:
+            expected = vendor_metric(v, wavelength, "IQE")
+            error = max_abs(beam["iqe"], expected, allow_nan=True)
+            if error > TOL_IQE:
+                raise AssertionError(f"beam {key} IQE max error={error:g}")
+            expected_summary = v["summaries"].get((wavelength, "iqe"))
+            if expected_summary is None:
+                raise AssertionError(f"missing {wavelength:g} nm IQE vendor summary")
+            summary_error = max_abs(summary(beam["iqe"]), expected_summary, allow_nan=True)
+            if summary_error > TOL_SUMMARY:
+                raise AssertionError(f"beam {key} IQE summary max error={summary_error:g}")
+            checks.append(
+                f"IQE={error:.3g},validIQE={sum(math.isfinite(value) for value in expected)}/{n}"
+            )
+
+        beam_messages.append(f"{wavelength:g}nm:" + ",".join(checks))
+
+    geometry_label = (
+        x["geometry_profile"]
+        if x["geometry_status"] == "complete"
+        else f"{x['geometry_status']}:{x['geometry_interpretation']}"
+    )
     return (
-        f"{xml_path.name}: {x['profile']}; points={n}; beams={len(x['beams'])}; "
-        f"X/Y max={max(ex, ey):.3g} mm; " + "; ".join(beam_messages)
+        f"{xml_path.name}: calc={x['profile']}; geometry={geometry_label}; "
+        f"points={n}; beams={len(x['beams'])}; X/Y max={max(ex, ey):.3g} mm; "
+        + "; ".join(beam_messages)
     )
 
 
@@ -498,29 +531,29 @@ def main():
         return 0
 
     ok = True
-    counts = {"PASS": 0, "UNPAIRED": 0, "INFERRED": 0, "FAIL": 0}
+    counts = {"PASS": 0, "EMPTY": 0, "UNPAIRED": 0, "FAIL": 0}
     for xml_path in raw:
         try:
             parsed = parse_xml(xml_path)
-            if parsed["profile"] == "LBIC-PARTIAL-INFERRED":
-                print(
-                    f"INFERRED {xml_path.name}: partial SquareRegion acquisition; "
-                    f"points={len(parsed['coords'])}; vendor coordinate parity not claimed"
-                )
-                counts["INFERRED"] += 1
-                continue
-            if parsed["profile"] == "LBIC-REFLECTANCE-003":
+            if parsed["profile"] == "LBIC-CALC-REFLECTANCE-ONLY-004":
                 xps_paths = matching_xps_files(xml_path)
-                if not xps_paths:
-                    if allow_unpaired:
-                        print(
-                            f"UNPAIRED {xml_path.name}: {parsed['profile']}; "
-                            f"points={len(parsed['coords'])}; no matching vendor XPS"
-                        )
-                        counts["UNPAIRED"] += 1
-                        continue
+                if xps_paths:
+                    msg = validate_reflectance_xps(xml_path, xps_paths)
+                elif parsed["empty"]:
+                    csv_path = xml_path.with_suffix(".csv")
+                    if not csv_path.exists():
+                        raise AssertionError("empty LBIC reference has no matching CSV")
+                    msg = validate_pair(xml_path, csv_path)
+                elif allow_unpaired:
+                    print(
+                        f"UNPAIRED {xml_path.name}: calc={parsed['profile']}; "
+                        f"geometry={parsed['geometry_profile'] or parsed['geometry_status']}; "
+                        f"points={len(parsed['coords'])}; no matching vendor XPS"
+                    )
+                    counts["UNPAIRED"] += 1
+                    continue
+                else:
                     raise AssertionError("matching PV-2000 Reflectivity XPS missing")
-                msg = validate_reflectance_xps(xml_path, xps_paths)
             else:
                 csv_path = xml_path.with_suffix(".csv")
                 if not csv_path.exists():
@@ -532,8 +565,13 @@ def main():
             counts["FAIL"] += 1
             ok = False
         else:
-            print("PASS " + msg)
-            counts["PASS"] += 1
+            if msg.startswith("LBIC EMPTY"):
+                print(msg)
+                counts["EMPTY"] += 1
+            else:
+                print("PASS " + msg)
+                counts["PASS"] += 1
+
     print("Summary: " + ", ".join(f"{label}={count}" for label, count in counts.items()))
     return 0 if ok else 1
 
