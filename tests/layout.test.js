@@ -671,3 +671,8 @@ test('QSS compact summary keeps all statistics without repeating five labels per
   assert.match(src,/median \$\{fmt\(st\.median\)\} · range/);
   assert.doesNotMatch(src,/qss-result-values/);
 });
+
+test('chart metadata can shrink without pushing Axes or Export controls outside a pane',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.chart-meta\{[^}]*min-width:0;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/);
+});

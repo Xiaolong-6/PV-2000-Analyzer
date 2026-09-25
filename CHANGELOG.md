@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.30 — 2026-09-25
+
+- Fixed chart-header flex overflow found by the new real-XML Chromium smoke: DIT's long dynamic chart metadata could retain its intrinsic no-wrap width and push the Axes/Export controls outside the right-hand pane even at a 1600 px wide three-column workspace.
+- Shared `.chart-meta` now participates in flex shrinking with `min-width:0` and ellipsis clipping, so control buttons retain their pane position without hard-coded DIT widths.
+- Added a layout contract regression for shrinkable chart metadata. No chart data, axis semantics or scientific calculations changed.
+
 ## v20260925.29 — 2026-09-25
 
 - Fixed the shared Python geometry-validation bridge to forward `FixedPointsPattern/PointValues` as canonical `absolutePoints`, matching the browser/runtime geometry resolver.
