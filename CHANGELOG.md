@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.28 — 2026-09-25
+
+- Made source-structure regression tests portable across LF and CRLF checkouts. Two layout assertions for Dual QSS initial redraw ordering and DIT filter/map synchronization previously passed on Ubuntu but failed when the same public suite was replayed from a Windows private-validation runner.
+- No runtime or scientific calculation behavior changed; this release hardens the cross-repository validation gate so Windows vendor-oracle workflows can run the public `npm run check` suite unchanged.
+
 ## v20260925.27 — 2026-09-25
 
 - Hardened `roundGrid()` and shared MapPattern resolution against zero, negative and non-finite pitch values. Invalid RoundWafer map pitches now return unresolved geometry immediately instead of allowing an unbounded schedule loop that could hang the browser.
