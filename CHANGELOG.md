@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.16.1 — 2026-09-25 (branch)
+
+- Fixed LBIC Distribution rendering after plot normalization: the shared canvas frame exposes `ctx`, and reading `context` caused `Cannot read properties of undefined (reading 'clearRect')` during LBIC redraw.
+- Added a drawing regression test that exercises the Distribution canvas frame and verifies that it clears and paints.
+
 ## v20260925.16 — 2026-09-25
 
 - Compact large/small editable numeric values in Valid-data filter and manual-axis text boxes using scientific notation instead of long digit strings.

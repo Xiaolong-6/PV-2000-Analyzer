@@ -7,6 +7,26 @@ const L=PV2000.modules.lbic;
 const FLUX=1708439235302983;
 const CURRENT_FLAGS={measureCurrent:'true',measureDirect:'true',measureDiffuse:'true'};
 
+test('LBIC Distribution draws through the shared canvas frame',()=>{
+  const fs=require('node:fs'),vm=require('node:vm');
+  const source=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  const drawing=source.slice(source.indexOf('  function drawHist('),source.indexOf('  function profilePoints(',source.indexOf('  function drawHist(')));
+  let cleared=0,filled=0;
+  const ctx=new Proxy({}, {get(target,key){
+    if(key==='clearRect')return()=>{cleared++};
+    if(key==='fillRect')return()=>{filled++};
+    return()=>{};
+  },set(){return true}});
+  const draw=vm.runInNewContext(`${drawing}\ndrawHist`,{
+    PV:{plot:{canvasFrame:()=>({ctx,W:760,H:430}),resolve:r=>r,bind(){}}},
+    S:{histogram:()=>[{lo:1,hi:2,count:1}]},css:()=>'',color:()=>'',niceTicks:()=>[],axisFmt:String
+  });
+  const rows=draw({}, {values:[1],short:'Current',unit:'µA'},[true]);
+  assert.equal(rows.length,1);
+  assert.equal(cleared,1);
+  assert.ok(filled>=2);
+});
+
 test('rect grid reproduces PV-2000 X-fast row-major coordinates with increasing Y',()=>{
   const p=PV2000.geometry.rectGrid(-37,42,5,5,51,51,2601,1);
   assert.equal(p.length,2601);

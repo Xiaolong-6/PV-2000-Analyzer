@@ -553,7 +553,7 @@
   }
   function drawHist(canvas,metric,mask,binCount=30,swapped=true,zoom,onZoom){
     const activeValues=metric.values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
-      bins=S.histogram(activeValues,binCount),frame=PV.plot.canvasFrame(canvas),context=frame.context,W=frame.W,H=frame.H,p={l:64,r:18,t:24,b:52};
+      bins=S.histogram(activeValues,binCount),frame=PV.plot.canvasFrame(canvas),context=frame.ctx,W=frame.W,H=frame.H,p={l:64,r:18,t:24,b:52};
     context.clearRect(0,0,W,H);context.fillStyle=css('--chart-bg');context.fillRect(0,0,W,H);if(!bins.length)return bins;
     const autoMetric=[bins[0].lo,bins[bins.length-1].hi],
       autoCount=[0,Math.max(...bins.map(b=>b.count),1)],
