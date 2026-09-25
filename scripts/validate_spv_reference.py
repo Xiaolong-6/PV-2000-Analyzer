@@ -122,8 +122,59 @@ def lifetime(dl, is_p):
     return dl * dl * 0.01 / (0.0259 * mobility)
 
 
+def enhanced_equation(length_cm, surface_velocity, wafer_cm, ratio, z6_cm, z8_cm, is_p):
+    diffusion = 36.4 if is_p else 12.2
+    a = diffusion / length_cm
+    if surface_velocity != 0:
+        sw = math.sinh(wafer_cm / length_cm)
+        cw = math.cosh(wafer_cm / length_cm)
+        b = ((a / surface_velocity) * sw + cw) / (
+            sw + (a / surface_velocity) * cw
+        )
+    else:
+        b = math.tanh(wafer_cm / length_cm)
+    return (
+        ((1 - (z6_cm / length_cm) ** 2) / (1 - (z8_cm / length_cm) ** 2))
+        * ((1 - b * z8_cm / length_cm) / (1 - b * z6_cm / length_cm))
+        - ratio
+    )
+
+
+def enhanced_dl(ratio, z6_um, z8_um, wafer_um, surface_velocity, is_p):
+    if not all(math.isfinite(v) for v in (
+        ratio, z6_um, z8_um, wafer_um, surface_velocity
+    )) or wafer_um <= 0:
+        return math.nan
+    wafer_cm, z6_cm, z8_cm = wafer_um * 1e-4, z6_um * 1e-4, z8_um * 1e-4
+    fn = lambda length: enhanced_equation(
+        length, surface_velocity, wafer_cm, ratio, z6_cm, z8_cm, is_p
+    )
+    lo, hi = 0.001, 3.0
+    flo, fhi = fn(lo), fn(hi)
+    if not (math.isfinite(flo) and math.isfinite(fhi)) or flo * fhi > 0:
+        return math.nan
+    if flo == 0:
+        return lo * 1e4
+    if fhi == 0:
+        return hi * 1e4
+    for _ in range(220):
+        mid = (lo + hi) / 2
+        fm = fn(mid)
+        if not math.isfinite(fm):
+            return math.nan
+        if abs(fm) < 1e-14 or abs(hi - lo) < 1e-15:
+            lo = hi = mid
+            break
+        if flo * fm <= 0:
+            hi, fhi = mid, fm
+        else:
+            lo, flo = mid, fm
+    value = (lo + hi) / 2 * 1e4
+    return value if 0 < value <= 2500 else math.nan
+
+
 def calculate(spv8, spv6, s):
-    if s['parse_signals'] or s['enhanced']:
+    if s['parse_signals']:
         return math.nan, math.nan
     c8, c6 = spv8, spv6
     factor = linearity_factor(s['spv8_global'], s['spv8_reduced'], s['ratio_ok'])
@@ -151,7 +202,13 @@ def calculate(spv8, spv6, s):
     if not (spv8 > spv6) or c6 == 0:
         return math.nan, math.nan
     ratio = c8 / c6
-    dl = (z6 - ratio * z8) / (ratio - 1)
+    dl = (
+        enhanced_dl(
+            ratio, z6, z8, s['wafer_thickness'], s['bsr_velocity'], s['is_p']
+        )
+        if s['enhanced']
+        else (z6 - ratio * z8) / (ratio - 1)
+    )
     if not (0 < dl <= 2500):
         return math.nan, math.nan
     return dl, lifetime(dl, s['is_p'])
@@ -184,6 +241,8 @@ def parse_xml(path, enhanced_override=None):
         'texture': number(measurement, 'TextureCorrection'),
         'enhanced': text(measurement, 'UseEnhancedMode').lower() == 'true',
         'parse_signals': text(measurement, 'ParseSignals').lower() == 'true',
+        'wafer_thickness': number(measurement, 'WaferThickness'),
+        'bsr_velocity': number(measurement, 'BSRVelocity'),
         'is_p': text(measurement, 'DopingType', 'PType') == 'PType',
     }
     if enhanced_override is not None:
@@ -248,21 +307,12 @@ def audit_enhanced(xml_path, csv_path):
     root = ET.parse(xml_path).getroot()
     if text(child(root, 'Measurement'), 'UseEnhancedMode').lower() != 'true':
         raise AssertionError('Expected UseEnhancedMode=true')
-    vendor = parse_csv(csv_path)
-    raw = parse_xml(xml_path)
-    standard = parse_xml(xml_path, enhanced_override=False)
-    assert len(vendor) == len(raw) == len(standard)
-    raw_errors = [max_error([row[i] for row in raw], [row[i] for row in vendor])
-                  for i in (2, 3)]
-    assert all(error < 1e-10 and mismatch == 0 for error, mismatch in raw_errors)
-    standard_comparison = [max_error([row[i] for row in standard], [row[i] for row in vendor])
-                           for i in (0, 1)]
-    available = [sum(math.isfinite(row[i]) for row in vendor) for i in (0, 1)]
-    print(f'SPV ENHANCED DIAGNOSTIC {xml_path.name}: {len(vendor)} sites, '
-          f'finite DL/Tau={available}, raw max errors={[error for error, _ in raw_errors]}, '
-          f'standard-path max errors={[error for error, _ in standard_comparison]}, '
-          f'standard-path mask mismatches={[mask for _, mask in standard_comparison]}, '
-          'separate enhanced calculation profile remains unvalidated')
+    results = validate(xml_path, csv_path)
+    labels = ['DL', 'Tau', 'SPV8', 'SPV6']
+    print('SPV ENHANCED PASS ' + xml_path.name + ': ' + ', '.join(
+        f'{label} err={error:.3g} mask={mismatch}'
+        for label, (error, mismatch) in zip(labels, results)
+    ))
 
 
 def pair_paths(value):
