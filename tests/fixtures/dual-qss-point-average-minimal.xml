@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>Dual QSS point-average fixture</Name>
+  <ResultName>Dual QSS point-average parser fixture</ResultName>
+  <Status>Finished</Status>
+  <ExecutionInfo><StartTime>2026-09-25T08:00:00</StartTime><EndTime>2026-09-25T08:00:01</EndTime><ElapsedTime>1</ElapsedTime></ExecutionInfo>
+  <Substrate>
+    <SubstrateId>fixture-wafer</SubstrateId><LotId>fixture-lot</LotId><Description>Sanitized point-average fixture</Description>
+    <SubstrateShape xsi:type="Circle"><Radius>50</Radius></SubstrateShape>
+  </Substrate>
+  <Measurement xsi:type="DualQssMeasurement">
+    <WaferThickness>180</WaferThickness><OpticalFactor>0.72</OpticalFactor><Doping>1e15</Doping><DopingType>p</DopingType>
+    <LaserPower>1.5</LaserPower><QssLampIntensity>1000</QssLampIntensity><EvalutationMode>2</EvalutationMode>
+    <ProbeSelection>Back</ProbeSelection><QssBiasSelection>Back</QssBiasSelection><SaveTransient>true</SaveTransient><DoAutoSetting>false</DoAutoSetting>
+    <DoPointAveraging>true</DoPointAveraging><PointAverageCount>3</PointAverageCount>
+    <CalculateJZeroParams>true</CalculateJZeroParams><IncludeKSJ0>true</IncludeKSJ0><UseAugerCorrection>false</UseAugerCorrection>
+    <DeltaTauLimitForJ0Calc>0.05</DeltaTauLimitForJ0Calc><DefaultDeltaN>1e15</DefaultDeltaN><DefaultDeltaNRangeInPercentage>10</DefaultDeltaNRangeInPercentage>
+    <ValidQdcRange><Min>0.9</Min><Max>1.1</Max></ValidQdcRange><JZeroIntensity><Min>1</Min><Max>5</Max></JZeroIntensity>
+    <Pattern xsi:type="FixedPointsPattern">
+      <Name>Fixed center</Name>
+      <PointValues><Point><X>0</X><Y>0</Y></Point></PointValues>
+    </Pattern>
+    <Target xsi:type="PseudoSquareCell"><Size><Width>156</Width><Height>156</Height></Size><Diameter>205</Diameter><EdgeExclusion>3</EdgeExclusion></Target>
+    <MeasurementData><IterationData><Iteration>
+      <ChuckTemperature>25</ChuckTemperature><MeasurementVelocity>1.25</MeasurementVelocity>
+      <Data><DataItem>
+        <Values>
+          <ArrayOfDouble><double>210</double><double>183</double><double>150</double></ArrayOfDouble>
+          <ArrayOfDouble><double>213</double><double>180</double><double>153</double></ArrayOfDouble>
+          <ArrayOfDouble><double>207</double><double>177</double><double>147</double></ArrayOfDouble>
+        </Values>
+        <Intensity><ArrayOfDouble><double>681</double><double>1000</double><double>1468</double></ArrayOfDouble></Intensity>
+        <Power><ArrayOfDouble><double>2e13</double><double>2.5e13</double><double>3e13</double></ArrayOfDouble></Power>
+        <Transients>
+          <TransientInfo LifeTime="210" Amplitude="20"><Transient><SmallPoint X="0" Y="10"/><SmallPoint X="5" Y="12"/></Transient></TransientInfo>
+          <TransientInfo LifeTime="180" Amplitude="18"><Transient><SmallPoint X="0" Y="9"/><SmallPoint X="5" Y="11"/></Transient></TransientInfo>
+          <TransientInfo LifeTime="150" Amplitude="16"><Transient><SmallPoint X="0" Y="8"/><SmallPoint X="5" Y="10"/></Transient></TransientInfo>
+        </Transients>
+      </DataItem></Data>
+    </Iteration></IterationData></MeasurementData>
+  </Measurement>
+</Job>
