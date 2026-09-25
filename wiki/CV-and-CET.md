@@ -171,6 +171,6 @@ One matching 9-site PV-2000 XML/numeric-export pair forms the historical `CET-9P
 - summary statistics;
 - the undefined EOT/Cd + R² = 0 site behavior.
 
-The paired numerical differences are at floating-point precision. Other observed CET pattern/target geometries remain inferred until matching vendor coordinate/result evidence extends the profile envelope.
+Seven further nonempty XML/vendor CSV pairs add 19 sites across FivePoint/RoundWafer, SquareRegion/SquareCell and RoundWafer, OnePoint/SquareCell and RoundWafer, and NinePoint/SquareCell. The largest new EOT difference is **2.27e-12 Å** and the largest coordinate difference is below **2.1e-14 mm**. A separate zero-site pair supplies empty-export evidence only. FixedPoints and other unpaired configurations remain inferred.
 
 The base CV acquisition semantics are documented independently from CET's derived-result path.

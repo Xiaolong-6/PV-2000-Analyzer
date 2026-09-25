@@ -109,12 +109,16 @@ test('single-file build includes CET before generic fallback',()=>{
 test('CET calculation validation is independent from geometry',()=>{
   const calc=PV2000.profiles.resolveCalculation('cet',{
     type:'CETMeasurement',
+    iterationCount:1,
     sites:[{}],
     coronaCharge:1e11,
     patternType:'OnePointPattern',
     targetType:'RoundWafer'
   });
   assert.equal(calc?.id,'CET-CALC-001');
+  assert.equal(PV2000.profiles.resolveCalculation('cet',{
+    type:'CETMeasurement',iterationCount:2,sites:[{}],coronaCharge:1e11
+  }),null);
   const g=PV2000.geometry.resolveMeasurementGeometry({
     patternType:'NinePointPattern',
     targetType:'SquareCell',

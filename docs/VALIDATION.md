@@ -72,7 +72,7 @@ npm run validate:cet
 
 The validator expects same-basename private XML/CSV pairs under `private/reference/cet/` by default. The curated pair is also stored in the separate private-reference repository for development testing; neither location is a runtime dependency.
 
-The larger unpaired CET XML corpus exercises OnePoint, FixedPoints, RoundWafer NinePoint and SquareRegion structures. These are import/structure evidence only unless a matching vendor output is supplied.
+Seven additional nonempty CET XML/vendor CSV pairs cover **19 sites** across FivePoint/RoundWafer, SquareRegion/SquareCell and RoundWafer, OnePoint/SquareCell and RoundWafer, and NinePoint/SquareCell. EOT/Cd/R² maximum new errors are **2.27e-12 Å**, **5.69e-13 nF/cm²** and **6.03e-14**; all availability masks agree. Their geometry resolves independently with maximum coordinate error below **2.1e-14 mm**. One additional zero-site pair is classified as empty and does not promote a numeric result. FixedPoints and other unpaired paths remain inferred.
 
 See `docs/ALGORITHMS_CET.md` and the CET evidence/profile section in `docs/REFERENCE_PROFILES.md`.
 

@@ -94,12 +94,12 @@ All nine exported X/Y coordinates match the canonical reconstruction to floating
 
 ### Other observed CET patterns
 
-The supplied XML corpus also contains OnePoint, FixedPoints, RoundWafer NinePoint and one-point SquareRegion examples.
+New paired outputs cover OnePoint/SquareCell and RoundWafer, FivePoint/RoundWafer, SquareRegion/SquareCell and RoundWafer, and NinePoint/SquareCell. FixedPoints and other unpaired configurations remain structural evidence.
 
 - `OnePointPattern` center geometry is supported through the shared resolver.
 - `FixedPointsPattern/PointValues` is treated as explicit absolute millimetre coordinates.
 - `SquareRegionPattern` uses the shared Region + Dimension path where its XML fields are complete.
-- other CET pattern/target combinations remain **inferred** until matching vendor coordinate/output evidence is paired.
+- other unpaired CET pattern/target combinations remain **inferred** until matching vendor coordinate/output evidence is paired.
 
 Support for parsing/importing a geometry does not upgrade that geometry or result profile to validated status.
 
@@ -141,7 +141,7 @@ By default it looks for same-basename XML/CSV pairs under `private/reference/cet
 The paired evidence validates:
 
 - `CETMeasurement`;
-- `NinePointPattern + SquareCell`;
+- the calculation path independently of the six paired geometry combinations;
 - target-relative fixed-point geometry;
 - process-index corona-charge axis;
 - illuminated-CPD averaging and offset correction;
