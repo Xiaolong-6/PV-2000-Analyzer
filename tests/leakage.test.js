@@ -1,5 +1,7 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {DOMParser}=require('@xmldom/xmldom');
 global.PV2000={};
+require('../src/core/xml.js');
 require('../src/core/stats.js');
 require('../src/core/geometry.js');
 require('../src/core/validity.js');
@@ -7,13 +9,35 @@ require('../src/core/quantity.js');
 require('../src/core/measurement.js');
 require('../src/core/profiles.js');
 require('../src/core/registry.js');
-PV2000.xml={};
 PV2000.ui={escapeHtml:String};
 require('../src/profiles/leakage.js');
 require('../src/modules/leakage.js');
 
 test('Leakage module registers dedicated measurement type',()=>{
   assert.deepEqual(PV2000.modules.leakage.types,['LeakageMeasurement']);
+});
+
+test('Leakage parse maps acquisition arrays and settings from a vendor-shaped XML fixture',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','leakage-minimal.xml'),'utf8');
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const job=doc.documentElement,measurement=PV2000.xml.direct(job,'Measurement');
+  const d=PV2000.modules.leakage.parse({doc,job,measurement,type:PV2000.xml.attrType(measurement)});
+  assert.equal(d.type,'LeakageMeasurement');
+  assert.equal(d.resultName,'Leakage parser fixture');
+  assert.equal(d.substrateId,'leakage-wafer');
+  assert.equal(d.patternType,'OnePointPattern');
+  assert.equal(d.targetType,'RoundWafer');
+  assert.equal(d.measurePositive,true);
+  assert.equal(d.measureNegative,true);
+  assert.equal(d.positiveSettings.intervalSeconds,0.1);
+  assert.equal(d.negativeSettings.intervalSeconds,0.1);
+  assert.equal(d.offset,0.02);
+  assert.equal(d.sites.length,1);
+  assert.equal(d.sites[0].positiveRaw.length,15);
+  assert.equal(d.sites[0].negativeRaw.length,15);
+  assert.equal(d.sites[0].positiveDelay,0.48);
+  assert.equal(d.sites[0].negativeDelay,0.47);
+  assert.deepEqual(d.coords,[{x:0,y:0}]);
 });
 
 test('paired Leakage VSASS regression reproduces vendor values',()=>{
