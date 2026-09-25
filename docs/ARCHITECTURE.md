@@ -173,7 +173,7 @@ Profile matching uses categorical measurement semantics such as:
 
 It must not use filenames, sample names or arbitrary numeric identity values.
 
-The shared registry now stores profiles on explicit axes. Current examples include calculation profiles such as `ISC-CALC-001`, `VCPD-CALC-001`, `CET-9PT-SQUARE-001`, `SPV-CALC-STANDARD-001` and `LEAKAGE-CALC-VSASS-001`, plus independent geometry profiles in `src/profiles/geometry.js`.
+The shared registry now stores profiles on explicit axes. Current examples include calculation profiles such as `ISC-CALC-001`, `VCPD-CALC-001`, `CET-CALC-001`, `SPV-CALC-STANDARD-001`, `SPV-CALC-ENHANCED-N-003` and `LEAKAGE-CALC-VSASS-001`, plus independent geometry profiles in `src/profiles/geometry.js`.
 
 Exact IDs, matching semantics and evidence boundaries remain authoritative in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
@@ -197,7 +197,7 @@ The practical rule is:
 4. attach quantity validation independently when one output has a narrower evidence envelope;
 5. render supported data even when a particular calculated quantity remains inferred or unavailable.
 
-Profile gates must describe **categorical semantic branches**, not filenames, sample identities or ordinary numeric parameter values. For example, changing SPV wavelength or oxide-thickness magnitude inside the same standard oxide-correction formula does not create a new calculation profile; enabling enhanced mode, texture correction, parsed-signal processing, a different doping branch, or the reflectivity-vs-oxide branch can.
+Profile gates must describe **categorical semantic branches**, not filenames, sample identities or ordinary numeric parameter values. For example, changing SPV wavelength or oxide-thickness magnitude inside the same standard oxide-correction formula does not create a new calculation profile; switching between standard and Enhanced SPV, enabling texture correction, parsed-signal processing, an unpaired doping branch, or changing the reflectivity-vs-oxide categorical path can.
 
 ### Canonical measurement geometry
 
@@ -278,7 +278,7 @@ Existing families retain their family-specific scientific views while using the 
 - `src/profiles/cet.js` — CET-9PT-SQUARE-001 semantic envelope.
 - `src/profiles/geometry.js` — shared geometry-profile registry for validated coordinate encodings.
 - `src/profiles/leakage.js` — paired Leakage VSASS/LI calculation profile.
-- `src/profiles/spv.js` — paired standard SPV calculation profile.
+- `src/profiles/spv.js` — paired standard P-type and Enhanced N-type SPV calculation profiles.
 
 Additional families should gain shared profile metadata only when their reference envelope is understood. Ordinary numeric parameter variation inside an established formula is not a reason to mint a new profile.
 
@@ -292,7 +292,7 @@ Additional families should gain shared profile metadata only when their referenc
 - `src/modules/lbic.js` — LBIC raster analyzer.
 - `src/modules/cet.js` — contactless capacitance / EOT analyzer.
 - `src/modules/leakage.js` — Leakage VSASS / LI analyzer.
-- `src/modules/spv.js` — two-wavelength SPV / diffusion-length analyzer.
+- `src/modules/spv.js` — two-wavelength SPV / diffusion-length analyzer with standard and finite-wafer/back-surface Enhanced calculation paths.
 - `src/modules/generic.js` — unknown-type fallback.
 - `src/app.js` — file opening, dispatch and shared shell.
 
