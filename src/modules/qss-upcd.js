@@ -728,7 +728,8 @@
     }
     function renderShell(){
       const filterState=filterController.snapshot(),
-        validN=filterState.validCount;
+        validN=filterState.validCount,
+        onePoint=d.values.length===1;
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}\
@@ -795,9 +796,9 @@ ${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when F
 ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl>\
 </details>
       </aside><section class="plots overview">
-        <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option>${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}</select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
-        <div class="panel chart"><header><b>Acquisition profile</b>${help('This is a whole-dataset acquisition-order profile. Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
+        <div class="panel chart"><header><b>${onePoint?'Measurement position':'Wafer map'}</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option>${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}</select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
+        ${onePoint?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
+        <div class="panel chart"><header><b>Acquisition profile</b>${help('This is a whole-dataset acquisition-order profile. Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>`}
       </section><section class="plots detail"><section class="panel"><h3>${d.values.length===1?'Measurement point':'Selected site'}</h3><div id="qSelected">${selectedHtml()}</div></section></section></div>`;
       host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
@@ -864,23 +865,34 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         filterKey=filterState.metricKey,
         filterLo=filterState.lower,
         filterHi=filterState.upper,
-        bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask);
-        drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,selected,zoom.map,n=>{zoom.map=n;redraw()},i=>{selected=i;host.querySelector('#qSelected').innerHTML=selectedHtml();redraw()},supportMask);
-        drawProfile(host.querySelector('#qProfile'),d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
-        PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
+        histCanvas=host.querySelector('#qHist'),
+        profileCanvas=host.querySelector('#qProfile'),
+        bins=histCanvas
+          ?drawHist(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask)
+          :[];
+      drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,selected,zoom.map,n=>{zoom.map=n;redraw()},i=>{
+        selected=i;
+        host.querySelector('#qSelected').innerHTML=selectedHtml();
+        redraw();
+      },supportMask);
+      if(profileCanvas)drawProfile(profileCanvas,d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
+      PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
+      if(histCanvas){
         PV.plot.bindAxisControls(host,'qHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
           swapped:histSwapped,
           onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
         });
         PV.plot.bindBinControls(host,'qHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
-        PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
-        
+      }
+      if(profileCanvas)PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
       host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
-        host.querySelector('#qExportProfile').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
-        host.querySelector('#qExportHist').onclick=()=>{
+      const profileExport=host.querySelector('#qExportProfile');
+      if(profileExport)profileExport.onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
+      const histExport=host.querySelector('#qExportHist');
+      if(histExport)histExport.onclick=()=>{
         const unit=a.metrics[metricKey].unit;
-        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]))};
-        
+        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]));
+      };
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
     PV.plot.observeResize(host,redraw);
