@@ -25,20 +25,16 @@ def points(node):
             for point in (list(node) if node is not None else [])]
 
 
-def validate(xml_path, csv_path, profile_id):
+def resolve_xml_geometry(xml_path, point_count):
     root = ET.parse(xml_path).getroot()
     measurement = root.find("Measurement")
     pattern, target = measurement.find("Pattern"), measurement.find("Target")
     exclusions = [points(shape.find("Vertices")) for shape in target.findall("Exclusions/Shape")
                   if shape.attrib.get(TYPE) == "Quadrilateral"]
-    with open(csv_path, encoding="utf-8-sig", newline="") as file:
-        rows = list(csv.reader(file, delimiter=";"))
-    header_index = next(i for i, row in enumerate(rows) if row and row[0].startswith("Point.X"))
-    expected = [(float(row[0]), float(row[1])) for row in rows[header_index + 1 :]]
     region = pattern.find("Region")
     data = {
         "patternType": pattern.attrib.get(TYPE), "targetType": target.attrib.get(TYPE),
-        "pointCount": len(expected),
+        "pointCount": point_count,
         "allowPartialPrefix": (root.findtext("Status") or "").lower() in
         {"terminated", "aborted", "interrupted", "cancelled", "canceled"},
         "rawCoefficients": points(pattern.find("Coefficients")),
@@ -68,6 +64,15 @@ def validate(xml_path, csv_path, profile_id):
     output = subprocess.run(["node", "-e", source], input=json.dumps(data), text=True,
                             capture_output=True, check=True)
     result = json.loads(output.stdout)
+    return result, data
+
+
+def validate(xml_path, csv_path, profile_id):
+    with open(csv_path, encoding="utf-8-sig", newline="") as file:
+        rows = list(csv.reader(file, delimiter=";"))
+    header_index = next(i for i, row in enumerate(rows) if row and row[0].startswith("Point.X"))
+    expected = [(float(row[0]), float(row[1])) for row in rows[header_index + 1 :]]
+    result, data = resolve_xml_geometry(xml_path, len(expected))
     if data["allowPartialPrefix"] and result["status"] == "partial":
         assert result.get("profileId") is None and result["interpretation"] != "unresolved", result
     else:

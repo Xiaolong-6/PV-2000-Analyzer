@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.2.1 — 2026-09-25 (feature branch)
+
+- Modernized ISC and VCPD paired validators to check calculation/quantity results independently of the shared geometry resolver. Nine new ISC pairs (1860 sites) match all three outputs and coordinates, including RoundWafer maps and SquareRegion/SquareCell.
+- Validated VCPD arithmetic means of one, four and sixteen readings/site across three new numeric pairs (1283 sites), with independent geometry parity for Map/RoundWafer, HighDensity/PseudoSquareCell and OnePoint/RoundWafer. A fourth empty acquisition remains outside numeric validation.
+- Tightened VCPD runtime profile assignment to require dark acquisition, zero offset and the configured reading count at every site; updated reference envelopes, algorithm notes, handoff and Wiki.
+
 ## v20260925.2 — 2026-09-25
 
 - Expanded SPV paired evidence with eight standard-mode XML/vendor CSV pairs: five extend the positive-oxide calculation, and three establish the zero-oxide/zero-reflectivity correction path. Across 3213 sites, 1542 finite DL/Tau values and every availability mask match the vendor output.

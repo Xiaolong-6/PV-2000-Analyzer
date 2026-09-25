@@ -8,7 +8,7 @@ The browser runtime remains XML-only. Matching PV-2000 CSV exports are used only
 
 ## Validated scalar path
 
-One paired `VcpdMeasurement` XML + PV-2000 CSV export establishes the current profile.
+The original pair and three new numeric `VcpdMeasurement` XML + PV-2000 CSV exports establish the calculation profile across one, four and sixteen readings/site.
 
 The XML structure is:
 
@@ -30,21 +30,21 @@ Measurement xsi:type="VcpdMeasurement"
 
 For the current paired reference:
 
-- `NumberOfReadings = 1`;
+- `NumberOfReadings = 1`, `4` or `16` in the paired references;
 - `LightOn = false`;
 - iteration-level `VcpdOffset = 0 V`;
-- each site contains exactly one finite `Readings/double`;
+- each site contains that many finite `Readings/double` values;
 - the vendor CSV contains one result quantity: **Vcpd Dark [V]**.
 
 The paired data establish:
 
 ```text
-Vcpd Dark = XML Reading
+Vcpd Dark = arithmetic mean(XML Readings at the site)
 ```
 
-point-by-point with zero numerical error for all 1649 sites.
+point-by-point for the original 1649 sites and 1283 new measured sites. The maximum new result error is below `4.45e-16 V`.
 
-The runtime implementation uses the mean of the site's `Readings` container so the data model remains well-defined, but **multiple readings/site are not yet vendor-validated for `VcpdMeasurement`**. Likewise, a non-zero VcpdOffset is not applied or guessed. Either condition is a **NEW PROFILE** until paired PV-2000 output establishes the result semantics.
+The paired four- and sixteen-reading cases now establish the runtime mean path for those counts. A non-zero VcpdOffset is not applied or guessed and remains a new calculation profile.
 
 ## Validated map geometry
 
@@ -72,6 +72,8 @@ keep point when x² + y² < r²
 
 with X-fast row-major ordering. This produces exactly 1649 sites, from `(-24, -88)` at the first row to `(24, 88)` at the last row. All 1649 X/Y pairs match the vendor CSV exactly.
 
+Three new numeric pairs independently validate shared HighDensity/PseudoSquareCell, Map/RoundWafer and OnePoint/RoundWafer coordinates. A fourth pair has no acquired data and does not validate a numeric or geometry path.
+
 ## Statistics
 
 The paired export reports Average, Median, Stdev, Min and Max for Vcpd Dark. The analyzer reproduces these using finite-site statistics and **sample standard deviation**:
@@ -97,12 +99,11 @@ VCPD also uses the shared **Valid-data filter**. Because the current VCPD profil
 
 ## Validation boundary
 
-The current validated VCPD family is narrowly defined by the paired reference:
+The current validated VCPD calculation family is defined by the paired result semantics:
 
 - `VcpdMeasurement`;
 - one iteration;
-- `MapPattern + RoundWafer`;
-- one reading/site;
+- one, four or sixteen readings/site with the XML count matching each site's raw readings;
 - `LightOn=false`;
 - iteration-level `VcpdOffset=0`;
 - vendor output `Vcpd Dark [V]`.
@@ -111,8 +112,8 @@ The following require a new paired reference before the validated claim expands:
 
 - non-zero VcpdOffset;
 - `LightOn=true`;
-- multiple readings/site;
-- another pattern or target geometry;
+- a different raw-reading/result path;
+- a new pattern/target schedule without paired coordinate evidence (geometry validation only);
 - multiple iterations;
 - another unit convention;
 - additional vendor result quantities.

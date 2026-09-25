@@ -36,6 +36,16 @@ test('VcpdMeasurement direct readings preserve the vendor-observed scalar path',
   assert.equal(r.darkMean,0.478138298);
   assert.ok(Number.isNaN(r.light));
   assert.ok(Number.isNaN(r.vsb));
+  assert.equal(ISC.reconstructVcpdSite([.2,.4,.6,.8]).dark,.5);
+});
+
+test('VCPD multi-reading calculation stays gated to the paired dark, zero-offset path',()=>{
+  const base={measurementKind:'vcpd',iterationCount:1,lightOn:'false',offset:0,
+    numberOfReadings:4,sites:[{darkRaw:[.2,.4,.6,.8]}]};
+  assert.equal(PV2000.profiles.resolveCalculation('vcpd',base)?.id,'VCPD-CALC-001');
+  assert.equal(PV2000.profiles.resolveCalculation('vcpd',{...base,lightOn:'true'}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('vcpd',{...base,offset:.01}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('vcpd',{...base,numberOfReadings:1}),null);
 });
 
 test('missing VcpdOffset does not silently become zero',()=>{

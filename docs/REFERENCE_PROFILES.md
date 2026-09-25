@@ -449,7 +449,7 @@ See `docs/ALGORITHMS_JZERO.md` and run `npm run validate:jzero`.
 
 ---
 
-### ISC-MAP-001 — repeated-reading Initial Surface Charge map
+### ISC-CALC-001 — repeated-reading Initial Surface Charge
 
 **Measurement type**
 
@@ -457,7 +457,7 @@ See `docs/ALGORITHMS_JZERO.md` and run `npm run validate:jzero`.
 
 **Reference material**
 
-One matching PV-2000 XML + CSV export. The XML contains repeated dark/light VCPD readings for every site; the CSV contains the vendor Vcpd Dark, Vcpd Light and Vsb result columns plus summary statistics.
+The original 169-site pair plus nine additional private XML + vendor CSV exports (1860 sites). They cover repeated dark/light readings with Map/RoundWafer, Map/SquareCell and SquareRegion/SquareCell geometries.
 
 **Validated family**
 
@@ -465,7 +465,7 @@ Semantic input/output path:
 
 - one iteration;
 - repeated `VcpdDark` and `VcpdLight` readings per `ISCDataItem`;
-- `MapPattern + SquareCell`;
+- calculation independent of pattern/target geometry;
 - finite XML `VcpdOffset` and `VsbCorrectionFactor`;
 - vendor outputs Vcpd Dark / Vcpd Light / Vsb in volts.
 
@@ -477,7 +477,7 @@ Vsb        = F * (D - L)
 Vcpd Light = Vcpd Dark - Vsb
 ```
 
-The current reference instance has 169 sites, 24 readings/site, a 100 × 100 mm SquareCell, 30 mm EdgeExclusion and 3 × 3 mm pitch. Those numeric settings are evidence, not runtime whitelist values.
+The original reference instance has 169 sites, 24 readings/site, a 100 × 100 mm SquareCell, 30 mm EdgeExclusion and 3 × 3 mm pitch. The new pairs cover 16 and 24 readings/site. Those numeric settings are evidence, not runtime whitelist values.
 
 **Validated / established**
 
@@ -487,10 +487,11 @@ The current reference instance has 169 sites, 24 readings/site, a 100 × 100 mm 
 - Vcpd Light pointwise maximum absolute error ≈ **3.55e-15 V**;
 - Vsb pointwise maximum absolute error ≈ **7.49e-16 V**;
 - Average / Median / sample Stdev / Min / Max reproduce the vendor summary to ≈ **3.33e-15** maximum absolute error.
+- All nine new pairs reproduce three result columns and summaries pointwise; the largest absolute result error is **4.44e-14 V**. All **1860** new X/Y rows independently match the shared geometry resolver (maximum coordinate error below **6e-15 mm**).
 
 **Partial acquisitions — inferred**
 
-One supplied terminated ISC XML uses `MapPattern + RoundWafer` with a 200 mm target, 4 mm EdgeExclusion and 1 × 1 mm pitch. The complete strict-circle schedule contains **28,913** sites, while the saved XML contains **10,947** DataItems. Runtime support maps those DataItems to the leading X-fast / ascending-Y schedule prefix so the partial wafer remains viewable. This coordinate interpretation is labelled **partial / inferred** and is excluded from `ISC-MAP-001` profile parity until matching vendor X/Y output confirms incomplete-scan ordering.
+One supplied terminated ISC XML uses `MapPattern + RoundWafer` with a 200 mm target, 4 mm EdgeExclusion and 1 × 1 mm pitch. The complete strict-circle schedule contains **28,913** sites, while the saved XML contains **10,947** DataItems. Runtime support maps those DataItems to the leading X-fast / ascending-Y schedule prefix so the partial wafer remains viewable. This geometry remains **partial / inferred** until matching vendor X/Y output confirms incomplete-scan ordering. Completed RoundWafer pairs do not establish this terminated prefix.
 
 Completed/normal acquisitions with mismatched point counts remain unsupported instead of using prefix truncation.
 
@@ -506,7 +507,7 @@ The selected-site raw-reading plot exposes the underlying repeated XML readings;
 
 Examples include:
 
-- another pattern/coordinate encoding or target geometry requiring a different scheduling rule;
+- a new pattern/target schedule without matching vendor coordinate evidence (geometry axis only);
 - multiple iterations or another raw-reading structure;
 - a different offset/correction path or missing correction factor semantics;
 - another unit convention or vendor result set.
@@ -515,7 +516,7 @@ Ordinary numeric changes in pitch, target size, edge exclusion, reading count, o
 
 ---
 
-### VCPD-MAP-001 — direct dark-contact-potential wafer map
+### VCPD-CALC-001 — dark-contact-potential reading mean
 
 **Measurement type**
 
@@ -523,26 +524,26 @@ Ordinary numeric changes in pitch, target size, edge exclusion, reading count, o
 
 **Reference material**
 
-One matching PV-2000 XML + CSV export plus a PV-2000 result screenshot. The XML contains one `Readings/double` value for every `VcpdDataItem`; the CSV contains X/Y coordinates, vendor `Vcpd Dark [V]` and summary statistics.
+The original 1649-site XML/CSV pair and screenshot plus three new paired exports with 213, 1069 and 1 measured sites. A fourth new pair has zero acquired sites and supplies only empty-export evidence.
 
 **Validated family**
 
 Semantic input/output path:
 
 - one iteration;
-- `VcpdDataItem/Readings` with exactly one reading/site;
-- `MapPattern + RoundWafer`;
+- `VcpdDataItem/Readings` with one, four or sixteen readings/site;
+- calculation independent of paired Map/RoundWafer, HighDensity/PseudoSquareCell and OnePoint/RoundWafer geometry;
 - `LightOn=false`;
 - iteration-level `VcpdOffset=0 V`;
 - vendor output `Vcpd Dark [V]`.
 
-For this paired reference:
+For these paired references:
 
 ```text
-Vcpd Dark = XML Reading
+Vcpd Dark = arithmetic mean(XML Readings at the site)
 ```
 
-The runtime stores VCPD site results through the shared ISC/Kelvin-probe data model and uses the mean of the `Readings` container. This does **not** expand the validated claim to multiple readings/site or non-zero offsets.
+The runtime uses the mean of the `Readings` container. Multi-reading counts of four and sixteen are paired; non-zero offset remains outside the validated envelope.
 
 The reference instance has 1649 sites, one reading/site, a 200 mm RoundWafer, 8 mm EdgeExclusion and 4 × 4 mm pitch. Those numeric settings are evidence, not a runtime whitelist.
 
@@ -559,6 +560,8 @@ The reference instance has 1649 sites, one reading/site, a 200 mm RoundWafer, 8 
 - Min = **-3.43040323 V**;
 - Max = **2.16074562 V**;
 - analyzer finite-site summary reproduces the vendor summary to floating-point precision.
+- New 213-site HighDensity/PseudoSquareCell with sixteen readings/site matches within **4.45e-16 V** pointwise; the 1069-site RoundWafer map with one reading/site matches exactly; the one-site RoundWafer target with four readings yields **60 V** exactly. New summary errors stay below **5e-15 V**, including the vendor's unavailable one-site Stdev.
+- All **1283** new measured coordinates match independently (maximum coordinate error below **7e-14 mm**). The empty 0-site export provides no finite numeric or geometry validation.
 
 **Shared analyzer behavior**
 
@@ -570,8 +573,8 @@ Examples include:
 
 - non-zero iteration-level VcpdOffset;
 - `LightOn=true`;
-- multiple readings/site;
-- another pattern/coordinate encoding or target geometry;
+- reading counts inconsistent with the XML setting;
+- a new pattern/target schedule without matching vendor coordinate evidence (geometry axis only);
 - multiple iterations;
 - another unit convention or additional vendor result quantity.
 

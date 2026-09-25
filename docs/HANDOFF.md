@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline for this branch: `v20260925.1` (LBIC DL and four geometry profiles merged in PR #66).
-- Feature branch: `feat/spv-standard-evidence-enhanced-audit`.
-- Scope: eight standard SPV XML/CSV pairs, one enhanced N-type pair, and independent partial HighDensity geometry evidence from the 100-case private corpus.
-- Private regression: run `scripts/validate_spv_reference.py` on the eight standard pairs and `scripts/validate_spv_reference.py --audit-enhanced` on the enhanced pair. Verify the eight standard geometry pairs with `scripts/validate_geometry_profiles.py`. Reference files stay ignored in `private/`.
+- Main baseline for this branch: `v20260925.2` (SPV standard expansion and enhanced audit merged in PR #67).
+- Feature branch: `feat/isc-vcpd-corpus-parity`.
+- Scope: geometry-independent paired ISC/VCPD validators and quantity-level promotion from the 100-case private corpus.
+- Private regression: run `scripts/validate_isc_reference.py` on nine ISC XML/CSV pairs and `scripts/validate_vcpd_reference.py` on the three nonempty VCPD pairs; check the one empty pair separately as new/unavailable profile evidence. Reference files stay ignored in `private/`.
 
 ## Cross-profile parity / geometry-decoupling audit
 

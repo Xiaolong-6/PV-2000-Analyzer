@@ -2,14 +2,14 @@
 """Pointwise validator for paired private PV-2000 VCPD XML + CSV references.
 
 Runtime remains XML-only. CSV exports are development references. The current
-validated family is VcpdMeasurement + MapPattern + RoundWafer with one direct
-Readings value per site, LightOn=false, iteration-level VcpdOffset=0, and the
+validated calculation family is VcpdMeasurement with Readings per site,
+LightOn=false, iteration-level VcpdOffset=0, and the
 vendor Vcpd Dark output.
 
-The paired reference establishes direct pointwise equality between the XML
-Reading and exported Vcpd Dark. Non-zero VcpdOffset, illuminated VCPD, multiple
-readings/site, alternate patterns/targets or additional result quantities are
-NEW PROFILE until paired vendor output establishes their semantics.
+The paired references establish the arithmetic mean of one, four or sixteen
+XML readings against exported Vcpd Dark. Geometry is validated independently.
+Non-zero offset, illuminated VCPD and additional result quantities remain
+outside the calculation profile.
 """
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ import statistics
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from validate_geometry_profiles import resolve_xml_geometry
 
 TOL_COORD = 1e-12
 TOL_VALUE = 1e-12
@@ -87,6 +88,18 @@ def max_abs(a, b):
     return err
 
 
+def max_abs_available(a, b):
+    if len(a) != len(b):
+        raise AssertionError(f"length mismatch {len(a)} != {len(b)}")
+    error = 0.0
+    for i, (left, right) in enumerate(zip(a, b), 1):
+        if math.isfinite(left) != math.isfinite(right):
+            raise AssertionError(f"summary availability mismatch at column {i}")
+        if math.isfinite(left):
+            error = max(error, abs(left - right))
+    return error
+
+
 def summary(values):
     z = [v for v in values if math.isfinite(v)]
     if not z:
@@ -114,42 +127,11 @@ def parse_xml(path: Path):
     iteration = iters[0]
     data = child(iteration, "Data")
     items = [x for x in children(data) if lname(x.tag) == "DataItem"]
-
-    pattern = child(m, "Pattern")
-    target = child(m, "Target")
-    if xtype(pattern) != "MapPattern":
-        raise AssertionError(f"NEW PROFILE: pattern={xtype(pattern)!r}")
-    if xtype(target) != "RoundWafer":
-        raise AssertionError(f"NEW PROFILE: target={xtype(target)!r}")
-
-    pitch = child(pattern, "Pitch")
-    pitch_x, pitch_y = num(pitch, "X"), num(pitch, "Y")
-    diameter = num(target, "Diameter")
-    edge = num(target, "EdgeExclusion", num(m, "EdgeExclusion", 0.0))
-    if not all(math.isfinite(v) for v in (pitch_x, pitch_y, diameter, edge)):
-        raise AssertionError("NEW PROFILE: incomplete MapPattern/RoundWafer geometry")
-    if pitch_x <= 0 or pitch_y <= 0 or diameter <= 0:
-        raise AssertionError("NEW PROFILE: invalid MapPattern/RoundWafer geometry")
-
-    radius = diameter / 2 - edge
-    if radius <= 0:
-        raise AssertionError("NEW PROFILE: edge exclusion removes the target")
-
-    xs, ys = [], []
-    nx = math.ceil(radius / pitch_x)
-    ny = math.ceil(radius / pitch_y)
-    eps = 1e-9
-    for iy in range(-ny, ny + 1):
-        y = iy * pitch_y
-        for ix in range(-nx, nx + 1):
-            x = ix * pitch_x
-            if x * x + y * y < radius * radius - eps:
-                xs.append(x)
-                ys.append(y)
-    if len(xs) != len(items):
-        raise AssertionError(
-            f"NEW PROFILE: generated coordinates={len(xs)}, DataItem count={len(items)}"
-        )
+    if not items:
+        raise AssertionError("NEW PROFILE: no acquired sites; empty export only")
+    geometry, _ = resolve_xml_geometry(path, len(items))
+    xs = [point["x"] for point in geometry["points"]]
+    ys = [point["y"] for point in geometry["points"]]
 
     offset = num(iteration, "VcpdOffset")
     if not math.isfinite(offset):
@@ -162,25 +144,26 @@ def parse_xml(path: Path):
         raise AssertionError(f"NEW PROFILE: LightOn={light_on!r}")
 
     configured_readings = num(m, "NumberOfReadings")
-    if not math.isfinite(configured_readings) or int(configured_readings) != 1:
+    if not math.isfinite(configured_readings) or configured_readings < 1 or int(configured_readings) != configured_readings:
         raise AssertionError(f"NEW PROFILE: NumberOfReadings={configured_readings!r}")
 
     values = []
+    reading_counts = set()
     for i, item in enumerate(items):
         readings = scalar_values(child(item, "Readings"))
-        if len(readings) != 1:
+        if len(readings) != configured_readings:
             raise AssertionError(
                 f"NEW PROFILE: point {i + 1} reading count={len(readings)}"
             )
-        values.append(readings[0])
+        reading_counts.add(len(readings))
+        values.append(statistics.fmean(readings))
 
     return {
         "xs": xs,
         "ys": ys,
         "values": values,
-        "pitch": (pitch_x, pitch_y),
-        "diameter": diameter,
-        "edge": edge,
+        "geometry": geometry,
+        "reading_counts": sorted(reading_counts),
         "offset": offset,
     }
 
@@ -232,15 +215,17 @@ def parse_vendor_csv(path: Path):
 def validate_pair(xml_path: Path, csv_path: Path):
     x = parse_xml(xml_path)
     v = parse_vendor_csv(csv_path)
-    if len(v["xs"]) != len(x["xs"]):
+    if len(v["xs"]) != len(x["values"]):
         raise AssertionError(
-            f"CSV point count={len(v['xs'])}, XML point count={len(x['xs'])}"
+            f"CSV point count={len(v['xs'])}, XML point count={len(x['values'])}"
         )
 
+    if x["geometry"]["status"] not in {"complete", "partial"} or len(x["xs"]) != len(x["values"]):
+        raise AssertionError(f"GEOMETRY NEW PROFILE: {x['geometry']}")
     ex = max_abs(x["xs"], v["xs"])
     ey = max_abs(x["ys"], v["ys"])
     ev = max_abs(x["values"], v["values"])
-    es = max_abs(summary(x["values"]), v["summary"])
+    es = max_abs_available(summary(x["values"]), v["summary"])
     if max(ex, ey) > TOL_COORD:
         raise AssertionError(f"coordinate max error X={ex:g}, Y={ey:g}")
     if ev > TOL_VALUE:
@@ -249,9 +234,8 @@ def validate_pair(xml_path: Path, csv_path: Path):
         raise AssertionError(f"summary max error={es:g}")
 
     return (
-        f"{xml_path.name}: points={len(x['xs'])}; readings/site=1; "
-        f"pitch={x['pitch'][0]:g}x{x['pitch'][1]:g} mm; "
-        f"diameter={x['diameter']:g} mm; edge={x['edge']:g} mm; "
+        f"{xml_path.name}: points={len(x['xs'])}; readings/site={x['reading_counts']}; "
+        f"geometry={x['geometry']['profileId'] or x['geometry']['status']}; "
         f"X/Y max={max(ex, ey):.3g} mm; Vcpd Dark max={ev:.3g} V; "
         f"summary max={es:.3g}"
     )
