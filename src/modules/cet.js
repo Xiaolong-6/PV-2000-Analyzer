@@ -481,7 +481,7 @@
     function drawHistogram(){
       const svg=host.querySelector('#cetHist');
       if(!svg)return;
-        metric=analysis.metrics[metricKey],
+      const metric=analysis.metrics[metricKey],
         mask=filterController.metricMask(metric),
         rows=histogramRows(metric,mask,histBins),
         width=640,height=360,margin={l:62,r:18,t:22,b:42};
