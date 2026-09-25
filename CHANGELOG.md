@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.26 — 2026-09-25
+
+- Closed the two previously conflicting Dual QSS `FixedPointsPattern + PseudoSquareCell` final-result cases by recovering the vendor saved-vector input rule from managed IL.
+- Preserved all XML `Values` lifetime vectors. `DoPointAveraging=false` uses `Values[0][i]`; `DoPointAveraging=true` uses the pointwise arithmetic mean of `Values[*][i]` through the vendor-equivalent `GetLifeTimeAsVector(i).Average()` path. `PointAverageCount` is retained as metadata but is not the branch selector.
+- Reused the existing `QSS-INJ-RESULT-001` downstream QSS/QDC/J0 equations unchanged. The former 3avg discrepancy closes at floating-point scale, including teff.SS ≈ **1.14e-13 µs** error, teff.SS Max ≈ **2.27e-13 µs**, Basore J0 ≈ **2.84e-14 fA/cm²** and K-S J0 ≈ **7.82e-13 fA/cm²**.
+- Extended the paired result envelope only to one-site FixedPoints acquisitions; multi-site FixedPoints, Auger correction, alternate sources and other unpaired categorical branches remain gated.
+- Updated the parser, numeric/runtime validators, sanitized parser fixture, regression tests, algorithm/profile/validation docs, Wiki, measurement matrices and handoff. The 100-case classifier becomes **73 scoped PASS + 14 intentional diagnostics** across the 87 successful vendor exports.
+
 ## v20260925.25 — 2026-09-25
 
 - Reworked dedicated-analyzer Current dataset panels into a compact shared summary strip with no nested cards. Wide sidebars divide the row evenly across the analyzer's actual metric count, covering the current 3-item Dual QSS, 4-item analyzers and 5-item JZero layouts without empty or orphan slots.
