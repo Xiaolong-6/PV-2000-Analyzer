@@ -93,6 +93,27 @@ The same `Vsb_direct` is the scalar `Vsb` written by the vendor final-result tab
 
 This result-table reconstruction is kept separate from the measured-light arrays used by Standard COCOS analysis. Recovered managed IL makes the distinction explicit: `CreateDataValues()` exports scalar `VsbInit` with the direct sign, whereas `StartDitCalculation()` separately negates the N-type `VsbrInitial` / analysis arrays. Therefore an N-type file can legitimately have opposite signs for **PV-2000 result Vsb** and **signed Standard-COCOS analysis Vsb** without implying a vendor-version conflict.
 
+## Current-DLL final-result reconstruction
+
+The project also reconstructs the current managed PV-2000 Standard-COCOS **final-result table** as a compatibility path. This is intentionally separate from the configurable Analyzer scientific calculation.
+
+Recovered result processing includes:
+
+1. reject `round(log2(N-1))` repeated-reading outliers around each vector mean when more than four readings are present;
+2. apply the saved Vcpd offset and `VsbCorrectionFactor`;
+3. order the process charge axis according to doping type;
+4. interpolate dark/light values on a natural-cubic grid with **3×** the acquired process-point count;
+5. calculate the vendor silicon space-charge relation using `ni = 1.45e10 cm^-3`, `eps_r = 11.9`, and the recovered temperature behavior;
+6. recover `QcInit` from a local three-point line fit;
+7. recover `Vfb/Qcfb` through the DLL's threshold/intersection and availability branches;
+8. use `Qtot = QcInit - Qcfb` only when both terms are available;
+9. map configured Qit barriers through the dense Qsc curve using the DLL interval rule;
+10. calculate the discrete variation-method Dit minimum with the doping-dependent sign convention and vendor clipping/unavailability rules.
+
+On the private 13-file / 43-site current-DLL corpus, Vfb/Qsc/Qtot/Qit/Minimum-Dit availability is reproduced exactly and finite numerical differences are at floating-point/interpolation scale.
+
+These values are exposed as **PV-2000 result** quantities. They do not replace the Analyzer's selectable Si/Ge Standard COCOS analysis values, PCHIP Midgap Dit, or inferred COCOS-II results.
+
 ## Standard COCOS
 
 Standard COCOS keeps the measured dark/light XML branch. After Vcpd offset removal, let `D` and `L` be the measured dark and light values and `F` the XML `VsbCorrectionFactor`. The signed result convention is:
