@@ -428,7 +428,7 @@ test('all plot Axes controls are rendered in chart headers immediately before ex
   assert.match(dit,/axisControls\('ditVcpdAxes'\)\}<button id="e1"/);
   assert.match(dit,/axisControls\('ditDitAxes'\)\}<button id="e2"/);
   assert.match(dit,/axisControls\('ditVsbAxes'\)\}<button id="e3"/);
-  assert.match(dit,/axisControls\('ditMapAxes'\)\}<button id="e4"/);
+  assert.match(dit,/axisControls\('ditMapAxes'\)\}\s*<button id="e4"/);
   assert.match(qss,/axisControls\('qMapAxes'\)\}<button id="qExportMap"/);
   assert.match(qss,/binControls\('qHistBins',histBins\)\}<button id="qExportHist"/);
   assert.match(qss,/axisControls\('qProfileAxes'\)\}<button id="qExportProfile"/);
