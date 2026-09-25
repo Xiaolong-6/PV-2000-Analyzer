@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.14 — 2026-09-25
+
+- Resolved the remaining DIT N-type Vsb ambiguity by recovering the vendor result-path semantics: `CreateDataValues()` exports direct `Vsb = VDark - VLight_result`, while `StartDitCalculation()` separately applies the N-type sign transform to Standard-COCOS analysis arrays.
+- Added an explicit runtime `ResultVsb` quantity and exposed **PV-2000 result Vsb** separately from **Analysis Vsb** without changing the existing doping-aware Standard COCOS calculation.
+- Promoted final-result Vsb to a strict paired gate alongside VDark, corrected VLight and Initial Qc for the 13-file / 43-site DIT result corpus.
+- Narrowed the remaining DIT evidence wall to downstream Vfb/Qtot/Qit/Qsc/Dit historical/current parity; no flatband or Dit formula was widened.
+
 ## v20260925.13 — 2026-09-25
 
 - Resolved the DIT final-result corrected-light semantics across **13 paired files / 43 sites**: `VLight_result = VDark - F × (VDark - VLight_measured)`, with maximum absolute error about **3.8e-15 V**.
