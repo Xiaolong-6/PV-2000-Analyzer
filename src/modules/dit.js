@@ -906,7 +906,26 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 500"></svg></div></div>
       </section><section class="plots detail">
         <div class="dit-detail-sticky">
-          <section class="panel dit-selected-panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd><dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd>${selectedResultRows}${vendorResultRows}</dl>${midgapCoverageText(s)?`<div class="note" style="margin-top:7px">${esc(midgapCoverageText(s))}</div>`:''}</section>
+          <section class="panel dit-selected-panel">
+            <h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3>
+            <div class="site-controls">
+              <button id="ditPrev">‹</button>
+              <select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select>
+              <button id="ditNext">›</button>
+              <span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span>
+            </div>
+            <dl class="meta" style="margin-top:8px">
+              <dt>Status</dt><dd>${esc(siteFilterState)}</dd>
+              <dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd>
+              <dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd>
+              <dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd>
+              <dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd>
+              <dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd>
+              <dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd>
+              ${selectedResultRows}${vendorResultRows}
+            </dl>
+            ${midgapCoverageText(s)?`<div class="note" style="margin-top:7px">${esc(midgapCoverageText(s))}</div>`:''}
+          </section>
           <div class="panel dit-detail-tabs" role="tablist" aria-label="Point analysis"><button type="button" role="tab" data-dit-view="vcpd">Vcpd–Qc</button><button type="button" role="tab" data-dit-view="dit">Dit–Vsb</button><button type="button" role="tab" data-dit-view="vsb">Vsb–Qc</button><button type="button" role="tab" data-dit-view="all">All</button></div>
         </div>
         <div class="panel chart" data-dit-detail="vcpd"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVcpdAxes')}<button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 640 360"></svg></div></div>
