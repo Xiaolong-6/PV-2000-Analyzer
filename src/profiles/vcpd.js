@@ -10,10 +10,12 @@
     matches:data=>
       data?.measurementKind==='vcpd'&&
       data.iterationCount===1&&
+      data.lightOn==='false'&&
       Number.isFinite(data.offset)&&
       Math.abs(data.offset)<=1e-12&&
+      Number.isInteger(data.numberOfReadings)&&data.numberOfReadings>0&&
       Array.isArray(data.sites)&&
       data.sites.length>0&&
-      data.sites.every(site=>site.darkRaw?.length>0)
+      data.sites.every(site=>site.darkRaw?.length===data.numberOfReadings)
   });
 })(typeof window!=='undefined'?window:globalThis);

@@ -71,7 +71,7 @@ coordinateCompleteness = prefix-inferred
 
 A supplied terminated `ISCMeasurement + MapPattern + RoundWafer` case with a 200 mm target, 4 mm EdgeExclusion and 1 × 1 mm pitch contains 10,947 acquired sites versus 28,913 scheduled sites; the analyzer therefore renders the acquired prefix while retaining the full wafer and exclusion boundaries.
 
-This incomplete-prefix coordinate interpretation is **inferred**, not vendor-validated. It does not expand `ISC-MAP-001` or `VCPD-MAP-001` parity. A point-count mismatch on a normal/completed acquisition remains unavailable rather than being silently truncated, so corrupted XML or an incorrect geometry rule is not masked.
+This incomplete-prefix coordinate interpretation is **inferred**, not vendor-validated. The new completed RoundWafer and SquareRegion pairs validate their own full schedules; they do not validate the terminated 10,947-site prefix. A point-count mismatch on a normal/completed acquisition remains unavailable rather than being silently truncated.
 
 ## Statistics
 

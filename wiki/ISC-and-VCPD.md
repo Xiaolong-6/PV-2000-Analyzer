@@ -36,18 +36,18 @@ The final light result therefore is not generally identical to `L-O` when the co
 
 ## VCPD
 
-On the current paired VCPD profile, each site stores a dark Kelvin-probe reading and the reported Vcpd Dark result follows that stored reading path.
+Paired VCPD profiles cover one, four and sixteen dark readings per site. The reported Vcpd Dark is their arithmetic mean when `LightOn=false` and the iteration offset is zero.
 
 VCPD does not synthesize ISC-only Vcpd Light or VSB.
 
-Alternate behavior such as non-zero offset handling, illumination or different repeated-reading structure remains a new profile until paired vendor output establishes it.
+Alternate behavior such as non-zero offset handling or illumination remains a new profile until paired vendor output establishes it.
 
 ## Maps and geometry
 
-Current validated map profiles are separate:
+Calculation profiles are independent of validated coordinate paths. The paired geometry paths include:
 
-- ISC: `MapPattern + SquareCell`;
-- VCPD: `MapPattern + RoundWafer`.
+- ISC: `MapPattern + SquareCell`, `MapPattern + RoundWafer`, `SquareRegionPattern + SquareCell`;
+- VCPD: `MapPattern + RoundWafer`, `HighDensityPattern + PseudoSquareCell`, `OnePointPattern + RoundWafer`.
 
 The analyzer reconstructs the scheduled coordinates from target dimensions, edge exclusion and pitch rather than guessing positions from filenames or result names.
 

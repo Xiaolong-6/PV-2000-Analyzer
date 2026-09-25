@@ -315,7 +315,7 @@ In multi-column layouts, the left functional sidebar is independently scrollable
 
 ## ISC — XML + raw PV-2000 export
 
-One paired ISC XML + PV-2000 CSV export establishes the current `ISCMeasurement + MapPattern + SquareCell` reference family. The manual identifies Vcpd Dark, Vcpd Light and VSB as the three ISC data-view quantities and states that the ISC raw export contains the per-point voltage readings.
+The original ISC pair plus nine new paired XML/vendor CSV exports establish `ISC-CALC-001` independently of geometry. The new cases cover 1860 sites across Map/RoundWafer, Map/SquareCell and SquareRegion/SquareCell. The manual identifies Vcpd Dark, Vcpd Light and VSB as the three ISC data-view quantities.
 
 For each site, with raw dark/light means `D` / `L`, XML offset `O`, and XML VSB correction factor `F`, the vendor output is reproduced by:
 
@@ -336,7 +336,7 @@ Vcpd Light = Vcpd Dark - Vsb
 | Vsb | max abs error ~7.49e-16 V | validated |
 | Average / Median / sample Stdev / Min / Max | max abs error ~3.33e-15 | validated |
 
-The validated coordinate path uses `MapPattern + SquareCell`: scheduled half-extent is `Size/2 - EdgeExclusion`, with an X-fast centered lattice at the XML X/Y pitch. The reference is 100 × 100 mm with 30 mm EdgeExclusion and 3 × 3 mm pitch, yielding a 13 × 13 grid from -18 to +18 mm.
+The original validated coordinate path uses `MapPattern + SquareCell`: scheduled half-extent is `Size/2 - EdgeExclusion`, with an X-fast centered lattice at XML pitch. The new paired corpus adds independent RoundWafer Map and SquareCell SquareRegion coordinate evidence. All nine new calculation and coordinate comparisons pass; the largest result difference is **4.44e-14 V** and the largest coordinate difference is below **6e-15 mm**.
 
 Run:
 
@@ -344,17 +344,17 @@ Run:
 npm run validate:isc
 ```
 
-Matching private references use the same basename under `private/reference/isc/`. Runtime remains XML-only; the CSV is never consulted during user analysis. Alternate ISC pattern/target/raw/result paths remain outside this validated envelope until paired vendor output is supplied.
+Matching private references use the same basename under `private/reference/isc/`, or can be provided as explicit paths to `scripts/validate_isc_reference.py`. The validator checks the calculation/quantity values and resolves geometry through the shared JavaScript geometry layer. Runtime remains XML-only. A new raw/result path remains a calculation profile; new coordinate scheduling requires its own paired geometry evidence.
 
 
 ## VCPD — XML + PV-2000 export
 
-One paired VCPD XML + PV-2000 CSV export establishes the current `VcpdMeasurement + MapPattern + RoundWafer` reference family. It is implemented in the shared ISC/Kelvin-probe analyzer but retains a separate result path and validation boundary.
+The original VCPD pair plus three new numeric pairs establish `VCPD-CALC-001` across one, four and sixteen readings per site. One additional empty XML/CSV pair has no acquired sites and provides no numeric validation. The family remains separate from ISC.
 
-For the paired reference, every `VcpdDataItem` contains one `Readings/double`, `LightOn=false`, and iteration-level `VcpdOffset=0 V`. The vendor result is reproduced by:
+For these paired references, `LightOn=false`, iteration-level `VcpdOffset=0 V` and every acquired `VcpdDataItem` contains the configured number of readings. The vendor result is reproduced by:
 
 ```text
-Vcpd Dark = XML Reading
+Vcpd Dark = arithmetic mean(XML Readings at the site)
 ```
 
 | Quantity / behavior | Regression result | Status |
@@ -368,7 +368,9 @@ Vcpd Dark = XML Reading
 | Average / Median / sample Stdev / Min / Max | floating-point parity with vendor summary | validated |
 | non-zero VcpdOffset | no paired reference | NEW PROFILE |
 | LightOn=true | no paired reference | NEW PROFILE |
-| multiple readings/site | no paired reference | NEW PROFILE |
+| multiple readings/site | 4 and 16 readings/site paired; maximum new result error ≈ 4.44e-16 V | validated for paired path |
+
+The three new numeric exports cover **1283 sites**; all coordinates reproduce independently through Map/RoundWafer, HighDensity/PseudoSquareCell and OnePoint/RoundWafer shared geometry profiles (maximum coordinate difference below **7e-14 mm**). Their summaries agree within **5e-15 V**, including the one-site unavailable Stdev. `LightOn=true`, non-zero offset and inconsistent reading counts remain outside the validated calculation path.
 
 The strict circular schedule uses `r = Diameter/2 - EdgeExclusion` and keeps lattice points satisfying `x²+y²<r²` in X-fast row-major order. For the reference, `r=92 mm`, the first coordinate is `(-24,-88) mm`, and the last is `(24,88) mm`.
 

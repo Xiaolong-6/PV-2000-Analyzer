@@ -273,8 +273,8 @@ Existing families retain their family-specific scientific views while using the 
 
 ### Profiles
 
-- `src/profiles/isc.js` — ISC-MAP-001 semantic envelope.
-- `src/profiles/vcpd.js` — VCPD-MAP-001 semantic envelope.
+- `src/profiles/isc.js` — ISC-CALC-001 calculation envelope, independent of shared geometry profiles.
+- `src/profiles/vcpd.js` — VCPD-CALC-001 calculation envelope, independent of shared geometry profiles.
 - `src/profiles/cet.js` — CET-9PT-SQUARE-001 semantic envelope.
 - `src/profiles/geometry.js` — shared geometry-profile registry for validated coordinate encodings.
 - `src/profiles/leakage.js` — paired Leakage VSASS/LI calculation profile.

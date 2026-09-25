@@ -2,14 +2,12 @@
 """Pointwise validator for paired private PV-2000 ISC XML + CSV references.
 
 Runtime remains XML-only. CSV exports are development references. The current
-validated family is ISCMeasurement + MapPattern + SquareCell with repeated
+validated calculation family is ISCMeasurement with repeated
 VcpdDark/VcpdLight readings, XML VcpdOffset/VsbCorrectionFactor, and vendor
 Vcpd Dark / Vcpd Light / Vsb outputs.
 
-Ordinary numeric changes in target size, edge exclusion, pitch, reading count,
-offset or correction factor stay within this family when the same XML/result
-path is used. Other pattern/target/result paths are NEW PROFILE until paired
-vendor output confirms their semantics.
+Calculation and geometry are checked independently against the same paired
+vendor output through the shared geometry resolver.
 """
 from __future__ import annotations
 
@@ -20,6 +18,7 @@ import statistics
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from validate_geometry_profiles import resolve_xml_geometry
 
 TOL_COORD = 1e-12
 TOL_VALUE = 1e-12
@@ -125,37 +124,9 @@ def parse_xml(path: Path):
     data = child(iters[0], "Data")
     items = [x for x in children(data) if lname(x.tag) == "DataItem"]
 
-    pattern = child(m, "Pattern")
-    target = child(m, "Target")
-    if xtype(pattern) != "MapPattern":
-        raise AssertionError(f"NEW PROFILE: pattern={xtype(pattern)!r}")
-    if xtype(target) != "SquareCell":
-        raise AssertionError(f"NEW PROFILE: target={xtype(target)!r}")
-
-    pitch = child(pattern, "Pitch")
-    pitch_x, pitch_y = num(pitch, "X"), num(pitch, "Y")
-    size = child(target, "Size")
-    width, height = num(size, "Width"), num(size, "Height")
-    edge = num(target, "EdgeExclusion", num(m, "EdgeExclusion", 0.0))
-    if not all(math.isfinite(v) for v in (pitch_x, pitch_y, width, height, edge)):
-        raise AssertionError("NEW PROFILE: incomplete MapPattern/SquareCell geometry")
-    if pitch_x <= 0 or pitch_y <= 0 or width <= 0 or height <= 0:
-        raise AssertionError("NEW PROFILE: invalid MapPattern/SquareCell geometry")
-    hx, hy = width / 2 - edge, height / 2 - edge
-    if hx < 0 or hy < 0:
-        raise AssertionError("NEW PROFILE: edge exclusion exceeds target half-size")
-
-    nx = math.floor(hx / pitch_x + 1e-9)
-    ny = math.floor(hy / pitch_y + 1e-9)
-    xs, ys = [], []
-    for iy in range(-ny, ny + 1):
-        for ix in range(-nx, nx + 1):
-            xs.append(ix * pitch_x)
-            ys.append(iy * pitch_y)
-    if len(xs) != len(items):
-        raise AssertionError(
-            f"NEW PROFILE: generated coordinates={len(xs)}, DataItem count={len(items)}"
-        )
+    geometry, _ = resolve_xml_geometry(path, len(items))
+    xs = [point["x"] for point in geometry["points"]]
+    ys = [point["y"] for point in geometry["points"]]
 
     offset = first_num(md, ["VcpdOffset", "VcpdOffsett"], math.nan)
     factor = num(md, "VsbCorrectionFactor", math.nan)
@@ -190,11 +161,9 @@ def parse_xml(path: Path):
         "light": light,
         "vsb": vsb,
         "reading_counts": sorted(reading_counts),
+        "geometry": geometry,
         "factor": factor,
         "offset": offset,
-        "pitch": (pitch_x, pitch_y),
-        "size": (width, height),
-        "edge": edge,
     }
 
 
@@ -260,10 +229,12 @@ def parse_vendor_csv(path: Path):
 def validate_pair(xml_path: Path, csv_path: Path):
     x = parse_xml(xml_path)
     v = parse_vendor_csv(csv_path)
-    n = len(x["xs"])
+    n = len(x["dark"])
     if len(v["xs"]) != n:
         raise AssertionError(f"CSV point count={len(v['xs'])}, XML point count={n}")
 
+    if x["geometry"]["status"] not in {"complete", "partial"} or len(x["xs"]) != n:
+        raise AssertionError(f"GEOMETRY NEW PROFILE: {x['geometry']}")
     ex = max_abs(x["xs"], v["xs"])
     ey = max_abs(x["ys"], v["ys"])
     ed = max_abs(x["dark"], v["dark"])
@@ -286,8 +257,7 @@ def validate_pair(xml_path: Path, csv_path: Path):
 
     return (
         f"{xml_path.name}: points={n}; readings/site={x['reading_counts']}; "
-        f"pitch={x['pitch'][0]:g}x{x['pitch'][1]:g} mm; "
-        f"target={x['size'][0]:g}x{x['size'][1]:g} mm; edge={x['edge']:g} mm; "
+        f"geometry={x['geometry']['profileId'] or x['geometry']['status']}; "
         f"X/Y max={max(ex, ey):.3g} mm; Vcpd Dark max={ed:.3g} V; "
         f"Vcpd Light max={el:.3g} V; Vsb max={eb:.3g} V; "
         f"summary max={summary_err:.3g}"

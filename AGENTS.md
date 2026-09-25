@@ -100,9 +100,9 @@ A different resolver-supported Pattern/Target combination must not be rejected m
 
 ## ISC validity rule
 
-The current validated ISC family is one iteration of repeated `VcpdDark` / `VcpdLight` readings using `MapPattern + SquareCell`, finite `VcpdOffset` and `VsbCorrectionFactor`, and vendor outputs Vcpd Dark / Vcpd Light / Vsb. For raw means `D` and `L`, offset `O`, and factor `F`, preserve the paired-reference equations `Vcpd Dark = D-O`, `Vsb = F(D-L)`, and `Vcpd Light = Vcpd Dark-Vsb`.
+The validated ISC calculation family is one iteration of repeated `VcpdDark` / `VcpdLight` readings, finite `VcpdOffset` and `VsbCorrectionFactor`, and vendor outputs Vcpd Dark / Vcpd Light / Vsb. Nine further paired examples cover Map/RoundWafer, Map/SquareCell and SquareRegion/SquareCell; each calculation and geometry path was checked separately. For raw means `D` and `L`, offset `O`, and factor `F`, preserve the paired-reference equations `Vcpd Dark = D-O`, `Vsb = F(D-L)`, and `Vcpd Light = Vcpd Dark-Vsb`.
 
-Numeric pitch/target/edge/read-count/offset/factor changes remain within this family when the same semantic path applies. Another pattern/coordinate encoding, target scheduling rule, iteration/raw schema, correction semantics, unit convention or vendor result set is **NEW PROFILE** and requires the actual XML plus matching PV-2000 output before validation expands. The runtime remains XML-only.
+Numeric pitch/target/edge/read-count/offset/factor changes remain within this family when the same semantic path applies. Geometry evidence is independent of the calculation profile; a new pattern/target combination needs paired coordinates before its geometry is validated. A different iteration/raw schema, correction semantics, unit convention or vendor result set is **NEW PROFILE** and requires the actual XML plus matching PV-2000 output before validation expands. The runtime remains XML-only.
 
 ## LBIC validity rule
 
