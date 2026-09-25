@@ -1,5 +1,7 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {DOMParser}=require('@xmldom/xmldom');
 global.PV2000={};
+require('../src/core/xml.js');
 require('../src/core/stats.js');
 require('../src/core/geometry.js');
 require('../src/core/validity.js');
@@ -9,7 +11,6 @@ require('../src/core/measurement.js');
 require('../src/core/profiles.js');
 require('../src/core/registry.js');
 require('../src/profiles/geometry.js');
-PV2000.xml={};
 PV2000.ui={escapeHtml:String,help(){return''},cssVar(){return''}};
 PV2000.plot={};
 PV2000.exporter={csv(){}};
@@ -18,6 +19,25 @@ require('../src/modules/cet.js');
 
 test('CET module registers dedicated measurement type',()=>{
   assert.deepEqual(PV2000.modules.cet.types,['CETMeasurement']);
+});
+
+test('CET parse maps a vendor-shaped XML fixture through the real XML helpers',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','cet-minimal.xml'),'utf8');
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const job=doc.documentElement,measurement=PV2000.xml.direct(job,'Measurement');
+  const d=PV2000.modules.cet.parse({doc,job,measurement,type:PV2000.xml.attrType(measurement)});
+  assert.equal(d.type,'CETMeasurement');
+  assert.equal(d.resultName,'CET parser fixture');
+  assert.equal(d.substrateId,'cet-wafer');
+  assert.equal(d.patternType,'OnePointPattern');
+  assert.equal(d.targetType,'RoundWafer');
+  assert.equal(d.iterationCount,1);
+  assert.equal(d.coronaCharge,1e11);
+  assert.equal(d.offset,0.01);
+  assert.equal(d.sites.length,1);
+  assert.deepEqual(d.sites[0].lightMeans,[-1.1,-2.1,-3.1]);
+  assert.deepEqual(d.coords,[{x:0,y:0}]);
+  assert.equal(d.temperatureC,25);
 });
 
 test('CET paired reference site reproduces Cd, EOT and R2',()=>{
