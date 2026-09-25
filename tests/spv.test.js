@@ -1,5 +1,7 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {DOMParser}=require('@xmldom/xmldom');
 global.PV2000={};
+require('../src/core/xml.js');
 require('../src/core/stats.js');
 require('../src/core/geometry.js');
 require('../src/core/validity.js');
@@ -7,7 +9,6 @@ require('../src/core/quantity.js');
 require('../src/core/measurement.js');
 require('../src/core/profiles.js');
 require('../src/core/registry.js');
-PV2000.xml={};
 PV2000.ui={escapeHtml:String};
 require('../src/profiles/spv.js');
 require('../src/modules/spv.js');
@@ -15,6 +16,29 @@ require('../src/modules/spv.js');
 test('SPV module registers dedicated measurement type',()=>{
   assert.deepEqual(PV2000.modules.spv.types,['SPVMeasurement']);
 });
+
+test('SPV parse maps signal vectors and acquisition settings from a vendor-shaped XML fixture',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','spv-minimal.xml'),'utf8');
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const job=doc.documentElement,measurement=PV2000.xml.direct(job,'Measurement');
+  const d=PV2000.modules.spv.parse({doc,job,measurement,type:PV2000.xml.attrType(measurement)});
+  assert.equal(d.type,'SPVMeasurement');
+  assert.equal(d.resultName,'SPV parser fixture');
+  assert.equal(d.substrateId,'spv-wafer');
+  assert.equal(d.patternType,'OnePointPattern');
+  assert.equal(d.targetType,'RoundWafer');
+  assert.equal(d.wavelength8,778);
+  assert.equal(d.wavelength6,933);
+  assert.equal(d.chuckTemperature,24);
+  assert.equal(d.ledTemperature,25);
+  assert.equal(d.spv8Global,5.329166666666667);
+  assert.equal(d.spv8ReducedGlobal,6.9295);
+  assert.equal(d.sites.length,1);
+  assert.ok(Math.abs(d.sites[0].spv8-3.5)<1e-12);
+  assert.ok(Math.abs(d.sites[0].spv6-3.2)<1e-12);
+  assert.deepEqual(d.coords,[{x:0,y:0}]);
+});
+
 
 test('paired SPV valid point reproduces vendor DL and Tau',()=>{
   const settings={

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>Leakage fixture recipe</Name>
+  <ResultName>Leakage parser fixture</ResultName>
+  <Status>Finished</Status>
+  <ExecutionInfo><StartTime>2026-09-25T08:00:00</StartTime><EndTime>2026-09-25T08:00:02</EndTime><ElapsedTime>2</ElapsedTime></ExecutionInfo>
+  <Substrate>
+    <SubstrateId>leakage-wafer</SubstrateId><LotId>fixture-lot</LotId><Description>Sanitized Leakage parser fixture</Description>
+    <SubstrateShape xsi:type="Circle"><Radius>50</Radius></SubstrateShape>
+  </Substrate>
+  <Measurement xsi:type="LeakageMeasurement">
+    <MeasurePositive>true</MeasurePositive><MeasureNegative>true</MeasureNegative>
+    <Material>Si</Material><PhysicalThickness>180</PhysicalThickness>
+    <PositiveSettings><Charge>1</Charge><MeasuringTimeSeconds>1.5</MeasuringTimeSeconds><MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds></PositiveSettings>
+    <NegativeSettings><Charge>-1</Charge><MeasuringTimeSeconds>1.5</MeasuringTimeSeconds><MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds></NegativeSettings>
+    <Pattern xsi:type="OnePointPattern"><Name>Center</Name><Coefficients><Point><X>0</X><Y>0</Y></Point></Coefficients></Pattern>
+    <Target xsi:type="RoundWafer"><Diameter>100</Diameter><EdgeExclusion>5</EdgeExclusion></Target>
+    <MeasurementData>
+      <VcpdOffset><double>0.01</double><double>0.03</double></VcpdOffset>
+      <IterationData><Iteration><ChuckTemperature>24</ChuckTemperature><Data><DataItem>
+        <PositiveDelaySeconds>0.48</PositiveDelaySeconds><NegativeDelaySeconds>0.47</NegativeDelaySeconds>
+        <PositiveData><double>40</double><double>40.01</double><double>40.02</double><double>40.03</double><double>40.04</double><double>40.05</double><double>40.06</double><double>40.07</double><double>40.08</double><double>40.09</double><double>40.1</double><double>40.11</double><double>40.12</double><double>40.13</double><double>40.14</double></PositiveData>
+        <NegativeData><double>-28</double><double>-28.01</double><double>-28.02</double><double>-28.03</double><double>-28.04</double><double>-28.05</double><double>-28.06</double><double>-28.07</double><double>-28.08</double><double>-28.09</double><double>-28.1</double><double>-28.11</double><double>-28.12</double><double>-28.13</double><double>-28.14</double></NegativeData>
+      </DataItem></Data></Iteration></IterationData>
+    </MeasurementData>
+  </Measurement>
+</Job>

@@ -1,12 +1,13 @@
-const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const {DOMParser}=require('@xmldom/xmldom');
 global.PV2000={};
+require('../src/core/xml.js');
 require('../src/core/stats.js');
 require('../src/core/selection.js');
 require('../src/core/geometry.js');
 require('../src/core/profiles.js');
 require('../src/profiles/geometry.js');
 require('../src/core/registry.js');
-PV2000.xml={};
 PV2000.ui={escapeHtml:String,help(){return''},cssVar(){return''}};
 PV2000.plot={};
 PV2000.exporter={csv(){}};
@@ -14,6 +15,25 @@ require('../src/modules/jzero.js');
 
 test('JZero module registers dedicated measurement type',()=>{
   assert.deepEqual(PV2000.modules.jzero.types,['JZeroMeasurement']);
+});
+
+test('JZero parse maps paired lifetime iterations from a vendor-shaped XML fixture',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','jzero-minimal.xml'),'utf8');
+  const doc=new DOMParser().parseFromString(xml,'application/xml');
+  const job=doc.documentElement,measurement=PV2000.xml.direct(job,'Measurement');
+  const d=PV2000.modules.jzero.parse({doc,job,measurement,type:PV2000.xml.attrType(measurement)});
+  assert.equal(d.type,'JZeroMeasurement');
+  assert.equal(d.resultName,'JZero parser fixture');
+  assert.equal(d.substrateId,'jzero-wafer');
+  assert.equal(d.patternType,'OnePointPattern');
+  assert.equal(d.targetType,'RoundWafer');
+  assert.equal(d.iterations,2);
+  assert.deepEqual(d.values,[[200.25],[125.5]]);
+  assert.deepEqual(d.qssMilli,[1000,3000]);
+  assert.deepEqual(d.coords,[{x:0,y:0}]);
+  assert.equal(d.waferThickness,200);
+  assert.equal(d.doping,1.5e16);
+  assert.deepEqual(d.temperatures,[25,26]);
 });
 
 test('pseudo-square JZero reference geometry reconstructs 5017 sites',()=>{
