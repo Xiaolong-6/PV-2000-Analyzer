@@ -81,22 +81,29 @@ test('DIT InitialQc includes the initial state before preprocess charge attempts
   assert.ok(Number.isNaN(calc(2, NaN)));
 });
 
-test('DIT final-result corrected VLight follows the vendor result reconstruction', () => {
-  const calc = PV2000.modules.dit.finalResultVLight;
-  assert.ok(Math.abs(calc(0.36505355013958335, 0.3394385534729166, 1.2) - 0.3343155541395834) < 1e-15);
-  assert.ok(Math.abs(calc(0.6352415098270833, 0.65172946979375, 1.2) - 0.6550270617870833) < 1e-15);
-  assert.ok(Number.isNaN(calc(NaN, 0.2, 1.2)));
+test('DIT final-result VLight and Vsb stay separate from signed analysis Vsb', () => {
+  const light = PV2000.modules.dit.finalResultVLight;
+  const resultVsb = PV2000.modules.dit.finalResultVsb;
+  const analysisVsb = PV2000.modules.dit.standardVsb;
+  const vdark = 0.36505355013958335;
+  const measured = 0.3394385534729166;
+  const factor = 1.2;
+  assert.ok(Math.abs(light(vdark, measured, factor) - 0.3343155541395834) < 1e-15);
+  assert.ok(Math.abs(resultVsb(vdark, measured, factor) - 0.0307379960000001) < 1e-15);
+  assert.ok(Math.abs(analysisVsb(vdark, measured, factor, 'n') + 0.0307379960000001) < 1e-15);
+  assert.ok(Number.isNaN(resultVsb(NaN, 0.2, factor)));
 });
 
-test('DIT final-result validator gates corrected VLight but keeps Vsb sign diagnostic-only', () => {
+test('DIT final-result validator hard-gates direct result Vsb independently', () => {
   const fs = require('node:fs');
   const src = fs.readFileSync(require.resolve('../scripts/validate_dit_result_reference.py'), 'utf8');
-  assert.match(src, /final-result corrected VLight/);
-  assert.match(src, /result_light = initial_dark - direct/);
-  assert.match(src, /if light_mask or light_error > 1e-9/);
+  assert.match(src, /final-result Vsb reconstructed as VDark - corrected VLight/);
+  assert.match(src, /vsb = direct/);
+  assert.match(src, /if vsb_mask or vsb_error > 1e-9/);
   assert.match(src, /Initial Qc preprocess bookkeeping/);
   assert.match(src, /VLight max=/);
-  assert.match(src, /Vsb diagnostic max=/);
+  assert.match(src, /Vsb max=/);
+  assert.doesNotMatch(src, /Vsb diagnostic max=/);
 });
 
 test('OnePoint circular substrate uses nominal geometry instead of point extent', () => {
