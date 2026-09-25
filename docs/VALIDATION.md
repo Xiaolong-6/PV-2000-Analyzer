@@ -43,7 +43,9 @@ The validated calculation envelope is the standard non-enhanced, non-texture, no
 
 The 100-case corpus adds **nine** paired SPV exports. Eight standard pairs cover **3213 sites**: five positive-oxide pairs extend `SPV-CALC-STANDARD-001`, while three zero-oxide/zero-reflectivity pairs establish `SPV-CALC-ZERO-OXIDE-002`. All **1542 finite DL/Tau sites** in these new pairs agree pointwise (new-pair maxima 5.52e-12 µm and 7.15e-13 µs), and no value or raw-channel availability masks differ. Geometry is independently checked: 877-, 1649- and 221-site RoundWafer maps, NinePoint/RoundWafer, OnePoint/RoundWafer and HighDensity/PseudoSquareCell are complete; a terminated 59-site HighDensity/SquareCell acquisition matches the vendor coordinate prefix but stays partial.
 
-The remaining enhanced N-type pair has 69 raw SPV sites and 28 finite vendor DL/Tau values. Raw channels match; the standard formula on those 28 sites differs by as much as 296.64 µm (DL) and 420.23 µs (Tau). It remains an **unimplemented enhanced calculation profile**. The validator now detects `UseEnhancedMode=true` and reports this pair as an explicit **diagnostic**, rather than failing the standard-profile regression or promoting it to PASS. `--audit-enhanced` remains available for an explicit enhanced audit. CSV is never a runtime input.
+The paired N-type `UseEnhancedMode=true` case has **69 sites**, with **28 finite DL/Tau** values and 41 vendor `Ud.` sites. The recovered finite-wafer/back-surface model now reproduces the full paired result: DL maximum absolute error is **2.11e-7 µm**, Tau **1.46e-7 µs**, raw SPV8/SPV6 agree to floating-point precision, and the DL/Tau availability mask has **zero mismatches**. This establishes `SPV-CALC-ENHANCED-N-003`.
+
+The validated Enhanced envelope is N-type, measured-linearity, non-texture, non-parsed-signal processing with positive oxide thickness and finite wafer-thickness / BSR parameters. Enhanced P-type, texture correction, parsed signals and manual-linearity mode remain outside the paired profile. CSV remains development evidence only; runtime stays XML-only.
 
 ## VCPD empty-acquisition diagnostic
 
