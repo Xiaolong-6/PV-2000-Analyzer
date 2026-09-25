@@ -212,7 +212,11 @@ Run:
 npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 ```
 
-The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or other categorical Dual QSS result branches.
+The 100-case harness adds five nonempty Dual QSS final-result rows beyond the original two-pair regression. Three OnePoint rows remain compatible with the established non-Auger Back/Back calculation family. One of them has `CalculateJZeroParams=false`: PV-2000 exports finite teff.d/teff.SS/Δn/Smax/Voc but `Ud.` for `teff.SS Max` and maximum-Smax. The runtime now preserves that quantity-level unavailability instead of exposing internally computable maxima.
+
+Two historical `FixedPointsPattern + PseudoSquareCell` rows give conflicting calculation evidence: one is close to the current reconstruction, while the other differs materially (for example ≈0.43 µs teff.SS, ≈10.16 µs teff.SS Max and ≈1.30 fA/cm² Basore J0). The result-profile geometry gate therefore remains unchanged.
+
+The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or the conflicting historical FixedPoints result branch.
 
 
 ## Emitter J0 map — calculation / geometry / quantity regression
