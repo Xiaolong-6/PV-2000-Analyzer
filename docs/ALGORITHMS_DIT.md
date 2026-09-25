@@ -78,7 +78,20 @@ Initial Qc = (N_pre + 1) × ΔQ_pre
 
 The extra one is required even though the XML contains only `N_pre` PreProcess dark vectors. The 100-case paired final-result corpus validates this bookkeeping exactly on **43 sites across 13 files**, over charge steps ranging from `-5e10` to `-1e14 cm^-2`.
 
-This is a direct/bookkeeping result, not a new Standard COCOS formula. The same regenerated final-result exports retain corrected-light and vendor-version drift in `VLight`, N-type Vsb and downstream flatband/Dit quantities; those branches keep their existing evidence boundary.
+This is a direct/bookkeeping result, not a new Standard COCOS formula.
+
+## Final-result corrected VLight
+
+The vendor final-result point table does not report the raw measured initial light value directly when `VsbCorrectionFactor != 1`. After offset removal, let `D` be initial dark, `L` the measured initial light and `F` the XML correction factor. The final-result light value is:
+
+```text
+Vsb_direct = F × (D - L)
+VLight_result = D - Vsb_direct
+```
+
+Across **43 sites in 13 paired final-result files**, this reproduces vendor `VLight` to floating-point precision (maximum absolute error about **3.8e-15 V**). The largest measured-versus-result difference, about **83.1 mV**, is explained by this correction and is not an unexplained processing drift.
+
+This result-table reconstruction is kept separate from the measured-light arrays used by Standard COCOS analysis. The two N-type regenerated result rows use the current-DLL direct Vsb sign, which conflicts with the stronger historical doping-aware Standard-COCOS sign evidence; that sign boundary remains unchanged.
 
 ## Standard COCOS
 

@@ -9,12 +9,13 @@ Strict gates are intentionally narrow:
 - point count;
 - shared geometry coordinates when a complete geometry profile resolves;
 - initial VDark stored in XML;
+- final-result corrected VLight reconstructed from the XML correction factor;
 - Initial Qc preprocess bookkeeping.
 
-VLight and Vsb are printed as diagnostics because regenerated historical
-exports can contain corrected-light/vendor-version state not uniquely saved in
-the XML.  This script must not be used to widen Standard COCOS or COCOS-II
-calculation claims.
+Vsb remains diagnostic because the regenerated N-type final-result exports use
+the current-DLL direct sign while the stronger historical Standard-COCOS
+reference uses the doping-aware sign convention.  This script must not be used
+to widen Standard COCOS or COCOS-II calculation claims.
 """
 from __future__ import annotations
 
@@ -152,13 +153,15 @@ def xml_rows(path):
         initial_dark = scalar_mean(child(item, "InitialVcpdDark")) - offset
         initial_light = scalar_mean(child(item, "InitialVcpdLight")) - offset
         direct = factor * (initial_dark - initial_light)
+        result_light = initial_dark - direct
         vsb = -direct if doping_type == "n" else direct
         pred = child(item, "PreProcessData")
         attempts = len(kids(child(pred, "VcpdDark")))
         initial_qc = (attempts + 1) * pre_step if math.isfinite(pre_step) else math.nan
         result.append({
             "VDark": initial_dark,
-            "VLight": initial_light,
+            "VLight": result_light,
+            "MeasuredVLight": initial_light,
             "Vsb": vsb,
             "InitialQc": initial_qc,
         })
@@ -236,6 +239,8 @@ def main():
 
     if vdark_mask or vdark_error > 1e-9:
         raise AssertionError(f"VDark max={vdark_error:g} availability mismatch={vdark_mask}")
+    if light_mask or light_error > 1e-9:
+        raise AssertionError(f"VLight max={light_error:g} availability mismatch={light_mask}")
     if initial_mask or initial_error > 1e-6:
         raise AssertionError(
             f"InitialQc max={initial_error:g} availability mismatch={initial_mask}"
@@ -248,8 +253,8 @@ def main():
     )
     print(
         f"DIT RESULT PASS {args.xml.name}: sites={len(actual)}; geometry={geometry_text}; "
-        f"VDark max={vdark_error:.3g} V; InitialQc max={initial_error:.3g} cm^-2; "
-        f"VLight diagnostic max={light_error:.6g} V/mask{light_mask}; "
+        f"VDark max={vdark_error:.3g} V; VLight max={light_error:.3g} V; "
+        f"InitialQc max={initial_error:.3g} cm^-2; "
         f"Vsb diagnostic max={vsb_error:.6g} V/mask{vsb_mask}; doping={doping_type}"
     )
     return 0

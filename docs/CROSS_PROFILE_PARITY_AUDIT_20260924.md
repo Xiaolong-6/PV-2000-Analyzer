@@ -217,7 +217,7 @@ At the date of this audit, calculated DL was unsupported. The later 2026-09-25 f
 
 ### P4 — DIT
 
-Compare the regenerated historical cases against original paired references and known vendor-version behavior. Resolve corrected-light/N-type drift before changing any Standard COCOS calculation. Geometry evidence may be promoted independently.
+Corrected final-result VLight is now resolved independently: `VLight_result = VDark - F × (VDark - VLight_measured)` matches all 43 sites in the 13-pair final-result corpus at floating-point scale. The remaining conflict is narrower: regenerated N-type final-result Vsb uses the opposite sign from the stronger historical Standard-COCOS reference, while flatband/Qtot/Dit remain version/profile-sensitive. Do not change the existing doping-aware Standard COCOS sign rule from regenerated result tables. Geometry evidence may be promoted independently.
 
 ### P5 — Dual QSS
 

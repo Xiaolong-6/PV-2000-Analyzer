@@ -238,6 +238,6 @@ The analyzer currently supports silicon and a legacy-compatible germanium model.
 
 ## 12. Validation status
 
-Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. `DIT-RESULT-INITIAL-001` additionally validates final-result initial VDark and Initial Qc bookkeeping across 13 paired files without promoting the regenerated corrected-light/Vsb/flatband/Dit branches. COCOS-II and material extensions retain their documented profile status until matching output establishes parity.
+Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. `DIT-RESULT-INITIAL-001` additionally validates final-result initial VDark, corrected VLight and Initial Qc across 13 paired files / 43 sites. Corrected VLight follows `VDark - F × (VDark - VLight_measured)`; N-type result Vsb and downstream flatband/Dit remain outside that promotion. COCOS-II and material extensions retain their documented profile status until matching output establishes parity.
 
 Exact validation envelopes are maintained in docs/REFERENCE_PROFILES.md.

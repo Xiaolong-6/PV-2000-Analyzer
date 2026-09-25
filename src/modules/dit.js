@@ -18,6 +18,10 @@
     const direct=factor*(vdark-vlight);
     return type==='n'?-direct:direct;
   };
+  const finalResultVLight=(vdark,measuredLight,factor)=>
+    Number.isFinite(vdark)&&Number.isFinite(measuredLight)&&Number.isFinite(factor)
+      ?vdark-factor*(vdark-measuredLight)
+      :NaN;
   const initialQcFromPreprocess=(darkVectorCount,chargeStep)=>{
     if(!Number.isFinite(darkVectorCount)||darkVectorCount<0||!Number.isFinite(chargeStep))return NaN;
     return (darkVectorCount+1)*chargeStep;
@@ -96,12 +100,12 @@
         const vd=d[j]-off,
           vl=l[j]-off,
           vsb=standardVsb(vd,vl,factor,dopingType);
-        rows.push({Qc:(j-1)*qstep,VDark:vd,VLight:vl,Vsb:vsb,rawDiff:vl-vd});
+        rows.push({Qc:(j-1)*qstep,VDark:vd,VLight:vl,ResultVLight:finalResultVLight(vd,vl,factor),Vsb:vsb,rawDiff:vl-vd});
       }
       const id=scalarMean(X.direct(it,'InitialVcpdDark'))-off,
         il=scalarMean(X.direct(it,'InitialVcpdLight'))-off,
         iv=standardVsb(id,il,factor,dopingType);
-      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,Vsb:iv,InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)});
+      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,ResultVLight:finalResultVLight(id,il,factor),Vsb:iv,InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)});
     });
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
@@ -536,7 +540,7 @@
           helpText:'Choose a calculated DIT/COCOS site quantity and numeric range. Algorithm-invalid sites remain intrinsically excluded; the user range only narrows the active site population used by Results summary, wafer-map display and map export. Current-site Vcpd/Vsb/Dit curves are never recalculated or truncated by this filter.'
         })}
         <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Mean and sample standard deviation use sites that pass intrinsic algorithm validity, the active Valid-data filter and the displayed quantity\'s finite-value availability. Current-site values remain available even when that site is FILTERED.')}</summary><div class="result-list">${rows.map(([n,k])=>{const v=metric(s,k),sk=k==='eot'?'eot':k,unit=mapSpec(k==='eot'?'EOT':k)[1];return`<div class="result-card" title="${esc(resultHelp[k]||'')}"><div class="result-card-head"><span class="result-card-name">${n} ${help(resultHelp[k]||'')}</span><span class="result-unit">${esc(unit)}</span></div><div class="result-card-values"><div><span class="result-label">Valid-site mean</span><strong>${statText(sk)}</strong></div><div><span class="result-label">Current site</span><strong>${fmt(v)}</strong></div></div>${k==='MidgapDit'&&midgapCoverageText(s)?`<div class="note">${esc(midgapCoverageText(s))}</div>`:''}</div>`}).join('')}</div></details>
-        <section class="panel"><h3>Selected site ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd></dl></section>
+        <section class="panel"><h3>Selected site ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd></dl></section>
         <details class="panel">\
 <summary>Measurement metadata ${help('Detailed recipe, substrate, timing and COCOS settings parsed directly from the imported XML.')}</summary>\
 <dl class="meta meta-detail">${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}\
@@ -643,7 +647,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         drawMap()};
         applyBtn.onclick=()=>rebuild();
         
-      host.querySelector('#e1').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vcpd.csv`,['Qc','VDark','Measured VLight','Analysis Vsb','COCOS-II synthetic VLight'],s.rows.map((r,i)=>[r.Qc,r.VDark,r.VLight,s.analysisVsb[i],s.c2?.light?.[i]??'']));
+      host.querySelector('#e1').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vcpd.csv`,['Qc','VDark','Measured VLight','PV-2000 result VLight','Analysis Vsb','COCOS-II synthetic VLight'],s.rows.map((r,i)=>[r.Qc,r.VDark,r.VLight,r.ResultVLight,s.analysisVsb[i],s.c2?.light?.[i]??'']));
         
       host.querySelector('#e2').onclick=()=>{
         const fitMethod=analysis.options.pchipEnabled?(analysis.options.pchipMethod==='median'?'Median-binned PCHIP':'PCHIP (original)'):'Off',
@@ -861,6 +865,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
     materialProfile,
     materials:MATERIALS,
     standardVsb,
+    finalResultVLight,
     initialQcFromPreprocess,
     spatialEnvelope
   };

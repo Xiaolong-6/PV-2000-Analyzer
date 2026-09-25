@@ -303,16 +303,17 @@ Run the diagnostic with `npm run validate:dit -- --xml-dir <local XML directory>
 
 ### Final-result direct/bookkeeping quantities
 
-Status: **paired validation for VDark and Initial Qc only**.
+Status: **paired validation for VDark, corrected final-result VLight and Initial Qc**.
 
 The 100-case private corpus contains **13 successful DIT final-result XML/vendor-CSV pairs (43 sites)** plus one XML whose vendor harness export fails with `ArgumentOutOfRangeException`. The paired results span OnePoint, SquareRegion and FivePoint geometries, plus one FixedPoints case whose geometry remains unresolved.
 
 For the 13 successful pairs:
 
 - initial `VDark` reconstructed directly from `InitialVcpdDark` and the stored offset agrees to a maximum absolute error of **3.55e-15 V**;
+- final-result `VLight` is deterministically reconstructed as `VDark - F × (VDark - VLight_measured)` using the XML `VsbCorrectionFactor`; all **43 sites** match to floating-point precision, with maximum absolute error about **3.8e-15 V**. The previously reported **83.1 mV** difference is therefore a real corrected-light result semantic, not unexplained drift;
 - PV-2000 `Initial Qc` is **one preprocess charge step beyond the number of stored PreProcess dark vectors**: `(N_preprocess + 1) × CoronaCharge`; all **43 sites** match vendor output exactly after this correction;
 - 12/13 cases resolve through existing shared geometry profiles, with maximum X/Y error about **3.58e-14 mm**; the single FixedPoints/RoundWafer case remains a geometry diagnostic rather than widening geometry support;
-- regenerated final-result `VLight` differs by as much as **83.1 mV**, and the two N-type cases export the opposite Vsb sign from the stronger original Standard-COCOS reference rule. Those fields remain diagnostics and do not alter the current doping-aware Standard COCOS implementation.
+- the two N-type regenerated final-result rows still export the opposite Vsb sign from the stronger original Standard-COCOS reference rule. Vsb remains diagnostic and the current doping-aware Standard COCOS implementation is unchanged.
 
 The same final-result rows contain mixed/unavailable Vfb/Qtot/Qit states and materially drifting Dit/Qsc values. They are not promoted by this profile. Run the narrow final-result validator with:
 

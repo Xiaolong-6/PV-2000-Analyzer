@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.13 — 2026-09-25
+
+- Resolved the DIT final-result corrected-light semantics across **13 paired files / 43 sites**: `VLight_result = VDark - F × (VDark - VLight_measured)`, with maximum absolute error about **3.8e-15 V**.
+- Reclassified the previously observed **83.1 mV** measured-vs-result VLight difference as deterministic `VsbCorrectionFactor` behavior rather than unexplained drift.
+- Kept measured VLight as the Standard COCOS calculation input while exposing the separate PV-2000 final-result VLight in runtime site details and Vcpd/Qc export.
+- Promoted corrected VLight to a strict gate in the DIT final-result validator alongside VDark and Initial Qc.
+- Kept the stronger historical doping-aware N-type Standard COCOS Vsb convention unchanged; regenerated N-type result Vsb, Vfb/Qtot/Qit/Qsc/Dit and unresolved FixedPoints geometry remain outside the promoted result profile.
+
 ## v20260925.12 — 2026-09-25
 
 - Implemented the recovered finite-wafer/back-surface SPV Enhanced calculation for the paired N-type branch as `SPV-CALC-ENHANCED-N-003`.
