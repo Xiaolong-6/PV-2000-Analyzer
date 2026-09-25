@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.18 — 2026-09-25
+
+- Fixed LBIC Distribution rendering after plot normalization: `PV.plot.canvasFrame()` exposes `ctx`, and reading `frame.context` caused `Cannot read properties of undefined (reading 'clearRect')` during redraw.
+- Added a drawing regression test that exercises the Distribution canvas frame and verifies that it clears and paints.
+
+
 ## v20260925.17 — 2026-09-25
 
 - Made the wide desktop workspace a true equal-width three-pane layout with independent vertical scrolling for dataset/analysis state, whole-sample overview and point/local detail.

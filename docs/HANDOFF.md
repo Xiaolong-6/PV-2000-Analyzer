@@ -1,5 +1,10 @@
 # Agent handoff — 2026-09-25
 
+## LBIC Distribution regression fix (v20260925.18)
+
+LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matching `PV.plot.canvasFrame()`. The previous `frame.context` access caused a `clearRect` TypeError on LBIC redraw. A drawing regression test covers the shared canvas-frame path.
+
+
 ## Current baseline
 
 - Public main: `v20260925.12`.
