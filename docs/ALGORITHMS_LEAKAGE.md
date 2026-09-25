@@ -54,6 +54,16 @@ The sampling interval is a numeric input to the same spline algorithm and is not
 
 Different categorical acquisition/result paths — for example negative-only operation or a materially different result builder — require separate paired evidence before being labelled validated.
 
+## Physical interpretation boundary
+
+A voltage relaxation can be related to leakage current only after an electrostatic/capacitance model is specified. In an ideal areal-capacitor picture,
+
+```text
+J_leak = -C_A * dV/dt
+```
+
+but the measured Kelvin-probe CPD can also contain semiconductor surface-potential and trapping contributions. The validated `LEAKAGE-CALC-VSASS-001` outputs are therefore voltage-domain compatibility quantities; the analyzer does not label VSASS or LI as leakage-current density.
+
 ## Derivative I-V diagnostic
 
 The legacy software also forms a dielectric-capacitance-scaled derivative diagnostic from smoothed transients. That recovered behavior is not currently exposed as a primary validated Analyzer quantity. The scalar VSASS/LI path is intentionally kept separate from that diagnostic.

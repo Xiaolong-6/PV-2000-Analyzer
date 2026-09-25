@@ -12,9 +12,9 @@ This page separates **dedicated runtime analyzers** from measurement families th
 | [Emitter J0](Emitter-J0) | `JZeroMeasurement` | two lifetime states plus derived Smax/Voc/J0 | implemented; lifetime/Smax/Basore calculation validated across paired geometries; Voc quantity profile is narrower |
 | [ISC](ISC-and-VCPD) | `ISCMeasurement` | corrected/derived repeated Kelvin-probe readings | implemented; paired map profile validated |
 | [VCPD](ISC-and-VCPD) | `VcpdMeasurement` | stored/averaged Kelvin-probe readings | implemented; separate paired map profile validated |
-| [CET / EOT](CV-and-CET) | `CETMeasurement` | corona/CPD sweep plus fitted capacitance/EOT | implemented; `CET-9PT-SQUARE-001` validates the current fixed-point path |
+| [CET / EOT](CV-and-CET) | `CETMeasurement` | corona/CPD sweep plus fitted capacitance/EOT | implemented; `CET-CALC-001` is calculation-scoped and paired geometry evidence spans several fixed/region target combinations |
 | [LBIC](LBIC) | `LBICMeasurement` | measured photocurrent/reflection channels plus derived Reflectivity/IQE and paired cross-beam DL | implemented; current-plus-scattered DL numeric profile validated, other optical DL paths require separate evidence |
-| [SPV / Diffusion Length](SPV) | `SPVMeasurement` | raw SPV8/SPV6 plus compatibility DL and DL-derived Tau | implemented; paired 4 mm RoundWafer standard path validated |
+| [SPV / Diffusion Length](SPV) | `SPVMeasurement` | raw SPV8/SPV6 plus compatibility DL and DL-derived Tau | implemented; standard P-type profiles and the paired Enhanced N-type finite-wafer/back-surface path are validated |
 | [Leakage](Leakage) | `LeakageMeasurement` | offset-corrected transient interpolation to VSASS+/VSASS- plus LI | implemented; two paired one-point cases validate the current extraction path |
 
 The **Generic XML Inspector** handles unregistered XML types as a structural/raw-data fallback. It is not listed above because it performs no family-specific scientific reconstruction.

@@ -1,12 +1,20 @@
 # Changelog
 
-## v20260925.19.1 — 2026-09-25 (branch)
+## v20260925.20.1 — 2026-09-25 (branch)
 
 - Audited every dedicated analyzer left sidebar against one semantic information contract instead of treating Measurement as a generic metadata bucket.
 - Measurement is now a compact identity block; active point/iteration/beam/completeness information lives in Current dataset; timestamps, offsets, acquisition settings and validation/provenance remain collapsed below Results summary.
 - DIT now exposes Recipe/Substrate/Status/Pattern/Target directly in Measurement, adds Current dataset counts, renames the old catch-all Measurement metadata panel to Acquisition metadata, and keeps charge-sequence recipe details in their own collapsed section.
 - Applied the same separation to QSS, Dual QSS, JZero, ISC/VCPD, LBIC, CET/EOT, SPV/Diffusion Length and Leakage.
 - Expanded layout regression coverage to all nine dedicated analyzer modules and added a guard that prevents lower-priority audit metadata from drifting back into Measurement.
+
+
+## v20260925.20 — 2026-09-25
+
+- Reworked SPV, Leakage, Dual QSS, LBIC and ISC/VCPD Wiki pages as measurement-science references, adding physical principles, governing equations, assumptions and interpretation instead of relying mainly on compatibility/regression notes.
+- Corrected stale/contradictory documentation: Dual QSS now documents its exposed teff.SS/Voc/J0 scalar results, and SPV no longer classifies the paired Enhanced N-type path as unvalidated.
+- Expanded Scientific Foundations with optical generation depth, EQE/IQE and idealized capacitance-relaxation leakage physics; aligned SPV/Leakage algorithm notes and added a durable family-page scientific-content contract.
+- Updated Home/Measurement Families capability summaries and strengthened `docs:check` to require equations plus validation sections on scientific family pages, catch the known SPV/Dual-QSS stale claims and verify HANDOFF's public-main baseline against `VERSION`.
 
 
 ## v20260925.19 — 2026-09-25

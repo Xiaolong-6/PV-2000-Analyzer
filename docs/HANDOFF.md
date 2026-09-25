@@ -1,5 +1,10 @@
 # Agent handoff — 2026-09-25
 
+## Documentation scientific-content audit (v20260925.20)
+
+The Wiki science layer was audited against current runtime and validation documents. SPV, Leakage, Dual QSS, LBIC and ISC/VCPD now explain measurement physics, governing equations, assumptions and interpretation in addition to compatibility/validation boundaries. Stale Dual-QSS output wording and contradictory SPV Enhanced-N validation wording were removed. `docs:check` now guards the scientific-page equation/validation baseline and selected known stale contradictions.
+
+
 ## LBIC Distribution regression fix (v20260925.18)
 
 LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matching `PV.plot.canvasFrame()`. The previous `frame.context` access caused a `clearRect` TypeError on LBIC redraw. A drawing regression test covers the shared canvas-frame path.
@@ -7,7 +12,7 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.19`.
+- Public main: `v20260925.20`.
 - No active feature branch is required to complete the 100-case closure.
 - Final private 100-case matrix against this baseline: **71 scoped PASS + 16 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.

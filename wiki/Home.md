@@ -17,11 +17,11 @@ This Wiki is the **user guide and scientific reference** for PV-2000 Analyzer. I
 |---|---|---|
 | [DIT / COCOS](DIT) | `DITMeasurement` | surface band bending, Dit, Qtot, Qsc, Cox/EOT |
 | [QSS-µPCD](QSS-uPCD) | `QssUpcdMeasurement` | lifetime maps, Smax, implied Voc, optional Analyzer SRV |
-| [QSS Injection](Dual-QSS) | `DualQssMeasurement` | injection-dependent lifetime and stored transient inspection |
+| [QSS Injection](Dual-QSS) | `DualQssMeasurement` | injection-dependent lifetime, transient correction, implied Voc and profile-scoped J0 results |
 | [Emitter J0](Emitter-J0) | `JZeroMeasurement` | two-intensity lifetime/Smax/Voc maps and Basore J0 |
 | [ISC / VCPD](ISC-and-VCPD) | `ISCMeasurement`, `VcpdMeasurement` | Kelvin-probe surface-potential results |
 | [CET / EOT](CV-and-CET) | `CETMeasurement` | contactless capacitance, EOT and fit quality |
-| [LBIC](LBIC) | `LBICMeasurement` | photocurrent, reflectivity and IQE mapping |
+| [LBIC](LBIC) | `LBICMeasurement` | photocurrent, reflectivity, IQE and validated multi-wavelength diffusion-length mapping |
 | [SPV / Diffusion Length](SPV) | `SPVMeasurement` | two-wavelength SPV diffusion length, derived lifetime and raw SPV channels |
 | [Leakage](Leakage) | `LeakageMeasurement` | VSASS+/VSASS- and leakage indicator from corona-relaxation CPD transients |
 

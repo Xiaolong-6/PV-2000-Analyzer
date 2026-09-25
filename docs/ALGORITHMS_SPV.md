@@ -83,13 +83,12 @@ f(L) =
 
 The reference build searches approximately `L=0.001..3 cm`, converts the accepted root back to µm, and applies the existing `0 < DL <= 2500 µm` result gate. The paired N-type case validates this path across 69 sites: 28 finite values reproduce within **2.11e-7 µm DL** / **1.46e-7 µs Tau**, with zero availability mismatches.
 
-Categorical changes that remain outside the currently paired SPV profiles include:
+The paired `SPV-CALC-ENHANCED-N-003` case validates the Enhanced **N-type** finite-wafer/back-surface DL path together with its reported DL-derived Tau. Categorical changes that remain outside the currently paired SPV profiles include:
 
-- enhanced finite-wafer mode;
+- Enhanced **P-type** finite-wafer processing;
 - texture correction enabled;
 - parsed-signal processing;
-- N-type lifetime branch;
-- manual-linearity-ratio (`UseManualLR`) branch;
+- manual-linearity-ratio (`UseManualLR`) processing;
 - nonzero reflectivity correction on the zero-oxide branch.
 
 These paths remain inferred/unvalidated until matching numeric vendor output is supplied.
