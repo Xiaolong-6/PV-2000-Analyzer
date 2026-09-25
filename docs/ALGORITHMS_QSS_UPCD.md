@@ -2,7 +2,7 @@
 
 ## XML and coordinate order
 
-Two QSS map coordinate families currently have paired PV-2000 export evidence.
+Paired PV-2000 coordinate evidence now covers three QSS map paths: MapPattern + RoundWafer, SquareRegionPattern + SquareCell, and HighDensityPattern + RoundWafer.
 
 **QSS-MAP-001 — MapPattern + RoundWafer.** Coordinates are generated in XML acquisition order: ascending Y, then ascending X within each row. The scheduled radius is `Diameter / 2 - EdgeExclusion` when `EdgeExclusion` is present, and only lattice points strictly inside that effective circle are retained (`x²+y² < Rmap²`). A 100 mm target with 3 mm edge exclusion and 2 mm pitch therefore schedules 1741 sites rather than the 1941 sites produced by the nominal 50 mm radius. The original 305-point paired reference confirms this order exactly. A later private 96-XML corpus exercises the same family across 100 mm / 305-site and 125 mm / 489-site RoundWafer maps at 5 mm pitch; nine matching CSV exports again reproduce all X/Y coordinates exactly. These are numeric geometry changes inside the same coordinate rule, not new profiles.
 
