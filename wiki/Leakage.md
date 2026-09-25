@@ -1,50 +1,101 @@
 # Leakage
 
-`LeakageMeasurement` analyzes corona-relaxation Kelvin-probe transients and reports the historical PV-2000 leakage result quantities.
+`LeakageMeasurement` follows the relaxation of a corona-charged surface with Kelvin-probe contact-potential measurements. The current analyzer reproduces the historical PV-2000 voltage-domain outputs **VSASS+**, **VSASS-** and **LI**.
 
-## Outputs
+## Physical measurement principle
 
-- **VSASS+ [V]** — positive-polarity surface-assignment voltage.
-- **VSASS- [V]** — negative-polarity surface-assignment voltage.
-- **LI [V]** — legacy leakage indicator, `VSASS+ - VSASS-` when both required branches are available.
+A corona step changes charge associated with the dielectric/semiconductor surface system. After charging, the measured contact potential can relax as charge redistributes, leaks through the dielectric stack, exchanges with interface states, or responds through other electrical relaxation mechanisms.
 
-## Current validated path
+The instrument records a Kelvin-probe voltage transient rather than directly measuring leakage current.
 
-`LEAKAGE-CALC-VSASS-001` is validated against two real XML + numeric PV-2000 CSV pairs.
+In an idealized areal-capacitor picture,
 
-One pair contains both polarities; replay gives:
+```math
+J_{\mathrm{leak}}=-C_A\frac{dV}{dt}.
+```
 
-- VSASS+ error about **4.3e-14 V**;
-- VSASS- error about **1.1e-14 V**;
-- LI error about **2.8e-14 V**.
+This explains why a relaxation slope can carry leakage information. Real CPD can also contain semiconductor surface-potential and trapping contributions, so this equation is physical context rather than the definition of the current validated outputs.
 
-A second pair exercises the positive-only branch and reproduces VSASS+ to about **1.8e-15 V** while the unavailable negative/LI quantities remain unavailable.
+## What is measured
 
-## Vendor-compatible VSASS extraction
+For each enabled polarity the XML stores a sequence of Kelvin-probe voltage readings separated by a measurement interval. The result path also uses the stored Vcpd offset and polarity-specific delay. The raw transient remains available for selected-point inspection.
 
-For each enabled polarity the Analyzer follows the recovered PV-2000 path:
+## Offset-corrected transient
 
-1. subtract the mean stored Vcpd offset from the transient;
-2. form the time axis from the stored measurement interval;
-3. select the local sample window around 1.2 s;
-4. build the vendor natural cubic spline;
-5. evaluate at `1.2 s - polarity delay`.
+Let $V_i^{\mathrm{raw}}$ be a stored sample and $\overline{V_{\mathrm{off}}}$ the mean stored offset:
 
-The target can lie outside the selected local knot interval; the historical routine extrapolates using the end spline interval, and the compatibility implementation preserves that behavior.
+```math
+V_i^{\mathrm{corr}}=V_i^{\mathrm{raw}}-\overline{V_{\mathrm{off}}}.
+```
 
-## Derivative I-V diagnostic boundary
+With interval $\Delta t$,
 
-The vendor software also constructs a smoothed derivative diagnostic using dielectric capacitance and repeated smoothing/interpolation. That recovered path is documented reference knowledge, but it is not part of the current primary scalar-result profile and is not claimed as a separately validated user-facing quantity.
+```math
+t_i=i\Delta t.
+```
 
-## Validation boundary
+The compatibility path selects the local samples around 1.2 s and constructs a natural cubic spline $S(t)$.
 
-The sampling interval is an input to the same spline calculation rather than a profile identity. Current paired evidence is one-point data. Multi-point Leakage geometry, different material/thickness branches and additional acquisition modes require matching vendor output before expanding the validated profile.
+## VSASS extraction
 
-Calculation validation and geometry validation are independent.
+For stored polarity delay $t_d$,
+
+```math
+t_{\mathrm{eval}}=1.2\;\mathrm{s}-t_d,
+```
+
+and
+
+```math
+VSASS=S(t_{\mathrm{eval}}).
+```
+
+The historical routine can evaluate outside the selected local knot interval by continuing the end spline interval; the compatibility implementation preserves that behavior.
+
+Positive and negative acquisitions are processed independently.
+
+## Leakage indicator
+
+When both required polarity results are available,
+
+```math
+LI=VSASS_+-VSASS_-.
+```
+
+LI therefore has units of volts in the current analyzer.
+
+**LI is not a leakage-current density.** Converting a transient slope to current density additionally requires a validated capacitance/electrostatic model and a defined transient region.
+
+## Derivative diagnostic
+
+Historical PV-2000 processing also contains a dielectric-capacitance-scaled derivative diagnostic based on smoothing/interpolation of the transient. Conceptually it is the branch most directly connected to
+
+```math
+J\propto-C_A\frac{dV}{dt}.
+```
+
+That recovered diagnostic is scientific context, but it is not currently exposed as a separately validated primary Analyzer result.
+
+## Outputs and interpretation
+
+- **VSASS+ [V]** — positive-polarity delayed spline result.
+- **VSASS- [V]** — negative-polarity result when measured.
+- **LI [V]** — difference between the two polarity results.
+- **Raw leakage readings** — stored transient data for inspection.
+
+A changing CPD transient demonstrates electrical/surface relaxation. Assigning all of that change to bulk dielectric leakage requires additional assumptions because trapping, surface states and electrostatic redistribution can also affect the signal.
+
+## Validation status
+
+`LEAKAGE-CALC-VSASS-001` is validated against two real XML + numeric PV-2000 CSV pairs: one both-polarity case and one positive-only case. The pairs establish the natural-cubic VSASS extraction, LI difference and unavailable-branch behavior.
+
+Current paired evidence is one-point data. Multi-point geometry and materially different acquisition/result builders require matching vendor output before the validation envelope expands.
 
 ## Related documentation
 
+- [Scientific Foundations](Scientific-Foundations)
 - [Measurement Families](Measurement-Families)
 - [Validation and Reference Profiles](Validation-and-Reference-Profiles)
+- repository `docs/ALGORITHMS_LEAKAGE.md`
 - repository `docs/REFERENCE_PROFILES.md`
 - repository `docs/VALIDATION.md`

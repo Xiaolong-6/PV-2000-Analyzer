@@ -1,126 +1,118 @@
 # LBIC
 
-LBIC (`LBICMeasurement`) is a spatial optical/electrical raster measurement. The analyzer models each result as **position × iteration × beam/wavelength × channel** and keeps measured channels separate from derived optical quantities.
+LBIC (`LBICMeasurement`) is a spatial optical/electrical raster measurement. A focused beam is scanned across the sample while photocurrent and, where configured, reflected-light channels are recorded.
+
+## Physical measurement principle
+
+Absorbed photons generate electron-hole pairs. Carriers that reach the collecting junction/contact contribute to photocurrent, so spatial variations in recombination, optical reflection, diffusion and collection appear as LBIC contrast.
+
+For incident photon flux $\Phi$ and current $I$,
+
+```math
+\mathrm{EQE}=\frac{I/q}{\Phi}.
+```
+
+With a simple front-reflection correction,
+
+```math
+\mathrm{IQE}=\frac{\mathrm{EQE}}{1-R}.
+```
+
+Different wavelengths probe different silicon generation depths,
+
+```math
+Z(\lambda,T)\sim\frac{1}{\alpha(\lambda,T)}.
+```
+
+Multi-wavelength IQE can therefore probe depth-dependent carrier collection.
 
 ## Active measurement channels
 
-Known XML channels include:
+Known XML channels include Current, DirectReflection and ScatteredReflection. Measurement flags decide whether a channel is actually active; a numeric placeholder in a disabled channel is not treated as measured data.
 
-- Current;
-- DirectReflection;
-- ScatteredReflection.
-
-The XML measurement flags determine whether a channel is actually active. A stored numeric placeholder from a disabled channel is not automatically treated as measured data.
-
-This matters for reflectance-only measurements: current can be stored as zero even when `MeasureCurrent=false`. The analyzer suppresses that placeholder instead of presenting a false zero-current result.
+This matters for reflectance-only measurements, where `Current=0` may be stored while `MeasureCurrent=false`.
 
 ## Reflectivity
 
 For the validated Direct + Scattered path,
 
 ```math
-R_{raw}[\%]
-=
-R_{direct}[\%]+R_{scattered}[\%].
+R_{raw}[\%]=R_{direct}[\%]+R_{scattered}[\%].
 ```
 
-Displayed Reflectivity is clipped to the physical display interval:
+Displayed Reflectivity is clipped,
 
 ```math
-R_{display}=\operatorname{clamp}(R_{raw},0,100).
+R_{display}=\operatorname{clamp}(R_{raw},0,100),
 ```
 
-The raw optical sum is retained separately where it is needed for compatibility calculations.
+while the unclipped optical sum is retained where compatibility calculations require it.
 
-## EQE
+## EQE and IQE compatibility path
 
-When current measurement is active and photon flux is available, an external quantum efficiency intermediate can be written as
+When current and photon flux are available,
 
 ```math
-\mathrm{EQE}[\%]
-=
-\frac{I/q}{\Phi}\times100,
+\mathrm{EQE}[\%]=\frac{I/q}{\Phi}\times100.
 ```
 
-where `I` is photocurrent and `Phi` is photon flux.
+Calculated EQE remains an Advanced/intermediate quantity because the vendor reference export does not expose it as a standalone primary output.
 
-For the current compatibility profiles, the exact unit scaling and historical charge constant are profile-defined. The vendor reference export does not expose EQE as a standalone result column, so the analyzer keeps it as an Advanced/intermediate quantity rather than promoting it to a validated primary vendor output.
-
-No EQE is synthesized when current measurement is disabled.
-
-## IQE
-
-For the current validated path,
+The current IQE path uses
 
 ```math
 \mathrm{IQE}[\%]
 =
-\frac{\mathrm{EQE}[\%]}
-{1-R_{raw}/100}.
+\frac{\mathrm{EQE}[\%]}{1-R_{raw}/100}.
 ```
 
-The compatibility calculation uses the **unclipped raw optical sum** in this denominator even though displayed Reflectivity is clipped to 0–100%.
+The denominator deliberately uses **unclipped** reflectivity for compatibility. No EQE/IQE is synthesized when the required current channel is inactive.
 
-Vendor-unavailable/non-computable IQE remains unavailable rather than being replaced with a numerical zero.
+## Multi-wavelength diffusion length
 
-For the paired negative-current corner, PV-2000 blanks the displayed Current while the signed raw current remains a separate Advanced value. Its IQE calculation still uses that signed value and the unclipped reflectivity, so a raw reflection above 100% can yield a finite positive IQE.
+For qualifying current-plus-scattered data, each wavelength is converted to the profile's silicon penetration depth and the analyzer fits
 
-No IQE is synthesized for the reflectance-only profile because current is not measured.
+```math
+\frac{1}{\mathrm{IQE}}=a+bZ.
+```
 
-## Single-beam and multi-beam measurements
+The compatibility diffusion length is
 
-The analyzer supports dynamic beam/wavelength selection.
+```math
+L=\frac{a}{b}.
+```
 
-The current validated geometry/result families include:
+This uses wavelength-dependent generation depth to characterize an effective collection/diffusion length. It is a profile-specific compatibility model, not a claim that arbitrary $1/IQE$ spectra must always be linear in $Z$.
 
-- current-enabled single-beam `SquareRegionPattern`;
-- current-enabled multi-beam `MapPattern + PseudoSquareCell`;
-- reflectance-only `SquareRegionPattern`.
+Enough distinct qualifying wavelengths, active required channels, a finite fit and the XML `MaxDLValue` range gate are required.
 
-Wavelength, power and ordinary numeric raster-size changes do not by themselves define a new scientific profile when the semantic channel/result path is unchanged.
+## Maps, beams and filtering
 
-## Maps and line profiles
+The analyzer keeps position × iteration × beam/wavelength × channel separate. Geometry is reconstructed from the measurement pattern/target rather than inferred from filenames.
 
-The raster map uses reconstructed physical coordinates.
+The Valid-data filter is scoped to the active iteration and beam/wavelength and provides one population for summary statistics, map, distribution and X/Y profiles. Filtering does not rewrite raw XML values.
 
-For rectangular `SquareRegionPattern` scans, the structured Region and Dimension fields define the grid. For the validated pseudo-square map, the scheduled lattice is clipped by both the target rectangle and circular diameter after edge exclusion.
+## Outputs and interpretation
 
-X and Y profiles are extracted from the selected physical coordinate rather than assuming that every LBIC map is a dense rectangular array.
+- **Current** — measured photocurrent when enabled.
+- **Reflectivity** — result from active reflection channels.
+- **EQE** — Analyzer intermediate where calculable.
+- **IQE** — collection efficiency corrected by the compatibility reflection path.
+- **DL [µm]** — shared cross-beam result for the validated multi-wavelength path.
 
-Interrupted/incomplete rasters can display a leading acquisition prefix where the schedule is known; that incomplete-coordinate path remains **inferred** until matching vendor evidence validates it.
-
-## Valid-data filter
-
-The filter is scoped to the current iteration and beam/wavelength.
-
-One selected filter quantity defines the active site population used by:
-
-- summary statistics;
-- raster map;
-- distribution;
-- X profile;
-- Y profile.
-
-Changing only the displayed quantity does not silently change the filter metric. Raw data remain preserved.
-
-## Calculated diffusion length
-
-The analyzer calculates DL for the paired current-plus-scattered multi-wavelength path. It selects wavelengths inside the XML `DLWavelenghtRange`, converts each wavelength and the iteration temperature to a silicon penetration depth, fits `1/IQE` against depth at each site, and reports `intercept/slope` in µm when the fit is finite and lies within the XML `MaxDLValue`. DL is a shared result across the selected wavelengths, so the same DL map is available from each qualifying beam.
-
-One private 961-point XML/vendor CSV pair validates 956 numeric DL values (maximum error 1.66e-11 µm) and five unavailable sites. Three one/five-point pairs confirm seven additional unavailable sites. Finite DL for the direct-plus-scattered optical combination has no matching numeric reference and remains unavailable in the analyzer. The XML alone is sufficient when using the application; CSV is only regression evidence.
+A low-response pixel does not uniquely identify one mechanism: recombination, optical reflection, electrical collection and local material/device structure can all contribute.
 
 ## Validation status
 
-Historical composite evidence bundles remain:
+Current/Reflectivity/IQE calculation profiles and geometry profiles are tracked independently.
 
-- `LBIC-SINGLE-001`;
-- `LBIC-MULTI-002`;
-- `LBIC-REFLECTANCE-003`.
+`LBIC-CALC-DL-MULTIWAVELENGTH-005` validates finite DL for the **current-plus-scattered** cross-beam path. The direct-plus-scattered paired evidence contains only unavailable DL and does not establish finite DL for that optical combination.
 
-Calculation semantics are now tracked independently as `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001`, `LBIC-CALC-CURRENT-SCATTERED-002`, `LBIC-CALC-CURRENT-ONLY-003` and `LBIC-CALC-REFLECTANCE-ONLY-004`, with geometry resolved by the shared geometry profiles.
+Exact pair counts and tolerances remain in `docs/REFERENCE_PROFILES.md` and `docs/VALIDATION.md`.
 
-The 100-case closure contributes **eight numeric current+scattered pairs / 27,376 sites**, one five-site direct+scattered pair and two zero-site diagnostics. Current is exact, finite IQE agrees to about **9.95×10⁻¹⁴ percentage point** at worst, and the paired geometries agree to about **4.26×10⁻¹⁴ mm** at worst.
+## Related documentation
 
-`LBIC-CALC-DL-MULTIWAVELENGTH-005` remains separately scoped. Finite DL is validated for the current+scattered cross-beam path; the direct+scattered five-point pair contains only `Ud.` DL and therefore does not justify finite DL on that optical branch.
-
-Exact numerical tolerances and evidence boundaries are maintained in the repository validation documentation.
+- [Scientific Foundations](Scientific-Foundations)
+- [Measurement Families](Measurement-Families)
+- [Validation and Reference Profiles](Validation-and-Reference-Profiles)
+- repository `docs/ALGORITHMS_LBIC.md`

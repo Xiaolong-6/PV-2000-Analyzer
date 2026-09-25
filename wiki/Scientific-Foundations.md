@@ -214,7 +214,31 @@ so that
 
 Surface-photovoltage methods estimate $L$ from wavelength-dependent generation depth and response. Optical corrections and finite-wafer assumptions are measurement-family specific.
 
-## 12. Frequency response and first-order lifetime
+## 12. Optical generation depth and quantum efficiency
+
+For an absorption coefficient $\alpha(\lambda,T)$, a characteristic optical generation depth is
+
+```math
+Z(\lambda,T)\sim\frac{1}{\alpha(\lambda,T)}.
+```
+
+Shorter and longer wavelengths can therefore weight different depths in a semiconductor. SPV and multi-wavelength LBIC use this depth dependence in different physical models.
+
+External quantum efficiency compares collected carriers with incident photons,
+
+```math
+\mathrm{EQE}=\frac{I/q}{\Phi},
+```
+
+where $I$ is photocurrent and $\Phi$ is incident photon flux. Under a simple front-reflection correction,
+
+```math
+\mathrm{IQE}=\frac{\mathrm{EQE}}{1-R}.
+```
+
+Actual compatibility calculations can use profile-specific units, clipping and raw-versus-displayed reflectivity rules; the LBIC page states those details.
+
+## 13. Frequency response and first-order lifetime
 
 A simple first-order low-pass response has magnitude
 
@@ -227,7 +251,19 @@ V(f)
 
 A frequency-scan lifetime can therefore be fitted from the roll-off of response amplitude with frequency.
 
-## 13. Validity, blanking and undefined values
+## 14. Corona-charge relaxation and leakage
+
+After a corona-charge step, a dielectric/semiconductor surface potential can relax because charge redistributes, leaks or exchanges with traps/interface states. In an idealized areal-capacitor model,
+
+```math
+J_{\rm leak}=-C_A\frac{dV}{dt},
+```
+
+where $C_A$ is capacitance per unit area. This relation gives physical context for derivative-based leakage diagnostics.
+
+A Kelvin-probe CPD transient is not automatically identical to the dielectric voltage in that ideal model. Surface band bending, trapping and instrument conventions can also contribute. The current Leakage analyzer therefore reports its validated voltage-domain VSASS/LI compatibility quantities separately from any current-density interpretation.
+
+## 15. Validity, blanking and undefined values
 
 Scientific validity rules are part of a result definition.
 
@@ -243,7 +279,7 @@ Typical causes of an undefined result include:
 
 A numerical zero should remain distinguishable from an unavailable result.
 
-## 14. Result provenance
+## 16. Result provenance
 
 Each project quantity should be classifiable as one of the following.
 
