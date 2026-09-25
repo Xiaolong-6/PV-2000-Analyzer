@@ -23,7 +23,7 @@ This is a validation boundary, not an exact-version runtime whitelist. XML from 
 
 ## Profile registry
 
-### SPV-CALC-STANDARD-001 — standard two-wavelength SPV map
+### SPV-CALC-STANDARD-001 — positive-oxide two-wavelength SPV
 
 **Measurement type**
 
@@ -31,7 +31,7 @@ This is a validation boundary, not an exact-version runtime whitelist. XML from 
 
 **Reference material**
 
-Two private real XML + numeric PV-2000 CSV pairs, each a 1649-site 4 mm `MapPattern + RoundWafer` map.
+The original two 1649-site RoundWafer maps plus five new real XML + vendor CSV pairs (877, 1, 1649, 221 and 221 sites). The new geometry spans full-wafer maps and a one-point target.
 
 **Validated / established**
 
@@ -45,7 +45,7 @@ Two private real XML + numeric PV-2000 CSV pairs, each a 1649-site 4 mm `MapPatt
 - SPV8/SPV6 remain available independently of DL/Tau availability;
 - paired `Ud.` masks for DL/Tau reproduce with zero mismatches.
 
-Across the two pairs, maximum absolute differences are approximately **1.64e-11 µm** for DL and **2.06e-11 µs** for Tau; SPV8/SPV6 agree to floating-point precision.
+Across the seven pairs, the original maximum absolute differences remain approximately **1.64e-11 µm** for DL and **2.06e-11 µs** for Tau. The five additional pairs agree within **2.39e-12 µm** and **4.33e-13 µs** respectively; SPV8/SPV6 agree to floating-point precision and all availability masks agree.
 
 Ordinary numeric settings that are inputs to this same formula — for example wavelength, temperature, multiplier and positive oxide-thickness magnitude — do not create a new profile by themselves.
 
@@ -57,7 +57,19 @@ Ordinary numeric settings that are inputs to this same formula — for example w
 - manual-linearity-ratio (`UseManualLR`) branch;
 - alternate wavelength/configuration families or optical branches not exercised by the pair.
 
-Calculation validation is separate from geometry validation. The current 4 mm RoundWafer map geometry resolves through the shared map geometry profile.
+Calculation validation is separate from geometry validation. The paired full maps and one-point case resolve through the shared geometry profiles.
+
+---
+
+### SPV-CALC-ZERO-OXIDE-002 — zero oxide, zero reflectivity correction
+
+Three private real XML + vendor CSV pairs cover 59-site terminated HighDensity/SquareCell, 9-site NinePoint/RoundWafer and 176-site HighDensity/PseudoSquareCell acquisitions. All have `OxideThickness=0`, `ReflectivityCorrection8=0`, `ReflectivityCorrection6=0`, P-type doping, measured linearity and standard non-enhanced, non-texture, non-parsed-signal processing.
+
+Across their 244 sites, all DL/Tau values are finite and the maximum absolute differences are **5.52e-12 µm** for DL and **7.15e-13 µs** for Tau. SPV8/SPV6 and the availability masks agree pointwise. This validates the separate zero-oxide optical path with zero reflectivity correction. Nonzero reflectivity correction, N-type doping, enhanced mode, manual linearity, texture and parsed signals remain outside this profile.
+
+The 59-site acquisition is marked `Terminated`: its first 59 scheduled coordinates agree with the vendor CSV within **1.6e-14 mm**. Its geometry remains **partial** and does not receive a complete geometry profile. The NinePoint and PseudoSquare coordinates agree within **2.1e-14 mm** through their independent complete geometry profiles.
+
+The ninth new pair is `UseEnhancedMode=true` and N-type: 28 of 69 DL/Tau sites are finite in vendor output. Raw SPV8/SPV6 agree to floating-point precision; evaluating the standard path on those sites gives DL/Tau maximum errors of **296.64 µm** and **420.23 µs**. This is evidence for a separate enhanced calculation path, not for applying either standard profile.
 
 ---
 

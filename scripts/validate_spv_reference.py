@@ -157,7 +157,7 @@ def calculate(spv8, spv6, s):
     return dl, lifetime(dl, s['is_p'])
 
 
-def parse_xml(path):
+def parse_xml(path, enhanced_override=None):
     root = ET.parse(path).getroot()
     measurement = child(root, 'Measurement')
     if attr_type(measurement) != 'SPVMeasurement':
@@ -186,6 +186,8 @@ def parse_xml(path):
         'parse_signals': text(measurement, 'ParseSignals').lower() == 'true',
         'is_p': text(measurement, 'DopingType', 'PType') == 'PType',
     }
+    if enhanced_override is not None:
+        s['enhanced'] = enhanced_override
     out = []
     for item in children(child(iteration, 'Data'), 'DataItem'):
         signal = child(item, 'Signal')
@@ -237,6 +239,26 @@ def validate(xml_path, csv_path):
     return results
 
 
+def audit_enhanced(xml_path, csv_path):
+    root = ET.parse(xml_path).getroot()
+    if text(child(root, 'Measurement'), 'UseEnhancedMode').lower() != 'true':
+        raise AssertionError('Expected UseEnhancedMode=true')
+    vendor = parse_csv(csv_path)
+    raw = parse_xml(xml_path)
+    standard = parse_xml(xml_path, enhanced_override=False)
+    assert len(vendor) == len(raw) == len(standard)
+    raw_errors = [max_error([row[i] for row in raw], [row[i] for row in vendor])
+                  for i in (2, 3)]
+    assert all(error < 1e-10 and mismatch == 0 for error, mismatch in raw_errors)
+    standard_comparison = [max_error([row[i] for row in standard], [row[i] for row in vendor])
+                           for i in (0, 1)]
+    available = [sum(math.isfinite(row[i]) for row in vendor) for i in (0, 1)]
+    print(f'SPV ENHANCED AUDIT {xml_path.name}: {len(vendor)} sites, '
+          f'finite DL/Tau={available}, raw max errors={[error for error, _ in raw_errors]}, '
+          f'standard-path max errors={[error for error, _ in standard_comparison]}, '
+          f'standard-path mask mismatches={[mask for _, mask in standard_comparison]}')
+
+
 def pair_paths(value):
     if '::' in value:
         xml_value, csv_value = value.split('::', 1)
@@ -247,6 +269,9 @@ def pair_paths(value):
 
 def main():
     args = list(sys.argv[1:])
+    enhanced = '--audit-enhanced' in args
+    if enhanced:
+        args.remove('--audit-enhanced')
     if not args:
         args = sorted(glob.glob('private/reference/spv/*.xml'))
     if not args:
@@ -254,6 +279,9 @@ def main():
         return 0
     for value in args:
         xml_path, csv_path = pair_paths(value)
+        if enhanced:
+            audit_enhanced(xml_path, csv_path)
+            continue
         results = validate(xml_path, csv_path)
         labels = ['DL', 'Tau', 'SPV8', 'SPV6']
         print('SPV PASS ' + xml_path.name + ': ' + ', '.join(

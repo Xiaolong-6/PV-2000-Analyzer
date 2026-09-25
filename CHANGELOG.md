@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.1.1 — 2026-09-25 (feature branch)
+
+- Expanded SPV paired evidence with eight standard-mode XML/vendor CSV pairs: five extend the positive-oxide calculation, and three establish the zero-oxide/zero-reflectivity correction path. Across 3213 sites, 1542 finite DL/Tau values and every availability mask match the vendor output.
+- Preserved the coordinate prefix of a terminated 59-site HighDensity/SquareCell acquisition as partial geometry; seven other new standard pairs match complete geometry profiles.
+- Audited an enhanced N-type pair separately: raw channels match, while the standard calculation differs by up to 296.64 µm DL and 420.23 µs Tau on 28 finite sites. Enhanced calculations remain unvalidated.
+
 ## v20260925.1 — 2026-09-25
 
 - Added the XML-only cross-beam LBIC diffusion-length result for the paired current-plus-scattered path. One 961-site vendor pair matches 956 finite DL values within 1.66e-11 µm and five undefined sites; three additional four-wavelength pairs confirm seven more undefined sites.

@@ -14,7 +14,7 @@ Raw SPV channels are quantity-independent: they remain available when DL/Tau are
 
 ## Standard calculation branch
 
-The currently validated calculation profile is `SPV-CALC-STANDARD-001`.
+The positive-oxide calculation is `SPV-CALC-STANDARD-001`; zero oxide with zero stored reflectivity corrections is independently paired as `SPV-CALC-ZERO-OXIDE-002`.
 
 For the stored global and reduced-global SPV8 measurements, define the measured linearity ratio and solve the historical nonlinear correction parameter on its accepted interval. If no valid root exists, the point channels are left unlinearized.
 
@@ -31,7 +31,7 @@ Z  = 10000 / a^2
 
 When texture correction is disabled, the resulting `Z6` and `Z8` are used directly.
 
-The paired profile exercises the oxide-correction branch. The recovered vendor helper has a historical parameter-order quirk: XML `TemperatureCorrectionCoefficientLED6` is applied to SPV8, while XML `TemperatureCorrectionCoefficientLED8` is applied to SPV6. The Analyzer preserves that compatibility behavior. After the optical and LED-temperature corrections, let
+Positive-oxide pairs exercise the oxide-correction branch. Three zero-oxide pairs instead exercise the reflectivity branch with both stored corrections equal to zero. The recovered vendor helper has a historical parameter-order quirk: XML `TemperatureCorrectionCoefficientLED6` is applied to SPV8, while XML `TemperatureCorrectionCoefficientLED8` is applied to SPV6. The Analyzer preserves that compatibility behavior. After the optical and LED-temperature corrections, let
 
 ```text
 R = SPV8_corrected / SPV6_corrected
@@ -66,13 +66,13 @@ Categorical changes that currently remain outside `SPV-CALC-STANDARD-001` includ
 - parsed-signal processing;
 - N-type lifetime branch;
 - manual-linearity-ratio (`UseManualLR`) branch;
-- reflectivity-correction branch instead of the paired oxide-correction branch.
+- nonzero reflectivity correction on the zero-oxide branch.
 
 These paths remain inferred/unvalidated until matching numeric vendor output is supplied.
 
 ## Paired evidence
 
-Two private 1649-site 4 mm RoundWafer XML+CSV pairs reproduce:
+Two original 1649-site RoundWafer XML+CSV pairs and eight new standard pairs reproduce:
 
 - SPV8/SPV6 to floating-point precision;
 - DL with maximum absolute difference about `1.64e-11 µm`;

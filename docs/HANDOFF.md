@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline for this branch: `v20260924.5` (P0–P6 validation decoupling and paired Leakage/SPV already merged).
-- Feature branch: `feat/lbic-dl-parity-geometry-profiles`.
-- Scope: paired LBIC multi-wavelength DL calculation and four independent geometry-profile expansions from the 100-case private corpus.
-- Private regression: run `scripts/validate_lbic_dl_reference.py` on the four XML/CSV DL pairs and `scripts/validate_geometry_profiles.py` on the four selected geometry pairs. Reference files stay ignored in `private/`.
+- Main baseline for this branch: `v20260925.1` (LBIC DL and four geometry profiles merged in PR #66).
+- Feature branch: `feat/spv-standard-evidence-enhanced-audit`.
+- Scope: eight standard SPV XML/CSV pairs, one enhanced N-type pair, and independent partial HighDensity geometry evidence from the 100-case private corpus.
+- Private regression: run `scripts/validate_spv_reference.py` on the eight standard pairs and `scripts/validate_spv_reference.py --audit-enhanced` on the enhanced pair. Verify the eight standard geometry pairs with `scripts/validate_geometry_profiles.py`. Reference files stay ignored in `private/`.
 
 ## Cross-profile parity / geometry-decoupling audit
 

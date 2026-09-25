@@ -26,7 +26,8 @@ def points(node):
 
 
 def validate(xml_path, csv_path, profile_id):
-    measurement = ET.parse(xml_path).getroot().find("Measurement")
+    root = ET.parse(xml_path).getroot()
+    measurement = root.find("Measurement")
     pattern, target = measurement.find("Pattern"), measurement.find("Target")
     exclusions = [points(shape.find("Vertices")) for shape in target.findall("Exclusions/Shape")
                   if shape.attrib.get(TYPE) == "Quadrilateral"]
@@ -38,6 +39,8 @@ def validate(xml_path, csv_path, profile_id):
     data = {
         "patternType": pattern.attrib.get(TYPE), "targetType": target.attrib.get(TYPE),
         "pointCount": len(expected),
+        "allowPartialPrefix": (root.findtext("Status") or "").lower() in
+        {"terminated", "aborted", "interrupted", "cancelled", "canceled"},
         "rawCoefficients": points(pattern.find("Coefficients")),
         "exclusionPolygons": exclusions,
         "diameter": number(target, "Diameter"),
@@ -65,12 +68,15 @@ def validate(xml_path, csv_path, profile_id):
     output = subprocess.run(["node", "-e", source], input=json.dumps(data), text=True,
                             capture_output=True, check=True)
     result = json.loads(output.stdout)
-    assert result["status"] == "complete" and result["profileId"] == profile_id, result
+    if data["allowPartialPrefix"] and result["status"] == "partial":
+        assert result.get("profileId") is None and result["interpretation"] != "unresolved", result
+    else:
+        assert result["status"] == "complete" and result["profileId"] == profile_id, result
     assert len(result["points"]) == len(expected)
     error = max((math.hypot(point["x"] - x, point["y"] - y)
                  for point, (x, y) in zip(result["points"], expected)), default=0)
     assert error < 1e-9, (xml_path, error)
-    print(f"PASS {profile_id}: {len(expected)} paired coordinates, max error {error:.3g} mm")
+    print(f"PASS {profile_id} ({result['status']}): {len(expected)} paired coordinates, max error {error:.3g} mm")
 
 
 if __name__ == "__main__":

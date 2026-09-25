@@ -101,7 +101,12 @@ test('categorical SPV branch changes do not inherit standard validation',()=>{
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useEnhancedMode:true}),null);
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,useTextureCorrection:true}),null);
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,dopingType:'NType'}),null);
-  assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,oxideThickness:0}),null);
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{
+    ...base,oxideThickness:0,reflectivity8:0,reflectivity6:0
+  })?.id,'SPV-CALC-ZERO-OXIDE-002');
+  assert.equal(PV2000.profiles.resolveCalculation('spv',{
+    ...base,oxideThickness:0,reflectivity8:.1,reflectivity6:0
+  }),null);
 });
 
 test('vendor cross-maps nonzero LED temperature coefficients',()=>{

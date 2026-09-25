@@ -118,7 +118,23 @@ test('pseudo-square high-density coefficients respect the circular edge and phys
     patternType:'HighDensityPattern',targetType:'PseudoSquareCell',rawCoefficients:coefficients,
     pointCount:176,targetWidth:156,targetHeight:156,diameter:205,edgeExclusion:8
   });
-  assert.equal(noExclusion.geometryStatus,'unavailable');
+  assert.equal(noExclusion.geometryStatus,'mismatch');
+});
+
+test('terminated high-density acquisition preserves the scheduled coordinate prefix without validating the incomplete geometry',()=>{
+  const rawCoefficients=Array.from({length:25},(_,index)=>({
+    x:(index%5-2)/2,y:(Math.floor(index/5)-2)/2
+  }));
+  const input={patternType:'HighDensityPattern',targetType:'SquareCell',rawCoefficients,
+    targetWidth:100,targetHeight:100,edgeExclusion:0,pointCount:8};
+  const partial=PV2000.geometry.resolveMeasurementGeometry({...input,allowPartialPrefix:true});
+  assert.equal(partial.geometryStatus,'partial');
+  assert.equal(partial.expectedPointCount,25);
+  assert.equal(partial.pointsMm.length,8);
+  assert.deepEqual(partial.pointsMm[7],{x:0,y:-25});
+  assert.equal(PV2000.profiles.resolveGeometry({geometryModel:partial}),null);
+  const noTermination=PV2000.geometry.resolveMeasurementGeometry(input);
+  assert.equal(noTermination.pointsMm.length,0);
 });
 
 
