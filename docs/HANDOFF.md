@@ -1,5 +1,9 @@
 # Agent handoff — 2026-09-25
 
+## Geometry boundary-contract hardening (v20260925.20.3 branch)
+
+The canonical geometry core deliberately keeps three different circular predicates. `roundGrid()` is strict with an inward `1e-9` guard; `pseudoSquareGrid()` is inclusive with an outward `1e-9` guard; HighDensity circular clipping is strict with no epsilon. The HighDensity rule is directly parity-sensitive: the 35 × 35 RoundWafer coefficient template resolves to 893 sites only when the stored floating-point coefficients are tested directly without subtracting an artificial epsilon. Dedicated regression tests now lock all three edge semantics, and architecture documentation warns against merging them into one helper without new paired boundary evidence.
+
 ## Documentation scientific-content audit (v20260925.20)
 
 The Wiki science layer was audited against current runtime and validation documents. SPV, Leakage, Dual QSS, LBIC and ISC/VCPD now explain measurement physics, governing equations, assumptions and interpretation in addition to compatibility/validation boundaries. Stale Dual-QSS output wording and contradictory SPV Enhanced-N validation wording were removed. `docs:check` now guards the scientific-page equation/validation baseline and selected known stale contradictions.

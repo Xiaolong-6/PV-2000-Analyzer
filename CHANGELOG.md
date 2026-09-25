@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.20.3 — 2026-09-25 (branch)
+
+- Locked the three intentionally different circular-boundary contracts in `src/core/geometry.js`: strict inward-guard Map/Round rastering, inclusive outward-guard PseudoSquare rastering, and strict zero-epsilon HighDensity clipping.
+- Added boundary-focused regression tests that distinguish the epsilon directions instead of checking only ordinary interior points.
+- Documented why these predicates must not be deduplicated blindly; HighDensity's zero-epsilon rule remains anchored by the vendor-compatible 35 × 35 = 893-site schedule.
+
 ## v20260925.20.2 — 2026-09-25 (branch)
 
 - Restored SPV scientific-input visibility after the sidebar normalization: LED temperature, wafer thickness, back-surface velocity, Enhanced-mode state and doping type now remain visible under collapsed Acquisition / validation metadata.
