@@ -135,3 +135,12 @@ test('manual linearity-ratio branch stays outside paired SPV validation',()=>{
   assert.equal(PV2000.profiles.resolveCalculation('spv',base)?.id,'SPV-CALC-STANDARD-001');
   assert.equal(PV2000.profiles.resolveCalculation('spv',{...base,linearityRatioMethod:'UseManualLR'}),null);
 });
+
+
+test('SPV validator keeps enhanced-mode evidence diagnostic instead of standard PASS',()=>{
+  const src=fs.readFileSync(require.resolve('../scripts/validate_spv_reference.py'),'utf8');
+  assert.match(src,/def is_enhanced\(xml_path\)/);
+  assert.match(src,/SPV ENHANCED DIAGNOSTIC/);
+  assert.match(src,/separate enhanced calculation profile remains unvalidated/);
+  assert.match(src,/if enhanced or is_enhanced\(xml_path\)/);
+});
