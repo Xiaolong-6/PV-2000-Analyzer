@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.24.6 — 2026-09-25 (branch)
+
+- Reworked dedicated-analyzer Current dataset panels into a compact shared summary strip with no nested cards. Wide sidebars divide the row evenly across the analyzer's actual metric count, covering the current 3-item Dual QSS, 4-item analyzers and 5-item JZero layouts without empty or orphan slots.
+- At the medium sidebar width, Current dataset switches to compact label/value rows rather than forcing an odd wrapped card grid; other validation/status cards keep their existing presentation. ISC/VCPD also normalizes a completed acquisition schedule to “Complete”.
+- Added regression coverage for the 3/4/5-item cases and the responsive list fallback.
+
 ## v20260925.24 — 2026-09-25
 
 - Promoted the recovered current managed-DLL DIT COCOS-II path to controlled vendor validation as `DIT-RESULT-COCOSII-DLL-003`, while keeping native instrument-recorded `UseCocosII=true` pairing as a provenance distinction rather than pretending it exists.
