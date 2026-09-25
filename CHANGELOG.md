@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.20.2 — 2026-09-25 (branch)
+
+- Restored SPV scientific-input visibility after the sidebar normalization: LED temperature, wafer thickness, back-surface velocity, Enhanced-mode state and doping type now remain visible under collapsed Acquisition / validation metadata.
+- Restored Leakage Material and Physical thickness to collapsed Acquisition / validation metadata instead of leaving parsed measurement settings invisible.
+- Added a layout regression guard that requires these calculation/settings inputs to remain represented in the dedicated analyzer sidebar without expanding the compact Measurement identity block.
+
 ## v20260925.20.1 — 2026-09-25 (branch)
 
 - Audited every dedicated analyzer left sidebar against one semantic information contract instead of treating Measurement as a generic metadata bucket.
