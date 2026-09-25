@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline before this validation-only branch: `v20260925.10`.
-- Feature branch: `validation/dual-qss-100-result-closure`.
-- Scope: finish the 100-case Dual QSS final-result validator without widening the runtime scientific profile.
-- The candidate classifies the ten harness exports as **3 numeric PASS + 7 diagnostics**: four empty acquisitions, one legacy Lifetime-only branch and two conflicting FixedPoints/PseudoSquare rows remain non-promoting evidence.
+- Main baseline before this feature branch: `v20260925.11`.
+- Feature branch: `feat/spv-enhanced-parity`.
+- Scope: implement the recovered finite-wafer/back-surface SPV Enhanced N-type calculation only after pointwise paired validation.
+- Private oracle result: 69 sites, 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -24,7 +24,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
 8. **partially completed:** final-result direct/bookkeeping audit validates initial VDark and fixes the Initial Qc off-by-one; corrected-light/N-type/flatband/Dit regenerated-export drift remains an evidence boundary and the stronger original-pair Standard COCOS rules are unchanged;
 9. **completed:** re-audit Dual QSS final-result branches; three current-style OnePoint rows pass independently of target geometry, the no-J0 maximum-quantity availability rule is preserved, and four empty + one legacy + two conflicting FixedPoints cases are explicit diagnostics;
-10. **completed:** Leakage and the paired standard SPV map path are implemented; the Enhanced N-type SPV pair is now an explicit diagnostic/evidence wall, and IntensityScan remains deferred because no trustworthy scientific result export path exists.
+10. **completed:** Leakage and the paired standard SPV map paths are implemented; `SPV-CALC-ENHANCED-N-003` now reproduces the paired N-type Enhanced finite-wafer/back-surface result, while Enhanced P-type and other categorical branches remain gated; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
 
