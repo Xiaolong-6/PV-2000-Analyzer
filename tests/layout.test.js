@@ -386,7 +386,7 @@ test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shar
   assert.match(src,/axisControls\('qHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(src,/binControls\('qHistBins',histBins\)/);
   assert.match(src,/bindBinControls\(host,'qHistBins',histBins/);
-  assert.match(src,/histCanvas\?drawHist\(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
+  assert.match(src,/histCanvas\s*\?drawHist\(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
   assert.doesNotMatch(src,/id="qSwapHistAxes"/);
 });
 
@@ -460,7 +460,7 @@ test('QSS Distribution uses valid counts only and axis swap cannot change filter
 test('ISC establishes semantic desktop columns and keeps selected-site detail out of the dataset sidebar',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
   const asideEnd=src.indexOf('</aside>');
-  const selected=src.indexOf('<h3>Selected site ');
+  const selected=src.indexOf("?'Measurement point':'Selected site'");
   assert.match(src,/section class="plots overview"/);
   assert.match(src,/section class="plots detail"/);
   assert.ok(asideEnd>=0&&selected>asideEnd);
