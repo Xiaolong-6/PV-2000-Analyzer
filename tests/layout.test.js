@@ -145,6 +145,15 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
   ordered(sources.leakage,['<h3>Measurement</h3>','<h3>Current dataset</h3>','<h3>Results summary</h3>','<summary>Acquisition / validation</summary>']);
 });
 
+test('Current dataset filter counts stay live in ISC and LBIC without forcing a shell rebuild',()=>{
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
+    lbic=fs.readFileSync(require.resolve('../src/modules/lbic.js'),'utf8');
+  assert.match(isc,/id="iDatasetValid"/);
+  assert.match(isc,/datasetValid\.textContent=\`\$\{state\.validCount\} \/ \$\{state\.siteCount\}\`/);
+  assert.match(lbic,/id="lDatasetValid"/);
+  assert.match(lbic,/datasetValid\.textContent=\`\$\{state\.validCount\} \/ \$\{state\.siteCount\}\`/);
+});
+
 test('Measurement panels remain compact identity blocks instead of metadata catch-alls',()=>{
   const files=['dit.js','qss-upcd.js','dual-qss.js','jzero.js','isc.js','lbic.js','cet.js','spv.js','leakage.js'];
   for(const file of files){
