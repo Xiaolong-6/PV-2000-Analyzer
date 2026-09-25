@@ -1,10 +1,32 @@
 # Changelog
 
-## v20260925.14.9 — 2026-09-25 (branch)
+## v20260925.15.2.1 — 2026-09-25 (branch)
 
-- Compactified large/small numeric values in editable Valid-data filter and manual-axis text boxes using scientific notation (for example `1e13` or `1.23457e-7`) instead of exposing long digit strings.
-- Normal-scale values remain ordinary decimal text. Programmatically populated inputs retain their exact underlying numeric value until the user actually edits the field, so display formatting alone does not silently change filter or axis semantics.
+- Compact large/small editable numeric values in Valid-data filter and manual-axis text boxes using scientific notation instead of long digit strings.
+- Normal-scale values remain ordinary decimal text. Programmatically populated inputs retain their exact underlying numeric value until the user edits the field, so display formatting alone does not silently change filter or axis semantics.
 - Added shared numeric-input formatter/set/read helpers and regression coverage for scientific display plus exact-value preservation.
+
+
+## v20260925.15.2 — 2026-09-25 (branch)
+
+- Fixed `HighDensityPattern + RoundWafer` schedule reconstruction to apply the vendor-compatible strict circle test directly to stored floating-point coefficients, without subtracting an artificial epsilon from the radius.
+- This restores the 35 × 35 HighDensity schedule to **893** coordinates while preserving the validated 15 × 15 (**145**) and 20 × 20 (**276**) RoundWafer schedules.
+- Added JZero geometry regression coverage for all three dimensions; no scientific JZero calculation changed.
+
+
+## v20260925.15.1 — 2026-09-25 (branch)
+
+- Compactified the LBIC sidebar View panel into a two-column stacked-label control grid, matching the visual language used by Valid-data filter instead of mixing left-label/right-control rows with stacked fields.
+- Normalized sidebar select/input height, padding and label spacing between View and Valid-data filter, and changed the Advanced raw/intermediate toggle to a compact full-width inline row.
+
+
+## v20260925.15 — 2026-09-25
+
+- Recovered the current managed-DLL Standard-COCOS final-result path for DIT Vfb, Qsc, Qtot, Qit and Minimum Dit as `DIT-RESULT-STANDARD-DLL-002`.
+- Reproduced the 13 paired final-result files / 43 sites with **zero availability mismatches**. Browser-runtime maximum absolute errors are about **1.03e-13 V (Vfb)**, **5.49e-4 cm^-2 (Qsc)**, **3.47e-2 cm^-2 (Qtot)**, **3.81e-1 cm^-2 eV^-1 (Minimum Dit)** and **2.93e-3 cm^-2 (Qit)**.
+- Added the recovered repeated-reading rejection, natural-cubic 3× charge-grid interpolation, flatband intersection/availability rules, vendor silicon constants, Qit mapping and discrete Dit result semantics.
+- Kept these PV-2000 compatibility quantities separate from the Analyzer's configurable Si/Ge Standard COCOS, optional PCHIP Midgap Dit and inferred COCOS-II paths; selected-site detail exposes both layers explicitly.
+- Independent private Python-oracle and browser-runtime gates both pass the full paired DIT downstream corpus.
 
 ## v20260925.14.6 — 2026-09-25 (branch)
 

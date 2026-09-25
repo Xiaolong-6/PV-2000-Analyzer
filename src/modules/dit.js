@@ -12,6 +12,14 @@
     Si:Object.freeze({key:'Si',label:'Silicon',niCm3:9.65e9,epsR:11.68,status:'default analyzer model'}),
     Ge:Object.freeze({key:'Ge',label:'Germanium',niCm3:2e13,epsR:16.2,status:'analyzer-only legacy MATLAB model; PV-2000 has no material selector'})
   });
+  const VENDOR_DIT=Object.freeze({
+    q:1.602e-19,
+    k:1.38066e-23,
+    eps0:8.8542e-14,
+    epsR:11.9,
+    niCm3:1.45e10,
+    profileId:'DIT-RESULT-STANDARD-DLL-002'
+  });
   const materialKey=value=>value==='Ge'?'Ge':'Si';
   const materialProfile=value=>MATERIALS[materialKey(value)];
   const standardVsb=(vdark,vlight,factor,type)=>{
@@ -41,6 +49,252 @@
   const help=text=>PV.ui.help(text);
   function scalarMean(e){return e?mean([...e.children].map(x=>Number(x.textContent))):NaN}
   function vectorMeans(e){return e?[...e.children].map(scalarMean):[]}
+  function vectorValues(e){
+    return e
+      ?[...e.children].map(x=>Number(x.textContent)).filter(Number.isFinite)
+      :[];
+  }
+  function vendorOutlierCount(values){
+    return values.length>4?Math.round(Math.log2(values.length-1)):0;
+  }
+  function vendorRejectedMean(values,count=vendorOutlierCount(values)){
+    if(!values.length||count>=values.length)return NaN;
+    if(count<=0)return mean(values);
+    const center=mean(values);
+    const ranked=values
+      .map((value,index)=>({value,index,distance:Math.abs(value-center)}))
+      .sort((a,b)=>a.distance-b.distance||a.index-b.index);
+    return mean(ranked.slice(0,values.length-count).map(x=>x.value));
+  }
+  function vendorProcessMeans(pd){
+    const darkNode=X.direct(pd,'VcpdDark'),
+      lightNode=X.direct(pd,'VcpdLight'),
+      darkVectors=darkNode?[...darkNode.children]:[],
+      lightVectors=lightNode?[...lightNode.children]:[],
+      n=Math.min(darkVectors.length,lightVectors.length),
+      dark=[],
+      light=[];
+    for(let i=0;i<n;i++){
+      const dv=vectorValues(darkVectors[i]),
+        lv=vectorValues(lightVectors[i]),
+        reject=vendorOutlierCount(dv);
+      dark.push(vendorRejectedMean(dv,reject));
+      light.push(vendorRejectedMean(lv,reject));
+    }
+    return{dark,light};
+  }
+  function vendorLineFit(x,y){
+    const n=Math.min(x.length,y.length);
+    if(n<2)return{intercept:NaN,slope:NaN};
+    const sx=x.slice(0,n).reduce((a,b)=>a+b,0),
+      sy=y.slice(0,n).reduce((a,b)=>a+b,0),
+      xm=sx/n,
+      denom=x.slice(0,n).reduce((a,v)=>a+(v-xm)**2,0);
+    if(!denom)return{intercept:NaN,slope:NaN};
+    const slope=x.slice(0,n).reduce((a,v,i)=>a+(v-xm)*y[i],0)/denom;
+    return{intercept:(sy-sx*slope)/n,slope};
+  }
+  function vendorFindX(a,value){
+    return a.length>1?a.reduce((n,v)=>n+(v<value?1:0),0):-1;
+  }
+  function vendorEvenGrid(count,low,high){
+    if(count<1)return[];
+    if(count===1)return[low];
+    return Array.from({length:count},(_,i)=>low+(high-low)*i/(count-1));
+  }
+  function vendorSplineSecond(x,y){
+    const n=x.length,y2=new Array(n).fill(0),u=new Array(Math.max(0,n-1)).fill(0);
+    if(n<2)return y2;
+    for(let i=1;i<n-1;i++){
+      const sig=(x[i]-x[i-1])/(x[i+1]-x[i-1]),
+        p=sig*y2[i-1]+2;
+      y2[i]=(sig-1)/p;
+      u[i]=(6*((y[i+1]-y[i])/(x[i+1]-x[i])-(y[i]-y[i-1])/(x[i]-x[i-1]))/
+        (x[i+1]-x[i-1])-sig*u[i-1])/p;
+    }
+    for(let k=n-2;k>=0;k--)y2[k]=y2[k]*y2[k+1]+u[k];
+    return y2;
+  }
+  function vendorSplineEval(x,y,y2,xq){
+    let lo=0,hi=x.length-1;
+    while(hi-lo>1){
+      const mid=(hi+lo)>>1;
+      if(x[mid]>xq)hi=mid;else lo=mid;
+    }
+    const h=x[hi]-x[lo];
+    if(!h)return NaN;
+    const a=(x[hi]-xq)/h,b=(xq-x[lo])/h;
+    return a*y[lo]+b*y[hi]+((a**3-a)*y2[lo]+(b**3-b)*y2[hi])*h*h/6;
+  }
+  function vendorSpline(x,y,queries){
+    if(x.length<2||x.length!==y.length)return queries.map(()=>NaN);
+    const pairs=x.map((v,i)=>[v,y[i]]).sort((a,b)=>a[0]-b[0]),
+      xx=pairs.map(p=>p[0]),
+      yy=pairs.map(p=>p[1]),
+      y2=vendorSplineSecond(xx,yy);
+    return queries.map(v=>vendorSplineEval(xx,yy,y2,v));
+  }
+  function vendorDitQsc(vsb,doping,type,temperature=300){
+    const C=VENDOR_DIT,
+      beta=C.q/(C.k*temperature),
+      minorityRatio=(C.niCm3*C.niCm3)/(doping*doping);
+    const term=type==='p'
+      ?Math.exp(-beta*vsb)+beta*vsb-1+
+        minorityRatio*(Math.exp(beta*vsb)-beta*vsb-1)
+      :Math.exp(beta*vsb)-beta*vsb-1+
+        minorityRatio*(Math.exp(-beta*vsb)+beta*vsb-1);
+    if(!(term>0))return 1e10;
+    return Math.sqrt(2*C.eps0*C.epsR*C.k*temperature*doping*term)/C.q;
+  }
+  function vendorIntersection(qc,vdark,vlight,threshold,a,b){
+    const a1=vdark[b]-vdark[a],
+      a2=qc[b]*(vdark[a]-threshold)-qc[a]*(vdark[b]-threshold),
+      b1=vlight[b]-vlight[a],
+      b2=vlight[a]*qc[b]-vlight[b]*qc[a],
+      denom=a1-b1,
+      dx=qc[b]-qc[a];
+    if(!denom||!dx)return{x:NaN,y:NaN};
+    return{
+      x:(b2-a2)/denom,
+      y:(b2*a1-a2*b1)/(denom*dx)
+    };
+  }
+  function vendorVfb(qc,vsb,vdark,vlight,threshold){
+    const n=qc.length,
+      unavailable=()=>({Vfb:NaN,Qcfb:NaN,available:false});
+    if(n<4)return unavailable();
+    const abs=vsb.map(Math.abs),maxAbs=Math.max(...abs),minAbs=Math.min(...abs);
+    if(!abs.some(v=>v>.08)||!abs.some(v=>v<.5)||!maxAbs||minAbs/maxAbs>.7)return unavailable();
+    const scaled=qc.map(v=>v/1e10),
+      averageHits=pairs=>{
+        const hits=pairs.map(([a,b])=>vendorIntersection(scaled,vdark,vlight,threshold,a,b));
+        if(hits.some(h=>!Number.isFinite(h.x)||!Number.isFinite(h.y)))return unavailable();
+        const Vfb=mean(hits.map(h=>h.y)),
+          Qcfb=mean(hits.map(h=>h.x))*1e10;
+        return Vfb===0?unavailable():{Vfb,Qcfb,available:true};
+      };
+    if(Math.abs(vsb[0])>=Math.abs(vsb[n-1])){
+      for(let i=1;i<n;i++){
+        const v=vsb[i];
+        if(v*vsb[i-1]>0&&Math.abs(v)>Math.abs(threshold)*2)continue;
+        const index=v*vsb[i-1]<=0?i-1:i;
+        if(index===1)return unavailable();
+        if(index>=3)return averageHits([[index,index-1],[index-1,index-2],[index,index-2]]);
+        if(index===2)return averageHits([[index,index-1]]);
+        return unavailable();
+      }
+      return unavailable();
+    }
+    for(let i=n-2;i>=0;i--){
+      const v=vsb[i+1];
+      if(v*vsb[i]>0&&i!==0&&Math.abs(v)>Math.abs(threshold)*2)continue;
+      const index=v*vsb[i]<=0?i+1:i;
+      if(index>=n)return unavailable();
+      if(index<=n-2)return averageHits([[index+1,index],[index+1,index+2],[index,index+2]]);
+      return unavailable();
+    }
+    return unavailable();
+  }
+  function vendorQcInit(qc,vdark,initialDark){
+    const n=Math.min(qc.length,vdark.length);
+    if(n<3)return{value:NaN,available:false};
+    let index=vendorFindX(vdark,initialDark);
+    index=Math.max(1,Math.min(index,n-2));
+    const fit=vendorLineFit(qc.slice(index-1,index+2),vdark.slice(index-1,index+2));
+    if(!Number.isFinite(fit.slope)||!fit.slope)return{value:NaN,available:false};
+    const value=(initialDark-fit.intercept)/fit.slope,
+      lo=Math.min(qc[0],qc[n-1]),
+      hi=Math.max(qc[0],qc[n-1]);
+    return value<lo||value>hi
+      ?{value:NaN,available:false}
+      :{value,available:true};
+  }
+  function vendorQit(qc,qscValues,doping,type,qitMin,qitMax){
+    if(qc.length<2||!Number.isFinite(qitMin)||!Number.isFinite(qitMax))return NaN;
+    const step=qc[1]-qc[0],
+      locate=barrier=>{
+        if(!(Math.abs(barrier)>=.03&&Math.abs(barrier)<=.5))return NaN;
+        const target=vendorDitQsc(barrier,doping,type,300);
+        let found=0;
+        for(let i=0;i<qscValues.length-1;i++){
+          const a=qscValues[i],b=qscValues[i+1];
+          if((target>=a&&target<=b)||(target<=a&&target>=b)){found=i;break}
+        }
+        if(found===0)return NaN;
+        const denom=qscValues[found+1]-qscValues[found];
+        if(!denom)return NaN;
+        const fraction=(target-qscValues[found])/denom;
+        return type==='p'
+          ?Math.abs(step)*(fraction+found-1)
+          :Math.abs(step)*(fraction+qscValues.length-found-1);
+      },
+      a=locate(qitMin),b=locate(qitMax);
+    return Number.isFinite(a)&&Number.isFinite(b)?Math.abs(b-a):NaN;
+  }
+  function vendorDitMinimum(qc,vsb,qscValues,type){
+    const values=[];
+    for(let i=0;i<vsb.length-1;i++){
+      const dv=vsb[i+1]-vsb[i];
+      if(!dv)continue;
+      const dqc=(qc[i+1]-qc[i])/dv,
+        dqsc=(qscValues[i+1]-qscValues[i])/dv;
+      let value=type==='p'?dqc-dqsc:-dqc-dqsc;
+      if(value>1e14)value=1e14;
+      if(value<1e9)continue;
+      values.push(value);
+    }
+    return values.length?Math.min(...values):NaN;
+  }
+  function vendorResultDownstream(site,d){
+    const unavailable={
+      profileId:null,
+      Vfb:NaN,Qcfb:NaN,QcInit:NaN,Qsc:NaN,Qtot:NaN,Qit:NaN,Dit:NaN
+    };
+    if(d.useCocosII||!site.resultProcess)return unavailable;
+    const dark=site.resultProcess.dark,
+      measuredLight=site.resultProcess.light,
+      n=Math.min(dark.length,measuredLight.length)-1;
+    if(n<5)return{...unavailable,profileId:VENDOR_DIT.profileId};
+    const vd=dark.slice(1,n+1),
+      ml=measuredLight.slice(1,n+1),
+      vl=vd.map((v,i)=>finalResultVLight(v,ml[i],d.factor)),
+      directVsb=vd.map((v,i)=>v-vl[i]),
+      qcInitial=new Array(n).fill(0);
+    if(d.dopingType==='p'){
+      for(let i=0;i<n;i++)qcInitial[i]=i*d.process.charge;
+    }else{
+      for(let i=0;i<n;i++)qcInitial[n-1-i]=-i*d.process.charge;
+    }
+    const qscInitial=[];
+    for(let i=0;i<n;i++){
+      const temp=i===0&&!(site.chuckTemperature>0)?296.16:300;
+      qscInitial.push(vendorDitQsc(directVsb[i],d.doping,d.dopingType,temp));
+    }
+    const qc=vendorEvenGrid(3*n,qcInitial[0],qcInitial[n-1]),
+      vdark=vendorSpline(qcInitial,vd,qc),
+      vlight=vendorSpline(qcInitial,vl,qc),
+      denseVsb=vdark.map((v,i)=>v-vlight[i]),
+      denseQsc=denseVsb.map(v=>vendorDitQsc(v,d.doping,d.dopingType,300)),
+      qcInit=vendorQcInit(qc,vdark,site.VDark),
+      initialDirectVsb=finalResultVsb(site.VDark,site.VLight,d.factor),
+      resultQsc=vendorDitQsc(initialDirectVsb,d.doping,d.dopingType,300),
+      threshold=(d.dopingType==='p'?1:-1)*Math.abs(d.vsbThreshold),
+      flat=vendorVfb(qc,denseVsb,vdark,vlight,threshold),
+      Qtot=qcInit.available&&flat.available?qcInit.value-flat.Qcfb:NaN,
+      Qit=vendorQit(qc,denseQsc,d.doping,d.dopingType,d.qitMin,d.qitMax),
+      signedVsb=d.dopingType==='p'?directVsb:directVsb.map(v=>-v),
+      Dit=vendorDitMinimum(qcInitial,signedVsb,qscInitial,d.dopingType);
+    return{
+      profileId:VENDOR_DIT.profileId,
+      Vfb:flat.Vfb,
+      Qcfb:flat.Qcfb,
+      QcInit:qcInit.value,
+      Qsc:resultQsc,
+      Qtot,
+      Qit,
+      Dit
+    };
+  }
   function firstNum(parents,names,d=NaN){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.num(p,n,NaN);if(Number.isFinite(v))return v}return d}
   function firstBool(parents,names,d=false){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.text(p,n,'');if(v!=='')return v.toLowerCase()==='true'}return d}
   function settings(m,name){
@@ -60,7 +314,9 @@
       qstep=X.num(X.direct(proc,'Settings'),'CoronaCharge'),
       pre=X.direct(m,'PreProcess'),
       prestep=X.num(X.direct(pre,'Settings'),'CoronaCharge'),
-      data=X.direct(X.direct(X.direct(md,'IterationData'),'Iteration'),'Data'),
+      iteration=X.direct(X.direct(md,'IterationData'),'Iteration'),
+      chuckTemperature=X.num(iteration,'ChuckTemperature',0),
+      data=X.direct(iteration,'Data'),
       items=data?X.children(data).filter(e=>X.lname(e)==='DataItem'):[],
       pattern=X.direct(m,'Pattern'),
       patternType=X.attrType(pattern),
@@ -99,6 +355,11 @@
         pred=X.direct(it,'PreProcessData'),
         d=vectorMeans(X.direct(pd,'VcpdDark')),
         l=vectorMeans(X.direct(pd,'VcpdLight')),
+        vendorProcess=vendorProcessMeans(pd),
+        resultProcess={
+          dark:vendorProcess.dark.map(v=>v-off),
+          light:vendorProcess.light.map(v=>v-off)
+        },
         rows=[];
       for(let j=1;j<Math.min(d.length,l.length);j++){
         const vd=d[j]-off,
@@ -109,7 +370,18 @@
       const id=scalarMean(X.direct(it,'InitialVcpdDark'))-off,
         il=scalarMean(X.direct(it,'InitialVcpdLight'))-off,
         iv=standardVsb(id,il,factor,dopingType);
-      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,ResultVLight:finalResultVLight(id,il,factor),ResultVsb:finalResultVsb(id,il,factor),Vsb:iv,InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)});
+      sites.push({
+        rows,
+        resultProcess,
+        chuckTemperature,
+        coord:coords[si]||null,
+        VDark:id,
+        VLight:il,
+        ResultVLight:finalResultVLight(id,il,factor),
+        ResultVsb:finalResultVsb(id,il,factor),
+        Vsb:iv,
+        InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)
+      });
     });
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
@@ -117,7 +389,15 @@
       cocosIIMinVsb:firstNum([m,md],['CocosIIMinVsb','CocosIIMinVSB','COCOSIIMinVsb','COCOSIIMinVSB'],-0.1),
       cocosIIMaxVsb:firstNum([m,md],['CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
       backSurfaceShift:firstBool([m,md],['BackSurfaceShift'],false),
-      qitMin:X.num(qit,'Min',NaN),qitMax:X.num(qit,'Max',NaN),numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),measurementInterval:X.num(m,'MeasurementInterval',NaN),patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,diameter,edgeExclusion,coords,rawCoefficients,geometryModel,geometryProfile,pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
+      vsbThreshold:firstNum([m,md],['VsbThreshold'],.03),
+      qitMin:X.num(qit,'Min',NaN),
+      qitMax:X.num(qit,'Max',NaN),
+      chuckTemperature,
+      numberOfDataPoints:X.num(m,'NumberOfDataPoints',NaN),
+      measurementInterval:X.num(m,'MeasurementInterval',NaN),
+      patternType,patternName:X.text(pattern,'Name',''),targetType,targetWidth,targetHeight,
+      diameter,edgeExclusion,coords,rawCoefficients,geometryModel,geometryProfile,
+      pre:settings(m,'PreProcess'),process:settings(m,'Process'),post:settings(m,'PostProcess')};
         
   }
 
@@ -335,12 +615,52 @@
     const settingsError=errors.join(' ');
     const sites=model.sites.map(s=>{
       const f=flat(s,model,accumN),
-      c2=effective==='pv2000-re'?cocosIIReverse(s,model,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift}):{enabled:false,valid:false,source:'standard measured light'},
-      requiresC2=effective==='pv2000-re',
-      usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
-      window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
-      v=variation(s,model,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
-      mx=finite(v.vsb.map(Math.abs));return{...s,...f,c2,analysisVsb:v.vsb,Dit:v.min,MidgapDit:v.mid,ditRaw:v.raw,ditAccepted:v.accepted,ditWindow:v.window,ditCurve:v.curve,ditFitKnots:v.fitKnots,ditAcceptedCount:v.acceptedCount,ditIntervalCount:v.totalIntervals,ditMinVsb:v.minVsbAt,directRaw:v.directRaw,directCurve:v.directCurve,directMid:v.directMid,midgapV:v.midgapV,midgapStatus:v.midgapStatus,midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,midgapFitMinVsb:v.midgapFitMinVsb,midgapFitMaxVsb:v.midgapFitMaxVsb,Qsc:Math.abs(qsc(s.Vsb,model.doping,model.dopingType,material)),MaxVsb:mx.length?Math.max(...mx):NaN,valid:mx.length&&Math.max(...mx)>.1}});
+        vendorResult=vendorResultDownstream(s,d),
+        c2=effective==='pv2000-re'
+          ?cocosIIReverse(s,model,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift})
+          :{enabled:false,valid:false,source:'standard measured light'},
+        requiresC2=effective==='pv2000-re',
+        usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
+        window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
+        v=variation(s,model,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
+        mx=finite(v.vsb.map(Math.abs));
+      return{
+        ...s,
+        ...f,
+        c2,
+        ResultProfile:vendorResult.profileId,
+        ResultVfb:vendorResult.Vfb,
+        ResultQcfb:vendorResult.Qcfb,
+        ResultQcInit:vendorResult.QcInit,
+        ResultQsc:vendorResult.Qsc,
+        ResultQtot:vendorResult.Qtot,
+        ResultQit:vendorResult.Qit,
+        ResultDit:vendorResult.Dit,
+        analysisVsb:v.vsb,
+        Dit:v.min,
+        MidgapDit:v.mid,
+        ditRaw:v.raw,
+        ditAccepted:v.accepted,
+        ditWindow:v.window,
+        ditCurve:v.curve,
+        ditFitKnots:v.fitKnots,
+        ditAcceptedCount:v.acceptedCount,
+        ditIntervalCount:v.totalIntervals,
+        ditMinVsb:v.minVsbAt,
+        directRaw:v.directRaw,
+        directCurve:v.directCurve,
+        directMid:v.directMid,
+        midgapV:v.midgapV,
+        midgapStatus:v.midgapStatus,
+        midgapMeasuredMinVsb:v.midgapMeasuredMinVsb,
+        midgapMeasuredMaxVsb:v.midgapMeasuredMaxVsb,
+        midgapFitMinVsb:v.midgapFitMinVsb,
+        midgapFitMaxVsb:v.midgapFitMaxVsb,
+        Qsc:Math.abs(qsc(s.Vsb,model.doping,model.dopingType,material)),
+        MaxVsb:mx.length?Math.max(...mx):NaN,
+        valid:mx.length&&Math.max(...mx)>.1
+      };
+    });
       
     const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],
       stats={};
@@ -537,7 +857,10 @@
         selectedResultRows=rows.filter(([,key])=>key!=='InitialQc').map(([name,key])=>{
           const unit=mapSpec(key==='eot'?'EOT':key)[1];
           return `<dt>${esc(name)}</dt><dd>${fmt(metric(s,key))} ${esc(unit)}</dd>`;
-        }).join('');
+        }).join(''),
+        vendorResultRows=s.ResultProfile
+          ?`<dt>PV-2000 result profile</dt><dd>${esc(s.ResultProfile)}</dd><dt>PV-2000 Vfb</dt><dd>${fmt(s.ResultVfb,6)} V</dd><dt>PV-2000 Qsc</dt><dd>${sci(s.ResultQsc,4)} cm⁻²</dd><dt>PV-2000 Qtot</dt><dd>${sci(s.ResultQtot,4)} cm⁻²</dd><dt>PV-2000 Qit</dt><dd>${sci(s.ResultQit,4)} cm⁻²</dd><dt>PV-2000 Minimum Dit</dt><dd>${sci(s.ResultDit,4)} cm⁻² eV⁻¹</dd>`
+          :'';
         
       host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML except the semiconductor Material selected in Analysis controls.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(analysis.options.material)} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div></section>
@@ -575,7 +898,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       </aside><section class="plots overview">
         <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 360"></svg></div></div>
       </section><section class="plots detail">
-        <section class="panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd><dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd>${selectedResultRows}</dl></section>
+        <section class="panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd><dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd>${selectedResultRows}${vendorResultRows}</dl></section>
         <div class="panel chart"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVcpdAxes')}<button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 640 360"></svg></div></div>
         <div class="panel chart"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 640 360"></svg></div></div>
         <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
@@ -877,6 +1200,11 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
     standardVsb,
     finalResultVsb,
     finalResultVLight,
+    vendorOutlierCount,
+    vendorRejectedMean,
+    vendorDitQsc,
+    vendorResultDownstream,
+    vendorDitModel:VENDOR_DIT,
     initialQcFromPreprocess,
     spatialEnvelope
   };
