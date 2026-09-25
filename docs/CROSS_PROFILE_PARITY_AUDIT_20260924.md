@@ -25,7 +25,7 @@ The second pass found:
 - one incomplete 5-of-49 SquareRegion case reproduces the vendor coordinates as the exact acquisition-prefix schedule;
 - ISC calculations remain exact across three different geometry families;
 - VCPD calculations remain exact across RoundWafer and PseudoSquareCell;
-- JZero lifetime, Smax and Basore J0 remain numerically stable across four geometry families; a later managed-IL closure identified the Implied-Voc temperature-model mismatch and validates the recovered current-DLL Voc path independently of geometry;
+- JZero lifetime, Smax and Basore J0 remain numerically stable across four geometry families, while Implied Voc has a narrower evidence envelope;
 - LBIC exposes both geometry over-coupling and genuinely new channel/result semantics.
 
 Therefore a single atomic “reference profile = algorithm + geometry + all quantities” is too coarse.
@@ -121,27 +121,18 @@ Both coordinate sets are exact.
 
 ### JZero
 
-The original cross-profile pass established that lifetime, Smax and Basore J0
-were geometry-independent while the then-current Implied-Voc reconstruction
-showed approximately 0.35–0.56 mV error on one warm map and approximately
-19–20 mV on several lower-temperature non-map cases.
+Four complete geometries were tested:
 
-That discrepancy is now resolved. Managed-IL tracing of the current
-`SDI.Data` result path shows that vendor JZero Voc uses fixed
-`NiForSilicon(T)=1.22e10 cm^-3`, `T_C+272.15`, rounded
-`k=1.38066e-23` / `q=1.602e-19`, and an explicit `+1` inside the
-logarithm. Pattern/Target is absent from the calculation.
+- Map + PseudoSquareCell;
+- HighDensity + RoundWafer;
+- SquareRegion + SquareCell;
+- NinePoint + SquareCell.
 
-A private forensic regression across 12 harness-generated JZero pairs /
-15,886 finite Voc values reproduces the vendor outputs at exported precision
-for Map, HighDensity, NinePoint, SquareRegion and OnePoint geometries. The
-earlier apparent geometry split was a temperature/corpus confounder caused by
-the public physical `ni(T)` reconstruction.
+Across all four, both stored lifetime channels, Smax and Basore J0 reproduce to floating-point precision. This confirms that `JZERO-CALC-001` is substantially geometry-independent.
 
-**Resolved action:** retain the calculation/geometry separation and expose the
-current-DLL Implied-Voc path as geometry-independent
-`JZERO-VOC-COMPAT-001`. Preserve the legacy constants exactly in
-compatibility mode.
+Implied Voc is different: the new historical references show about 0.35–0.56 mV error for one map and about 19–20 mV for the other three cases. This is too large to inherit the same validation claim.
+
+**Action:** preserve calculation/geometry separation and move Implied Voc to a narrower quantity-level compatibility profile until the historical dependency is identified.
 
 ### LBIC
 
@@ -201,9 +192,9 @@ Use the strongest new evidence first:
 - migrate ISC to one calculation profile plus the validated geometry profiles;
 - migrate VCPD the same way;
 - formalize JZero's existing calc/geometry split and add the newly paired geometries;
-- preserve JZero Implied Voc as a separate quantity profile.
+- keep JZero Implied Voc separately constrained.
 
-No formula change is required for ISC/VCPD. The later JZero managed-IL audit has now closed the previously deferred Voc discrepancy as `JZERO-VOC-COMPAT-001`.
+No formula change is required for ISC/VCPD. JZero formula changes are explicitly out of scope until the Voc discrepancy is understood.
 
 ### P2 — LBIC
 
@@ -218,11 +209,7 @@ At the date of this audit, calculated DL was unsupported. The later 2026-09-25 f
 
 ### P3 — QSS-µPCD
 
-1. add independent geometry profiles for the newly paired coordinate encodings;
-2. make incomplete SquareRegion prefix validity conditional on acquisition status;
-3. run a sentinel-aware HighDensity lifetime/Smax validator;
-4. keep Implied Voc as a separately version/profile-sensitive quantity;
-5. retain raw/non-positive lifetime semantics exactly as currently documented.
+Completed. Geometry remains independently profiled; sentinel-aware lifetime/Smax semantics are closed across the seven nonempty cross-geometry pairs. A 2026-09-25 managed-DLL follow-up also closes simple-map Implied Voc as `QSS-CALC-IMPLIED-VOC-002`: fixed vendor constants/temperature convention, zero-intensity availability, and non-positive-lifetime placeholders reproduce paired vendor output with zero availability mismatches and **5.56e-16 V** maximum absolute error. Optional Physical Si/Ge modes remain Analyzer-side models.
 
 ### P4 — DIT
 

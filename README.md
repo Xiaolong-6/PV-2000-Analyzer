@@ -23,9 +23,9 @@ PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab 
 | XML type | Analyzer | Main outputs | Current evidence boundary |
 |---|---|---|---|
 | `DITMeasurement` | Dit / COCOS | Vcpd/Vsb, Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT | `DIT-RESULT-INITIAL-001` validates direct/bookkeeping result fields; `DIT-RESULT-STANDARD-DLL-002` validates current-DLL Standard-COCOS Vfb/Qsc/Qtot/Qit/Minimum-Dit separately from configurable Analyzer outputs; COCOS-II remains inferred |
-| `QssUpcdMeasurement` | QSS-µPCD | lifetime, Smax, implied Voc, optional Analyzer SRV | paired Map/SquareRegion/HighDensity-Round geometry; lifetime/Smax and sentinel result semantics validated independently; Implied Voc remains profile-scoped |
+| `QssUpcdMeasurement` | QSS-µPCD | lifetime, Smax, implied Voc, optional Analyzer SRV | lifetime/Smax + sentinel semantics validated across paired geometries; `QSS-CALC-IMPLIED-VOC-002` validates current-DLL simple-map Implied Voc independently of geometry; Physical Si/Ge and SRV remain Analyzer-side |
 | `DualQssMeasurement` | QSS Injection | injection sweep, stored transients, profile-scoped teff.d/teff.SS/Δn/Smax/Voc/Basore J0/K-S J0 result table | raw path validated; two real XML+CSV pairs validate the complete non-Auger Back/Back scalar result path |
-| `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | `JZERO-CALC-001` validates lifetime/Smax/Basore across paired geometries; `JZERO-VOC-COMPAT-001` reproduces current-DLL Voc across 12 paired harness exports / 15,886 finite values |
+| `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | `JZERO-CALC-001` validated across paired OnePoint/SquareRegion/HighDensity/Map geometries; Voc remains quantity-scoped |
 | `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB | paired map profile validated |
 | `VcpdMeasurement` | VCPD | Vcpd Dark | paired map profile validated |
 | `CETMeasurement` | CET / EOT | EOT, Cd, R² | `CET-CALC-001` calculation + `GEOM-NINEPOINT-SQUARE-001` paired geometry; historical evidence bundle `CET-9PT-SQUARE-001` |

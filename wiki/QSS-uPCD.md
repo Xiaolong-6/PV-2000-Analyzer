@@ -124,30 +124,34 @@ This has the steady-state structure
 
 ## 6. Implied Voc
 
-For p-type material with doping $N_A$, a physical carrier-product expression is
+The vendor-compatible simple-map path is now reconstructed from the managed DLL rather than fitted empirically:
+
+```math
+\Delta n
+=
+2.38\times10^{12}
+\frac{I_{\rm mSun} f_{\rm opt}\tau_{\mu s}}
+{W_{\mu m}},
+```
+
+and
 
 ```math
 V_{\rm oc,impl}
 =
-\frac{kT}{q}
+\frac{k_{\rm vendor}T}{q_{\rm vendor}}
 \ln\left[
 1+
-\frac{\Delta n(N_A+\Delta n)}{n_i^2}
-\right].
+\frac{\Delta n(N_{\rm base}+\Delta n)}
+{n_{i,\rm vendor}^{2}}
+\right],
 ```
 
-The currently validated QSS map compatibility path evaluates the same expression **without** the additive 1:
+where PV-2000 uses `k = 1.38066e-23`, `q = 1.602e-19`, fixed `ni = 1.22e10 cm^-3`, and `T = ChuckTemperature + 272.15 K`. If the stored chuck temperature is exactly 0 °C, the simple-result path substitutes 27 °C first.
 
-```math
-V_{\rm oc,compat}
-=
-\frac{kT}{q}
-\ln\left[
-\frac{\Delta n(N_A+\Delta n)}{n_i^2}
-\right].
-```
+This recovered path matches the seven nonempty cross-geometry QSS pairs to floating-point roundoff: maximum absolute Implied-Voc error is **5.56×10⁻¹⁶ V** with zero availability mismatches. When QSS intensity is zero, PV-2000 exposes Implied Voc as `Ud.` rather than a finite zero-voltage result.
 
-This distinction, temperature and the $n_i(T)$ convention are part of the reference profile; the physical expression above must not be substituted for the vendor-regressed compatibility calculation.
+The optional **Physical Si** and **Physical Ge** modes remain Analyzer-side physical estimates. They deliberately use separate material models and are not claims about the vendor algorithm.
 
 ## 7. Intensity-scan J0
 
@@ -230,6 +234,6 @@ They share the same lifetime input while depending on different physical assumpt
 
 Current QSS evidence separates calculation, geometry and quantity availability. Seven nonempty 100-case XML/vendor-CSV pairs span SquareRegion, Map and HighDensity geometries: positive lifetime agrees to **5.68×10⁻¹⁴ µs**, Smax to **5.00×10⁻¹² cm/s**, and all **39** non-positive controller sentinels reproduce the vendor `Ud./0/0` lifetime/Smax/Voc result convention.
 
-Implied Voc is deliberately narrower. The original reference remains within about 0.1 mV, while the later cross-geometry audit reaches about **4.918 mV** maximum absolute difference. It therefore remains a PV-2000-compatible/inferred quantity outside the tightly regressed instance rather than being promoted together with lifetime/Smax.
+Implied Voc is now independently validated as `QSS-CALC-IMPLIED-VOC-002`. Across the seven nonempty cross-geometry pairs, the recovered managed-DLL formula has **zero availability mismatches** and maximum absolute error **5.56×10⁻¹⁶ V**. The earlier 4.918 mV spread came from the analyzer's fitted compatibility approximation.
 
 Controller-side transient-evaluation formulas are outside the viewer's current scientific reconstruction boundary.

@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.23 — 2026-09-25
+
+- Recovered the QSS-µPCD simple-map Implied-Voc current-DLL path and promoted it as `QSS-CALC-IMPLIED-VOC-002`: fixed `ni=1.22e10 cm^-3`, vendor `k/q`, and `T = ChuckTemperature + 272.15 K` with the zero-temperature fallback.
+- Reproduced seven nonempty paired cross-geometry QSS exports with zero Implied-Voc availability mismatches and maximum absolute error **5.56e-16 V**.
+- Preserved vendor result semantics for non-positive lifetime (`Voc=0` placeholder at positive intensity) and zero QSS intensity (`Voc=Ud.` even when lifetime is finite), including the 7000-site zero-intensity oracle.
+- Upgraded the QSS validator from diagnostic Voc comparison to a strict parity gate while keeping optional Analyzer Physical Si / Physical Ge estimates separate from vendor validation.
+- Updated QSS algorithm/validation/reference/Wiki documentation plus README, measurement matrices, handoff, cross-profile audit and maintainer guidance to remove the superseded 4.918 mV inferred-compatibility claim.
+
 ## v20260925.22 — 2026-09-25
 
 - Recovered the current managed-DLL JZero Implied-Voc path and replaced the earlier fitted `NI_VOC_300 + ni(T)` reconstruction with exact PV-2000 compatibility semantics: fixed `NiForSilicon=1.22e10 cm^-3`, `ChuckTemperature + 272.15`, rounded `k=1.38066e-23` / `q=1.602e-19`, and `ln(ratio + 1)`.

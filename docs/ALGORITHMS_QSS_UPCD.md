@@ -42,17 +42,27 @@ with W in cm and lifetime in seconds. The original 305-row CSV reference validat
 
 ## Implied Voc
 
-The manual gives:
+The current managed PV-2000 DLL path has been reconstructed directly. For QSS intensity `I` in mSun, wafer thickness `W` in µm, optical factor `OF`, lifetime `tau` in µs and base doping `Nbase`:
 
 ```text
-G = 2.38e17 * I[suns] / W[cm] * OF
-Delta_n = G * tau
-Voc = (kT/q) * ln(Delta_n * (Nbase + Delta_n) / ni(T)^2)
+Delta_n = 2.38e17 * I * OF / W * tau * 1e-5
+T_K = ChuckTemperature + 272.15
+Voc = (k_vendor*T_K/q_vendor) * ln(Delta_n*(Nbase + Delta_n)/ni_vendor^2 + 1)
 ```
 
-The analyzer uses XML chuck temperature when available. The original 305-point export does not match the manual's revised example `ni=1.02e10 cm^-3 at 300 K`; it is matched closely by the existing PV-2000-compatible silicon-style `ni(T)` scaling anchored at `ni(300 K)=1.517791063e10 cm^-3` with Varshni band-gap temperature dependence. That **specific reference instance** remains within 0.1 mV.
+with the vendor compatibility constants:
 
-The expanded nine-pair RoundWafer corpus reaches approximately **1.94 mV maximum absolute error**. The later seven-pair cross-geometry 100-case audit extends the observed range to approximately **4.918 mV**, driven by SquareRegion examples; HighDensity/RoundWafer examples remain below about 0.95 mV in that audit. Therefore <0.1 mV must not be presented as a family-wide guarantee, and Implied Voc remains an inferred compatibility quantity outside the tightly regressed reference instance.
+```text
+k_vendor  = 1.38066e-23
+q_vendor  = 1.602e-19
+ni_vendor = 1.22e10 cm^-3
+```
+
+`NiForSilicon()` in the recovered DLL returns the fixed `1.22e10 cm^-3` value; it does not apply the temperature-dependent `ni(T)` model previously used by the analyzer. If the stored chuck temperature is exactly 0 °C, the vendor simple-result path substitutes 27 °C. A non-positive wafer thickness is replaced by 200 µm by the vendor injection conversion.
+
+The seven nonempty cross-geometry pairs in the 100-case corpus now reproduce Implied Voc with **zero availability mismatches** and maximum absolute error **5.56e-16 V**. Five zero-site acquisitions remain empty evidence. A separate 7000-site zero-intensity case confirms that PV-2000 reports the entire Implied-Voc column as `Ud.` when QSS intensity is zero. The earlier approximately **4.918 mV** discrepancy was caused by the fitted compatibility approximation, not geometry.
+
+Finite and placeholder output is therefore validated as `QSS-CALC-IMPLIED-VOC-002`, independently from geometry.
 
 ### PV-2000 compatibility versus physical material model
 
