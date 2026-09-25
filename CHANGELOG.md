@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.15.2 — 2026-09-25 (branch)
+
+- Fixed `HighDensityPattern + RoundWafer` schedule reconstruction to apply the vendor-compatible strict circle test directly to stored floating-point coefficients, without subtracting an artificial epsilon from the radius.
+- This restores the 35 × 35 HighDensity schedule to **893** coordinates while preserving the validated 15 × 15 (**145**) and 20 × 20 (**276**) RoundWafer schedules.
+- Added JZero geometry regression coverage for all three dimensions; no scientific JZero calculation changed.
+
+
 ## v20260925.15.1 — 2026-09-25 (branch)
 
 - Compactified the LBIC sidebar View panel into a two-column stacked-label control grid, matching the visual language used by Valid-data filter instead of mixing left-label/right-control rows with stacked fields.

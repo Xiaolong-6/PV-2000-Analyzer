@@ -43,6 +43,28 @@ test('JZero SquareRegion geometry uses structured Region + Dimension fields',()=
   assert.equal(g.interpretation,'explicit-region-grid');
 });
 
+
+test('HighDensity RoundWafer keeps raw floating-point strict-circle membership',()=>{
+  const coefficients=n=>Array.from({length:n*n},(_,index)=>({
+    x:-1+2*(index%n)/(n-1),
+    y:-1+2*Math.floor(index/n)/(n-1)
+  }));
+  for(const [dimension,count] of [[15,145],[20,276],[35,893]]){
+    const g=PV2000.geometry.resolveMeasurementGeometry({
+      patternType:'HighDensityPattern',
+      targetType:'RoundWafer',
+      rawCoefficients:coefficients(dimension),
+      pointCount:count,
+      diameter:100,
+      edgeExclusion:7,
+      allowPartialPrefix:true
+    });
+    assert.equal(g.geometryStatus,'complete');
+    assert.equal(g.expectedPointCount,count);
+    assert.equal(g.pointsMm.length,count);
+  }
+});
+
 test('terminated JZero SquareRegion can preserve a 5-of-9 leading schedule prefix',()=>{
   const g=PV2000.geometry.resolveMeasurementGeometry({
     patternType:'SquareRegionPattern',

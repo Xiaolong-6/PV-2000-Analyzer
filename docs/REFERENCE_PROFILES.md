@@ -393,7 +393,7 @@ This profile is calculation/availability evidence and is independent of the geom
 
 The same 100-case corpus supplies two nonempty `HighDensityPattern + RoundWafer` QSS pairs: **145 sites** from a 15 × 15 normalized template and **276 sites** from a 20 × 20 template, both on a 100 mm RoundWafer with 7 mm edge exclusion.
 
-The shared geometry resolver preserves coefficient order, restricts the normalized template to the strict unit-circle subset (`x²+y² < 1`), then scales by the EdgeExclusion-adjusted radius. The paired vendor X/Y coordinates agree to a maximum error of **7.03e-14 mm**, establishing `GEOM-HIGHDENSITY-ROUND-001` directly on QSS data.
+The shared geometry resolver preserves coefficient order, restricts the normalized template to the strict unit-circle subset (`x²+y² < 1`) using the stored XML floating-point coefficients directly, then scales by the EdgeExclusion-adjusted radius. No artificial epsilon is subtracted from the radius test: that matters for some odd-dimension HighDensity templates whose decimal coefficient rounding places a small number of nominal boundary points just inside the strict circle. The paired vendor X/Y coordinates agree to a maximum error of **7.03e-14 mm**, establishing `GEOM-HIGHDENSITY-ROUND-001` directly on QSS data.
 
 Observed `HighDensityPattern + SquareCell` runtime geometry remains governed by its separate shared geometry evidence; the RoundWafer QSS pairs do not automatically widen calculation or geometry claims to every HighDensity target combination.
 
