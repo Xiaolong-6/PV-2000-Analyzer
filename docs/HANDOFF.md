@@ -78,7 +78,7 @@ Four new paired geometry combinations resolve independently of calculation profi
 
 QSS preserves raw lifetime and intrinsic sentinel validity separately from the user Valid-data filter. Smax and profile-specific implied-Voc compatibility behavior are documented; optional physical Si/Ge Voc and SRV are Analyzer-side interpretation paths.
 
-DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark and Initial Qc bookkeeping on 13 final-result pairs / 43 sites; regenerated VLight, N-type Vsb and downstream flatband/Dit results remain diagnostic and do not override the stronger Standard COCOS evidence. The Ge material option is an Analyzer model and COCOS-II remains inferred.
+DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight and Initial Qc bookkeeping on 13 final-result pairs / 43 sites. Corrected VLight is `VDark - F × (VDark - VLight_measured)` and matches at floating-point scale; N-type final-result Vsb and downstream flatband/Dit results remain diagnostic and do not override the stronger Standard COCOS evidence. The Ge material option is an Analyzer model and COCOS-II remains inferred.
 
 ## Architecture state
 
