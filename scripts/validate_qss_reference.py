@@ -329,8 +329,9 @@ def validate_legacy():
 
 
 def main():
-    ok = validate_legacy()
-    raw = [Path(p) for p in (sys.argv[1:] or sorted(glob.glob("private/reference/qss/*.xml")))]
+    explicit = [Path(p) for p in sys.argv[1:]]
+    ok = True if explicit else validate_legacy()
+    raw = explicit or [Path(p) for p in sorted(glob.glob("private/reference/qss/*.xml"))]
     if not raw:
         print("QSS paired validator: SKIP (no private/reference/qss/*.xml)")
         return 0 if ok else 1
