@@ -2,23 +2,23 @@
 
 ## Current baseline
 
-- Main baseline before this feature branch: `v20260925.11`.
-- Feature branch: `feat/spv-enhanced-parity`.
-- Scope: implement the recovered finite-wafer/back-surface SPV Enhanced N-type calculation only after pointwise paired validation.
-- Private oracle result: 69 sites, 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
+- Public main: `v20260925.12`.
+- No active feature branch is required to complete the 100-case closure.
+- Final private 100-case matrix against this baseline: **71 scoped PASS + 16 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
+- `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
 ## Cross-profile parity / geometry-decoupling audit
 
 A 2026-09-24 private audit added 30 newly harness-paired cases across the already implemented DIT, QSS-µPCD, Dual QSS, JZero, ISC, VCPD and LBIC families. Calibration-only failures were intentionally excluded from scientific conclusions.
 
-The decisive architecture finding is that the **canonical geometry layer is already broadly reusable, while profile validation remains too coupled to geometry**. The decoupled audit reproduced 25 complete coordinate sets to floating-point precision and one incomplete SquareRegion prefix exactly. ISC and VCPD also preserved their scientific result equations across multiple independently validated geometries.
+The decisive architecture finding was that the **canonical geometry layer is broadly reusable and validation must be split by calculation, geometry and quantity availability**. The decoupled audit reproduced 25 complete coordinate sets to floating-point precision and one incomplete SquareRegion prefix exactly. ISC and VCPD also preserved their scientific result equations across multiple independently validated geometries.
 
-Next work should therefore start with validation-axis separation, not with another measurement-family feature:
+That validation-axis separation is now established. The completed sequence was:
 
-1. add separate calculation- and geometry-profile metadata to the normalized domain model;
-2. keep per-Quantity validation independent;
-3. change validators to emit calculation / geometry / quantity outcomes separately;
-4. migrate ISC/VCPD first because their new pairs prove the same calculation across different geometries;
+1. **completed:** add separate calculation- and geometry-profile metadata to the normalized domain model;
+2. **completed:** keep per-Quantity validation independent;
+3. **completed:** change validators to emit calculation / geometry / quantity outcomes separately;
+4. **completed:** migrate ISC/VCPD first because their new pairs prove the same calculation across different geometries;
 5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
 6. **completed:** split LBIC calculation semantics from geometry; the 100-case closure validates eight current+scattered numeric pairs / 27,376 sites plus one five-site direct+scattered pair, while two zero-site exports remain diagnostic and finite direct+scattered DL remains withheld;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
@@ -28,7 +28,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
 
-## Dedicated analyzers on this branch
+## Dedicated analyzers on current main
 
 - `DITMeasurement` — Dit / COCOS.
 - `QssUpcdMeasurement` — QSS-µPCD map.
@@ -121,12 +121,13 @@ Never publish private reference files or proprietary vendor material merely to m
 
 ## Remaining high-priority scientific gaps
 
-1. Dual QSS: keep the current result-profile gate; extend only when new real pairs explain the conflicting historical FixedPoints branch, or cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
-2. LBIC: obtain finite direct-plus-scattered DL evidence before widening the coupled calculation profile; retain the existing four-pair private regression gate.
-3. JZero: retain `JZERO-CALC-001` for the paired two-iteration lifetime/Smax/Basore path; widen Implied Voc only if a new paired categorical path explains the current ~19–21 mV legacy offsets. CET/geometry profiles still require paired categorical evidence.
-4. SPV: extend beyond the standard paired map path only with matching vendor output for enhanced, texture, parsed-signal or other categorical branches.
-5. Leakage: extend beyond the paired one-point acquisition path only with matching vendor output.
-6. CV, Frequency Scan, Voc/Voc Mapping, Fe/LID, Surface Passivation, Junction Lifetime, Sheet Resistance/Eddy, Height and other known families remain without dedicated analyzers until the real XML + numeric-export gate is met.
+1. **DIT historical corrected-light / processing state:** regenerated outputs show real VLight/N-type/downstream drift that is not uniquely encoded by saved XML. Keep the stronger original-pair Standard COCOS rules until version-matched/original evidence identifies the hidden state.
+2. **LBIC finite direct-plus-scattered DL:** obtain at least one finite paired vendor oracle before widening the current DL calculation envelope.
+3. **Dual QSS categorical branches:** explain the conflicting FixedPoints/PseudoSquare result branch, or obtain paired evidence for Auger correction, alternate source selections, different 1000-mSun placement or another result branch.
+4. **QSS exact Implied Voc compatibility:** lifetime/Smax are closed; further work is optional unless exact historical Voc parity beyond the current compatibility envelope is required.
+5. **SPV remaining categorical branches:** Enhanced N-type is validated; Enhanced P-type, texture correction, parsed-signal and manual-linearity paths still require their own paired evidence.
+6. **IntensityScan:** scientific result support remains blocked by the vendor result API/invocation path; XML structure alone is not sufficient.
+7. **Unsupported families:** CV, Frequency Scan, Voc/Voc Mapping, Fe/LID, Surface Passivation, Junction Lifetime, Sheet Resistance/Eddy, Height and other known families still require real XML + matching numeric vendor output before a dedicated scientific analyzer is added.
 
 ## Validation commands
 
