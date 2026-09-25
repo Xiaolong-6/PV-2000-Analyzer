@@ -25,7 +25,7 @@ PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab 
 | `DITMeasurement` | Dit / COCOS | Vcpd/Vsb, Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT | profile-scoped; Standard COCOS evidence plus inferred COCOS-II path |
 | `QssUpcdMeasurement` | QSS-µPCD | lifetime, Smax, implied Voc, optional Analyzer SRV | paired map profiles; non-positive sentinel handling is explicit |
 | `DualQssMeasurement` | QSS Injection | injection sweep, stored transients, profile-scoped teff.d/teff.SS/Δn/Smax/Voc/Basore J0/K-S J0 result table | raw path validated; two real XML+CSV pairs validate the complete non-Auger Back/Back scalar result path |
-| `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | paired two-intensity map profile validated |
+| `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | `JZERO-CALC-001` validated across paired OnePoint/SquareRegion/HighDensity/Map geometries; Voc remains quantity-scoped |
 | `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB | paired map profile validated |
 | `VcpdMeasurement` | VCPD | Vcpd Dark | paired map profile validated |
 | `CETMeasurement` | CET / EOT | EOT, Cd, R² | `CET-CALC-001` calculation + `GEOM-NINEPOINT-SQUARE-001` paired geometry; historical evidence bundle `CET-9PT-SQUARE-001` |

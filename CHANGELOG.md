@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.5 — 2026-09-25
+
+- Closed the remaining high-value JZero opportunity from the 100-case private corpus: eight numeric XML/vendor CSV pairs validate the two-intensity lifetime, Smax and Basore J0 calculation independently across OnePoint, SquareRegion, HighDensity and Map geometries.
+- Reworked the JZero private validator to use the shared geometry resolver and quantity-scoped outcomes. Across the eight pairs, maximum coordinate error is about 4.97e-14 mm and Basore J0 error about 4.73e-11 fA/cm²; one-site vendor Stdev remains correctly undefined.
+- Kept Implied Voc on the narrower `JZERO-VOC-MAP-PSEUDOSQUARE-001` profile. Two pseudo-square map pairs remain within about 0.850 mV, while paired legacy OnePoint/SquareRegion/HighDensity cases differ by about 18.7–21.1 mV and remain inferred/diagnostic.
 ## v20260925.4 — 2026-09-25
 
 - Expanded CET calculation evidence using seven new nonempty XML/vendor CSV pairs (19 sites) across six independently validated geometry combinations. Five finite EOT/Cd sites and all 19 R² results agree pointwise; an eighth zero-site pair remains empty evidence only.

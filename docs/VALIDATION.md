@@ -215,24 +215,24 @@ npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or other categorical Dual QSS result branches.
 
 
-## Emitter J0 map — paired XML/CSV regression
+## Emitter J0 map — calculation / geometry / quantity regression
 
-One private `JZeroMeasurement` XML + matching PV-2000 CSV export establishes the current two-intensity Emitter J0 reference path. The XML stores two 5017-point `UpcdIterationData` lifetime arrays at 1000 and 3000 mSun; the vendor export contains Basore J0, both τeff.d channels, both Smax channels, both Implied Voc channels, X/Y coordinates and summary statistics.
+The original 5017-site `JZeroMeasurement` XML + PV-2000 CSV pair established the two-intensity result path. The 100-case private harness corpus adds **eight successful numeric JZero exports** spanning OnePoint, SquareRegion, HighDensity and Map geometries. The current validator resolves geometry independently, validates the shared two-iteration calculation quantities across all eight pairs, and treats Implied Voc as a narrower quantity profile.
 
-| Quantity / behavior | Regression result | Status |
+| Quantity / behavior | 100-case regression result | Status |
 |---|---:|---|
-| point count | 5017 paired sites | validated |
-| `MapPattern + PseudoSquareCell` X/Y | max abs error 0 mm | validated |
-| τeff.d, first/second QSS | max abs error ≈ 5.2e-13 µs | validated |
-| Smax, first/second QSS | max abs error ≈ 5e-13 cm/s | validated |
-| Basore J0 | max abs error ≈ 9.1e-13 fA/cm² | validated |
-| Implied Voc, first QSS | max abs error ≈ 0.061 mV | compatibility-regressed |
-| Implied Voc, second QSS | max abs error ≈ 0.066 mV | compatibility-regressed |
-| Average / Median / sample Stdev / Min / Max | regressed for all seven quantities | validated within the quantity tolerances above |
+| geometry | 8 / 8 pairs resolve through shared geometry profiles | validated independently |
+| X/Y | max Euclidean error ≈ **4.97e-14 mm** | validated |
+| τeff.d, first/second QSS | max abs error ≈ **5.12e-13 µs** | `JZERO-CALC-001` validated |
+| Smax, first/second QSS | max abs error ≈ **4.77e-12 cm/s** | `JZERO-CALC-001` validated |
+| Basore J0 | max abs error ≈ **4.73e-11 fA/cm²** | `JZERO-CALC-001` validated |
+| Implied Voc on `MapPattern + PseudoSquareCell` | two numeric pairs; max abs error ≈ **0.850 mV** | `JZERO-VOC-MAP-PSEUDOSQUARE-001`, reproduced at displayed precision |
+| Implied Voc on the other paired geometries | observed max errors ≈ **18.7–21.1 mV** | diagnostic / inferred; not promoted |
+| one-site summary Stdev | vendor exports `NaN` | preserved as unavailable |
 
-The reference geometry is a 156 × 156 mm pseudo-square with 205 mm diameter mask, 7 mm EdgeExclusion and 2 mm pitch. The scheduled region is the intersection of the adjusted 71 × 71 mm half-extents and 95.5 mm radius, yielding exactly 5017 X-fast, ascending-Y sites from (-64, -70) to (64, 70) mm.
+The original 5017-site reference remains the strongest exact geometry instance: a 156 × 156 mm pseudo-square with 205 mm diameter mask, 7 mm EdgeExclusion and 2 mm pitch, yielding 5017 X-fast, ascending-Y sites from (-64, -70) to (64, 70) mm. Its two Implied-Voc channels reproduce within approximately 0.061 and 0.066 mV. A second 1221-site `MapPattern + PseudoSquareCell` pair extends the same quantity profile to approximately 0.850 mV maximum error.
 
-Basore J0 is derived from the two-intensity slope of inverse small-perturbation lifetime squared versus generation rate. The compatibility constant reproduces this reference to floating-point precision. JZero Implied Voc intentionally uses a separate compatibility calibration from the general QSS-map analyzer because the general QSS `ni(T)` model produces a systematic offset on this result family. These compatibility constants are regression models for the observed vendor output, not claims about undisclosed internal PV-2000 constants.
+The broader corpus demonstrates why validation axes are separate. Direct XML lifetime, `Smax = W/(2τ)` and the Basore-Hansen J0 compatibility equation remain stable across the paired geometry families, while the current JZero Implied-Voc calibration does not generalize to the older OnePoint/SquareRegion/HighDensity result paths. Runtime therefore keeps those Voc quantities inferred instead of widening the compatibility claim.
 
 Run:
 
@@ -240,7 +240,7 @@ Run:
 npm run validate:jzero
 ```
 
-The validator looks for matching private pairs under `private/reference/jzero/` and skips cleanly when they are absent. Runtime remains XML-only.
+The validator looks for matching private pairs under `private/reference/jzero/` or accepts explicit XML paths. Runtime remains XML-only; vendor CSVs are regression evidence only.
 
 ## DIT reference
 

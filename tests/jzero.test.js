@@ -214,3 +214,14 @@ test('JZero parser wires SquareRegion fields and permits explicit incomplete acq
   assert.match(src,/paired QSS sites/);
 });
 
+
+
+test('JZero private validator separates calculation parity from Voc quantity parity',()=>{
+  const src=fs.readFileSync(require.resolve('../scripts/validate_jzero_reference.py'),'utf8');
+  assert.match(src,/resolve_xml_geometry/);
+  assert.doesNotMatch(src,/xtype\(pattern\)!=['"]MapPattern['"]/);
+  assert.doesNotMatch(src,/xtype\(target\)!=['"]PseudoSquareCell['"]/);
+  assert.match(src,/GEOM-MAP-PSEUDOSQUARE-001/);
+  assert.match(src,/TOL_VOC_PROFILE=1e-3/);
+  assert.match(src,/diagnostic\/inferred/);
+});

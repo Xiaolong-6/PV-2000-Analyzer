@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline for this branch: `v20260925.3` (ISC/VCPD corpus parity merged in PR #68).
-- Feature branch: `feat/cet-corpus-parity`.
-- Scope: seven nonempty CET calculation/geometry pairs and one zero-site pair from the 100-case private corpus.
-- Private regression: run `scripts/validate_cet_reference.py` on eight matching XML/CSV pairs; the zero-site case is classified as empty. Reference files stay ignored in `private/`.
+- Main baseline for this branch: `v20260925.4` (CET corpus parity merged in PR #69).
+- Feature branch: `feat/jzero-quantity-corpus-parity`.
+- Scope: close the remaining high-value JZero evidence from the 100-case private corpus without changing scientific formulas.
+- Private regression: eight successful JZero XML/vendor CSV pairs now validate calculation, geometry and Implied-Voc quantity status independently. Reference files stay private.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -19,7 +19,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 2. keep per-Quantity validation independent;
 3. change validators to emit calculation / geometry / quantity outcomes separately;
 4. migrate ISC/VCPD first because their new pairs prove the same calculation across different geometries;
-5. migrate JZero next, preserving exact lifetime/Smax/Basore parity while keeping Implied Voc on a narrower evidence envelope;
+5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
 6. split LBIC channel semantics from geometry and add the paired current-only / scattered-only paths;
 7. perform the sentinel-aware QSS HighDensity pass;
 8. investigate DIT historical regenerated-export drift without weakening the stronger original-pair rules;
@@ -54,7 +54,7 @@ The canonical raw lifetime remains `TransientInfo@LifeTime`, with XML `Values` k
 
 ### JZero
 
-The complete two-intensity pseudo-square reference validates paired lifetime channels, Smax, Basore J0 and geometry; JZero implied Voc uses its documented compatibility calibration. Resolver-supported SquareRegion and explicitly incomplete acquisitions are runtime-supported with profile-scoped/inferred geometry where vendor coordinate evidence is absent.
+Eight successful 100-case numeric pairs validate the two-intensity lifetime channels, Smax and Basore J0 across OnePoint, SquareRegion, HighDensity and Map geometries. Maximum X/Y error is about 4.97e-14 mm and Basore J0 error about 4.73e-11 fA/cm². Implied Voc is quantity-scoped: two Map/PseudoSquare pairs support `JZERO-VOC-MAP-PSEUDOSQUARE-001` to at most about 0.850 mV, while older OnePoint/SquareRegion/HighDensity paths remain inferred with roughly 18.7–21.1 mV differences.
 
 ### ISC / VCPD
 
@@ -125,7 +125,7 @@ Never publish private reference files or proprietary vendor material merely to m
 
 1. Dual QSS: extend `QSS-INJ-RESULT-001` only when new real pairs cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
 2. LBIC: obtain finite direct-plus-scattered DL evidence before widening the coupled calculation profile; retain the existing four-pair private regression gate.
-3. Expand JZero/CET/geometry profiles only when a categorical new path is exercised by paired vendor output.
+3. JZero: retain `JZERO-CALC-001` for the paired two-iteration lifetime/Smax/Basore path; widen Implied Voc only if a new paired categorical path explains the current ~19–21 mV legacy offsets. CET/geometry profiles still require paired categorical evidence.
 4. SPV: extend beyond the standard paired map path only with matching vendor output for enhanced, texture, parsed-signal or other categorical branches.
 5. Leakage: extend beyond the paired one-point acquisition path only with matching vendor output.
 6. CV, Frequency Scan, Voc/Voc Mapping, Fe/LID, Surface Passivation, Junction Lifetime, Sheet Resistance/Eddy, Height and other known families remain without dedicated analyzers until the real XML + numeric-export gate is met.

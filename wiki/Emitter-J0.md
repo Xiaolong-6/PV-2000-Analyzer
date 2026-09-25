@@ -66,7 +66,7 @@ The JZero compatibility path is kept distinct from the general QSS-map implied-V
 
 ## Geometry
 
-The principal paired reference uses a `MapPattern + PseudoSquareCell` schedule. The analyzer separates:
+Paired evidence now covers shared OnePoint, SquareRegion, HighDensity and Map geometry profiles. The principal dense-map reference uses a `MapPattern + PseudoSquareCell` schedule. The analyzer separates:
 
 - the nominal pseudo-square target;
 - the EdgeExclusion-adjusted scheduled region;
@@ -83,14 +83,15 @@ Filtering does not alter either lifetime iteration or recalculate J0 from a diff
 
 ## Validation status
 
-The current complete two-intensity pseudo-square reference validates:
+Eight successful numeric pairs from the private 100-case corpus validate the common two-intensity calculation independently of geometry:
 
-- both lifetime maps;
-- both Smax maps;
+- both lifetime channels;
+- both Smax channels;
 - Basore J0;
-- pseudo-square coordinates;
-- summary behavior.
+- shared geometry profiles for the paired OnePoint, SquareRegion, HighDensity and Map cases.
 
-Implied Voc is compatibility-regressed within its documented tolerance rather than sharing the generic QSS model.
+Across those pairs, lifetime/Smax/Basore differences remain at floating-point or approximately 1e-11 scale, and X/Y coordinates agree within approximately 4.97e-14 mm.
 
-Alternate categorical geometry/result paths remain profile-specific until matching PV-2000 output is available.
+Implied Voc has a narrower evidence envelope. Two `MapPattern + PseudoSquareCell` pairs support `JZERO-VOC-MAP-PSEUDOSQUARE-001` with maximum error approximately 0.850 mV. Paired OnePoint, SquareRegion and HighDensity cases differ by roughly 18.7–21.1 mV under the same compatibility calibration, so their Voc output remains inferred/diagnostic rather than being promoted with the other quantities.
+
+Incomplete acquisitions remain profile-specific and do not become vendor-validated merely because a geometry can be reconstructed.
