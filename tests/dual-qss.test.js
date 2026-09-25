@@ -154,3 +154,24 @@ test('Dual QSS OnePoint geometry falls back to circular substrate metadata',()=>
   assert.equal(g.innerRadius,43);
   assert.deepEqual(g.coord,{x:0,y:0});
 });
+
+
+test('Dual QSS no-J0 result keeps vendor teff.SS Max and Smax Max unavailable',()=>{
+  const d={
+    patternType:'OnePointPattern',targetType:'RoundWafer',probe:'Back',bias:'Back',
+    augerCorrection:'false',calculateJ0:'false',includeKsJ0:'true',
+    waferThickness:450,opticalFactor:1,doping:1e16,temperatureC:25,
+    validQdcRange:{min:.9,max:1.1},jZeroIntensity:{min:1,max:5},
+    points:[
+      {intensityMilli:681,lifetime:190,transient:null},
+      {intensityMilli:1000,lifetime:1731.481394,transient:null},
+      {intensityMilli:1468,lifetime:1600,transient:null}
+    ]
+  };
+  const r=PV2000.modules.dualQss.pairedDualResults(d);
+  assert.equal(r.available,true);
+  assert.equal(r.teffSSMax.available,false);
+  assert.equal(r.teffSSMax.rule,'not-requested');
+  assert.equal(r.smaxMax.available,false);
+  assert.equal(r.smaxMax.rule,'not-requested');
+});
