@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.13.6 — 2026-09-25 (branch)
+
+- Migrated QSS-uPCD, Dual QSS and Leakage to the semantic workspace contract.
+- QSS now links the displayed quantity to the Valid-data filter, keeps Map/Distribution/acquisition-order profile as whole-dataset views, and adds map-driven selected-site detail on the right.
+- Dual QSS keeps the injection sweep and measurement-position overview together while moving Selected injection point + stored transient into local detail; its Canvas plots now use shared responsive/high-DPI sizing.
+- Leakage now separates measurement position from point detail and exposes the stored positive/negative offset-corrected raw readings as a local scientific plot instead of leaving its profile capability undisplayed.
+
 ## v20260925.13.5 — 2026-09-25 (branch)
 
 - Migrated CET and DIT to the semantic workspace. Whole-sample map/distribution content stays in the middle, while current/selected point cards and point-specific fit/COCOS curves move to the right.

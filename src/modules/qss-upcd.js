@@ -291,7 +291,7 @@
     }
     return nearestSiteValid&&nearestValidSq<=maxDist*maxDist&&den?num/den:NaN;
   }
-  function drawMap(canvas,d,a,key,mode,mask,zoom,onZoom,supportMask=null){
+  function drawMap(canvas,d,a,key,mode,mask,selected,zoom,onZoom,onSelect,supportMask=null){
     const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       vals=m.values,
@@ -367,6 +367,11 @@
           ctx.lineTo(x-3,y+3);
           ctx.stroke()}}}
     ctx.restore();
+    const selectedPoint=d.coords[selected];
+    if(selectedPoint){
+      const sx=X(selectedPoint.x),sy=Y(selectedPoint.y);
+      if(sx>=cx-R&&sx<=cx+R&&sy>=cy-R&&sy<=cy+R){ctx.beginPath();ctx.arc(sx,sy,7,0,2*Math.PI);ctx.strokeStyle=css('--yellow');ctx.lineWidth=2;ctx.stroke()}
+    }
     if(geometry){
       const traceBoundary=boundary=>{
         ctx.beginPath();
@@ -457,7 +462,8 @@
         const available=!supportMask||supportMask[best],
           state=available?(mask[best]?'VALID':'FILTERED'):'UNAVAILABLE';
         showTip(tip,e,`<b>Point ${best+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[best]?'good':'bad'}">${state}</span>`)}else hideTip(tip)};
-      PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+      canvas.onclick=e=>{const rect=canvas.getBoundingClientRect(),mx=(e.clientX-rect.left)*W/rect.width,my=(e.clientY-rect.top)*H/rect.height;let best=-1,bestD=Infinity;d.coords.forEach((pt,i)=>{if(!pt)return;const dd=(X(pt.x)-mx)**2+(Y(pt.y)-my)**2;if(dd<bestD){bestD=dd;best=i}});if(best>=0&&bestD<500)onSelect?.(best)};
+    PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
     return{lo,hi};
   }
@@ -664,6 +670,7 @@
     let analysisOptions={vocModel:'pv2000',srvEnabled:false,surfaceMode:'planar',bulkLifetimeUs:Infinity,planarSrv:5,minLifetimeUs:0},
       excludeInvalid=true,
       metricKey='lifetime',
+      selected=0,
       histSwapped=true,
       histBins=30,
       mapMode='smooth',
@@ -697,6 +704,7 @@
       }).join('');
     }
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
+    function selectedHtml(){const state=filterController.snapshot(),pt=d.coords[selected],support=state.selection.supportMask[selected],active=state.selection.activeMask[selected],status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';return `<dl class="meta">${metaRow('Point',String(selected+1))}${metaRow('Valid-data state',status)}${metaRow('Coordinate',pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—')}${Object.values(visibleMetrics()).map(m=>metaRow(m.short,Number.isFinite(m.values[selected])?`${fmt(m.values[selected])} ${m.unit}`:'—')).join('')}</dl>`}
     function renderShell(){
       const filterState=filterController.snapshot(),
         validN=filterState.validCount;
@@ -765,24 +773,20 @@ ${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configure
 ${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}\
 ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl>\
 </details>
-      </aside><section class="plots">
+      </aside><section class="plots overview">
         <div class="panel chart"><header><b>Wafer map</b>${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Wheel inside the map zooms both spatial axes; hover one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}<span class="grow"></span><select id="qMetric"><option value="lifetime">τeff.d</option><option value="smax">Smax</option><option value="voc">Implied Voc</option>${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}</select><select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>${PV.plot.axisControls('qMapAxes')}<button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button></header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
         <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
-      </section><section class="plots">
-        <div class="panel chart"><header><b>Acquisition profile</b>${help('Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits, useful when a few extreme points dominate autoscaling. Hover a point to see X/Y coordinates and validity.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
-
-      </section></div>`;
+        <div class="panel chart"><header><b>Acquisition profile</b>${help('This is a whole-dataset acquisition-order profile. Wheel inside the profile zooms both axes; hover one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>
+      </section><section class="plots detail"><section class="panel"><h3>${d.values.length===1?'Measurement point':'Selected site'}</h3><div id="qSelected">${selectedHtml()}</div></section></section></div>`;
       host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;
-      host.querySelector('#qMetric').onchange=e=>{metricKey=e.target.value;
-        zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
-        redraw()};
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
         redraw()};
         
       PV.ui.bindValidDataFilter(host,{
         prefix:'qFilter',
         controller:filterController,
-        onChange:()=>renderShell(),
+        linkedSelect:'#qMetric',
+        onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};renderShell()},
         onError:message=>alert(
           message==='Valid-data filter requires finite lower and upper bounds.'
             ?'Enter finite lower and upper limits.'
@@ -818,11 +822,13 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         const nextMetrics=visibleMetrics(),
           nextFilterMetric=nextMetrics[previousFilterMetric]?previousFilterMetric:'lifetime';
         if(!nextMetrics[metricKey])metricKey='lifetime';
+        const synchronizedMetric=nextMetrics[metricKey]?metricKey:nextFilterMetric;
+        metricKey=synchronizedMetric;
         filterController=Sel.createFilter({
           metrics:nextMetrics,
           siteCount:d.values.length,
           intrinsicMask:supportMask,
-          metricKey:nextFilterMetric
+          metricKey:synchronizedMetric
         });
         zoom={map:{x:null,y:null},hist:{x:null,y:null},profile:{x:null,y:null}};
         renderShell();
@@ -838,7 +844,7 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         filterLo=filterState.lower,
         filterHi=filterState.upper,
         bins=drawHist(host.querySelector('#qHist'),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask);
-        drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,zoom.map,n=>{zoom.map=n;redraw()},supportMask);
+        drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,selected,zoom.map,n=>{zoom.map=n;redraw()},i=>{selected=i;host.querySelector('#qSelected').innerHTML=selectedHtml();redraw()},supportMask);
         drawProfile(host.querySelector('#qProfile'),d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
         PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
         PV.plot.bindAxisControls(host,'qHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
