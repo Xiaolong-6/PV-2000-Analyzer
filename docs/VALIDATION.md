@@ -293,6 +293,27 @@ An expanded, read-only audit uses `scripts/validate_dit_raw_reference.py` to com
 
 Run the diagnostic with `npm run validate:dit -- --xml-dir <local XML directory> --csv-dir <local raw CSV directory>`; repeat `--csv-dir` for additional locations. `--max-dark-error-mv 2` additionally requires every XML in the selected directory to pair and every dark row to stay within 2 mV. A focused eight-pair subset passes that gate (520 rows, 1.60 mV maximum dark error); the entire mixed corpus does not.
 
+### Final-result direct/bookkeeping quantities
+
+Status: **paired validation for VDark and Initial Qc only**.
+
+The 100-case private corpus contains **13 successful DIT final-result XML/vendor-CSV pairs (43 sites)** plus one XML whose vendor harness export fails with `ArgumentOutOfRangeException`. The paired results span OnePoint, SquareRegion and FivePoint geometries, plus one FixedPoints case whose geometry remains unresolved.
+
+For the 13 successful pairs:
+
+- initial `VDark` reconstructed directly from `InitialVcpdDark` and the stored offset agrees to a maximum absolute error of **3.55e-15 V**;
+- PV-2000 `Initial Qc` is **one preprocess charge step beyond the number of stored PreProcess dark vectors**: `(N_preprocess + 1) × CoronaCharge`; all **43 sites** match vendor output exactly after this correction;
+- 12/13 cases resolve through existing shared geometry profiles, with maximum X/Y error about **3.58e-14 mm**; the single FixedPoints/RoundWafer case remains a geometry diagnostic rather than widening geometry support;
+- regenerated final-result `VLight` differs by as much as **83.1 mV**, and the two N-type cases export the opposite Vsb sign from the stronger original Standard-COCOS reference rule. Those fields remain diagnostics and do not alter the current doping-aware Standard COCOS implementation.
+
+The same final-result rows contain mixed/unavailable Vfb/Qtot/Qit states and materially drifting Dit/Qsc values. They are not promoted by this profile. Run the narrow final-result validator with:
+
+```bash
+python scripts/validate_dit_result_reference.py <result.xml> <vendor-result.csv>
+```
+
+This validator is intentionally separate from `validate_dit_raw_reference.py`, which remains the stronger raw-process-row audit.
+
 ### PV2000 COCOS-II (inferred)
 
 Status: **inferred**, not vendor-exact.
