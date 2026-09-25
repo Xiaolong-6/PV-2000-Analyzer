@@ -182,6 +182,6 @@ The UI reports, for the current site, the number of accepted Dit intervals and t
 
 ## Known boundaries
 
-- Exact proprietary PV-2000 `Vfb` and absolute `Qit` are not yet reproduced.
-- A historical charge-derivative diagnostic is retained internally for one release cycle but is absent from the normal UI and chart CSV. The current implementation differentiates `qit = -Qsc - (Qc - Qsurface)`; it is not simply `dQc/dVsb`, and its polarity/flatband assumptions remain unresolved. Do not label it as a validated Dit result.
+- Current managed-DLL Standard-COCOS final-result `Vfb`, `Qsc`, `Qtot`, `Qit` and Minimum Dit are reproduced under `DIT-RESULT-STANDARD-DLL-002`. Historical PV-2000 releases remain version-scoped and must not be assumed to share identical preprocessing/interpolation/bookkeeping.
+- A historical charge-derivative diagnostic is retained internally for one release cycle but is absent from the normal UI and chart CSV. The current implementation differentiates `qit = -Qsc - (Qc - Qsurface)`; it is not the validated current-DLL `Qit` result path and must not be presented as one.
 - EOT is always SiO2-equivalent electrical thickness. For any other dielectric or multilayer stack it is not the physical stack thickness; Cox is the more material-independent underlying quantity.
