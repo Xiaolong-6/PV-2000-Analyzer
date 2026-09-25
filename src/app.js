@@ -24,8 +24,19 @@
       access.title=hasMatchedFolder?'Change the authorized XML folder':'Authorize the current XML folder for ← / → navigation';
     }
   }
+  function restoreSnapshot(snapshot){
+    snapshot.mod.render($('#moduleHost'),snapshot.data,snapshot.analysis,{file:snapshot.file});
+    current=snapshot;
+    $('#landing').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    $('#fileName').textContent=snapshot.file.name;
+    $('#measurementType').textContent=snapshot.parsed.type||'Unknown';
+  }
   async function openFile(file,{keepFolder=false}={}){
-    if(!file)return;
+    if(!file)return false;
+    const previous=current,
+      previousFolderFiles=folderFiles.slice(),
+      previousFolderIndex=folderIndex;
     if(!keepFolder)clearFolderContext();
     setStatus('Loading…');
     try{
@@ -33,20 +44,36 @@
       parsed=PV.xml.parse(text),
       mod=PV.registry.resolve(parsed.type),
       data=mod.parse(parsed),
-      analysis=mod.analyze(data);
-      current={file,parsed,mod,data,analysis};
-      if(keepFolder&&folderFiles.length)folderIndex=folderFiles.findIndex(entry=>entry.name===file.name);
+      analysis=mod.analyze(data),
+      next={file,parsed,mod,data,analysis};
       $('#landing').classList.add('hidden');
       $('#app').classList.remove('hidden');
       $('#fileName').textContent=file.name;
       $('#measurementType').textContent=parsed.type||'Unknown';
       mod.render($('#moduleHost'),data,analysis,{file});
+      current=next;
+      if(keepFolder&&folderFiles.length)folderIndex=folderFiles.findIndex(entry=>entry.name===file.name);
       setStatus('');
       syncFolderNav();
+      return true;
     }catch(e){console.error(e);
+      folderFiles=previousFolderFiles;
+      folderIndex=previousFolderIndex;
+      if(previous){
+        try{restoreSnapshot(previous)}
+        catch(restoreError){console.error('Failed to restore previous dataset after load error.',restoreError)}
+      }else{
+        current=null;
+        $('#landing').classList.remove('hidden');
+        $('#app').classList.add('hidden');
+        $('#fileName').textContent='';
+        $('#measurementType').textContent='';
+      }
       setStatus(e.message);
       syncFolderNav();
-      alert(e.message)}
+      alert(e.message);
+      return false;
+    }
   }
   function bindInput(id){$(id).addEventListener('change',e=>openFile(e.target.files?.[0]))}
   function fileEntry(file){return{name:file.name,getFile:async()=>file}}
@@ -88,9 +115,9 @@
       return;
     }
     try{
-      const file=await folderFiles[target].getFile();
-      folderIndex=target;
-      await openFile(file,{keepFolder:true});
+      const file=await folderFiles[target].getFile(),
+        ok=await openFile(file,{keepFolder:true});
+      if(!ok)return;
       folderIndex=target;
       syncFolderNav();
     }catch(e){console.error(e);setStatus('Could not open the adjacent XML file.')}
