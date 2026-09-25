@@ -326,24 +326,19 @@
       ctx.stroke()}
     ctx.save();ctx.beginPath();ctx.rect(cx-R,cy-R,2*R,2*R);ctx.clip();
     if(mode==='smooth'&&d.coords.length===vals.length&&validVals.length>=3){
-      const img=ctx.createImageData(W,H),
-        step=3,
+      const step=3,
         maxDist=2.2*Math.max(d.pitchX||5,d.pitchY||5);
-        for(let py=Math.floor(cy-R);py<=Math.ceil(cy+R);py+=step){
+      for(let py=Math.floor(cy-R);py<=Math.ceil(cy+R);py+=step){
         for(let px=Math.floor(cx-R);px<=Math.ceil(cx+R);px+=step){
           const x=xr[0]+(px-(cx-R))/(2*R)*(xr[1]-xr[0]),
-          y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
+            y=yr[1]-(py-(cy-R))/(2*R)*(yr[1]-yr[0]);
           if(!insideScheduled(geometry,x,y))continue;
           const v=smoothValueAt(x,y,d.coords,vals,mask,maxDist);
           if(!Number.isFinite(v))continue;
-          const t=(v-lo)/(hi-lo||1),
-          rgb=color(t).match(/\d+/g).map(Number);
-          for(let yy=py;yy<Math.min(H,py+step);yy++)for(let xx=px;xx<Math.min(W,px+step);xx++){
-            const o=(yy*W+xx)*4;
-            img.data[o]=rgb[0];
-            img.data[o+1]=rgb[1];
-            img.data[o+2]=rgb[2];
-            img.data[o+3]=255}}}ctx.putImageData(img,0,0)
+          ctx.fillStyle=color((v-lo)/(hi-lo||1));
+          ctx.fillRect(px,py,step,step);
+        }
+      }
     }
     for(let i=0;i<d.coords.length;i++){
       const pt=d.coords[i],
