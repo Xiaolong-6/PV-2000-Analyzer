@@ -121,7 +121,7 @@ Never publish private reference files or proprietary vendor material merely to m
 
 ## Remaining high-priority scientific gaps
 
-1. **DIT downstream flatband/version behavior:** corrected final-result VLight and direct result-table Vsb are closed, while signed Standard-COCOS analysis Vsb remains a separate doping-aware quantity. Remaining uncertainty is Vfb/Qtot/Qit/Qsc/Dit parity across historical/current vendor behavior; do not widen those quantities without paired evidence.
+1. **DIT downstream current-DLL result path:** current managed-DLL Standard-COCOS Vfb/Qsc/Qtot/Qit/Minimum-Dit output is now paired-validated across 13 files / 43 sites with zero availability mismatches. Keep these PV-2000 compatibility quantities separate from the Analyzer's configurable Standard COCOS / Ge / PCHIP paths. Remaining uncertainty is historical-version behavior, not the current-DLL path.
 2. **LBIC finite direct-plus-scattered DL:** obtain at least one finite paired vendor oracle before widening the current DL calculation envelope.
 3. **Dual QSS categorical branches:** explain the conflicting FixedPoints/PseudoSquare result branch, or obtain paired evidence for Auger correction, alternate source selections, different 1000-mSun placement or another result branch.
 4. **QSS exact Implied Voc compatibility:** lifetime/Smax are closed; further work is optional unless exact historical Voc parity beyond the current compatibility envelope is required.

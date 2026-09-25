@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.15 — 2026-09-25
+
+- Recovered the current managed-DLL Standard-COCOS final-result path for DIT Vfb, Qsc, Qtot, Qit and Minimum Dit as `DIT-RESULT-STANDARD-DLL-002`.
+- Reproduced the 13 paired final-result files / 43 sites with **zero availability mismatches**. Browser-runtime maximum absolute errors are about **1.03e-13 V (Vfb)**, **5.49e-4 cm^-2 (Qsc)**, **3.47e-2 cm^-2 (Qtot)**, **3.81e-1 cm^-2 eV^-1 (Minimum Dit)** and **2.93e-3 cm^-2 (Qit)**.
+- Added the recovered repeated-reading rejection, natural-cubic 3× charge-grid interpolation, flatband intersection/availability rules, vendor silicon constants, Qit mapping and discrete Dit result semantics.
+- Kept these PV-2000 compatibility quantities separate from the Analyzer's configurable Si/Ge Standard COCOS, optional PCHIP Midgap Dit and inferred COCOS-II paths; selected-site detail exposes both layers explicitly.
+- Independent private Python-oracle and browser-runtime gates both pass the full paired DIT downstream corpus.
+
 ## v20260925.14.6 — 2026-09-25 (branch)
 
 - Final pre-merge review aligned the durable architecture wording with QSS: whole-dataset acquisition-order profiles are overview surfaces, while selected-point traces remain local detail.

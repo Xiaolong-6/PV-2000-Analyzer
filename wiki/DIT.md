@@ -159,7 +159,7 @@ PV-2000 final-result evidence shows that the initial corona charge includes the 
 Q_{c,init}=(N_{\rm pre}+1)\,\Delta Q_{\rm pre}.
 ```
 
-Across **13 paired final-result files / 43 sites**, this rule matches vendor `Initial Qc` exactly. Initial `VDark` also agrees to floating-point precision. Corrected final-result `VLight` and the direct result-table `Vsb = VDark - VLight_result` are independently validated. For N-type, that result-table Vsb is intentionally opposite in sign to the doping-aware signed Vsb used by the Standard-COCOS analysis arrays; recovered vendor IL shows these are separate quantities. Downstream flatband/Dit quantities retain their historical/version-dependent validation boundary.
+Across **13 paired final-result files / 43 sites**, this rule matches vendor `Initial Qc` exactly. Initial `VDark` also agrees to floating-point precision. Corrected final-result `VLight` and the direct result-table `Vsb = VDark - VLight_result` are independently validated. For N-type, that result-table Vsb is intentionally opposite in sign to the doping-aware signed Vsb used by the Standard-COCOS analysis arrays; recovered vendor IL shows these are separate quantities. For the current managed PV-2000 DLL, a separate compatibility reconstruction now also validates final-result Vfb, Qsc, Qtot, Qit and Minimum Dit. Historical releases can still differ, so this current-DLL result path remains version-scoped.
 
 If $Q_{c,init}$ is the inferred initial-state charge,
 
@@ -238,6 +238,6 @@ The analyzer currently supports silicon and a legacy-compatible germanium model.
 
 ## 12. Validation status
 
-Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. `DIT-RESULT-INITIAL-001` additionally validates final-result initial VDark, corrected VLight, direct result-table Vsb and Initial Qc across 13 paired files / 43 sites. Signed Standard-COCOS Vsb remains the separate analysis quantity; downstream flatband/Dit remain outside that promotion. COCOS-II and material extensions retain their documented profile status until matching output establishes parity.
+Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. `DIT-RESULT-INITIAL-001` validates final-result initial VDark, corrected VLight, direct result-table Vsb and Initial Qc across 13 paired files / 43 sites. `DIT-RESULT-STANDARD-DLL-002` separately validates the current-DLL final-result Vfb/Qsc/Qtot/Qit/Minimum-Dit path on the same corpus with zero availability mismatches. These PV-2000 compatibility quantities remain distinct from the Analyzer's configurable Si/Ge Standard COCOS and optional PCHIP outputs. COCOS-II retains its documented inferred status.
 
 Exact validation envelopes are maintained in docs/REFERENCE_PROFILES.md.
