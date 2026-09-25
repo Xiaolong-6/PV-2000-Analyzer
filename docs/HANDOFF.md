@@ -1,8 +1,9 @@
 # Agent handoff — 2026-09-25
 
-## LBIC Distribution regression fix (branch v20260925.16.1)
+## LBIC Distribution regression fix (v20260925.18)
 
-The plot-normalization change introduced `frame.context` in LBIC Distribution, while `PV.plot.canvasFrame()` returns `frame.ctx`. Loading an LBIC dataset consequently failed during the initial Distribution redraw with a `clearRect` TypeError. The branch uses `frame.ctx` and includes a canvas drawing regression test. The targeted LBIC tests and single-file build pass; full `npm run check` needs the development dependencies installed in this checkout.
+LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matching `PV.plot.canvasFrame()`. The previous `frame.context` access caused a `clearRect` TypeError on LBIC redraw. A drawing regression test covers the shared canvas-frame path.
+
 
 ## Current baseline
 

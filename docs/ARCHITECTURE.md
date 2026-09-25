@@ -357,7 +357,7 @@ Right visualization area:
 - scientific curves;
 - stored transients.
 
-In multi-column layouts the sidebar remains independently scrollable beneath the toolbar. Plot axis controls remain compact header popovers immediately before Export. Shared wheel zoom and double-click Auto behavior remain unchanged.
+In wide three-column layouts, the left dataset pane, middle overview pane and right local-detail pane each own their vertical scroll beneath the toolbar; scrolling point plots must not move the wafer map or dataset controls. The three wide columns currently share equal width. At medium widths the overview/detail regions return to normal document flow when they stack into one content column. Plot axis controls remain compact header popovers immediately before Export. Shared wheel zoom and double-click Auto behavior remain unchanged.
 
 ## Migration rule
 
@@ -385,7 +385,7 @@ On wide desktop layouts:
 
 - **left — dataset / analysis state:** Measurement identity, current dataset/acquisition context, Analysis controls, Valid-data filter, Results summary and collapsed provenance/full metadata;
 - **middle — population / whole-sample overview:** Map or measurement-position overview, Distribution and other dataset-level spatial/statistical views;
-- **right — point / local detail:** Selected site, Selected pixel or Measurement point plus raw readings, selected-point transients, point-specific fits/curves and local line profiles. A whole-dataset acquisition-order profile remains an overview surface rather than being moved here.
+- **right — point / local detail:** Selected site, Selected pixel or Measurement point plus raw readings, selected-point transients, point-specific fits/curves and local line profiles. A whole-dataset acquisition-order profile remains an overview surface rather than being moved here. When a point exposes several equally important local plots, compact tabs may replace an excessively long stacked column; an `All` view may be retained for simultaneous inspection.
 
 Selected-site/pixel detail does not belong in the left sidebar. A true one-point family should use **Measurement point** instead of implying a selection action.
 
