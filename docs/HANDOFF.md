@@ -22,7 +22,7 @@ That validation-axis separation is now established. The completed sequence was:
 5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
 6. **completed:** split LBIC calculation semantics from geometry; the 100-case closure validates eight current+scattered numeric pairs / 27,376 sites plus one five-site direct+scattered pair, while two zero-site exports remain diagnostic and finite direct+scattered DL remains withheld;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
-8. **completed for direct/bookkeeping + corrected light:** final-result audit validates initial VDark, corrected final-result VLight and Initial Qc across 13 pairs / 43 sites. Corrected VLight is `VDark - F × (VDark - VLight_measured)` at floating-point parity. The remaining DIT boundary is narrower: regenerated N-type Vsb sign plus downstream Vfb/Qtot/Qit/Qsc/Dit version behavior; the stronger original-pair Standard COCOS rules are unchanged;
+8. **completed for direct/bookkeeping result quantities:** final-result audit validates initial VDark, corrected final-result VLight, direct result-table Vsb and Initial Qc across 13 pairs / 43 sites. Managed IL confirms N-type result Vsb and signed Standard-COCOS analysis Vsb are distinct quantities, not a version-sign conflict. The remaining DIT boundary is downstream Vfb/Qtot/Qit/Qsc/Dit version behavior;
 9. **completed:** re-audit Dual QSS final-result branches; three current-style OnePoint rows pass independently of target geometry, the no-J0 maximum-quantity availability rule is preserved, and four empty + one legacy + two conflicting FixedPoints cases are explicit diagnostics;
 10. **completed:** Leakage and the paired standard SPV map paths are implemented; `SPV-CALC-ENHANCED-N-003` now reproduces the paired N-type Enhanced finite-wafer/back-surface result, while Enhanced P-type and other categorical branches remain gated; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
@@ -78,7 +78,7 @@ Four new paired geometry combinations resolve independently of calculation profi
 
 QSS preserves raw lifetime and intrinsic sentinel validity separately from the user Valid-data filter. Smax and profile-specific implied-Voc compatibility behavior are documented; optional physical Si/Ge Voc and SRV are Analyzer-side interpretation paths.
 
-DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight and Initial Qc bookkeeping on 13 final-result pairs / 43 sites. Corrected VLight is `VDark - F × (VDark - VLight_measured)` and matches at floating-point scale; N-type final-result Vsb and downstream flatband/Dit results remain diagnostic and do not override the stronger Standard COCOS evidence. The Ge material option is an Analyzer model and COCOS-II remains inferred.
+DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight, direct result-table Vsb and Initial Qc on 13 final-result pairs / 43 sites. N-type result Vsb and signed Standard-COCOS analysis Vsb intentionally use different semantics in the recovered DLL; downstream flatband/Dit results remain outside this promotion. The Ge material option is an Analyzer model and COCOS-II remains inferred.
 
 ## Architecture state
 
@@ -121,7 +121,7 @@ Never publish private reference files or proprietary vendor material merely to m
 
 ## Remaining high-priority scientific gaps
 
-1. **DIT N-type sign / flatband historical processing state:** corrected final-result VLight is closed in `v20260925.13`. Remaining regenerated-output uncertainty is the N-type Vsb sign and downstream Vfb/Qtot/Qit/Qsc/Dit behavior. Keep the stronger original-pair Standard COCOS rules until version-matched/original evidence identifies the branch discriminator.
+1. **DIT downstream flatband/version behavior:** corrected final-result VLight and direct result-table Vsb are closed, while signed Standard-COCOS analysis Vsb remains a separate doping-aware quantity. Remaining uncertainty is Vfb/Qtot/Qit/Qsc/Dit parity across historical/current vendor behavior; do not widen those quantities without paired evidence.
 2. **LBIC finite direct-plus-scattered DL:** obtain at least one finite paired vendor oracle before widening the current DL calculation envelope.
 3. **Dual QSS categorical branches:** explain the conflicting FixedPoints/PseudoSquare result branch, or obtain paired evidence for Auger correction, alternate source selections, different 1000-mSun placement or another result branch.
 4. **QSS exact Implied Voc compatibility:** lifetime/Smax are closed; further work is optional unless exact historical Voc parity beyond the current compatibility envelope is required.

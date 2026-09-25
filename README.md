@@ -22,7 +22,7 @@ PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab 
 
 | XML type | Analyzer | Main outputs | Current evidence boundary |
 |---|---|---|---|
-| `DITMeasurement` | Dit / COCOS | Vcpd/Vsb, Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT | Standard COCOS remains profile-scoped; `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight and Initial Qc; COCOS-II remains inferred |
+| `DITMeasurement` | Dit / COCOS | Vcpd/Vsb, Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT | Standard COCOS remains profile-scoped; `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight, direct result-table Vsb and Initial Qc; COCOS-II remains inferred |
 | `QssUpcdMeasurement` | QSS-µPCD | lifetime, Smax, implied Voc, optional Analyzer SRV | paired Map/SquareRegion/HighDensity-Round geometry; lifetime/Smax and sentinel result semantics validated independently; Implied Voc remains profile-scoped |
 | `DualQssMeasurement` | QSS Injection | injection sweep, stored transients, profile-scoped teff.d/teff.SS/Δn/Smax/Voc/Basore J0/K-S J0 result table | raw path validated; two real XML+CSV pairs validate the complete non-Auger Back/Back scalar result path |
 | `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels and Basore J0 | `JZERO-CALC-001` validated across paired OnePoint/SquareRegion/HighDensity/Map geometries; Voc remains quantity-scoped |
