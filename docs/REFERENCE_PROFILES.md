@@ -395,7 +395,7 @@ See `docs/ALGORITHMS_DUAL_QSS.md`.
 
 ---
 
-### JZERO-MAP-001 — two-intensity Emitter J0 pseudo-square map
+### JZERO-CALC-001 — two-intensity Emitter J0 calculation
 
 **Measurement type**
 
@@ -403,51 +403,58 @@ See `docs/ALGORITHMS_DUAL_QSS.md`.
 
 **Reference material**
 
-One matching private XML + PV-2000 CSV export with **5017 sites**. The XML contains two `UpcdIterationData` arrays measured at **1000 mSun** and **3000 mSun**.
+The original private 5017-site XML/PV-2000 CSV pair is supplemented by **eight successful harness-generated numeric pairs** from the 100-case private corpus. Those eight pairs cover independently resolved OnePoint, SquareRegion, HighDensity and Map geometries.
 
-**Validated family**
+**Validated calculation family**
 
-- `MapPattern + PseudoSquareCell`;
-- two lifetime iterations paired by site index;
-- X-fast, ascending-Y centered lattice;
-- scheduled target = intersection of the EdgeExclusion-adjusted rectangle and circle;
-- seven vendor quantities: Basore J0, τeff.d ×2, Smax ×2 and Implied Voc ×2.
+- exactly two nonempty lifetime iterations paired by site index;
+- direct XML lifetime → τeff.d for both QSS states;
+- `Smax = W/(2τ)`;
+- Basore-Hansen J0 from the two-intensity inverse-lifetime-squared slope;
+- calculation identity independent of Pattern/Target geometry.
 
-The current reference instance uses target Size = 156 × 156 mm, Diameter = 205 mm, EdgeExclusion = 7 mm, Pitch = 2 × 2 mm, WaferThickness = 200 µm, Doping = 1.5e16 cm⁻³ PType and OpticalFactor = 1. Those numeric values are evidence rather than runtime whitelist keys.
+Across the eight numeric pairs:
 
-**Validated / established**
+- τeff.d maximum absolute error is approximately **5.12e-13 µs**;
+- Smax maximum absolute error is approximately **4.77e-12 cm/s**;
+- Basore J0 maximum absolute error is approximately **4.73e-11 fA/cm²**.
 
-- XML lifetime point count: **5017 + 5017**;
-- reconstructed coordinate count: **5017**;
-- first site: **(-64, -70) mm**;
-- last site: **(64, 70) mm**;
-- all X/Y coordinates match the vendor CSV exactly;
-- both τeff.d arrays match the export to floating-point precision (max abs error approximately **5.2e-13 µs**);
-- both Smax arrays, using `Smax = W/(2τ)`, match to floating-point precision (max abs error approximately **5e-13 cm/s**);
-- Basore-Hansen J0 uses the two-intensity slope of inverse lifetime squared versus generation rate and matches point-by-point with maximum absolute error approximately **9.1e-13 fA/cm²** under the documented JZero compatibility calibration;
-- both Implied Voc channels are reproduced with maximum absolute errors of approximately **0.061 mV** and **0.066 mV**, respectively, using the separate JZero compatibility path documented in `docs/ALGORITHMS_JZERO.md`;
-- Average / Median / sample Stdev / Min / Max are regressed for all seven quantities.
+These quantities therefore retain `JZERO-CALC-001` across separately validated geometry profiles. Pattern/Target is not a calculation-profile key.
 
-**Compatibility caveat**
+**Geometry evidence**
 
-The Basore and Implied-Voc compatibility constants are reverse-engineered from this paired result path. They reproduce the observed vendor output but are not claims about undisclosed PV-2000 internal constants. In particular, JZero Implied Voc must remain separate from the general QSS-map compatibility model because directly reusing that model produces a systematic offset on this reference.
+The same corpus independently confirms the shared geometry resolver on JZero outputs including:
 
-**Same-family numeric changes**
+- `GEOM-ONEPOINT-CENTER-001`;
+- `GEOM-SQUAREREGION-ROUND-001`;
+- `GEOM-SQUAREREGION-SQUARE-001`;
+- `GEOM-HIGHDENSITY-ROUND-001`;
+- `GEOM-MAP-PSEUDOSQUARE-001`.
 
-Different two-QSS intensity values, pitch, pseudo-square dimensions, EdgeExclusion, wafer thickness, doping or optical factor stay inside this family when the same two-iteration schema, coordinate rule and result formulas apply. Numeric changes should still be sanity-checked, but they do not automatically create a new profile.
+Maximum observed paired coordinate error is approximately **4.97e-14 mm**. Geometry validation remains a separate axis and does not promote a narrower derived quantity automatically.
 
-**Runtime-supported inferred cases**
+### JZERO-VOC-MAP-PSEUDOSQUARE-001 — JZero Implied-Voc quantity profile
 
-Two supplied XML-only cases use `SquareRegionPattern + RoundWafer` and remain outside JZERO-MAP-001 vendor parity:
+The JZero-specific Implied-Voc calibration is **not** part of the broad `JZERO-CALC-001` claim.
 
-- a completed 1 × 1 SquareRegion with two one-site lifetime iterations; the structured Region + Dimension fields resolve a single measurement position at (0, 0) mm;
-- a terminated 3 × 3 SquareRegion where only five first-intensity sites were stored and no second lifetime iteration was acquired. The analyzer maps the five sites to the leading 5 / 9 row-major schedule prefix, preserves first-intensity τeff.d/Smax/Implied-Voc, and leaves second-intensity results and Basore J0 unavailable.
+Two numeric `MapPattern + PseudoSquareCell` pairs support this quantity profile:
 
-These cases establish runtime compatibility only. They do not validate SquareRegion coordinates against vendor X/Y export, incomplete-scan ordering against PV-2000, or one-iteration Basore-result semantics.
+- the original 5017-site pair reproduces the first/second Voc channels within approximately **0.061 / 0.066 mV**;
+- a second 1221-site pair reaches approximately **0.850 mV** maximum error.
+
+The runtime therefore labels JZero Voc on this paired geometry as reproduced at displayed precision.
+
+The same current calibration differs by approximately **18.7–21.1 mV** on paired OnePoint, SquareRegion and HighDensity cases. Those outputs remain **inferred/diagnostic** even though their lifetime/Smax/Basore quantities and their geometry can be validated independently. No geometry-only change may silently widen this Voc quantity profile.
+
+The Basore and Implied-Voc compatibility constants are reverse-engineered regression models for observed vendor output, not claims about undisclosed PV-2000 internal constants.
+
+**Incomplete acquisitions**
+
+Explicitly interrupted acquisitions may preserve first-intensity quantities while second-intensity quantities and Basore J0 remain unavailable. Leading schedule-prefix geometry may be displayed as partial/inferred. Such cases do not enter `JZERO-CALC-001` without paired numeric evidence.
 
 **NEW PROFILE triggers**
 
-Examples include another pattern/target encoding, more or fewer than two lifetime iterations, a different iteration/result ordering, a different raw data item schema, additional vendor outputs, or evidence that the derived-result formulas/validity behavior change.
+Examples include more or fewer than two lifetime iterations, a different iteration/result ordering, a different raw data-item schema, additional vendor outputs, or evidence that the Basore calculation/availability path changes. Implied-Voc changes are quantity-profile questions and must not be used to invalidate otherwise matching lifetime/Smax/Basore calculation parity.
 
 See `docs/ALGORITHMS_JZERO.md` and run `npm run validate:jzero`.
 
