@@ -4,16 +4,15 @@
 Runtime remains XML-only. Matching vendor CSV files are development evidence.
 
 This validator intentionally distinguishes:
-- strict PASS for the paired non-Auger Back/Back OnePoint result family;
+- strict PASS for the paired non-Auger Back/Back single-site result family;
 - diagnostic zero-site acquisitions;
 - diagnostic legacy Lifetime-only exports;
 - diagnostic categorical branches outside QSS-INJ-RESULT-001.
 
-Pattern/Target geometry is not used as a calculation key. The current paired
-runtime gate requires OnePointPattern, Back/Back sources and non-Auger data;
-OnePoint target geometry may resolve independently (for example RoundWafer or
-SquareCell). Conflicting FixedPoints/PseudoSquare evidence remains outside the
-result profile.
+Pattern/Target geometry is not used as a calculation key. Paired evidence now
+covers OnePointPattern plus one-site FixedPointsPattern results. When
+DoPointAveraging=true, the vendor result path averages the saved lifetime
+vectors pointwise before the existing downstream calculation.
 
 The validator checks only relationships that are independently observable from
 XML/result columns here. Full steady-state/QDC/J0 runtime parity is covered by
@@ -83,17 +82,47 @@ def bool_value(node, name):
     return None
 
 
-def vector(node, name):
+def vectors(node, name):
     holder = child(node, name)
-    vectors = list(holder) if holder is not None else []
-    if not vectors:
+    rows = list(holder) if holder is not None else []
+    if not rows:
         return []
+    if not any(list(row) for row in rows):
+        rows = [rows]
+    result = []
+    for row in rows:
+        values = []
+        for item in list(row):
+            try:
+                values.append(float(item.text))
+            except (TypeError, ValueError):
+                values.append(math.nan)
+        if values:
+            result.append(values)
+    return result
+
+
+def vector(node, name):
+    rows = vectors(node, name)
+    return rows[0] if rows else []
+
+
+def effective_lifetime(rows, point_averaging):
+    if not rows:
+        return []
+    if point_averaging is not True or len(rows) == 1:
+        return list(rows[0])
     out = []
-    for item in list(vectors[0]):
-        try:
-            out.append(float(item.text))
-        except (TypeError, ValueError):
-            out.append(math.nan)
+    for index in range(len(rows[0])):
+        column = [
+            row[index] if index < len(row) else math.nan
+            for row in rows
+        ]
+        out.append(
+            sum(column) / len(column)
+            if all(math.isfinite(value) for value in column)
+            else math.nan
+        )
     return out
 
 
@@ -126,6 +155,8 @@ def parse_xml(path: Path):
         "auger": bool_value(measurement, "UseAugerCorrection"),
         "calculate_j0": bool_value(measurement, "CalculateJZeroParams"),
         "include_ks": bool_value(measurement, "IncludeKSJ0"),
+        "do_point_averaging": bool_value(measurement, "DoPointAveraging"),
+        "point_average_count": number(measurement, "PointAverageCount"),
         "wafer_thickness_um": number(measurement, "WaferThickness"),
         "optical_factor": number(measurement, "OpticalFactor"),
         "doping": number(measurement, "Doping"),
@@ -143,7 +174,8 @@ def parse_xml(path: Path):
         }
 
     intensity = vector(items[0], "Intensity")
-    values = vector(items[0], "Values")
+    value_vectors = vectors(items[0], "Values")
+    values = effective_lifetime(value_vectors, base["do_point_averaging"])
     if len(intensity) != len(values) or not intensity:
         return {
             **base,
@@ -158,6 +190,7 @@ def parse_xml(path: Path):
         "empty": False,
         "intensity": intensity,
         "values": values,
+        "value_vector_count": len(value_vectors),
     }
 
 
@@ -343,11 +376,11 @@ def validate_pair(xml_path: Path, csv_path: Path):
     if xml.get("diagnostic"):
         return diagnostic(xml_path, xml, xml["diagnostic"])
 
-    if xml["pattern_type"] != "OnePointPattern":
+    if xml["pattern_type"] not in {"OnePointPattern", "FixedPointsPattern"}:
         return diagnostic(
             xml_path,
             xml,
-            "outside QSS-INJ-RESULT-001 OnePoint calculation envelope",
+            "outside QSS-INJ-RESULT-001 paired single-site calculation envelope",
         )
     if xml["probe"] != "Back" or xml["bias"] != "Back":
         return diagnostic(
@@ -361,7 +394,7 @@ def validate_pair(xml_path: Path, csv_path: Path):
         return diagnostic(
             xml_path,
             xml,
-            f"OnePoint profile has {len(vendor['rows'])} vendor result rows",
+            f"single-site profile has {len(vendor['rows'])} vendor result rows",
         )
 
     row = vendor["rows"][0]
@@ -450,11 +483,11 @@ def validate_pair(xml_path: Path, csv_path: Path):
     points = geometry.get("points", [])
     if geometry.get("status") != "complete" or len(points) != 1:
         raise AssertionError(
-            f"OnePoint geometry unresolved: status={geometry.get('status')} "
+            f"single-site geometry unresolved: status={geometry.get('status')} "
             f"profile={geometry.get('profileId')}"
         )
     if not (math.isfinite(row["x"]) and math.isfinite(row["y"])):
-        raise AssertionError("vendor OnePoint X/Y unavailable")
+        raise AssertionError("vendor single-site X/Y unavailable")
     coord_error = math.hypot(
         points[0]["x"] - row["x"], points[0]["y"] - row["y"]
     )
@@ -473,6 +506,8 @@ def validate_pair(xml_path: Path, csv_path: Path):
         "smax_max_error": smax_max_error,
         "dn_rel_error": dn_rel,
         "calculate_j0": calculate_j0,
+        "do_point_averaging": xml.get("do_point_averaging"),
+        "value_vector_count": xml.get("value_vector_count", 0),
         "vendor_basore_available": math.isfinite(row["basore_j0"]),
         "vendor_ks_available": math.isfinite(row["ks_j0"]),
         "vendor_voc_available": math.isfinite(row["voc_1sun"]),
