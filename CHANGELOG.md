@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.18.1 — 2026-09-25 (branch)
+## v20260925.19 — 2026-09-25
 
 - Reworked the wide analyzer shell so toolbar, content and project footer fit exactly inside the viewport. The footer now occupies the bottom shell row and the body no longer contributes a second vertical scrollbar.
 - Kept the three desktop analyzer tracks literally equal-width and made dataset, overview and detail panes the sole vertical scroll owners for their columns.
