@@ -832,7 +832,7 @@
       </dl></section>
       <section class="panel current-dataset-panel"><h3>Current dataset ${help('Acquisition completeness and coordinate availability for the imported XML. Partial geometry remains explicitly inferred rather than promoted to validated parity.')}</h3><div class="validation">
         <div><b>${d.sites.length}</b><span>XML sites</span></div>
-        <div><b>${d.geometryStatus==='partial'&&Number.isFinite(d.expectedPointCount)?`${d.sites.length} / ${d.expectedPointCount}`:'complete'}</b><span>acquisition schedule</span></div>
+        <div><b>${d.geometryStatus==='partial'&&Number.isFinite(d.expectedPointCount)?`${d.sites.length} / ${d.expectedPointCount}`:'Complete'}</b><span>acquisition schedule</span></div>
         <div><b>${d.coords.length} / ${d.sites.length}</b><span>coordinates</span></div>
         <div><b id="iDatasetValid">${filterController.snapshot().validCount} / ${d.sites.length}</b><span>pass filter</span></div>
       </div></section>
