@@ -425,6 +425,7 @@
     const rebuildFilter=(preferredKey='Qtot')=>{
       metrics=filterMetrics(analysis);
       const key=metrics[preferredKey]?preferredKey:'Qtot';
+      mapKey=key;
       filterController=Sel.createFilter({
         metrics,
         siteCount:analysis.sites.length,
