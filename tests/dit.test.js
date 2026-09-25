@@ -72,6 +72,26 @@ test('Standard COCOS Vsb keeps the doping-aware vendor sign convention', () => {
   assert.ok(Math.abs(p + 0.12) < 1e-12);
 });
 
+test('DIT InitialQc includes the initial state before preprocess charge attempts', () => {
+  const calc = PV2000.modules.dit.initialQcFromPreprocess;
+  assert.equal(calc(5, -1e11), -6e11);
+  assert.equal(calc(1, -5e11), -1e12);
+  assert.equal(calc(36, -1e11), -3.7e12);
+  assert.equal(calc(2, -1e14), -3e14);
+  assert.ok(Number.isNaN(calc(2, NaN)));
+});
+
+test('DIT final-result validator keeps regenerated light and Vsb drift diagnostic-only', () => {
+  const fs = require('node:fs');
+  const src = fs.readFileSync(require.resolve('../scripts/validate_dit_result_reference.py'), 'utf8');
+  assert.match(src, /Initial Qc preprocess bookkeeping/);
+  assert.match(src, /VLight and Vsb are printed as diagnostics/);
+  assert.match(src, /attempts \+ 1/);
+  assert.match(src, /VDark max=/);
+  assert.match(src, /VLight diagnostic max=/);
+  assert.match(src, /Vsb diagnostic max=/);
+});
+
 test('OnePoint circular substrate uses nominal geometry instead of point extent', () => {
   const g = PV2000.modules.dit.spatialEnvelope(
     { patternType: 'OnePointPattern', shapeType: 'Circle', radius: 50, edgeExclusion: 4 },

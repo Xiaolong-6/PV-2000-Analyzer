@@ -193,6 +193,34 @@ Current COCOS-II status remains **inferred** until matching vendor pointwise out
 
 ---
 
+### DIT-RESULT-INITIAL-001 — final-result direct/bookkeeping quantities
+
+**Measurement type**
+
+`DITMeasurement`
+
+**Reference material**
+
+Thirteen successful XML/vendor final-result CSV pairs from the private 100-case harness corpus, covering **43 sites**, plus one additional DIT XML whose vendor harness export fails before producing a CSV.
+
+**Validated / established**
+
+- Initial `VDark` is reconstructed directly from `InitialVcpdDark` minus the stored offset; maximum paired error is **3.55e-15 V**.
+- `Initial Qc = (N_preprocess + 1) × PreProcess CoronaCharge`, where `N_preprocess` is the number of stored PreProcess dark vectors. All **43 paired sites** match exactly.
+- Twelve of the thirteen paired files independently resolve an existing shared geometry profile; maximum coordinate error is **3.58e-14 mm**.
+- The profile is independent of Standard-COCOS Dit/Qtot/Qsc formula validation.
+
+**Explicitly not promoted**
+
+- Regenerated final-result `VLight` (observed drift up to about **83.1 mV**).
+- Regenerated N-type final-result Vsb, whose two paired rows use the opposite sign from the stronger original Standard-COCOS evidence.
+- Vfb, Qtot, Qit, Qsc and Minimum Dit from these regenerated final-result exports.
+- The unresolved `FixedPointsPattern + RoundWafer` geometry case.
+
+Use `scripts/validate_dit_result_reference.py` for this narrow result-table evidence and `scripts/validate_dit_raw_reference.py` for the separate raw-process-row audit. Neither validator widens COCOS-II or the Analyzer-only Ge model.
+
+---
+
 ### QSS-MAP-001 — QSS-µPCD MapPattern + RoundWafer family
 
 **Measurement type**

@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260925.8 — 2026-09-25
+
+- Audited **13** paired DIT final-result XML/vendor-CSV exports covering **43 sites**; one additional DIT XML remains outside numeric closure because the vendor harness itself raises `ArgumentOutOfRangeException`.
+- Fixed an Initial Qc bookkeeping off-by-one: PV-2000 final results use `(N_preprocess + 1) × PreProcess CoronaCharge`. All 43 paired sites now match exactly.
+- Added narrow profile `DIT-RESULT-INITIAL-001` and a dedicated final-result validator. Initial VDark agrees to about **3.55e-15 V**; 12 resolved geometry cases agree to about **3.58e-14 mm**.
+- Kept regenerated `VLight`, N-type Vsb, Vfb, Qtot, Qit, Qsc and Minimum Dit outside the promoted profile. The current doping-aware Standard COCOS Vsb convention, COCOS-II boundary and Analyzer-only Ge model are unchanged.
+- Runtime remains XML-only; vendor final-result CSVs are private regression evidence only.
+
+
 ## v20260925.7 — 2026-09-25
 
 - Closed the 100-case QSS-µPCD HighDensity/sentinel audit with seven nonempty XML/vendor-CSV pairs plus five zero-site acquisitions.
