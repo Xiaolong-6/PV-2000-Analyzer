@@ -10,6 +10,28 @@ test('roundGrid keeps the strict inward-epsilon boundary contract',()=>{
   assert.deepEqual(points,[{x:0,y:0}]);
 });
 
+test('roundGrid rejects non-positive and non-finite pitches without entering a schedule loop',()=>{
+  assert.deepEqual(PV2000.geometry.roundGrid(50,0,5),[]);
+  assert.deepEqual(PV2000.geometry.roundGrid(50,5,0),[]);
+  assert.deepEqual(PV2000.geometry.roundGrid(50,-1,5),[]);
+  assert.deepEqual(PV2000.geometry.roundGrid(50,5,Infinity),[]);
+});
+
+test('MapPattern resolver leaves invalid-pitch geometry unresolved instead of attempting a grid',()=>{
+  const geometry=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'MapPattern',
+    targetType:'RoundWafer',
+    pointCount:1,
+    diameter:100,
+    edgeExclusion:0,
+    pitchX:0,
+    pitchY:5
+  });
+  assert.equal(geometry.geometryStatus,'unavailable');
+  assert.equal(geometry.interpretation,'unresolved');
+  assert.deepEqual(geometry.pointsMm,[]);
+});
+
 test('pseudoSquareGrid keeps the inclusive outward-epsilon boundary contract',()=>{
   const radius=1-2.5e-10,
     points=PV2000.geometry.pseudoSquareGrid(1,0,radius,1,1);
