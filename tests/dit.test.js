@@ -81,6 +81,17 @@ test('DIT InitialQc includes the initial state before preprocess charge attempts
   assert.ok(Number.isNaN(calc(2, NaN)));
 });
 
+test('DIT final-result validator keeps regenerated light and Vsb drift diagnostic-only', () => {
+  const fs = require('node:fs');
+  const src = fs.readFileSync(require.resolve('../scripts/validate_dit_result_reference.py'), 'utf8');
+  assert.match(src, /Initial Qc preprocess bookkeeping/);
+  assert.match(src, /VLight and Vsb are printed as diagnostics/);
+  assert.match(src, /attempts \+ 1/);
+  assert.match(src, /VDark max=/);
+  assert.match(src, /VLight diagnostic max=/);
+  assert.match(src, /Vsb diagnostic max=/);
+});
+
 test('OnePoint circular substrate uses nominal geometry instead of point extent', () => {
   const g = PV2000.modules.dit.spatialEnvelope(
     { patternType: 'OnePointPattern', shapeType: 'Circle', radius: 50, edgeExclusion: 4 },
