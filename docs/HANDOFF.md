@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-25
 
+## FixedPoints Python geometry bridge (v20260925.29)
+
+The private replay of the two real one-site Dual QSS FixedPoints pairs showed full nine-result runtime parity, while the Python numeric validator stopped early with `single-site geometry unresolved`. The canonical browser geometry layer was already correct; the shared Python adapter in `validate_geometry_profiles.py` forwarded `Coefficients` but omitted `Pattern/PointValues`.
+
+The bridge now forwards `PointValues` as `absolutePoints`. FixedPoints geometry therefore resolves through the same `GEOM-FIXEDPOINTS-ABS-001` path as the browser runtime, preserving strict coordinate validation instead of weakening the calculation validator. A real Python→JavaScript bridge regression covers the sanitized FixedPoints fixture.
+
 ## Cross-platform validation hardening (v20260925.28)
 
 The private Windows replay of public `npm run check` exposed two source-structure tests that assumed LF line endings. The runtime was correct and all FixedPoints forensic parity checks had already passed; only the test regexes failed after Windows checkout produced CRLF boundaries. The Dual QSS redraw-order assertion and DIT filter/map synchronization assertion now accept either LF or CRLF.
@@ -38,8 +44,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.28`.
-- Current hardening branch: `fix/cross-platform-source-tests-20260925`.
+- Public main: `v20260925.29`.
+- Current hardening branch: `fix/fixedpoints-python-geometry-bridge-20260925`.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 

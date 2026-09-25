@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.29 — 2026-09-25
+
+- Fixed the shared Python geometry-validation bridge to forward `FixedPointsPattern/PointValues` as canonical `absolutePoints`, matching the browser/runtime geometry resolver.
+- Restored strict geometry validation for the two one-site Dual QSS FixedPoints result pairs: the numeric final-result validator can now resolve `GEOM-FIXEDPOINTS-ABS-001` instead of incorrectly reporting `geometry unavailable` before result parity is checked.
+- Added an integration regression that sends the sanitized FixedPoints XML fixture through the Python bridge and the JavaScript canonical geometry resolver, asserting complete geometry, the validated profile ID and the expected absolute coordinate.
+- No Dual QSS calculation formula or validation envelope changed; this closes a validator-adapter omission exposed by the private Windows replay.
+
 ## v20260925.28 — 2026-09-25
 
 - Made source-structure regression tests portable across LF and CRLF checkouts. Two layout assertions for Dual QSS initial redraw ordering and DIT filter/map synchronization previously passed on Ubuntu but failed when the same public suite was replayed from a Windows private-validation runner.

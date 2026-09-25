@@ -38,6 +38,7 @@ def resolve_xml_geometry(xml_path, point_count):
         "allowPartialPrefix": (root.findtext("Status") or "").lower() in
         {"terminated", "aborted", "interrupted", "cancelled", "canceled"},
         "rawCoefficients": points(pattern.find("Coefficients")),
+        "absolutePoints": points(pattern.find("PointValues")),
         "exclusionPolygons": exclusions,
         "diameter": number(target, "Diameter"),
         "targetWidth": number(target, "Size/Width"),
