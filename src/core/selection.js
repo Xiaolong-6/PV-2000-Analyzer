@@ -24,13 +24,17 @@
     return mask.map(Boolean);
   }
 
+  function orderedBounds(lower,upper){
+    return lower<=upper?[lower,upper]:[upper,lower];
+  }
+
   function quantitySupport(metric,count){
     if(!metric)return Array(count).fill(false);
-    if(metric.availability){
-      if(metric.availability.length!==count)throw new Error('Quantity availability is not aligned to the shared site index space.');
-      return metric.availability.map(item=>!!item?.available);
-    }
-    return metric.values.map(Number.isFinite);
+    if(metric.availability&&metric.availability.length!==count)throw new Error('Quantity availability is not aligned to the shared site index space.');
+    return Array.from({length:count},(_,index)=>{
+      const available=metric.availability?.[index]?.available;
+      return available==null?Number.isFinite(metric.values[index]):!!available;
+    });
   }
 
   function metricRange(metric,supportMask=null){
@@ -71,10 +75,9 @@
     const intrinsic=normalizedMask(intrinsicMask,count,true),
       quantityMask=quantitySupport(metric,count),
       supportMask=intrinsic.map((ok,index)=>ok&&quantityMask[index]),
-      lower=Number.isFinite(filter.lower)?filter.lower:-Infinity,
-      upper=Number.isFinite(filter.upper)?filter.upper:Infinity;
-
-    if(lower>upper)throw new Error('Valid-data filter lower bound must not exceed upper bound.');
+      rawLower=Number.isFinite(filter.lower)?filter.lower:-Infinity,
+      rawUpper=Number.isFinite(filter.upper)?filter.upper:Infinity,
+      [lower,upper]=orderedBounds(rawLower,rawUpper);
 
     const filterMask=metric.values.map(value=>
       Number.isFinite(value)&&value>=lower&&value<=upper
@@ -168,7 +171,7 @@
 
     function apply(lower,upper){
       if(!Number.isFinite(lower)||!Number.isFinite(upper))throw new Error('Valid-data filter requires finite lower and upper bounds.');
-      if(lower>upper)[lower,upper]=[upper,lower];
+      [lower,upper]=orderedBounds(lower,upper);
       return refresh(lower,upper);
     }
 
