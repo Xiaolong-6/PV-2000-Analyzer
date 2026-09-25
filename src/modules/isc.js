@@ -865,10 +865,10 @@
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
     </aside><section class="plots overview">
-      <div class="panel chart"><header><b>${moduleLabel} map</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
-      <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
+      <div class="panel chart"><header><b>${d.sites.length===1?'Measurement position':moduleLabel+' map'}</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
+      ${d.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>`}
     </section><section class="plots detail">
-      <section class="panel"><h3>Selected site ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
+      <section class="panel"><h3>${d.sites.length===1?'Measurement point':'Selected site'} ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
     </section></div>`;
 
@@ -888,10 +888,11 @@
     function redraw(){
       const filterState=filterController.snapshot(),
         displayMask=filterController.metricMask(a.metrics[metricKey]),
-        bins=drawHist(host.querySelector('#iHist'),a,metricKey,displayMask,histBins,histSwapped,zoom.hist,n=>{
-        zoom.hist=n;
-        redraw();
-      });
+        histCanvas=host.querySelector('#iHist'),
+        bins=histCanvas?drawHist(histCanvas,a,metricKey,displayMask,histBins,histSwapped,zoom.hist,n=>{
+          zoom.hist=n;
+          redraw();
+        }):[];
       drawMap(
         host.querySelector('#iMap'),
         d,
@@ -920,21 +921,24 @@
         zoom.map=n;
         redraw();
       });
-      PV.plot.bindAxisControls(host,'iHistAxes',zoom.hist,n=>{
-        zoom.hist=n;
-        redraw();
-      },{
-        swapped:histSwapped,
-        onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
-      });
-      PV.plot.bindBinControls(host,'iHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
+      if(histCanvas){
+        PV.plot.bindAxisControls(host,'iHistAxes',zoom.hist,n=>{
+          zoom.hist=n;
+          redraw();
+        },{
+          swapped:histSwapped,
+          onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};redraw()}
+        });
+        PV.plot.bindBinControls(host,'iHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
+      }
       PV.plot.bindAxisControls(host,'iRawAxes',zoom.raw,n=>{
         zoom.raw=n;
         redraw();
       });
 
       host.querySelector('#iExportMap').onclick=()=>downloadMap(d,a,metricKey,filterState,displayMask);
-      host.querySelector('#iExportHist').onclick=()=>{
+      const histExport=host.querySelector('#iExportHist');
+      if(histExport)histExport.onclick=()=>{
         const m=a.metrics[metricKey];
         PV.exporter.csv(
           `${safe(d.resultName)}_${metricKey}_histogram.csv`,
