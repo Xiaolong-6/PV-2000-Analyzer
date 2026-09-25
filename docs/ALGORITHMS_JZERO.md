@@ -4,7 +4,7 @@
 
 This module handles PV-2000 `JZeroMeasurement` XML results. The runtime remains XML-only. Matching PV-2000 CSV exports are development references used for pointwise regression and are never required during analysis.
 
-The supplied reference contains two `UpcdIterationData` maps measured at the first and second QSS intensities. The analyzer pairs the two iterations by site index and exposes the seven vendor result quantities documented for Emitter J0 Map:
+The paired evidence contains two `UpcdIterationData` lifetime states measured at the first and second QSS intensities. The analyzer pairs the two iterations by site index and exposes the seven vendor result quantities documented for Emitter J0 Map:
 
 - Basore J0 [fA/cm²];
 - τeff.d at the first QSS intensity;
@@ -20,7 +20,7 @@ The JZero calculation path and the measurement geometry are separate concerns.
 
 The calculation path is determined by the JZero measurement schema: two lifetime iterations, two QSS intensities, wafer thickness, doping, optical factor and iteration metadata. Pattern/Target determines where those paired lifetime sites are located.
 
-The supplied paired reference validates one geometry instance, but that geometry does not define the JZero calculation itself.
+The original 5017-site pair validated one pseudo-square geometry instance. The 100-case private corpus now adds eight successful numeric JZero exports across OnePoint, SquareRegion, HighDensity and Map geometries. Across those pairs, lifetime, Smax and Basore J0 retain floating-point/approximately 1e-11-scale parity while geometry resolves independently. This establishes `JZERO-CALC-001` as a calculation profile rather than a Pattern/Target profile.
 
 ## SquareRegion and incomplete-acquisition runtime support
 
@@ -69,7 +69,7 @@ with x/y on the 2 mm lattice. This yields exactly 5017 points. The first site is
 
 ## Lifetime and Smax
 
-Each `UpcdIterationData/Data/DataItem/Value` is the vendor-exported small-perturbation lifetime for the corresponding QSS intensity. Both 5017-point lifetime arrays match the vendor export to floating-point precision.
+Each `UpcdIterationData/Data/DataItem/Value` is the vendor-exported small-perturbation lifetime for the corresponding QSS intensity. Both 5017-point lifetime arrays match the original vendor export to floating-point precision. Across all eight successful 100-case JZero exports, both lifetime channels remain at floating-point parity; the largest observed absolute difference is approximately 5.12e-13 µs.
 
 For wafer thickness `W` in cm and lifetime `τ` in seconds:
 
@@ -116,7 +116,7 @@ ni,compat = 8.626227186463587e9 cm⁻³
 
 and the final result converted from A/cm² to fA/cm².
 
-For the paired 5017-point reference, Basore J0 matches the vendor CSV with maximum absolute error below 1e-8 fA/cm²; the observed error is at floating-point level (~1e-12 fA/cm²).
+For the paired 5017-point reference, Basore J0 matches the vendor CSV at floating-point level (~1e-12 fA/cm²). Across all eight successful 100-case JZero exports, the maximum observed Basore J0 difference remains approximately 4.73e-11 fA/cm², including OnePoint, SquareRegion and HighDensity geometries.
 
 The fitted `ni,compat` is a **PV-2000 compatibility calibration for this validated result path**, not a claim that the proprietary PV-2000 implementation internally stores or independently uses that exact intrinsic-carrier-density constant.
 
@@ -145,7 +145,7 @@ ni,300(second) = 1.107764334152709e10 cm⁻³
 
 using the same silicon temperature dependence as the QSS analyzer.
 
-Across all 5017 sites, both Implied Voc maps reproduce the vendor export within 0.07 mV maximum absolute error. These two normalizations are explicitly compatibility values inferred from the current paired reference. They are not claimed as the proprietary PV-2000 internal formula, and alternate JZero result paths remain NEW PROFILE until matching vendor output is supplied.
+Across the original 5017 sites, both Implied Voc maps reproduce the vendor export within 0.07 mV maximum absolute error. A second 1221-site `MapPattern + PseudoSquareCell` pair reaches approximately 0.850 mV maximum error, so `JZERO-VOC-MAP-PSEUDOSQUARE-001` is treated as a display-precision quantity profile rather than part of the broad calculation profile. On paired OnePoint, SquareRegion and HighDensity cases, the same compatibility normalization differs by approximately 18.7–21.1 mV. Those Voc outputs therefore remain inferred/diagnostic even though their lifetime/Smax/Basore quantities and geometry validate independently. These normalizations are regression values, not claims about the proprietary PV-2000 internal formula.
 
 ## UI behavior
 
@@ -178,27 +178,21 @@ Pointwise exports retain all paired sites and add filter provenance: metric avai
 
 ## Validated envelope
 
-The current paired reference establishes the **calculation path**:
+The eight successful 100-case numeric pairs establish the **calculation path**:
 
 - `JZeroMeasurement`;
 - exactly two `UpcdIterationData` lifetime iterations;
 - first/second QSS-intensity pairing by iteration order;
 - direct XML lifetime → τeff.d;
-- Smax, Basore J0 and the JZero-specific Implied Voc compatibility equations.
+- Smax and Basore J0 under `JZERO-CALC-001`.
 
-It separately establishes the **geometry profile**:
+Implied Voc is deliberately excluded from that broad calculation claim. `JZERO-VOC-MAP-PSEUDOSQUARE-001` is a narrower quantity profile supported by two paired pseudo-square maps.
 
-- `MapPattern + PseudoSquareCell`;
-- X-fast row-major pseudo-square schedule;
-- direct XML lifetime → vendor τeff.d;
-- `Smax = W/(2τ)`;
-- the Basore J0 compatibility equation above;
-- the reference-regressed Implied Voc compatibility path;
-- sample-standard-deviation summary statistics.
+Geometry is validated on its own axis. The current paired JZero corpus exercises shared OnePoint, SquareRegion, HighDensity and Map profiles, with maximum observed X/Y error approximately 4.97e-14 mm. The original `MapPattern + PseudoSquareCell` case remains the clearest dense-map geometry reference.
 
 Ordinary numeric changes in pitch, target dimensions, EdgeExclusion, wafer thickness, doping, optical factor or the two QSS intensity values do not automatically define a new measurement type.
 
-A different resolver-supported Pattern/Target combination may reuse the same two-iteration JZero calculation path while carrying a separate geometry status. `MapPattern + PseudoSquareCell` is currently geometry-validated. `OnePointPattern + SquareCell` is loadable through the shared geometry resolver and remains geometry-**inferred** until paired X/Y/display evidence is supplied.
+A different resolver-supported Pattern/Target combination may reuse the same two-iteration JZero calculation path while carrying its own geometry profile. Paired evidence now covers OnePoint, SquareRegion, HighDensity and Map geometry families; an unpaired or incomplete path remains inferred until matching coordinate/output evidence is available.
 
 The following remain outside the current vendor-regressed **calculation** envelope until paired output is supplied:
 - more or fewer than two lifetime iterations;
