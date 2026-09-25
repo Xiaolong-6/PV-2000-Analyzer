@@ -10,7 +10,7 @@
 
 ## Current validated path
 
-`SPV-CALC-STANDARD-001` is validated against seven positive-oxide XML + numeric PV-2000 CSV pairs, including RoundWafer maps and a one-point acquisition. Three additional zero-oxide, zero-reflectivity pairs establish `SPV-CALC-ZERO-OXIDE-002` across HighDensity and NinePoint geometries. All use the non-enhanced, non-texture, measured-linearity P-type path.
+`SPV-CALC-STANDARD-001` is validated against seven positive-oxide XML + numeric PV-2000 CSV pairs, including RoundWafer maps and a one-point acquisition. Three additional zero-oxide, zero-reflectivity pairs establish `SPV-CALC-ZERO-OXIDE-002` across HighDensity and NinePoint geometries. These standard paths use non-enhanced, non-texture, measured-linearity P-type processing. A separate paired N-type Enhanced case establishes `SPV-CALC-ENHANCED-N-003`.
 
 Across the paired maps:
 
@@ -19,7 +19,7 @@ Across the paired maps:
 - Tau maximum absolute difference is about **2.06e-11 µs**;
 - vendor `Ud.` availability for DL/Tau has **zero mismatches**.
 
-The ten standard pairs include 1649-site maps with only one, 49 and zero finite DL/Tau sites, as well as maps with mostly finite results. The nine newly audited exports include one separate enhanced N-type pair; its 28 finite DL/Tau values do not match the standard formula, so that calculation path remains outside the validated envelopes. The private validator reports that pair as **Enhanced diagnostic** evidence: raw SPV8/SPV6 must still match, while no standard-profile PASS is claimed for DL/Tau.
+The ten standard pairs include 1649-site maps with only one, 49 and zero finite DL/Tau sites, as well as maps with mostly finite results. The separate N-type Enhanced pair contains 69 sites, 28 finite vendor DL/Tau values and 41 unavailable sites. The recovered finite-wafer/back-surface root model reproduces DL within **2.11×10⁻⁷ µm**, Tau within **1.46×10⁻⁷ µs**, raw SPV8/SPV6 at floating-point precision, and all availability masks exactly. Enhanced P-type, texture correction, parsed signals and manual-linearity remain outside the validated envelope.
 
 ## Calculation outline
 
