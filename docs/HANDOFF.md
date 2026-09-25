@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-25
 
+## Real-browser chart-header hardening (v20260925.30)
+
+The first private all-analyzer Chromium smoke opened ten real XML families against public v29. Nine passed; DIT alone exposed a real wide-layout defect: a dynamic no-wrap `.chart-meta` in the detail charts could keep its intrinsic width and push the Axes/Export controls past the right pane boundary.
+
+The shared chart metadata contract now allows flex shrink (`min-width:0`) and clips excess metadata with ellipsis. This preserves the Axes/Export controls inside the chart header without DIT-specific widths. The change is presentation-only.
+
 ## FixedPoints Python geometry bridge (v20260925.29)
 
 The private replay of the two real one-site Dual QSS FixedPoints pairs showed full nine-result runtime parity, while the Python numeric validator stopped early with `single-site geometry unresolved`. The canonical browser geometry layer was already correct; the shared Python adapter in `validate_geometry_profiles.py` forwarded `Coefficients` but omitted `Pattern/PointValues`.
@@ -44,8 +50,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.29`.
-- Current hardening branch: `fix/fixedpoints-python-geometry-bridge-20260925`.
+- Public main: `v20260925.30`.
+- Current hardening branch: `fix/chart-header-flex-overflow-20260925`.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
