@@ -36,11 +36,11 @@ function rangeTag(text,name,lo,hi){
 }
 function vectors(text,name){
   const block=tag(text,name,'');
-  const wrapped=[...block.matchAll(/<([A-Za-z_][\\w.:-]*)[^>]*>([\\s\\S]*?)<\\/\\1>/g)]
+  const wrapped=[...block.matchAll(/<([A-Za-z_][\w.:-]*)[^>]*>([\s\S]*?)<\/\1>/g)]
     .filter(row=>/<double>/.test(row[2]))
-    .map(row=>[...row[2].matchAll(/<double>([^<]+)<\\/double>/g)].map(m=>Number(m[1])));
+    .map(row=>[...row[2].matchAll(/<double>([^<]+)<\/double>/g)].map(m=>Number(m[1])));
   if(wrapped.length)return wrapped;
-  const direct=[...block.matchAll(/<double>([^<]+)<\\/double>/g)].map(m=>Number(m[1]));
+  const direct=[...block.matchAll(/<double>([^<]+)<\/double>/g)].map(m=>Number(m[1]));
   return direct.length?[direct]:[];
 }
 function vector(text,name){return vectors(text,name)[0]||[]}
