@@ -229,14 +229,14 @@ Thirteen successful XML/vendor final-result CSV pairs from the private 100-case 
 **Validated / established**
 
 - Initial `VDark` is reconstructed directly from `InitialVcpdDark` minus the stored offset; maximum paired error is **3.55e-15 V**.
+- Final-result `VLight` is the correction-factor reconstruction `VDark - F × (VDark - VLight_measured)`, where `F` is the XML `VsbCorrectionFactor`. All **43 paired sites** agree at floating-point scale; maximum absolute error is about **3.8e-15 V**.
 - `Initial Qc = (N_preprocess + 1) × PreProcess CoronaCharge`, where `N_preprocess` is the number of stored PreProcess dark vectors. All **43 paired sites** match exactly.
 - Twelve of the thirteen paired files independently resolve an existing shared geometry profile; maximum coordinate error is **3.58e-14 mm**.
 - The profile is independent of Standard-COCOS Dit/Qtot/Qsc formula validation.
 
 **Explicitly not promoted**
 
-- Regenerated final-result `VLight` (observed drift up to about **83.1 mV**).
-- Regenerated N-type final-result Vsb, whose two paired rows use the opposite sign from the stronger original Standard-COCOS evidence.
+- Regenerated N-type final-result Vsb, whose two paired rows use the opposite sign from the stronger original Standard-COCOS evidence. The corrected `VLight` result is validated independently and does not change that Vsb sign boundary.
 - Vfb, Qtot, Qit, Qsc and Minimum Dit from these regenerated final-result exports.
 - The unresolved `FixedPointsPattern + RoundWafer` geometry case.
 
