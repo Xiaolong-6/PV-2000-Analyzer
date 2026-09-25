@@ -77,3 +77,37 @@ test('valid-data filter binder supports a linked displayed-metric select',()=>{
   assert.match(src,/controller\.setMetric\(linked\.value\)/);
   assert.match(src,/if\(linked&&linked\.value!==state\.metricKey\)linked\.value=state\.metricKey/);
 });
+
+
+test('numeric input formatter uses compact scientific notation only for extreme magnitudes',()=>{
+  const UI=globalThis.PV2000.ui;
+  assert.equal(UI.formatNumericInputValue(0.0784),'0.0784');
+  assert.equal(UI.formatNumericInputValue(12345.6789),'12345.6789');
+  assert.equal(UI.formatNumericInputValue(1e13),'1e13');
+  assert.equal(UI.formatNumericInputValue(12345678901234),'1.23457e13');
+  assert.equal(UI.formatNumericInputValue(1.23456789e-7),'1.23457e-7');
+  assert.equal(UI.formatNumericInputValue(0),'0');
+});
+
+test('compact numeric input display preserves the exact underlying value until the user edits it',()=>{
+  const UI=globalThis.PV2000.ui,
+    input={value:'',dataset:{}},
+    exact=12345678901234;
+  UI.setNumericInputValue(input,exact);
+  assert.equal(input.value,'1.23457e13');
+  assert.equal(UI.readNumericInputValue(input),exact);
+  input.value='1.5e13';
+  assert.equal(UI.readNumericInputValue(input),1.5e13);
+});
+
+test('valid-data filter markup renders large and tiny limits compactly',()=>{
+  const UI=globalThis.PV2000.ui,
+    metrics={dit:{key:'dit',short:'Dit'}},
+    html=UI.validDataFilterMarkup({
+      prefix:'sci',
+      metrics,
+      state:{metricKey:'dit',lower:1.23456789e12,upper:9.87654321e13,validCount:3,siteCount:4}
+    });
+  assert.match(html,/id="sciLo"[^>]*value="1.23457e12"/);
+  assert.match(html,/id="sciHi"[^>]*value="9.87654e13"/);
+});
