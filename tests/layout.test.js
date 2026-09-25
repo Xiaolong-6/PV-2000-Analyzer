@@ -126,7 +126,7 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
   ordered(sources.qss,['<h3>Measurement ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset ','<summary>Full metadata']);
   ordered(sources.dual,['<h3>Measurement ','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<h3>Selected injection point</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.jzero,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current dataset</h3>','<summary>Acquisition metadata</summary>']);
-  ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected site ','<summary>Acquisition metadata</summary>']);
+  ordered(sources.isc,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
   ordered(sources.lbic,['<h3>Measurement ','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<h3>Selected pixel</h3>','<summary>Channel provenance</summary>','<summary>Geometry / validation ']);
   ordered(sources.cet,['<h3>Measurement ','validDataFilterMarkup','<h3>Results summary ','<h3>Current site</h3>']);
 });
@@ -453,4 +453,16 @@ test('QSS Distribution uses valid counts only and axis swap cannot change filter
   assert.ok(start>=0&&end>start);
   const swapBlock=src.slice(start,end);
   assert.doesNotMatch(swapBlock,/mask\s*=|filterKey\s*=|filterLo\s*=|filterHi\s*=/);
+});
+
+
+test('ISC establishes semantic desktop columns and keeps selected-site detail out of the dataset sidebar',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  const asideEnd=src.indexOf('</aside>');
+  const selected=src.indexOf('<h3>Selected site ');
+  assert.match(src,/section class="plots overview"/);
+  assert.match(src,/section class="plots detail"/);
+  assert.ok(asideEnd>=0&&selected>asideEnd);
+  assert.match(src,/linkedSelect:'#iMetric'/);
+  assert.match(src,/metricKey=state\.metricKey/);
 });

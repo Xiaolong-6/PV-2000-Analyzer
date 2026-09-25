@@ -862,7 +862,6 @@
           :'Choose Vcpd Dark, Vcpd Light or VSB as the filter quantity. One shared site mask is then applied across all ISC result quantities, summaries, maps, distributions and exports.'
       })}
       <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max use only sites passing the active Valid-data filter and availability mask. Stdev is the sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="iSummaryBody">${statRows()}</tbody></table></div></section>
-      <section class="panel"><h3>Selected site ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <details class="panel"><summary>Acquisition metadata</summary><dl class="meta">
         ${metaRow('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}
         ${metaRow('Measurement velocity',fmt(d.measurementVelocity,4))}
@@ -871,19 +870,20 @@
         ${metaRow('End',d.end||'—')}
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
-    </aside><section class="plots">
+    </aside><section class="plots overview">
       <div class="panel chart"><header><b>${moduleLabel} map</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
       <div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>
-    </section><section class="plots">
+    </section><section class="plots detail">
+      <section class="panel"><h3>Selected site ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
     </section></div>`;
 
-    const metricSelect=host.querySelector('#iMetric');
-    metricSelect.value=metricKey;
     PV.ui.bindValidDataFilter(host,{
       prefix:'iFilter',
       controller:filterController,
-      onChange:()=>{
+      linkedSelect:'#iMetric',
+      onChange:state=>{
+        metricKey=state.metricKey;
         zoom.map={x:null,y:null};
         zoom.hist={x:null,y:null};
         host.querySelector('#iSummaryBody').innerHTML=statRows();
@@ -891,12 +891,6 @@
         redraw();
       }
     });
-    metricSelect.onchange=e=>{
-      metricKey=e.target.value;
-      zoom.map={x:null,y:null};
-      zoom.hist={x:null,y:null};
-      redraw();
-    };
     function redraw(){
       const filterState=filterController.snapshot(),
         displayMask=filterController.metricMask(a.metrics[metricKey]),

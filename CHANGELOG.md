@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.13.2 — 2026-09-25 (branch)
+
+- Added the shared Valid-data-filter/displayed-metric linking hook and migrated ISC/VCPD as the reference implementation.
+- Reorganized ISC/VCPD into semantic desktop columns: dataset/filter/summary state on the left, Map + Distribution in the overview column, and Selected site + Raw readings in the local-detail column.
+- Updated architecture/agent guidance and structural tests so selected-point detail is no longer treated as sidebar content.
+
 ## v20260925.13.1 — 2026-09-25 (branch)
 
 - Opened the analysis-workspace UI refactor and recorded the implementation/audit plan before code changes.

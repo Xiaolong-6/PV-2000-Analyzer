@@ -375,3 +375,24 @@ For every migrated family:
 8. keep the established UI contract.
 
 Scientific formula changes belong in separate, evidence-backed work. Architectural movement alone must not change a result.
+
+
+## Scientific workspace UI contract
+
+Dedicated analyzers use semantic workspace columns rather than module-specific placement.
+
+On wide desktop layouts:
+
+- **left — dataset / analysis state:** Measurement identity, current dataset/acquisition context, Analysis controls, Valid-data filter, Results summary and collapsed provenance/full metadata;
+- **middle — population / whole-sample overview:** Map or measurement-position overview, Distribution and other dataset-level spatial/statistical views;
+- **right — point / local detail:** Selected site, Selected pixel or Measurement point plus raw readings, transients, acquisition profiles, point-specific fits/curves and local line profiles.
+
+Selected-site/pixel detail does not belong in the left sidebar. A true one-point family should use **Measurement point** instead of implying a selection action.
+
+At medium widths (<=1200 CSS px), the left dataset sidebar remains dedicated while the overview/detail regions stack into the second column. Narrow/mobile layouts collapse to one column in semantic order. Fine-pointer portrait desktop layouts must not be forced into the mobile layout solely by orientation.
+
+Where Map, Distribution and local profiles are alternate views of one site-level Quantity, they share one active displayed quantity with the Valid-data filter by default. Changing either the chart quantity selector or Filter metric updates the other. Diagnostic plots whose scientific meaning is fixed (for example raw acquisition readings or a current-site fit) are not relabelled as alternate result quantities. The selection core retains independent cross-metric masking capability for a future explicit advanced mode.
+
+Family-specific sections may be omitted or renamed when scientifically appropriate. A family must not invent a fake Distribution or heat map merely to fill a column. Generic XML Inspector is exempt.
+
+User filtering is always separate from intrinsic support/availability. A filtered finite value is not the same state as an unavailable/undefined value.
