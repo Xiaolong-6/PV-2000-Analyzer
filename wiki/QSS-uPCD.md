@@ -39,6 +39,8 @@ A simple reference validity interval is
 
 Values outside the accepted interval are treated as unavailable on that path.
 
+PV-2000 XML can store unavailable controller lifetime as `-1 µs`. Raw XML `-1` is preserved for provenance. Paired final-result exports show a different quantity-level representation at those same sites: **lifetime = `Ud.`, Smax = 0, Implied Voc = 0**. The default scientific population excludes non-positive lifetime before the user Valid-data filter is applied; **Raw XML/controller values** is an inspection mode, not a claim that `-1` is the vendor final-result lifetime.
+
 ## 3. Maximum surface recombination velocity
 
 For wafer thickness $W$ and effective lifetime $\tau_{\rm eff}$,
@@ -57,7 +59,7 @@ S_{\rm max}[{\rm cm/s}]
 50\frac{W_{\mu m}}{\tau_{\mu s}}.
 ```
 
-This is a symmetric-surface upper-bound interpretation.
+This is a symmetric-surface upper-bound interpretation for positive lifetime. For the paired controller sentinel `τ=-1 µs`, PV-2000 final-result exports use the placeholder **Smax = 0** rather than applying the formula to obtain a negative value.
 
 ## 4. Optional Analyzer SRV
 
@@ -210,6 +212,8 @@ The project supports several coordinate families, including:
 
 Geometry validation is tracked separately from lifetime/Smax/Voc validation because coordinate reconstruction is its own input-to-output path.
 
+Paired QSS evidence now covers **MapPattern + RoundWafer**, **SquareRegionPattern + SquareCell**, and **HighDensityPattern + RoundWafer**. In the 100-case corpus, the two nonempty HighDensity/RoundWafer cases contain 145 and 276 sites and reproduce vendor X/Y to about **7.03×10⁻¹⁴ mm**. Other target/pattern combinations retain their own geometry evidence boundary.
+
 ## 10. Scientific interpretation
 
 The three primary vendor-comparison simple-map quantities answer different questions:
@@ -224,6 +228,8 @@ They share the same lifetime input while depending on different physical assumpt
 
 ## 11. Validation status
 
-Current QSS map profiles have paired-output validation for lifetime, geometry, Smax and profile-specific implied-Voc behavior.
+Current QSS evidence separates calculation, geometry and quantity availability. Seven nonempty 100-case XML/vendor-CSV pairs span SquareRegion, Map and HighDensity geometries: positive lifetime agrees to **5.68×10⁻¹⁴ µs**, Smax to **5.00×10⁻¹² cm/s**, and all **39** non-positive controller sentinels reproduce the vendor `Ud./0/0` lifetime/Smax/Voc result convention.
+
+Implied Voc is deliberately narrower. The original reference remains within about 0.1 mV, while the later cross-geometry audit reaches about **4.918 mV** maximum absolute difference. It therefore remains a PV-2000-compatible/inferred quantity outside the tightly regressed instance rather than being promoted together with lifetime/Smax.
 
 Controller-side transient-evaluation formulas are outside the viewer's current scientific reconstruction boundary.

@@ -140,7 +140,7 @@ Pointwise regression on the nine numeric pairs establishes:
 
 The original 305-point reference remains the tighter <0.1 mV Implied-Voc instance. The expanded corpus demonstrates that this tighter figure must not be generalized to all RoundWafer files.
 
-The corpus also establishes an important raw-value convention: **76 of the 96 XML files contain `τeff.d = -1 µs` sentinel sites**. Across the corpus this occurs at **13,649 of 29,464 XML sites**. Matching vendor output preserves the raw sentinel and can carry it into negative Smax values. Runtime therefore preserves raw XML/Smax values for parity/export, while default scientific analysis marks non-positive lifetime unavailable before user filtering. Users can explicitly select Raw / PV-2000 style when inspecting vendor-style raw behavior.
+The older 96-XML corpus establishes that the controller can store **`τeff.d = -1 µs`** as a raw XML sentinel: 76 files contain it, totaling **13,649 of 29,464 XML sites**. The newer 100-case harness corpus resolves the final-result semantics more precisely. Across **39 paired sentinel sites**, PV-2000 exports lifetime as **`Ud.`**, Smax as the numeric placeholder **`0`**, and Implied Voc as **`0`**. Runtime therefore preserves raw XML `-1` for provenance, while PV-2000-compatible derived-result values use the observed placeholders and default scientific analysis excludes non-positive lifetime before user filtering.
 
 ### QSS analyzer-derived SRV and material modes
 
@@ -157,15 +157,17 @@ Implied Voc remains **PV-2000 compatible by default**. Optional Physical Si / Ph
 
 ### HighDensityPattern compatibility
 
-Status: **inferred coordinate reconstruction**, not vendor-validated.
+Status: **paired RoundWafer validation; other target combinations remain independently profile-scoped**.
 
-Older QSS XMLs in the current development set use `HighDensityPattern` with explicit normalized `Coefficients` and a scalar `Dimension`. Observed examples include 15 × 15 and 20 × 20 grids on a 100 mm RoundWafer with 7 mm edge exclusion, and a 35 × 35 grid on a 156 × 156 mm SquareCell with 7 mm edge exclusion. Runtime now requires coefficient count to equal measured-value count and preserves coefficient order.
+The 100-case private corpus supplies two nonempty `QssUpcdMeasurement + HighDensityPattern + RoundWafer` XML/vendor-CSV pairs: **145 sites** from a 15 × 15 normalized coefficient template and **276 sites** from a 20 × 20 template. The shared geometry resolver reproduces vendor X/Y with a maximum error of **7.03e-14 mm**, directly validating `GEOM-HIGHDENSITY-ROUND-001` on QSS data.
 
-For SquareCell, coefficients are scaled to the EdgeExclusion-adjusted rectangle. For RoundWafer, the full normalized coefficient template is filtered with `x²+y² < 1` before scaling by `Diameter/2 - EdgeExclusion`. This exactly reproduces the observed XML point counts: 145 from a 15×15 template and 276 from a 20×20 template. A matching PV-2000 X/Y export is still required before this path can be marked validated.
+Across all seven nonempty QSS pairs in that corpus (four SquareRegion/SquareCell, one Map/RoundWafer and two HighDensity/RoundWafer), positive stored lifetime agrees with vendor output to **5.68e-14 µs** and Smax to **5.00e-12 cm/s**. The same pairs contain **39** non-positive controller sentinels; all 39 follow the quantity-specific `Ud. / 0 / 0` lifetime/Smax/Voc result convention described above. Five additional QSS exports are zero-site acquisitions and do not promote a numeric profile.
+
+This evidence promotes the lifetime/Smax calculation path independently of geometry. It does **not** promote Implied Voc to a vendor-exact cross-profile quantity: finite compatibility error in the seven pairs reaches **4.918 mV**. The previously observed SquareCell HighDensity reconstruction and other QSS pattern/target combinations remain governed by their own geometry evidence rather than inheriting validation from RoundWafer.
 
 ### Valid-data filtering
 
-The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw / PV-2000 style can retain the sentinel for parity inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
+The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw XML/controller values can retain the sentinel for provenance inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
 
 ## Dual QSS injection sweep — paired raw XML/CSV regression
 

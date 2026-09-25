@@ -32,7 +32,7 @@ test('QSS validation metadata separates geometry, stored lifetime, Smax and Voc'
   assert.equal(a.geometryProfile.id,'GEOM-HIGHDENSITY-SQUARE-001');
   assert.equal(a.metrics.lifetime.profileId,'QSS-STORED-LIFETIME-001');
   assert.equal(a.metrics.smax.profileId,'QSS-CALC-LIFETIME-SMAX-001');
-  assert.equal(a.metrics.smax.validation,'numeric-validated-availability-inferred');
+  assert.equal(a.metrics.smax.validation,'validated');
   assert.equal(a.metrics.voc.profileId,null);
   assert.equal(a.metrics.voc.validation,'inferred');
   assert.deepEqual(Q.intrinsicLifetimeMask(d.values,true),[true,false,true]);
@@ -128,6 +128,7 @@ test('125 mm RoundWafer with 5 mm pitch reconstructs the 489-site corpus geometr
 test('PV-2000 -1 lifetime sentinel is preserved raw but can be excluded from analysis support',()=>{
   const Q=PV2000.modules.qss;
   assert.equal(Q.smax(-1,190),-9500);
+  assert.equal(Q.pv2000SmaxResult(-1,190),0);
   const support=Q.intrinsicLifetimeMask([-1,50,100],true);
   assert.deepEqual(support,[false,true,true]);
   const values=[-9500,190,95],metrics={smax:{key:'smax',values}},
@@ -136,6 +137,30 @@ test('PV-2000 -1 lifetime sentinel is preserved raw but can be excluded from ana
   assert.deepEqual(mask,[false,true,true]);
   const bins=Q.histogram(values,mask,5,support);
   assert.equal(bins.reduce((n,b)=>n+b.valid+b.invalid,0),2);
+});
+
+test('QSS vendor-result placeholders remain separate from raw XML lifetime and scientific support',()=>{
+  const Q=PV2000.modules.qss,d={
+    values:[-1,100],patternType:'HighDensityPattern',qssMilli:1000,waferThickness:190,
+    opticalFactor:1,doping:1e15,temperatureC:25,geometryProfile:{id:'GEOM-HIGHDENSITY-ROUND-001',status:'validated'}
+  };
+  const a=Q.analyze(d);
+  assert.deepEqual(a.metrics.lifetime.values,[-1,100]);
+  assert.deepEqual(a.metrics.smax.values,[0,95]);
+  assert.equal(a.metrics.voc.values[0],0);
+  assert.equal(a.metrics.smax.validation,'validated');
+  assert.deepEqual(Q.intrinsicLifetimeMask(d.values,true),[false,true]);
+  Q.applyAnalysisOptions(d,a,{vocModel:'physical-si'});
+  assert.ok(Number.isNaN(a.metrics.voc.values[0]));
+});
+
+test('QSS paired validator uses shared geometry and quantity-specific sentinel availability',()=>{
+  const src=require('node:fs').readFileSync(require.resolve('../scripts/validate_qss_reference.py'),'utf8');
+  assert.match(src,/resolve_xml_geometry/);
+  assert.match(src,/zero acquired sites; no numeric profile promoted/);
+  assert.match(src,/value if math\.isfinite\(value\) and value > 0 else None/);
+  assert.match(src,/else 0\.0 if math\.isfinite\(value\) and value <= 0 else None/);
+  assert.match(src,/Voc diagnostic max=/);
 });
 
 test('SRV conversion supports planar and textured/black formulas with optional bulk lifetime',()=>{
@@ -155,7 +180,7 @@ test('QSS keeps SRV analyzer-only, disabled by default, and planar when enabled'
   const a=Q.analyze(d);
   assert.equal(a.audit.invalidLifetimeCount,1);
   assert.deepEqual(Object.keys(a.metrics),['lifetime','smax','voc','srv']);
-  assert.equal(a.metrics.smax.values[0],-9500);
+  assert.equal(a.metrics.smax.values[0],0);
   assert.equal(a.options.srvEnabled,false);
   assert.equal(a.options.surfaceMode,'planar');
   assert.ok(a.metrics.srv.values.every(Number.isNaN));
@@ -188,7 +213,7 @@ test('QSS default shared filter exactly preserves pre-migration intrinsic-suppor
   assert.deepEqual(state.selection.supportMask,[false,true,true,false]);
 });
 
-test('QSS Raw/PV-2000 style remains distinct from user filtering',()=>{
+test('QSS raw XML/controller mode remains distinct from user filtering',()=>{
   const Q=PV2000.modules.qss,values=[-1,50,100],
     support=Q.intrinsicLifetimeMask(values,false),
     metrics={lifetime:{key:'lifetime',values}},
@@ -231,7 +256,7 @@ test('QSS UI clearly separates Analyzer controls from optional SRV analysis',()=
   const src=require('node:fs').readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.match(src,/Lifetime handling/);
   assert.match(src,/Scientific — exclude τ ≤ 0/);
-  assert.match(src,/Raw vendor values/);
+  assert.match(src,/Raw XML\/controller values/);
   assert.match(src,/Physical Si · Analyzer/);
   assert.match(src,/Additional SRV analysis/);
   assert.match(src,/Calculate SRV/);

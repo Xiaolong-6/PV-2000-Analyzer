@@ -1,5 +1,16 @@
 # Changelog
 
+## v20260925.7 — 2026-09-25
+
+- Closed the 100-case QSS-µPCD HighDensity/sentinel audit with seven nonempty XML/vendor-CSV pairs plus five zero-site acquisitions.
+- Validated shared geometry across four SquareRegion/SquareCell, one Map/RoundWafer and two HighDensity/RoundWafer numeric pairs; maximum X/Y error is about **7.03e-14 mm**.
+- Promoted `QSS-CALC-LIFETIME-SMAX-001` across the paired geometries: positive lifetime agrees to **5.68e-14 µs** and Smax to **5.00e-12 cm/s**.
+- Corrected quantity-specific controller-sentinel semantics from paired evidence: raw XML `τ=-1 µs` remains preserved, while PV-2000 final-result rows use lifetime `Ud.`, Smax `0` and Implied Voc `0` for all **39** observed sentinel sites.
+- Kept Implied Voc outside the promoted calculation profile; cross-geometry compatibility error reaches about **4.918 mV**.
+- Modernized the QSS private validator to resolve geometry independently, classify empty acquisitions explicitly and validate lifetime/Smax availability without widening the Implied-Voc claim.
+- Updated QSS runtime help, reference profiles, algorithm notes, Wiki, handoff and contributor rules to keep raw XML, vendor-result placeholders, scientific availability and user filtering distinct.
+
+
 ## v20260925.6 — 2026-09-25
 
 - Audited all ten harness-generated Dual QSS exports in the 100-case corpus: four are empty acquisitions, one is a legacy laser-power/Lifetime-only branch, and five contain current-style final-result rows.
