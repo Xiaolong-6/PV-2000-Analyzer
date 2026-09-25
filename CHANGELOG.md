@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.15.1 — 2026-09-25 (branch)
+
+- Compactified the LBIC sidebar View panel into a two-column stacked-label control grid, matching the visual language used by Valid-data filter instead of mixing left-label/right-control rows with stacked fields.
+- Normalized sidebar select/input height, padding and label spacing between View and Valid-data filter, and changed the Advanced raw/intermediate toggle to a compact full-width inline row.
+
+
 ## v20260925.15 — 2026-09-25
 
 - Recovered the current managed-DLL Standard-COCOS final-result path for DIT Vfb, Qsc, Qtot, Qit and Minimum Dit as `DIT-RESULT-STANDARD-DLL-002`.
