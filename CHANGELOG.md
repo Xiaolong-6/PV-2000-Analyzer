@@ -1,5 +1,15 @@
 # Changelog
 
+## v20260925.12 — 2026-09-25
+
+- Implemented the recovered finite-wafer/back-surface SPV Enhanced calculation for the paired N-type branch as `SPV-CALC-ENHANCED-N-003`.
+- Validated one real 69-site Enhanced N-type XML/vendor-CSV pair: **28 finite DL/Tau + 41 Ud.**, with **0 availability mismatches**.
+- Enhanced DL maximum absolute error is **2.11e-7 µm** and Tau **1.46e-7 µs**; raw SPV8/SPV6 remain at floating-point parity.
+- Preserved the standard signal preprocessing path, then solved the recovered vendor finite-wafer/back-surface root equation with N-type minority-carrier diffusion coefficient **12.2 cm²/s** and XML wafer-thickness / BSR parameters.
+- Kept Enhanced P-type, texture correction, parsed-signal and manual-linearity branches outside the validated profile.
+- Promoted the SPV validator from Enhanced diagnostic to strict paired validation and updated profile/algorithm/Wiki/handoff documentation.
+
+
 ## v20260925.11 — 2026-09-25
 
 - Modernized the Dual QSS final-result validator to match the current decoupled calculation/geometry architecture; runtime scientific calculations are unchanged.

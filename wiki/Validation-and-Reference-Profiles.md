@@ -85,7 +85,8 @@ The current implemented analyzers include several explicitly named profile famil
 - `LBIC-SINGLE-001` — current-enabled single-beam LBIC;
 - `LBIC-MULTI-002` — current-enabled multi-beam pseudo-square LBIC;
 - `LBIC-REFLECTANCE-003` — reflectance-only LBIC;
-- `SPV-CALC-STANDARD-001` — paired standard two-wavelength SPV DL/Tau path;
+- `SPV-CALC-STANDARD-001` / `SPV-CALC-ZERO-OXIDE-002` — paired standard P-type SPV DL/Tau paths;
+- `SPV-CALC-ENHANCED-N-003` — paired N-type finite-wafer/back-surface Enhanced SPV DL/Tau path;
 - `LEAKAGE-CALC-VSASS-001` — paired Leakage natural-cubic VSASS/LI extraction.
 
 This list is illustrative, not the authoritative profile registry. Exact IDs, matching conditions, tolerances and evidence remain in the repository validation documents.
