@@ -370,7 +370,7 @@
     ctx.strokeStyle=css('--soft');
     ctx.strokeRect(p.l,p.t,W-p.l-p.r,H-p.t-p.b);
     ctx.fillStyle=css('--muted');
-    ctx.font='10px system-ui';
+    ctx.font='11px system-ui';
     ctx.textAlign='center';
     for(const t of niceTicks(xr[0],xr[1],5))ctx.fillText(axisFmt(t),X(t),H-18);
     ctx.fillText(xLabel,(p.l+W-p.r)/2,H-3);
@@ -386,12 +386,10 @@
   }
 
   function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       metric=a.metrics[key],
       values=metric.values,
       activeValues=values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
-      W=canvas.width=760,
-      H=canvas.height=420,
       p={l:58,r:78,t:26,b:48};
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
@@ -567,12 +565,10 @@
   }
 
   function drawHist(canvas,a,key,mask,binCount=30,swapped=true,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       metric=a.metrics[key],
       activeValues=metric.values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
       bins=S.histogram(activeValues,binCount),
-      W=canvas.width=760,
-      H=canvas.height=300,
       p={l:58,r:18,t:24,b:48};
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
@@ -644,14 +640,12 @@
   }
 
   function drawRaw(canvas,d,selected,zoom,onZoom){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       site=d.sites[selected],
       isVcpd=d.measurementKind==='vcpd',
       dark=site?(isVcpd?site.darkRaw.slice():site.darkRaw.map(v=>v-d.offset)):[],
       light=site&&!isVcpd?site.lightRaw.map(v=>v-d.offset):[],
       n=Math.max(dark.length,light.length),
-      W=canvas.width=760,
-      H=canvas.height=300,
       p={l:62,r:18,t:24,b:48};
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
@@ -955,6 +949,7 @@
       if(host.isConnected)redraw();
     });
     redraw();
+    PV.plot.observeResize(host,redraw);
   }
 
   PV.modules=PV.modules||{};

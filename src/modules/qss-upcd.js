@@ -292,11 +292,9 @@
     return nearestSiteValid&&nearestValidSq<=maxDist*maxDist&&den?num/den:NaN;
   }
   function drawMap(canvas,d,a,key,mode,mask,zoom,onZoom,supportMask=null){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       vals=m.values,
-      W=canvas.width=760,
-      H=canvas.height=420,
       p={l:54,r:76,t:28,b:46},
       geometry=targetGeometry(d),
       extent=(geometry?.extent||d.diameter/2||50)*1.06,
@@ -474,11 +472,9 @@
       let j=Math.floor((x.v-lo)/(hi-lo||1)*bins);j=Math.max(0,Math.min(bins-1,j));out[j][mask[x.i]?'valid':'invalid']++});
     return out}
   function drawHist(canvas,a,key,mask,filterKey,filterLo,filterHi,binCount=30,swapped=true,zoom,onZoom,supportMask=null){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       bins=histogram(m.values,mask,binCount,supportMask),
-      W=canvas.width=760,
-      H=canvas.height=300,
       p={l:58,r:18,t:24,b:48};
       ctx.clearRect(0,0,W,H);
       ctx.fillStyle=css('--chart-bg');
@@ -502,7 +498,7 @@
       histYRange=swapped?mr:cr,
       histXPos=v=>p.l+(swapped?countPos(v):metricPos(v))*plotW,
       histYPos=v=>H-p.b-(swapped?metricPos(v):countPos(v))*plotH;
-      ctx.font='10px system-ui';
+      ctx.font='11px system-ui';
       ctx.strokeStyle=css('--grid2');
       ctx.fillStyle=css('--muted');
       ctx.textAlign='center';
@@ -582,12 +578,10 @@
       
   }
   function drawProfile(canvas,d,a,key,mask,zoom,onZoom,supportMask=null){
-    const ctx=canvas.getContext('2d'),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       m=a.metrics[key],
       vals=m.values.filter((v,i)=>Number.isFinite(v)&&(!supportMask||supportMask[i])),
       all=a.metrics[key].values,
-      W=canvas.width=760,
-      H=canvas.height=300,
       p={l:62,r:18,t:24,b:48},
       autoX=[1,Math.max(1,all.length)],
       autoY=vals.length?[Math.min(...vals),Math.max(...vals)]:[0,1],
@@ -601,7 +595,7 @@
       
     ctx.strokeStyle=css('--grid');
       ctx.fillStyle=css('--muted');
-      ctx.font='10px system-ui';
+      ctx.font='11px system-ui';
       for(const yv of niceTicks(yr[0],yr[1],5)){
       const y=Y(yv);
       ctx.beginPath();
@@ -862,6 +856,7 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
+    PV.plot.observeResize(host,redraw);
   }
   PV.modules=PV.modules||{};
     PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,pv2000SmaxResult,generation,impliedVoc,pv2000ImpliedVocResult,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};

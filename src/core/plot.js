@@ -108,6 +108,41 @@
       
     el.onpointerleave=()=>{el.style.cursor='default'};
   }
+  function canvasFrame(canvas,{surface='standard',fallbackWidth=760}={}){
+    const holder=canvas?.parentElement,
+      rect=holder?.getBoundingClientRect?.()||canvas?.getBoundingClientRect?.(),
+      measured=Number(rect?.width)||Number(canvas?.clientWidth)||fallbackWidth,
+      W=Math.max(280,Math.round(measured)),
+      rawH=surface==='compact'?W*5/16:W*9/16,
+      H=Math.round(surface==='compact'?clamp(rawH,180,260):clamp(rawH,260,420)),
+      dpr=clamp(Number(root.devicePixelRatio)||1,1,3),
+      pixelW=Math.max(1,Math.round(W*dpr)),
+      pixelH=Math.max(1,Math.round(H*dpr));
+    if(canvas.style){canvas.style.width='100%';canvas.style.height=`${H}px`}
+    if(canvas.width!==pixelW)canvas.width=pixelW;
+    if(canvas.height!==pixelH)canvas.height=pixelH;
+    const ctx=canvas.getContext('2d');
+    ctx.setTransform?.(dpr,0,0,dpr,0,0);
+    return{ctx,W,H,dpr,surface};
+  }
+  function observeResize(host,onResize){
+    host?.__pvPlotResizeObserver?.disconnect?.();
+    if(!host||typeof root.ResizeObserver!=='function')return null;
+    let last=Number(host.getBoundingClientRect?.().width)||0,raf=0;
+    const schedule=()=>{
+      if(raf)return;
+      const run=()=>{raf=0;if(host.isConnected!==false)onResize?.()};
+      raf=typeof root.requestAnimationFrame==='function'?root.requestAnimationFrame(run):root.setTimeout(run,0);
+    };
+    const observer=new root.ResizeObserver(entries=>{
+      const width=Number(entries?.[0]?.contentRect?.width)||Number(host.getBoundingClientRect?.().width)||0;
+      if(Math.abs(width-last)<1)return;
+      last=width;schedule();
+    });
+    observer.observe(host);
+    host.__pvPlotResizeObserver=observer;
+    return observer;
+  }
   function clear(state){state.x=null;state.y=null;return state}
-  PV.plot={resolve,equalAspectRanges,zoomRange,axisControls,binControls,bindAxisControls,bindBinControls,bind,clear};
+  PV.plot={resolve,equalAspectRanges,zoomRange,axisControls,binControls,bindAxisControls,bindBinControls,bind,canvasFrame,observeResize,clear};
 })(typeof window!=='undefined'?window:globalThis);

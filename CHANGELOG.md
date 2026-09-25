@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.13.3 — 2026-09-25 (branch)
+
+- Added shared responsive/high-DPI Canvas sizing and resize-redraw helpers in the plot core.
+- Migrated ISC/VCPD and QSS-uPCD Canvas plots away from fixed 760×300/420 display assumptions; standard plots now use the same responsive surface sizing.
+- Raised Canvas axis/tick typography to the shared readable baseline and enlarged SVG chart legend/metadata text pending vector-family migration.
+
 ## v20260925.13.2 — 2026-09-25 (branch)
 
 - Added the shared Valid-data-filter/displayed-metric linking hook and migrated ISC/VCPD as the reference implementation.

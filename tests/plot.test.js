@@ -91,3 +91,21 @@ test('Distribution controls keep Swap axes inside Axes and expose a separate Bin
   assert.match(bins,/data-bin-count/);
   assert.match(bins,/value="42"/);
 });
+
+
+test('canvasFrame sizes scientific canvases in CSS pixels and scales backing pixels for device density',()=>{
+  const ctx={setTransform(...args){this.args=args}};
+  const canvas={style:{},width:0,height:0,parentElement:{getBoundingClientRect(){return{width:640}}},getContext(){return ctx}};
+  const frame=P.canvasFrame(canvas);
+  assert.equal(frame.W,640);
+  assert.equal(frame.H,360);
+  assert.equal(canvas.style.width,'100%');
+  assert.equal(canvas.style.height,'360px');
+  assert.equal(canvas.width,640);
+  assert.equal(canvas.height,360);
+  assert.deepEqual(ctx.args,[1,0,0,1,0,0]);
+});
+
+test('shared plot core exposes a resize observer lifecycle for responsive redraws',()=>{
+  assert.equal(typeof P.observeResize,'function');
+});
