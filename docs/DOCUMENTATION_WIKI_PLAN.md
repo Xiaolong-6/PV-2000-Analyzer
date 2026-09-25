@@ -82,6 +82,22 @@ Physical plausibility alone never upgrades a result to “validated”. A parser
 - Do not publish vendor binaries, decompiled/proprietary source, private reference data or confidential sample-identifying material.
 - Keep exact corpus counts/tolerances in validation docs when they would distract from ordinary user guidance.
 
+## Family-page scientific contract
+
+A dedicated-analyzer Wiki page should read as a measurement-science reference, not only as a compatibility/regression ledger. Where applicable, it should cover:
+
+1. **physical measurement principle** — excitation, sensor/detector and what signal changes;
+2. **measurement/acquisition sequence** — what is varied in time, space, wavelength, charge or injection;
+3. **raw observables and provenance** — stored/measured versus corrected/derived quantities;
+4. **governing equations** — the model connecting observables to displayed results;
+5. **assumptions and boundary conditions** — material, geometry, steady-state, finite-thickness and optical/electrical corrections;
+6. **PV-2000 compatibility path** — profile-specific constants, interpolation, clipping, blanking and legacy behavior;
+7. **outputs and interpretation** — what each result means physically and what it does not establish by itself;
+8. **availability/failure cases** — why a quantity can be undefined;
+9. **validation status** — supported envelope in prose, with exact pair counts/tolerances delegated to `REFERENCE_PROFILES.md` and `VALIDATION.md`.
+
+Not every page needs nine literal headings, but the scientific narrative must be complete enough to understand both the measurement physics and the implemented calculation without reading source code.
+
 ## Wiki coverage requirement
 
 The reviewed Wiki source under `main/wiki/` must contain:

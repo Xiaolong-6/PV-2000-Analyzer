@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.20 — 2026-09-25
+
+- Reworked SPV, Leakage, Dual QSS, LBIC and ISC/VCPD Wiki pages as measurement-science references, adding physical principles, governing equations, assumptions and interpretation instead of relying mainly on compatibility/regression notes.
+- Corrected stale/contradictory documentation: Dual QSS now documents its exposed teff.SS/Voc/J0 scalar results, and SPV no longer classifies the paired Enhanced N-type path as unvalidated.
+- Expanded Scientific Foundations with optical generation depth, EQE/IQE and idealized capacitance-relaxation leakage physics; aligned SPV/Leakage algorithm notes and added a durable family-page scientific-content contract.
+- Updated Home/Measurement Families capability summaries and strengthened `docs:check` to require equations plus validation sections on scientific family pages, catch the known SPV/Dual-QSS stale claims and verify HANDOFF's public-main baseline against `VERSION`.
+
+
 ## v20260925.19 — 2026-09-25
 
 - Reworked the wide analyzer shell so toolbar, content and project footer fit exactly inside the viewport. The footer now occupies the bottom shell row and the body no longer contributes a second vertical scrollbar.
