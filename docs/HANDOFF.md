@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-25
 
+## Audit hardening (v20260925.27)
+
+The post-v26 full-project audit found and closed two engineering-level failure modes without changing scientific formulas. `roundGrid()` now rejects invalid/non-positive pitch before any loop bound is derived, and MapPattern resolution requires a positive finite X/Y pitch before assigning a generated-grid interpretation. XML loading is now transaction-like at the shell boundary: render must succeed before the new dataset becomes `current`; on failure the previous dataset, labels and folder context are restored. Adjacent navigation advances only after a successful load.
+
+The public repository now tracks `package-lock.json` (lockfile v3) and CI installs with `npm ci` under Node 22. This also removes the cross-repository false failure where private validation checked out the public analyzer and `npm ci` failed solely because no lockfile existed.
+
 ## Current dataset adaptive summary layout (v20260925.25)
 
 Dedicated analyzer **Current dataset** panels now use one compact count-adaptive presentation. Wide sidebars divide the row evenly across the analyzer's actual metric count (currently 3 in Dual QSS, 4 in most analyzers and 5 in JZero), so there is no empty fourth slot or orphan fifth item. At the medium two-column workspace, the panel becomes compact label/value rows rather than a forced card grid. The inner metric cards were removed only for Current dataset; other validation/status components keep their existing treatment. ISC/VCPD displays the completed acquisition schedule as **Complete**.
@@ -26,8 +32,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.26`.
-- Closure branch: `fix/dual-qss-fixedpoints-point-averaging-v26`.
+- Public main: `v20260925.27`.
+- Current hardening branch: `fix/audit-hardening-20260925`.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 

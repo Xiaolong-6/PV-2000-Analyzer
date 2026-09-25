@@ -2,6 +2,7 @@
   const PV=root.PV2000=root.PV2000||{};
 
   function roundGrid(radius,pitchX,pitchY,count){
+    if(![radius,pitchX,pitchY].every(Number.isFinite)||radius<=0||pitchX<=0||pitchY<=0)return[];
     const pts=[],nx=Math.ceil(radius/pitchX),ny=Math.ceil(radius/pitchY),eps=1e-9;
     // MapPattern/RoundWafer uses a strict interior. The inward epsilon is a floating-point guard;
     // do not share this predicate with pseudoSquareGrid or HighDensity circular clipping.
@@ -307,20 +308,21 @@
     const useSchedule=scheduled=>{
       scheduleMeta=scheduleForPointCount(scheduled,pointCount,{allowPartialPrefix});
       pointsMm=scheduleMeta.points;
-    };
+    },
+      validPitch=Number.isFinite(pitchX)&&pitchX>0&&Number.isFinite(pitchY)&&pitchY>0;
 
     if(patternType==='MapPattern'){
-      if(boundary.shape==='circle'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+      if(boundary.shape==='circle'&&boundary.scheduled&&validPitch){
         useSchedule(roundGrid(boundary.scheduled.radius,pitchX,pitchY));
         sourceSpace='generated-target-mm';
         interpretation='target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
-      }else if(boundary.shape==='rect'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+      }else if(boundary.shape==='rect'&&boundary.scheduled&&validPitch){
         useSchedule(centeredRectGrid(boundary.scheduled.halfWidth,boundary.scheduled.halfHeight,pitchX,pitchY));
         sourceSpace='generated-target-mm';
         interpretation='centered-target-pitch-grid';
         acquisitionOrder='x-fast / ascending-y';
-      }else if(boundary.shape==='pseudo-square'&&boundary.scheduled&&Number.isFinite(pitchX)&&Number.isFinite(pitchY)){
+      }else if(boundary.shape==='pseudo-square'&&boundary.scheduled&&validPitch){
         useSchedule(pseudoSquareGrid(
           boundary.scheduled.halfWidth,
           boundary.scheduled.halfHeight,

@@ -21,7 +21,7 @@ jobs:
         with:
           python-version: '3.x'
       - name: Install dev tooling
-        run: npm install --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Quality gates
         run: npm run check
       - name: Validator syntax smoke
