@@ -42,6 +42,32 @@
     const mobility=isPType?1288.07:461.511;
     return dlUm*dlUm*.01/(.0259*mobility);
   }
+  function enhancedDlEquation(lengthCm,surfaceVelocity,waferCm,ratio,z6Cm,z8Cm,isPType){
+    if(!(lengthCm>0)||!Number.isFinite(surfaceVelocity)||!(waferCm>0)||!Number.isFinite(ratio))return NaN;
+    const diffusion=isPType?36.4:12.2,a=diffusion/lengthCm,wl=waferCm/lengthCm;
+    let b;
+    if(surfaceVelocity!==0){
+      const sh=Math.sinh(wl),ch=Math.cosh(wl),as=a/surfaceVelocity;
+      b=(as*sh+ch)/(sh+as*ch);
+    }else b=Math.tanh(wl);
+    return((1-(z6Cm/lengthCm)**2)/(1-(z8Cm/lengthCm)**2))*((1-b*z8Cm/lengthCm)/(1-b*z6Cm/lengthCm))-ratio;
+  }
+  function enhancedDiffusionLength(ratio,z6Um,z8Um,waferUm,surfaceVelocity,isPType){
+    if(![ratio,z6Um,z8Um,waferUm,surfaceVelocity].every(Number.isFinite)||!(waferUm>0))return NaN;
+    const waferCm=waferUm*1e-4,z6Cm=z6Um*1e-4,z8Cm=z8Um*1e-4,
+      fn=l=>enhancedDlEquation(l,surfaceVelocity,waferCm,ratio,z6Cm,z8Cm,isPType);
+    let lo=.001,hi=3,flo=fn(lo),fhi=fn(hi);
+    if(!Number.isFinite(flo)||!Number.isFinite(fhi)||flo*fhi>0)return NaN;
+    if(flo===0)return lo*1e4;if(fhi===0)return hi*1e4;
+    for(let i=0;i<220;i++){
+      const mid=(lo+hi)/2,fmid=fn(mid);
+      if(!Number.isFinite(fmid))return NaN;
+      if(Math.abs(fmid)<1e-14||Math.abs(hi-lo)<1e-15){lo=hi=mid;break}
+      if(flo*fmid<=0){hi=mid;fhi=fmid}else{lo=mid;flo=fmid}
+    }
+    const dl=(lo+hi)/2*1e4;
+    return dl>0&&dl<=2500?dl:NaN;
+  }
   function calculatePoint(spv8,spv6,s){
     if(s.parseSignals)return{dl:NaN,tau:NaN,spv8,spv6,corrected8:NaN,corrected6:NaN,undefinedValue:true};
     let c8=spv8,c6=spv6;
@@ -61,8 +87,10 @@
       c6*=oxideCorrection(s.wavelength6,s.oxideThickness);
     }
     c8/=t8;c6/=t6;
-    if(!(spv8>spv6)||c6===0||s.useEnhancedMode)return{dl:NaN,tau:NaN,spv8,spv6,corrected8:c8,corrected6:c6,undefinedValue:true};
-    const ratio=c8/c6,dl=(z6-ratio*z8)/(ratio-1);
+    if(!(spv8>spv6)||c6===0)return{dl:NaN,tau:NaN,spv8,spv6,corrected8:c8,corrected6:c6,undefinedValue:true};
+    const ratio=c8/c6,dl=s.useEnhancedMode
+      ?enhancedDiffusionLength(ratio,z6,z8,s.waferThickness,s.bsrVelocity,s.isPType)
+      :(z6-ratio*z8)/(ratio-1);
     if(!(dl>0)||dl>2500)return{dl:NaN,tau:NaN,spv8,spv6,corrected8:c8,corrected6:c6,undefinedValue:true};
     return{dl,tau:lifetimeFromDl(dl,s.isPType),spv8,spv6,corrected8:c8,corrected6:c6,undefinedValue:false};
   }
@@ -85,6 +113,7 @@
         linearityRatioOk:X.num(iteration,'LineartiyRatioOK',NaN),reflectivity8:X.num(m,'ReflectivityCorrection8',0),reflectivity6:X.num(m,'ReflectivityCorrection6',0),
         useTextureCorrection:bool(X.text(m,'UseTextureCorrection','false')),textureCorrection:X.num(m,'TextureCorrection',NaN),
         useEnhancedMode:bool(X.text(m,'UseEnhancedMode','false')),parseSignals:bool(X.text(m,'ParseSignals','false')),
+        waferThickness:X.num(m,'WaferThickness',NaN),bsrVelocity:X.num(m,'BSRVelocity',NaN),
         isPType:X.text(m,'DopingType','PType')==='PType'
       },
       sites=items.map((item,index)=>{const means=signalMeans(item),spv8=means[0]*settings.multiplier,spv6=means[1]*settings.multiplier;return{index,...calculatePoint(spv8,spv6,settings),coord:null}}),
@@ -99,8 +128,8 @@
         allowPartialPrefix:G.isIncompleteAcquisitionStatus(common.status)}),
       coords=geometryModel.pointsMm,
       result={...common,...settings,sites,coords,geometryModel,patternType,targetType,diameter,edgeExclusion,pitchX,pitchY,
-        patternName:X.text(pattern,'Name','')||X.text(pattern,'DisplayName',''),waferThickness:X.num(m,'WaferThickness',NaN),
-        bsrVelocity:X.num(m,'BSRVelocity',NaN),dopingType:X.text(m,'DopingType',''),temperatureC:settings.chuckTemperature};
+        patternName:X.text(pattern,'Name','')||X.text(pattern,'DisplayName',''),waferThickness:settings.waferThickness,
+        bsrVelocity:settings.bsrVelocity,dopingType:X.text(m,'DopingType',''),temperatureC:settings.chuckTemperature};
     sites.forEach((site,index)=>{site.coord=coords[index]||null});
     const calc=P.resolveCalculation('spv',result),geom=P.resolveGeometry(result);
     result.calculationProfile=calc?{id:calc.id,status:calc.status}:null;
@@ -118,7 +147,7 @@
   function analyze(data){
     const profileId=data.calculationProfile?.id||null,validation=data.calculationProfile?.status||Q.VALIDATION.INFERRED,
       make=(id,key,label,short,unit,values,provenance)=>Q.create({id,key,label,short,unit,values,provenance,
-        modelId:key==='dl'||key==='tau'?'spv-two-wavelength-dl-v1':null,profileId,validation});
+        modelId:key==='dl'||key==='tau'?(data.useEnhancedMode?'spv-enhanced-finite-wafer-dl-v1':'spv-two-wavelength-dl-v1'):null,profileId,validation});
     return{metrics:{
       dl:make('spv-dl','dl','Diffusion length','DL','µm',data.sites.map(s=>s.dl),Q.PROVENANCE.DERIVED_COMPATIBILITY),
       tau:make('spv-tau','tau','Lifetime derived from diffusion length','Tau','µs',data.sites.map(s=>s.tau),Q.PROVENANCE.DERIVED_COMPATIBILITY),
@@ -207,7 +236,7 @@
         <section class="panel"><h3>Selected site</h3><div class="site-controls"><button id="spvPrev">←</button><select id="spvSite">${data.sites.map((_,i)=>`<option value="${i}">Site ${i+1}</option>`).join('')}</select><button id="spvNext">→</button></div><dl class="meta"><dt>Position</dt><dd>${current.coord?`${fmt(current.coord.x,2)}, ${fmt(current.coord.y,2)} mm`:'—'}</dd><dt>DL</dt><dd>${fmt(current.dl)} µm</dd><dt>Tau</dt><dd>${fmt(current.tau)} µs</dd><dt>SPV8</dt><dd>${fmt(current.spv8)} mV</dd><dt>SPV6</dt><dd>${fmt(current.spv6)} mV</dd></dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${data.sites.length}</b><span>XML sites</span></div><div><b>${finiteDl}</b><span>finite DL/Tau</span></div><div><b>${data.coords.length}</b><span>coordinates</span></div><div><b>${state.validCount}</b><span>pass filter</span></div></div></section>
       </aside><section class="plots"><div class="panel chart"><header><b>Wafer map</b><span class="grow"></span><select id="spvMetric">${options()}</select>${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div></section>
-      <section class="plots"><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div><section class="panel"><h3>Compatibility model</h3><p class="note">The validated standard profile reproduces DL/Tau and raw SPV channels from paired PV-2000 output. Parsed-signal and enhanced-mode DL are intentionally unavailable until paired numeric evidence establishes those branches.</p></section></section></div>`;
+      <section class="plots"><div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div><section class="panel"><h3>Compatibility model</h3><p class="note">Paired PV-2000 output validates the standard two-wavelength profiles and the finite-wafer/back-surface Enhanced N-type profile. Parsed-signal, texture-corrected, manual-linearity and Enhanced P-type branches remain outside the validated envelope.</p></section></section></div>`;
       host.querySelector('#spvMetric').value=metricKey;host.querySelector('#spvSite').value=String(site);
       host.querySelector('#spvMetric').onchange=e=>{metricKey=e.target.value;zoom={map:{x:null,y:null},hist:{x:null,y:null}};redraw()};
       host.querySelector('#spvSite').onchange=e=>{site=Number(e.target.value);shell()};
@@ -237,6 +266,6 @@
 
   PV.modules=PV.modules||{};
   PV.modules.spv={types:['SPVMeasurement'],familyId:'spv',capabilities:{map:true,distribution:true,validDataFilter:true,profile:true},parse,analyze,render,
-    calculatePoint,linearityFactor,penetrationDepth,oxideCorrection,lifetimeFromDl};
+    calculatePoint,linearityFactor,penetrationDepth,oxideCorrection,lifetimeFromDl,enhancedDlEquation,enhancedDiffusionLength};
   PV.registry.register(PV.modules.spv);
 })(typeof window!=='undefined'?window:globalThis);
