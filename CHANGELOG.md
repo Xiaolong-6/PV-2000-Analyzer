@@ -1,14 +1,11 @@
 # Changelog
 
-## v20260925.20.4 — 2026-09-25 (branch)
-
-- Fixed the new pseudo-square boundary regression to treat JavaScript `-0` and `0` as the same geometric coordinate while retaining strict checks for the boundary-site set and row/column indices.
-
-## v20260925.20.3 — 2026-09-25 (branch)
+## v20260925.21 — 2026-09-25
 
 - Locked the three intentionally different circular-boundary contracts in `src/core/geometry.js`: strict inward-guard Map/Round rastering, inclusive outward-guard PseudoSquare rastering, and strict zero-epsilon HighDensity clipping.
-- Added boundary-focused regression tests that distinguish the epsilon directions instead of checking only ordinary interior points.
-- Documented why these predicates must not be deduplicated blindly; HighDensity's zero-epsilon rule remains anchored by the vendor-compatible 35 × 35 = 893-site schedule.
+- Added boundary-focused regressions for the epsilon direction itself plus established 305-site Map/Round, 54,449-site Map/PseudoSquare and 893-site HighDensity/Round schedule anchors.
+- Kept JavaScript `-0` / `0` coordinate equivalence in the pseudo-square regression while preserving strict checks for the boundary-site set and row/column indices.
+- Documented the pattern-specific rationale in the architecture and handoff docs so these predicates are not deduplicated without new paired boundary evidence.
 
 ## v20260925.20.2 — 2026-09-25 (branch)
 
