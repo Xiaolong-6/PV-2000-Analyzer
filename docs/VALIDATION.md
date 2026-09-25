@@ -207,7 +207,7 @@ See `docs/ALGORITHMS_DUAL_QSS.md` and `docs/REFERENCE_PROFILES.md`.
 
 ## Dual QSS numeric final-result parity — QSS-INJ-RESULT-001
 
-Two real `DualQssMeasurement` XML files have matching **numeric PV-2000 final-result CSV exports**. The profile is `OnePointPattern + RoundWafer`, Back/Back source selection, non-Auger.
+The original core evidence is two real `DualQssMeasurement` XML files with matching **numeric PV-2000 final-result CSV exports**, both `OnePointPattern + RoundWafer`, Back/Back source selection and non-Auger. The 100-case harness adds three compatible current-style `OnePointPattern` result rows, including one `SquareCell` target; target geometry is therefore validated independently from the OnePoint calculation envelope.
 
 The independent private reconstruction starts from XML only and reproduces vendor QDC internals plus all nine final scalar outputs. The public runtime validator then executes the browser implementation against the same two XML+CSV pairs.
 
@@ -235,7 +235,9 @@ npm run validate:dual-qss-runtime-results -- <case-dir> [<case-dir> ...]
 
 The 100-case harness adds five nonempty Dual QSS final-result rows beyond the original two-pair regression. Three OnePoint rows remain compatible with the established non-Auger Back/Back calculation family. One of them has `CalculateJZeroParams=false`: PV-2000 exports finite teff.d/teff.SS/Δn/Smax/Voc but `Ud.` for `teff.SS Max` and maximum-Smax. The runtime now preserves that quantity-level unavailability instead of exposing internally computable maxima.
 
-Two historical `FixedPointsPattern + PseudoSquareCell` rows give conflicting calculation evidence: one is close to the current reconstruction, while the other differs materially (for example ≈0.43 µs teff.SS, ≈10.16 µs teff.SS Max and ≈1.30 fA/cm² Basore J0). The result-profile geometry gate therefore remains unchanged.
+Two historical `FixedPointsPattern + PseudoSquareCell` rows give conflicting calculation evidence: one is close to the current reconstruction, while the other differs materially (for example ≈0.43 µs teff.SS, ≈10.16 µs teff.SS Max and ≈1.30 fA/cm² Basore J0). They remain diagnostic and do not widen the OnePoint calculation gate.
+
+The modernized 100-case result validator now reports **3 numeric PASS + 7 diagnostics**: four zero-result acquisitions, one legacy Laser-Power/Lifetime-only branch and the two conflicting FixedPoints rows are explicitly non-promoting diagnostics. The three PASS rows include two RoundWafer targets and one SquareCell target; all resolve through `GEOM-ONEPOINT-CENTER-001`.
 
 The validator is a development regression gate only; runtime remains XML-only. This validation does **not** cover Auger correction, alternate source selections, a sweep crossing 1000 mSun without an exact 1000-mSun sample, or the conflicting historical FixedPoints result branch.
 

@@ -165,7 +165,7 @@ Logarithmic X is the default because the supplied schedules span orders of magni
 
 Six additional `OnePointPattern` XMLs exercise high-range injection schedules with `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They confirm that these recipe requests occur on the same raw Dual QSS schema and that the one-point geometry remains meaningful context.
 
-No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The two-pair `QSS-INJ-RESULT-001` validates the full non-Auger Back/Back result path only for its two real paired cases; these six XML-only files do not widen that validation envelope.
+No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The original two-pair core plus three compatible 100-case current-style OnePoint rows now support `QSS-INJ-RESULT-001`; these six XML-only files still do not widen that validation envelope.
 
 ## Remaining compatibility boundaries
 
@@ -180,4 +180,4 @@ Still outside the validated browser compatibility envelope:
 - generalization of the scalar result path to the broader 273-pair raw-export corpus;
 - vendor LP/HP stitching semantics, if any.
 
-The raw 273-pair corpus and the two-pair numeric result profile remain separate evidence sets. New categorical branches require their own real XML + matching numeric PV-2000 CSV before the runtime profile is widened.
+The raw 273-pair corpus and the numeric final-result profile remain separate evidence sets. The 100-case final-result validator classifies three compatible OnePoint rows as PASS and four empty acquisitions, one legacy Lifetime-only branch and two conflicting FixedPoints/PseudoSquare rows as diagnostics. New categorical branches require their own real XML + matching numeric PV-2000 CSV before the runtime profile is widened.

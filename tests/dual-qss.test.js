@@ -218,3 +218,15 @@ test('Dual QSS no-J0 result keeps vendor teff.SS Max and Smax Max unavailable',(
   assert.equal(r.smaxMax.available,false);
   assert.equal(r.smaxMax.rule,'not-requested');
 });
+
+
+test('Dual QSS result validator separates OnePoint calculation parity from diagnostic branches',()=>{
+  const src=fs.readFileSync(require.resolve('../scripts/validate_dual_qss_result_reference.py'),'utf8');
+  assert.match(src,/DUAL-QSS DIAGNOSTIC/);
+  assert.match(src,/legacy Laser Power \/ Lifetime-only result branch/);
+  assert.match(src,/zero acquired result rows/);
+  assert.match(src,/outside QSS-INJ-RESULT-001 OnePoint calculation envelope/);
+  assert.match(src,/CalculateJZeroParams=false expects teff\.SS Max \/ Smax Max to be Ud\./);
+  assert.match(src,/resolve_xml_geometry/);
+  assert.doesNotMatch(src,/paired result profile expects RoundWafer/);
+});

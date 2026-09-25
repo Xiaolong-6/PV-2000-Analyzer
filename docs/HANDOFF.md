@@ -2,10 +2,10 @@
 
 ## Current baseline
 
-- Main baseline before this validation-only branch: `v20260925.9`.
-- Feature branch: `validation/final-evidence-diagnostics`.
-- Scope: finish 100-case validator semantics for known non-numeric/independent branches without changing runtime scientific calculations.
-- QSS, DIT and LBIC closure changes are already merged; this branch reclassifies zero-site VCPD and the paired SPV Enhanced N-type evidence as diagnostics rather than false regression failures.
+- Main baseline before this validation-only branch: `v20260925.10`.
+- Feature branch: `validation/dual-qss-100-result-closure`.
+- Scope: finish the 100-case Dual QSS final-result validator without widening the runtime scientific profile.
+- The candidate classifies the ten harness exports as **3 numeric PASS + 7 diagnostics**: four empty acquisitions, one legacy Lifetime-only branch and two conflicting FixedPoints/PseudoSquare rows remain non-promoting evidence.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -23,7 +23,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 6. **completed:** split LBIC calculation semantics from geometry; the 100-case closure validates eight current+scattered numeric pairs / 27,376 sites plus one five-site direct+scattered pair, while two zero-site exports remain diagnostic and finite direct+scattered DL remains withheld;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
 8. **partially completed:** final-result direct/bookkeeping audit validates initial VDark and fixes the Initial Qc off-by-one; corrected-light/N-type/flatband/Dit regenerated-export drift remains an evidence boundary and the stronger original-pair Standard COCOS rules are unchanged;
-9. **completed:** re-audit Dual QSS alternate geometries; keep the result-profile gate because the paired FixedPoints/PseudoSquare evidence conflicts, while preserving the newly proven no-J0 quantity availability rule;
+9. **completed:** re-audit Dual QSS final-result branches; three current-style OnePoint rows pass independently of target geometry, the no-J0 maximum-quantity availability rule is preserved, and four empty + one legacy + two conflicting FixedPoints cases are explicit diagnostics;
 10. **completed:** Leakage and the paired standard SPV map path are implemented; the Enhanced N-type SPV pair is now an explicit diagnostic/evidence wall, and IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
