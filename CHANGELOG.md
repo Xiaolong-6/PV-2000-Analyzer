@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.13.1 — 2026-09-25 (branch)
+
+- Opened the analysis-workspace UI refactor and recorded the implementation/audit plan before code changes.
+- Defined the desktop semantic columns as dataset/analysis state (left), whole-sample overview (middle), and selected-point/local detail (right).
+- Defined the visualization normalization target: shared plot sizing/typography, bidirectional active-metric/filter synchronization, and a full dedicated-analyzer content audit.
+
 ## v20260925.13 — 2026-09-25
 
 - Resolved the DIT final-result corrected-light semantics across **13 paired files / 43 sites**: `VLight_result = VDark - F × (VDark - VLight_measured)`, with maximum absolute error about **3.8e-15 V**.
