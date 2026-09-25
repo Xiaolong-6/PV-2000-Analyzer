@@ -6,7 +6,13 @@
   const anum=(e,n,d=NaN)=>{const raw=e?.getAttribute?.(n);if(raw===null||raw===undefined||raw==='')return d;const v=Number(raw);return Number.isFinite(v)?v:d};
   const astr=(e,n,d='')=>e?.getAttribute?.(n)??d;
   function directPath(e,names){for(const n of names){e=X.direct(e,n);if(!e)return null}return e}
-  function vector(e,n){const h=X.direct(e,n),v=h?X.children(h)[0]:null;return v?X.children(v).map(x=>Number(x.textContent)).filter(Number.isFinite):[]}
+  function vector(e,n){
+    const holder=X.direct(e,n);
+    if(!holder)return[];
+    const direct=X.children(holder),nested=direct.length===1?X.children(direct[0]):[];
+    const values=nested.length?nested:direct;
+    return values.map(x=>Number(x.textContent)).filter(Number.isFinite);
+  }
   function nodeRange(e,n,lo,hi){
     const r=X.direct(e,n);
     return{min:X.num(r,'Min',lo),max:X.num(r,'Max',hi)};
@@ -618,7 +624,27 @@
       +row('Invalid / ≤0',a.invalidCount);
   }
   function render(host,d,a){let sets=[{label:d.resultName||d.name||'Current XML',data:d,fileName:''}],selSet=0,selPoint=0,logX=true,zoom={curve:{x:null,y:null},transient:{x:null,y:null}};const current=()=>sets[selSet]?.data.points[selPoint];
-    function selectedHtml(){const p=current(),t=p?.transient;if(!p)return'—';return`<dl class="meta">${row('Dataset',sets[selSet].label)}${row('Point',selPoint+1)}${row('Intensity',`${fmt(p.intensityMilli)} mSun`)}${row('Lifetime',`${fmt(lifetimeValue(p),4)} µs`,'Read from TransientInfo@LifeTime in the imported XML, with XML Values used only as a fallback when TransientInfo LifeTime is unavailable.')}${row('Evaluation',t?.evaluation||'—')}${row('Delta',`${fmt(t?.delta,3)} ns`)}${row('Pre-trigger',`${fmt(t?.preTrigger,3)} µs`)}${row('Auto cursor',fmt(t?.autoCursor,0))}${row('Time cursor',`${fmt(t?.timeCursor,3)} µs`)}${row('Average',fmt(t?.average,0))}${row('Amplitude',`${fmt(t?.amplitude,3)} mV`)}${row('Microwave',`${fmt(t?.microwave,4)} GHz`)}${row('Transient laser power',fmt(t?.laserPower,4))}${row('Voltage range',`${fmt(t?.voltage,3)} mV`)}${row('Offset',`${fmt(t?.offset,4)} mV`)}${row('Time base',`${fmt(t?.timeBase,3)} µs`)}${row('Samples',t?.points?.length||0)}</dl>`}
+    function selectedHtml(){
+      const p=current(),t=p?.transient;
+      if(!p)return'—';
+      return`<dl class="meta">${row('Dataset',sets[selSet].label)}\
+${row('Point',selPoint+1)}\
+${row('Intensity',`${fmt(p.intensityMilli)} mSun`)}\
+${row('Lifetime',`${fmt(lifetimeValue(p),4)} µs`,'Read from TransientInfo@LifeTime in the imported XML, with XML Values used only as a fallback when TransientInfo LifeTime is unavailable.')}\
+${row('Evaluation',t?.evaluation||'—')}\
+${row('Delta',`${fmt(t?.delta,3)} ns`)}\
+${row('Pre-trigger',`${fmt(t?.preTrigger,3)} µs`)}\
+${row('Auto cursor',fmt(t?.autoCursor,0))}\
+${row('Time cursor',`${fmt(t?.timeCursor,3)} µs`)}\
+${row('Average',fmt(t?.average,0))}\
+${row('Amplitude',`${fmt(t?.amplitude,3)} mV`)}\
+${row('Microwave',`${fmt(t?.microwave,4)} GHz`)}\
+${row('Transient laser power',fmt(t?.laserPower,4))}\
+${row('Voltage range',`${fmt(t?.voltage,3)} mV`)}\
+${row('Offset',`${fmt(t?.offset,4)} mV`)}\
+${row('Time base',`${fmt(t?.timeBase,3)} µs`)}\
+${row('Samples',t?.points?.length||0)}</dl>`;
+    }
     function legendHtml(){
       const visible=sets.slice(0,4).map((s,i)=>{
         const range=s.data.rangeClass.replace('-range injection','').replace(' injection','');
@@ -627,7 +653,60 @@
       return visible+(sets.length>4?`<span class="dual-qss-legend-more">+${sets.length-4}</span>`:'');
     }
     function comparisonHtml(){return sets.length===1?'<span class="note">Add another Dual QSS XML to overlay LP/HP or repeat measurements.</span>':sets.map((s,i)=>`<div class="comparison-row"><span class="comparison-swatch" style="background:var(${colors[i%colors.length]})"></span><span>${esc(s.label)}</span>${i?`<button data-remove="${i}">×</button>`:''}</div>`).join('')}
-    host.innerHTML=`<div class="module-grid dual-qss-module"><aside class="side"><section class="panel"><h3>Measurement ${help('Reads the DualQssMeasurement injection-intensity, stored lifetime vectors and transient waveform path. QSS-INJ-RESULT-001 additionally reconstructs the PV-2000 steady-state result table from XML only; its two real XML+CSV pairs validate teff.d/teff.SS, max teff.SS, Δn, Smax, implied Voc and requested J0 outputs.')}</h3><dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive lifetime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Geometry',Number.isFinite(d.diameter)?`Ø${fmt(d.diameter,1)} mm ${d.targetType||d.shapeType||''}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'—')}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl></section><section class="panel"><h3>Comparison overlay</h3><div id="dqComparisons" class="comparison-list">${comparisonHtml()}</div><label class="btn comparison-open">Add XML<input id="dqAdd" type="file" accept=".xml,text/xml,application/xml" multiple></label></section><section class="panel"><h3>Results summary</h3><dl class="meta">${resultSummaryHtml(a)}</dl>${a.vendorResult?.available?'<button id="dqExportResults">Export result table</button>':''}</section><section class="panel"><h3>Selected injection point</h3><div id="dqSelected">${selectedHtml()}</div></section><details class="panel"><summary>Acquisition metadata</summary><dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Within QSS-INJ-RESULT-001, Basore and K-S J0 are reconstructed on the paired non-Auger path; vendor zero results retain the legacy Ud. state.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl></details></aside><section class="plots"><div class="panel chart"><header><b>Lifetime vs QSS intensity</b>${help('Lifetime is read only from the imported XML: TransientInfo@LifeTime is used when available, with XML Values as a fallback. PV-2000 CSV/raw exports are development-validation evidence and are never runtime inputs.')}<span id="dqCurveLegend" class="dual-qss-inline-legend"></span><span class="grow"></span><select id="dqScale"><option value="log">Log X</option><option value="linear">Linear X</option></select>${PV.plot.axisControls('dqCurveAxes')}<button id="dqExportCurve">Export</button></header><div class="canvas-wrap"><canvas id="dqCurve"></canvas></div></div></section><section class="plots">${positionHtml(d)}<div class="panel chart"><header><b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow"></span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button></header><div class="canvas-wrap"><canvas id="dqTransient"></canvas></div></div></section></div>`;
+    host.innerHTML=`<div class="module-grid dual-qss-module">\
+<aside class="side">\
+<section class="panel">\
+<h3>Measurement ${help('Reads the DualQssMeasurement injection-intensity, stored lifetime vectors and transient waveform path. QSS-INJ-RESULT-001 additionally reconstructs the PV-2000 steady-state result table from XML only; its two real XML+CSV pairs validate teff.d/teff.SS, max teff.SS, Δn, Smax, implied Voc and requested J0 outputs.')}</h3>\
+<dl class="meta">${row('Result',d.resultName||'—')}${row('Recipe',d.name||'—')}${row('Substrate',d.substrateId||'—')}${row('Range',d.rangeClass)}${row('Points',d.points.length)}${row('Positive lifetime',`${a.validCount} / ${d.points.length}`)}${row('Pattern',d.patternName||d.patternType||'—')}${row('Geometry',Number.isFinite(d.diameter)?`Ø${fmt(d.diameter,1)} mm ${d.targetType||d.shapeType||''}${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'—')}${row('Wafer thickness',`${fmt(d.waferThickness,1)} µm`)}${row('Doping',Number.isFinite(d.doping)?`${d.doping.toExponential(3)} cm⁻³ ${d.dopingType}`:'—')}${row('Optical factor',fmt(d.opticalFactor,4))}${row('Laser power setting',fmt(d.laserPower,3))}</dl>\
+</section>\
+<section class="panel">\
+<h3>Comparison overlay</h3>\
+<div id="dqComparisons" class="comparison-list">${comparisonHtml()}</div>\
+<label class="btn comparison-open">Add XML<input id="dqAdd" type="file" accept=".xml,text/xml,application/xml" multiple>\
+</label>\
+</section>\
+<section class="panel">\
+<h3>Results summary</h3>\
+<dl class="meta">${resultSummaryHtml(a)}</dl>${a.vendorResult?.available?'<button id="dqExportResults">Export result table</button>':''}</section>\
+<section class="panel">\
+<h3>Selected injection point</h3>\
+<div id="dqSelected">${selectedHtml()}</div>\
+</section>\
+<details class="panel">\
+<summary>Acquisition metadata</summary>\
+<dl class="meta">${row('Probe',d.probe||'—')}${row('Bias',d.bias||'—')}${row('Save transient',d.saveTransient||'—')}${row('Auto setting',d.autoSetting||'—')}${row('Evaluation mode index',fmt(d.evaluationModeIndex,0))}${row('QSS lamp intensity',fmt(d.qssLampIntensity,3))}${row('Calculate J0',d.calculateJ0||'—','Stored recipe flag. Within QSS-INJ-RESULT-001, Basore and K-S J0 are reconstructed on the paired non-Auger path; vendor zero results retain the legacy Ud. state.')}${row('Include KS J0',d.includeKsJ0||'—')}${row('Auger correction',d.augerCorrection||'—')}${row('Δτ J0 limit',fmt(d.deltaTauLimit))}${row('Default Δn',fmt(d.defaultDeltaN,3))}${row('Default Δn range',fmt(d.defaultDeltaNRange,3))}${row('Measurement velocity',fmt(d.measurementVelocity,4))}${row('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}</dl>\
+</details>\
+</aside>\
+<section class="plots">\
+<div class="panel chart">\
+<header>\
+<b>Lifetime vs QSS intensity</b>${help('Lifetime is read only from the imported XML: TransientInfo@LifeTime is used when available, with XML Values as a fallback. PV-2000 CSV/raw exports are development-validation evidence and are never runtime inputs.')}<span id="dqCurveLegend" class="dual-qss-inline-legend">\
+</span>\
+<span class="grow">\
+</span>\
+<select id="dqScale">\
+<option value="log">Log X</option>\
+<option value="linear">Linear X</option>\
+</select>${PV.plot.axisControls('dqCurveAxes')}<button id="dqExportCurve">Export</button>\
+</header>\
+<div class="canvas-wrap">\
+<canvas id="dqCurve">\
+</canvas>\
+</div>\
+</div>\
+</section>\
+<section class="plots">${positionHtml(d)}<div class="panel chart">\
+<header>\
+<b>Stored transient</b>${help('Raw SmallPoint Time/Voltage waveform from the selected injection point. Paired PV-2000 raw CSV exports identify the Y quantity as Voltage [mV] and match the exported samples exactly. The yellow dashed line marks TimeCursor.')}<span class="grow">\
+</span>${PV.plot.axisControls('dqTransientAxes')}<button id="dqExportTransient">Export</button>\
+</header>\
+<div class="canvas-wrap">\
+<canvas id="dqTransient">\
+</canvas>\
+</div>\
+</div>\
+</section>\
+</div>`;
     host.querySelector('#dqScale').onchange=e=>{logX=e.target.value==='log';zoom.curve={x:null,y:null};redraw()};host.querySelector('#dqAdd').onchange=async e=>{for(const f of e.target.files||[]){try{const p=PV.xml.parse(await f.text());if(p.type!=='DualQssMeasurement')throw new Error(`${f.name}: not DualQssMeasurement.`);const z=parse(p);sets.push({label:z.resultName||z.name||f.name,data:z,fileName:f.name})}catch(err){alert(err.message)}}e.target.value='';zoom.curve={x:null,y:null};redraw()};
     function redraw(){
       if(selSet>=sets.length){selSet=0;selPoint=0}

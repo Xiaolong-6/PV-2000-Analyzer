@@ -1,15 +1,54 @@
 const test=require('node:test'),assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const {DOMParser}=require('@xmldom/xmldom');
 global.PV2000={};
 require('../src/core/stats.js');
 require('../src/core/profiles.js');
 require('../src/profiles/geometry.js');
 require('../src/core/geometry.js');
 require('../src/core/registry.js');
-PV2000.xml={direct(){return null},children(){return[]}};
+require('../src/core/xml.js');
 PV2000.ui={};
 PV2000.plot={};
 PV2000.exporter={csv(){}};
 require('../src/modules/dual-qss.js');
+
+function parseFixture(xmlText){
+  const doc=new DOMParser().parseFromString(xmlText,'application/xml');
+  const job=doc.documentElement,measurement=PV2000.xml.direct(job,'Measurement');
+  return PV2000.modules.dualQss.parse({
+    doc,job,measurement,type:PV2000.xml.attrType(measurement)
+  });
+}
+
+test('Dual QSS parse maps a vendor-shaped XML fixture through the real XML helpers',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','dual-qss-minimal.xml'),'utf8');
+  const d=parseFixture(xml);
+  assert.equal(d.type,'DualQssMeasurement');
+  assert.equal(d.resultName,'Dual QSS parser fixture');
+  assert.equal(d.substrateId,'fixture-wafer');
+  assert.equal(d.patternType,'OnePointPattern');
+  assert.equal(d.targetType,'RoundWafer');
+  assert.equal(d.points.length,2);
+  assert.deepEqual(d.intensity,[681,1000]);
+  assert.equal(d.points[0].lifetime,216.4370125);
+  assert.equal(d.points[1].power,2.5e13);
+  assert.equal(d.points[0].transient.lifetime,216.431);
+  assert.deepEqual(d.points[0].transient.points,[{x:0,y:10},{x:5,y:12}]);
+  assert.equal(d.waferThickness,180);
+  assert.equal(d.doping,1e15);
+  assert.equal(d.coord.x,0);
+  assert.equal(d.coord.y,0);
+});
+
+test('Dual QSS vector parsing accepts direct numeric children as well as vendor array wrappers',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','dual-qss-minimal.xml'),'utf8')
+    .replaceAll('<ArrayOfDouble>','').replaceAll('</ArrayOfDouble>','');
+  const d=parseFixture(xml);
+  assert.deepEqual(d.intensity,[681,1000]);
+  assert.equal(d.points[0].lifetime,216.4370125);
+  assert.equal(d.points[1].power,2.5e13);
+});
 
 test('Dual QSS range classification separates supplied low/high schedules',()=>{
   assert.equal(PV2000.modules.dualQss.classifyRange([1,2,3,5,464]),'Low-range injection');

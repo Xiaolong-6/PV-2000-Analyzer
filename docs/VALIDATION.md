@@ -9,6 +9,21 @@ The central registry of validated reference envelopes is `docs/REFERENCE_PROFILE
 
 Public reference data do not change the runtime contract: the analyzer still consumes XML only. CSV/XPS/screenshots are test and reverse-engineering evidence. A public dataset also does not by itself prove the PV-2000 internal algorithm; the validation label applies only to the observed input→output envelope.
 
+### CI validation semantics
+
+Public GitHub CI does **not** have access to `private/reference/`, so it does not claim private PV-2000 vendor parity. CI runs unit/integration tests, including sanitized XML parser fixtures, checks validator script syntax, and builds the distribution. The CI log emits an explicit `Private vendor parity: NOT RUN` notice instead of executing private-data validators that would only return `SKIP`.
+
+On a maintainer machine that has the private reference corpus, use the required-data commands when a missing corpus must be treated as a failure:
+
+```text
+npm run validate:qss:required
+npm run validate:dual-qss:required
+npm run validate:dual-qss-results:required
+npm run validate:lbic:required
+```
+
+The ordinary `validate:*` commands keep their convenient optional-data behavior for exploratory local work. The `:required` variants fail when the validator reports `SKIP` without any `PASS`, so a green required run is evidence that paired reference data were actually exercised.
+
 ## SPV — independent calculation and geometry regression
 
 Two private 1649-site `SPVMeasurement` XML + numeric CSV pairs establish `SPV-CALC-STANDARD-001`.
