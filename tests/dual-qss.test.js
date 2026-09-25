@@ -66,6 +66,28 @@ test('Dual QSS parser preserves point-average lifetime vectors and applies vendo
   assert.deepEqual(d.geometryModel.pointsMm,[{x:0,y:0}]);
 });
 
+
+test('Python geometry bridge forwards FixedPoints PointValues to the canonical resolver',()=>{
+  const {spawnSync}=require('node:child_process');
+  const fixture=path.join(__dirname,'fixtures','dual-qss-point-average-minimal.xml');
+  const code=[
+    "import json,sys",
+    "sys.path.insert(0,'scripts')",
+    "from validate_geometry_profiles import resolve_xml_geometry",
+    "result,_=resolve_xml_geometry(sys.argv[1],1)",
+    "print(json.dumps(result))"
+  ].join(';');
+  const proc=spawnSync(process.env.PYTHON||process.env.PYTHON3||'python',['-c',code,fixture],{
+    cwd:path.resolve(__dirname,'..'),encoding:'utf8'
+  });
+  assert.equal(proc.status,0,proc.stderr||proc.stdout);
+  const result=JSON.parse(proc.stdout.trim());
+  assert.equal(result.status,'complete');
+  assert.equal(result.profileId,'GEOM-FIXEDPOINTS-ABS-001');
+  assert.equal(result.interpretation,'explicit-fixed-points');
+  assert.deepEqual(result.points,[{x:0,y:0}]);
+});
+
 test('Dual QSS point averaging is controlled by DoPointAveraging, not PointAverageCount alone',()=>{
   const rows=[[100,200],[110,190],[90,210]];
   assert.deepEqual(PV2000.modules.dualQss.effectiveLifetimeVector(rows,'false'),[100,200]);
