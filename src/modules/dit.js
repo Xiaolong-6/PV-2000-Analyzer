@@ -866,10 +866,33 @@
         }).join(''),
         vendorResultRows=s.ResultProfile
           ?`<dt>PV-2000 result profile</dt><dd>${esc(s.ResultProfile)}</dd><dt>PV-2000 Vfb</dt><dd>${fmt(s.ResultVfb,6)} V</dd><dt>PV-2000 Qsc</dt><dd>${sci(s.ResultQsc,4)} cm⁻²</dd><dt>PV-2000 Qtot</dt><dd>${sci(s.ResultQtot,4)} cm⁻²</dd><dt>PV-2000 Qit</dt><dd>${sci(s.ResultQit,4)} cm⁻²</dd><dt>PV-2000 Minimum Dit</dt><dd>${sci(s.ResultDit,4)} cm⁻² eV⁻¹</dd>`
-          :'';
+          :'',
+        targetText=d.targetType==='RoundWafer'&&Number.isFinite(d.diameter)
+          ?`Ø${fmt(d.diameter,1)} mm · ${d.targetType}`
+          :d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)
+            ?`${fmt(d.targetWidth,1)} × ${fmt(d.targetHeight,1)} mm · ${d.targetType}`
+            :d.targetType||'—',
+        algorithmValidN=analysis.sites.filter(item=>item.valid).length,
+        coordinateN=analysis.sites.filter(item=>Number.isFinite(item.coord?.x)&&Number.isFinite(item.coord?.y)).length;
         
       host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
-        <section class="panel"><h3>Measurement ${help('All metadata below is read directly from the imported PV-2000 XML except the semiconductor Material selected in Analysis controls.')}</h3><div class="measurement-title">${esc(d.resultName)}</div><div class="measurement-sub">${d.useCocosII?'<span class="mode-badge good">COCOS-II ON</span>':'<span class="mode-badge">Standard COCOS</span>'} · ${esc(analysis.options.material)} · ${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³</div></section>
+        <section class="panel"><h3>Measurement ${help('Core measurement identity and sample context. Lower-priority timing, instrument and recipe details are kept under Acquisition metadata.')}</h3><dl class="meta">
+          ${md('Result',esc(d.resultName||'—'),'Result identifier stored in the PV-2000 XML.')}
+          ${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}
+          ${md('Substrate',esc(d.substrateId||'—'),metaHelp.substrate)}
+          ${md('Status',esc(d.status||'—'),metaHelp.status)}
+          ${md('Pattern',esc(d.patternName||d.patternType||'—'),metaHelp.pattern)}
+          ${md('Target',esc(targetText),'Nominal target geometry stored in the XML.')}
+          ${md('COCOS mode',d.useCocosII?'COCOS-II':'Standard COCOS',metaHelp.c2)}
+          ${md('Material',esc(analysis.options.material),'Analyzer semiconductor model selected in Analysis controls.')}
+          ${md('Doping',`${esc(d.dopingType)}-type · ${sci(d.doping,3)} cm⁻³`,'Semiconductor conductivity type and base doping used by the DIT calculations.')}
+        </dl></section>
+        <section class="panel current-dataset-panel"><h3>Current dataset ${help('Completeness and active-population counts for the currently imported XML.')}</h3><div class="validation">
+          <div><b>${analysis.sites.length}</b><span>XML sites</span></div>
+          <div><b>${algorithmValidN} / ${analysis.sites.length}</b><span>algorithm valid</span></div>
+          <div><b>${coordinateN} / ${analysis.sites.length}</b><span>coordinates</span></div>
+          <div><b>${filterState.validCount} / ${analysis.sites.length}</b><span>pass filter</span></div>
+        </div></section>
         ${analysisControls()}
         ${PV.ui.validDataFilterMarkup({
           prefix:'ditFilter',
@@ -880,15 +903,11 @@
         <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Each row shows valid-site mean ± sample standard deviation after intrinsic validity, the active Valid-data filter and quantity availability are applied. Point-specific values remain in the right-hand Selected site / Measurement point panel.')}</summary><dl class="meta compact-summary">${summaryRows}</dl></details>
 
         <details class="panel">\
-<summary>Measurement metadata ${help('Detailed recipe, substrate, timing and COCOS settings parsed directly from the imported XML.')}</summary>\
-<dl class="meta meta-detail">${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}\
-${md('Substrate ID',esc(d.substrateId||'—'),metaHelp.substrate)}\
-${md('Lot ID',esc(d.lotId||'—'),metaHelp.lot)}\
-${md('Status',esc(d.status||'—'),metaHelp.status)}\
+<summary>Acquisition metadata ${help('Lower-priority timing, instrument, calibration and COCOS recipe settings parsed directly from the imported XML.')}</summary>\
+<dl class="meta meta-detail">${md('Lot ID',esc(d.lotId||'—'),metaHelp.lot)}\
 ${md('Start',esc(d.start||'—'),metaHelp.start)}\
 ${md('End',esc(d.end||'—'),metaHelp.end)}\
 ${md('Elapsed',esc(d.elapsed||'—'),metaHelp.elapsed)}\
-${md('Pattern',`${esc(d.patternName||d.patternType||'—')} · ${analysis.sites.length} sites`,metaHelp.pattern)}\
 ${md('Data points / Vcpd',fmt(d.numberOfDataPoints,0),metaHelp.points)}\
 ${md('Measurement interval',`${fmt(d.measurementInterval,4)} s`,metaHelp.interval)}\
 ${md('Vcpd offset',`${fmt(d.offset,6)} V`,metaHelp.offset)}\
