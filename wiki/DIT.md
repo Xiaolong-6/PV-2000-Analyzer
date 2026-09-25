@@ -153,6 +153,14 @@ Flat band is estimated from the local relationship between the dark and illumina
 
 The corresponding corona charge is $Q_{c,fb}$, with flat-band potential $V_{fb}$.
 
+PV-2000 final-result evidence shows that the initial corona charge includes the charged state before the stored PreProcess attempts:
+
+```math
+Q_{c,init}=(N_{\rm pre}+1)\,\Delta Q_{\rm pre}.
+```
+
+Across **13 paired final-result files / 43 sites**, this rule matches vendor `Initial Qc` exactly. Initial `VDark` also agrees to floating-point precision. Regenerated `VLight`, N-type Vsb and downstream flatband/Dit quantities retain their separate historical/version-dependent validation boundary.
+
 If $Q_{c,init}$ is the inferred initial-state charge,
 
 ```math
@@ -230,6 +238,6 @@ The analyzer currently supports silicon and a legacy-compatible germanium model.
 
 ## 12. Validation status
 
-Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. COCOS-II and material extensions retain their documented profile status until matching output establishes parity.
+Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. `DIT-RESULT-INITIAL-001` additionally validates final-result initial VDark and Initial Qc bookkeeping across 13 paired files without promoting the regenerated corrected-light/Vsb/flatband/Dit branches. COCOS-II and material extensions retain their documented profile status until matching output establishes parity.
 
 Exact validation envelopes are maintained in docs/REFERENCE_PROFILES.md.
