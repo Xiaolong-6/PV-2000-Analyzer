@@ -903,7 +903,23 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         <details class="panel"><summary>Recipe charge sequence ${help('Corona charge increments, target ranges and loop limits controlling barrier adjustment and the main COCOS sweep.')}</summary><dl class="meta meta-detail">${md('PreProcess ΔQc',`${sci(d.pre.charge,3)} cm⁻²`,metaHelp.preCharge)}${md('PreProcess target',`${esc(d.pre.targetMin)} to ${esc(d.pre.targetMax)}`,metaHelp.preTarget)}${md('Pre attempts / extra',`${fmt(d.pre.attempts,0)} / ${fmt(d.pre.extra,0)}`,metaHelp.preAttempts)}${md('Process ΔQc',`${sci(d.process.charge,3)} cm⁻²`,metaHelp.processCharge)}${md('Process target',`${esc(d.process.targetMin)} to ${esc(d.process.targetMax)}`,metaHelp.processTarget)}${md('Process attempts / extra',`${fmt(d.process.attempts,0)} / ${fmt(d.process.extra,0)}`,metaHelp.processAttempts)}</dl></details>
 
       </aside><section class="plots overview">
-        <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 500"></svg></div></div>
+        <div class="panel chart map-panel"><header>
+          ${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}
+          ${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}
+          <span class="grow"></span>
+          <select id="ditMapMetric">
+            <option value="Qtot">Qtot</option>
+            <option value="Dit">Minimum Dit (PV2000-style)</option>
+            <option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option>
+            <option value="EOT">EOT</option>
+            <option value="Cox">Cox</option>
+            <option value="Qsc">Qsc</option>
+            <option value="InitialQc">Initial Qc</option>
+            <option value="MaxVsb">Max |Vsb|</option>
+          </select>
+          ${PV.plot.axisControls('ditMapAxes')}
+          <button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button>
+        </header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 500"></svg></div></div>
       </section><section class="plots detail">
         <div class="dit-detail-sticky">
           <section class="panel dit-selected-panel">
