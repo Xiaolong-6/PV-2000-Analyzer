@@ -386,7 +386,7 @@ test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shar
   assert.match(src,/axisControls\('qHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(src,/binControls\('qHistBins',histBins\)/);
   assert.match(src,/bindBinControls\(host,'qHistBins',histBins/);
-  assert.match(src,/drawHist\(host\.querySelector\('#qHist'\),a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
+  assert.match(src,/histCanvas\?drawHist\(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
   assert.doesNotMatch(src,/id="qSwapHistAxes"/);
 });
 
@@ -403,7 +403,7 @@ test('ISC keeps validated quantities, geometry-aware map and standardized Distri
   assert.match(isc,/axisControls\('iHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(isc,/binControls\('iHistBins',histBins\)/);
   assert.match(isc,/bindBinControls\(host,'iHistBins',histBins/);
-  assert.match(isc,/drawHist\(host\.querySelector\('#iHist'\),a,metricKey,displayMask,histBins,histSwapped/);
+  assert.match(isc,/histCanvas\?drawHist\(histCanvas,a,metricKey,displayMask,histBins,histSwapped/);
   assert.doesNotMatch(isc,/id="iSwapHistAxes"/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
@@ -512,4 +512,23 @@ test('QSS, Dual QSS and Leakage respect overview/detail semantics',()=>{
   assert.ok(dual.indexOf('<h3>Selected injection point</h3>')>dual.indexOf('</aside>'));
   assert.match(leakage,/Raw leakage readings/);
   assert.match(leakage,/PV\.plot\.canvasFrame\(canvas\)/);
+});
+
+test('one-point analyzers suppress population-only plots and use measurement-point wording',()=>{
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8');
+  const spv=fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8');
+  assert.match(qss,/onePoint=d\.values\.length===1/);
+  assert.match(qss,/onePoint\?'Measurement position':'Wafer map'/);
+  assert.match(qss,/onePoint\?'':`<div class="panel chart"><header><b>Distribution/);
+  assert.match(isc,/d\.sites\.length===1\?'Measurement position'/);
+  assert.match(isc,/d\.sites\.length===1\?'Measurement point':'Selected site'/);
+  assert.match(spv,/data\.sites\.length===1\?'Measurement position':'Wafer map'/);
+  assert.match(spv,/data\.sites\.length===1\?'':`<div class="panel chart"><header><b>Distribution/);
+});
+
+test('QSS smooth rendering is compatible with high-DPI canvas transforms',()=>{
+  const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.doesNotMatch(qss,/createImageData|putImageData/);
+  assert.match(qss,/ctx\.fillRect\(px,py,step,step\)/);
 });
