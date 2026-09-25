@@ -540,3 +540,9 @@ test('DIT analysis rebuild keeps the displayed map metric and filter metric sync
   assert.match(src,/const key=metrics\[preferredKey\]\?preferredKey:'Qtot';\n      mapKey=key;/);
   assert.match(src,/linkedSelect:'#ditMapMetric'/);
 });
+
+test('LBIC stacked local profiles use a horizontal divider at wide and medium widths',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.lbic-module \.lbic-profile-columns\{[^}]*grid-template-columns:1fr/);
+  assert.match(css,/\.lbic-module \.profile-pane\+\.profile-pane\{[^}]*border-left:0;[^}]*border-top:1px solid var\(--border\)/);
+});

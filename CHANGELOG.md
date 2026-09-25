@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.14.6 — 2026-09-25 (branch)
+
+- Final pre-merge review aligned the durable architecture wording with QSS: whole-dataset acquisition-order profiles are overview surfaces, while selected-point traces remain local detail.
+- Fixed the LBIC right-column stacked X/Y profiles to use a horizontal divider at wide widths instead of retaining the obsolete two-column left border.
+
 ## v20260925.14.5 — 2026-09-25 (branch)
 
 - Completed the analysis-workspace UI refactor across all dedicated analyzers: semantic desktop columns, responsive plot surfaces, readable plot typography, and bidirectional displayed-quantity / Valid-data-filter synchronization.

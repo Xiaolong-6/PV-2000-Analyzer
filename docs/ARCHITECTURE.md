@@ -385,7 +385,7 @@ On wide desktop layouts:
 
 - **left — dataset / analysis state:** Measurement identity, current dataset/acquisition context, Analysis controls, Valid-data filter, Results summary and collapsed provenance/full metadata;
 - **middle — population / whole-sample overview:** Map or measurement-position overview, Distribution and other dataset-level spatial/statistical views;
-- **right — point / local detail:** Selected site, Selected pixel or Measurement point plus raw readings, transients, acquisition profiles, point-specific fits/curves and local line profiles.
+- **right — point / local detail:** Selected site, Selected pixel or Measurement point plus raw readings, selected-point transients, point-specific fits/curves and local line profiles. A whole-dataset acquisition-order profile remains an overview surface rather than being moved here.
 
 Selected-site/pixel detail does not belong in the left sidebar. A true one-point family should use **Measurement point** instead of implying a selection action.
 
