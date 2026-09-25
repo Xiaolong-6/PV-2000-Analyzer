@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.14.3 — 2026-09-25 (branch)
+
+- Split dense UI event/render code introduced by the workspace migration so the strengthened source-density gate can inspect it normally.
+- No scientific or interaction semantics changed in this cleanup.
+
 ## v20260925.14.1 — 2026-09-25 (branch)
 
 - Merged the latest main baseline (`v20260925.14`) into the workspace-UI branch while preserving the new DIT result-Vsb semantics alongside the UI refactor.

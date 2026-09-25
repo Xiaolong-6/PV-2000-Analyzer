@@ -169,8 +169,41 @@
       Xp=x=>p.l+(x-xr[0])/(xr[1]-xr[0]||1)*(W-p.l-p.r),Yp=y=>H-p.b-(y-yr[0])/(yr[1]-yr[0]||1)*(H-p.t-p.b),
       css=name=>getComputedStyle(document.documentElement).getPropertyValue(name).trim();
     ctx.strokeStyle=css('--grid2');ctx.fillStyle=css('--muted');
-    for(let i=0;i<=4;i++){const x=xr[0]+(xr[1]-xr[0])*i/4,y=yr[0]+(yr[1]-yr[0])*i/4,px=Xp(x),py=Yp(y);ctx.beginPath();ctx.moveTo(px,p.t);ctx.lineTo(px,H-p.b);ctx.stroke();ctx.textAlign='center';ctx.fillText(fmt(x,2),px,H-19);ctx.beginPath();ctx.moveTo(p.l,py);ctx.lineTo(W-p.r,py);ctx.stroke();ctx.textAlign='right';ctx.fillText(fmt(y,4),p.l-7,py+4)}
-    for(const s of series){ctx.strokeStyle=css(s.stroke);ctx.lineWidth=1.7;ctx.beginPath();let started=false;s.values.forEach((v,i)=>{const y=v-data.offset;if(!Number.isFinite(y))return;const x=Xp(i*s.dt),py=Yp(y);if(started)ctx.lineTo(x,py);else{ctx.moveTo(x,py);started=true}});ctx.stroke()}
+    for(let i=0;i<=4;i++){
+      const x=xr[0]+(xr[1]-xr[0])*i/4,
+        y=yr[0]+(yr[1]-yr[0])*i/4,
+        px=Xp(x),
+        py=Yp(y);
+      ctx.beginPath();
+      ctx.moveTo(px,p.t);
+      ctx.lineTo(px,H-p.b);
+      ctx.stroke();
+      ctx.textAlign='center';
+      ctx.fillText(fmt(x,2),px,H-19);
+      ctx.beginPath();
+      ctx.moveTo(p.l,py);
+      ctx.lineTo(W-p.r,py);
+      ctx.stroke();
+      ctx.textAlign='right';
+      ctx.fillText(fmt(y,4),p.l-7,py+4);
+    }
+    for(const s of series){
+      ctx.strokeStyle=css(s.stroke);
+      ctx.lineWidth=1.7;
+      ctx.beginPath();
+      let started=false;
+      s.values.forEach((v,i)=>{
+        const y=v-data.offset;
+        if(!Number.isFinite(y))return;
+        const x=Xp(i*s.dt),py=Yp(y);
+        if(started)ctx.lineTo(x,py);
+        else{
+          ctx.moveTo(x,py);
+          started=true;
+        }
+      });
+      ctx.stroke();
+    }
     ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.fillText('Time [s]',(p.l+W-p.r)/2,H-3);ctx.save();ctx.translate(13,(p.t+H-p.b)/2);ctx.rotate(-Math.PI/2);ctx.fillText('Vcpd - offset [V]',0,0);ctx.restore();
     PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
   }
@@ -192,8 +225,44 @@
       '<section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>'+stats+'</tbody></table></div></section><details class="panel"><summary>Compatibility model</summary><p class="note meta-detail">PV-2000-compatible VSASS uses mean Vcpd-offset subtraction, the local samples around 1.2 s, and natural-cubic interpolation at 1.2 s minus the stored polarity delay. Calculation validation and geometry validation are tracked independently.</p></details></aside>'+
       '<section class="plots overview"><div class="panel chart"><header><b>Measurement position</b><span class="grow"></span></header><div class="chart-stage map-stage" id="leakagePosition">'+positionSvg(data,site)+'</div></div></section><section class="plots detail"><section class="panel"><h3>'+(data.sites.length===1?'Measurement point':'Selected site')+'</h3><div class="site-controls"><button id="leakPrev">←</button><select id="leakSite">'+data.sites.map((_,i)=>'<option value="'+i+'">Site '+(i+1)+'</option>').join('')+'</select><button id="leakNext">→</button></div><dl class="meta"><dt>Position</dt><dd id="leakPositionText"></dd><dt>VSASS+</dt><dd id="leakPositive"></dd><dt>VSASS-</dt><dd id="leakNegative"></dd><dt>LI</dt><dd id="leakLi"></dd></dl></section><div class="panel chart"><header><b>Raw leakage readings</b><span class="grow"></span>'+PV.plot.axisControls('leakRawAxes')+'</header><div class="canvas-wrap"><canvas id="leakRaw"></canvas></div></div></section>'+
       '</div>';
-    const redraw=()=>{const current=data.sites[site]||{},pt=current.coord;host.querySelector('#leakSite').value=String(site);host.querySelector('#leakPositionText').textContent=pt?`${fmt(pt.x,3)}, ${fmt(pt.y,3)} mm`:'—';host.querySelector('#leakPositive').textContent=`${fmt(current.vsassPositive)} V`;host.querySelector('#leakNegative').textContent=`${fmt(current.vsassNegative)} V`;host.querySelector('#leakLi').textContent=`${fmt(current.li)} V`;host.querySelector('#leakagePosition').innerHTML=positionSvg(data,site);drawRaw(host.querySelector('#leakRaw'),data,site,zoom.raw,n=>{zoom.raw=n;redraw()});PV.plot.bindAxisControls(host,'leakRawAxes',zoom.raw,n=>{zoom.raw=n;redraw()})};
-    host.querySelector('#leakSite').onchange=e=>{site=Number(e.target.value);zoom.raw={x:null,y:null};redraw()};host.querySelector('#leakPrev').onclick=()=>{if(site>0){site--;zoom.raw={x:null,y:null};redraw()}};host.querySelector('#leakNext').onclick=()=>{if(site<data.sites.length-1){site++;zoom.raw={x:null,y:null};redraw()}};redraw();PV.plot.observeResize(host,redraw);
+    const redraw=()=>{
+      const current=data.sites[site]||{},pt=current.coord;
+      host.querySelector('#leakSite').value=String(site);
+      host.querySelector('#leakPositionText').textContent=pt?`${fmt(pt.x,3)}, ${fmt(pt.y,3)} mm`:'—';
+      host.querySelector('#leakPositive').textContent=`${fmt(current.vsassPositive)} V`;
+      host.querySelector('#leakNegative').textContent=`${fmt(current.vsassNegative)} V`;
+      host.querySelector('#leakLi').textContent=`${fmt(current.li)} V`;
+      host.querySelector('#leakagePosition').innerHTML=positionSvg(data,site);
+      drawRaw(host.querySelector('#leakRaw'),data,site,zoom.raw,n=>{
+        zoom.raw=n;
+        redraw();
+      });
+      PV.plot.bindAxisControls(host,'leakRawAxes',zoom.raw,n=>{
+        zoom.raw=n;
+        redraw();
+      });
+    };
+    host.querySelector('#leakSite').onchange=e=>{
+      site=Number(e.target.value);
+      zoom.raw={x:null,y:null};
+      redraw();
+    };
+    host.querySelector('#leakPrev').onclick=()=>{
+      if(site>0){
+        site--;
+        zoom.raw={x:null,y:null};
+        redraw();
+      }
+    };
+    host.querySelector('#leakNext').onclick=()=>{
+      if(site<data.sites.length-1){
+        site++;
+        zoom.raw={x:null,y:null};
+        redraw();
+      }
+    };
+    redraw();
+    PV.plot.observeResize(host,redraw);
   }
 
   PV.modules=PV.modules||{};

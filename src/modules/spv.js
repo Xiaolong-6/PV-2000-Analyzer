@@ -180,7 +180,18 @@
     ticks(yr[0],yr[1]).forEach(t=>{ctx.beginPath();ctx.moveTo(p.l,yp(t));ctx.lineTo(W-p.r,yp(t));ctx.stroke()});
     const sx=Math.max(1.5,Math.abs(xp((data.pitchX||1)/2)-xp(-(data.pitchX||1)/2))),
       sy=Math.max(1.5,Math.abs(yp((data.pitchY||1)/2)-yp(-(data.pitchY||1)/2)));
-    data.coords.forEach((pt,i)=>{const v=metric.values[i];if(!pt||!mask[i]||!Number.isFinite(v))return;const x=xp(pt.x),y=yp(pt.y);ctx.fillStyle=color((v-lo)/(hi-lo||1));ctx.fillRect(x-sx/2,y-sy/2,sx,sy);if(i===selected){ctx.strokeStyle=css('--yellow');ctx.lineWidth=2;ctx.strokeRect(x-sx/2,y-sy/2,sx,sy)}});
+    data.coords.forEach((pt,i)=>{
+      const v=metric.values[i];
+      if(!pt||!mask[i]||!Number.isFinite(v))return;
+      const x=xp(pt.x),y=yp(pt.y);
+      ctx.fillStyle=color((v-lo)/(hi-lo||1));
+      ctx.fillRect(x-sx/2,y-sy/2,sx,sy);
+      if(i===selected){
+        ctx.strokeStyle=css('--yellow');
+        ctx.lineWidth=2;
+        ctx.strokeRect(x-sx/2,y-sy/2,sx,sy);
+      }
+    });
     if(data.geometryModel.shape==='circle'){
       ctx.strokeStyle=css('--text');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(xp(0),yp(0),Math.abs(xp(data.diameter/2)-xp(0)),0,2*Math.PI);ctx.stroke();
       const er=data.geometryModel.scheduled?.radius;if(Number.isFinite(er)){ctx.strokeStyle=css('--muted');ctx.setLineDash([6,4]);ctx.beginPath();ctx.arc(xp(0),yp(0),Math.abs(xp(er)-xp(0)),0,2*Math.PI);ctx.stroke();ctx.setLineDash([])}

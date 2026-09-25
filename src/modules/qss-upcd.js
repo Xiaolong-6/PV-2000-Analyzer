@@ -462,7 +462,21 @@
         const available=!supportMask||supportMask[best],
           state=available?(mask[best]?'VALID':'FILTERED'):'UNAVAILABLE';
         showTip(tip,e,`<b>Point ${best+1}</b><br>X ${fmt(pt.x,1)} mm · Y ${fmt(pt.y,1)} mm<br>${esc(m.short)} = ${fmt(v,4)} ${esc(m.unit)}<br><span class="${mask[best]?'good':'bad'}">${state}</span>`)}else hideTip(tip)};
-      canvas.onclick=e=>{const rect=canvas.getBoundingClientRect(),mx=(e.clientX-rect.left)*W/rect.width,my=(e.clientY-rect.top)*H/rect.height;let best=-1,bestD=Infinity;d.coords.forEach((pt,i)=>{if(!pt)return;const dd=(X(pt.x)-mx)**2+(Y(pt.y)-my)**2;if(dd<bestD){bestD=dd;best=i}});if(best>=0&&bestD<500)onSelect?.(best)};
+      canvas.onclick=e=>{
+        const rect=canvas.getBoundingClientRect(),
+          mx=(e.clientX-rect.left)*W/rect.width,
+          my=(e.clientY-rect.top)*H/rect.height;
+        let best=-1,bestD=Infinity;
+        d.coords.forEach((pt,i)=>{
+          if(!pt)return;
+          const dd=(X(pt.x)-mx)**2+(Y(pt.y)-my)**2;
+          if(dd<bestD){
+            bestD=dd;
+            best=i;
+          }
+        });
+        if(best>=0&&bestD<500)onSelect?.(best);
+      };
     PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
     return{lo,hi};
@@ -704,7 +718,19 @@
       }).join('');
     }
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
-    function selectedHtml(){const state=filterController.snapshot(),pt=d.coords[selected],support=state.selection.supportMask[selected],active=state.selection.activeMask[selected],status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';return `<dl class="meta">${metaRow('Point',String(selected+1))}${metaRow('Valid-data state',status)}${metaRow('Coordinate',pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—')}${Object.values(visibleMetrics()).map(m=>metaRow(m.short,Number.isFinite(m.values[selected])?`${fmt(m.values[selected])} ${m.unit}`:'—')).join('')}</dl>`}
+    function selectedHtml(){
+      const state=filterController.snapshot(),
+        pt=d.coords[selected],
+        support=state.selection.supportMask[selected],
+        active=state.selection.activeMask[selected],
+        status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE',
+        coordinate=pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—',
+        values=Object.values(visibleMetrics()).map(m=>{
+          const value=Number.isFinite(m.values[selected])?`${fmt(m.values[selected])} ${m.unit}`:'—';
+          return metaRow(m.short,value);
+        }).join('');
+      return `<dl class="meta">${metaRow('Point',String(selected+1))}${metaRow('Valid-data state',status)}${metaRow('Coordinate',coordinate)}${values}</dl>`;
+    }
     function renderShell(){
       const filterState=filterController.snapshot(),
         validN=filterState.validCount;
