@@ -211,12 +211,13 @@ The original paired reference contains 305 sites. A later private corpus adds **
 - effective lifetime: XML → paired CSV exact for the later nine pairs;
 - Smax: `W/(2τ)` reproduces the paired exports to numeric export precision; the original reference remains at floating-point precision;
 - ordinary numeric diameter/pitch/thickness/doping/optical-factor changes stay inside this family when the same XML/result path is used;
-- PV-2000 can store **`τeff.d = -1 µs` as a raw sentinel** and can carry it numerically into raw Smax/display summaries. Raw values must therefore be preserved for parity and export rather than silently rewritten.
+- PV-2000 can store **`τeff.d = -1 µs` as a raw XML/controller sentinel**. The later 100-case paired final-result exports resolve this separately from display availability: sentinel sites export lifetime as `Ud.`, Smax as `0`, and Implied Voc as `0`. Raw XML values remain preserved for provenance.
 
 **Implied Voc compatibility envelope**
 
 - the original 305-point reference instance remains within approximately **0.1 mV** maximum error using the documented compatibility `ni(T)` model;
-- across the later nine-pair corpus, the same model reaches approximately **1.94 mV maximum absolute error** on finite vendor Implied-Voc values;
+- across the later nine-pair RoundWafer corpus, the same model reaches approximately **1.94 mV maximum absolute error** on finite vendor Implied-Voc values;
+- the seven-pair 100-case cross-geometry audit reaches approximately **4.918 mV**, so Implied Voc remains an inferred compatibility quantity outside the tightly regressed original instance;
 - therefore the <0.1 mV figure is an instance-level result, not a family-wide guarantee.
 
 **Analyzer features not claimed as vendor algorithms**
@@ -236,7 +237,7 @@ Examples include:
 
 - a QSS map pattern or coordinate encoding outside the validated QSS-MAP-001 and QSS-MAP-002 families (ordinary numeric geometry changes inside either established coordinate rule are not automatically a new profile);
 - a new XML path for lifetime/injection data;
-- a different sentinel/blanking convention that is not the established numeric `-1 µs` behavior;
+- a different raw-controller or final-result sentinel/blanking convention from the established XML `-1 µs` → result `Ud. / 0 / 0` lifetime/Smax/Voc behavior;
 - a configuration whose Smax or Implied Voc calculation fields differ materially;
 - a vendor path that explicitly encodes and applies semiconductor material;
 - QSS-µPCD Scan/J0 or emitter-J0 data, which are separate scientific result paths rather than automatic extensions of QSS-MAP-001.
@@ -273,7 +274,7 @@ The current reference instance uses Region X = -40 mm, Y = -30 mm, Width = 70 mm
 - effective pitch: **70/34 ≈ 2.058823529 mm** in X and **60/29 ≈ 2.068965517 mm** in Y;
 - all reconstructed X/Y coordinates match the paired PV-2000 CSV point-by-point to floating-point precision.
 
-This reference expands the validated **coordinate reconstruction** envelope. It does not create a separate lifetime/Smax/Implied-Voc formula family: lifetime remains raw XML data, while derived-quantity validation claims remain those explicitly documented for QSS-MAP-001 unless separately regressed.
+This reference expands the validated **coordinate reconstruction** envelope. The later 100-case corpus separately validates the cross-geometry lifetime/Smax calculation profile described below; Implied Voc remains a narrower inferred compatibility quantity.
 
 **Same-family numeric changes**
 
@@ -283,13 +284,26 @@ Different Region origin/width/height or Dimension values stay inside QSS-MAP-002
 
 Examples include another pattern/coordinate encoding, reversed or serpentine acquisition semantics, a different point-count interpretation, or another vendor result path that changes how sites map to output rows.
 
-### QSS HighDensityPattern — runtime support, inferred
+### QSS-CALC-LIFETIME-SMAX-001 — stored lifetime and Smax result semantics
 
-Older QSS XMLs observed in the supplied development set use `HighDensityPattern` with a scalar `Dimension` and explicit normalized `Coefficients` covering a full square grid. Current observed instances include 15 × 15 and 20 × 20 on a 100 mm `RoundWafer` with 7 mm edge exclusion, plus 35 × 35 on a 156 × 156 mm `SquareCell` with 7 mm edge exclusion.
+The 100-case private harness corpus supplies **seven nonempty QSS-µPCD numeric pairs** across four `SquareRegionPattern + SquareCell`, one `MapPattern + RoundWafer`, and two `HighDensityPattern + RoundWafer` measurements. Five additional exports are zero-site acquisitions and do not promote numeric evidence.
 
-Runtime support preserves coefficient order and requires coefficient count = measured-value count. `SquareCell` coefficients are scaled to the EdgeExclusion-adjusted rectangle. `RoundWafer` coefficients are restricted to the strict normalized unit-circle subset (`x²+y² < 1`) and then scaled by the EdgeExclusion-adjusted radius.
+Across the seven numeric pairs:
 
-This path is **inferred**, not a new validated profile, because no matching PV-2000 X/Y export has yet been supplied. A paired export should be used before promoting this coordinate mapping to validated status.
+- positive XML lifetime matches vendor lifetime to a maximum absolute error of **5.68e-14 µs**;
+- Smax matches the positive-lifetime rule `W/(2τ)` to **5.00e-12 cm/s**;
+- **39** XML/controller sentinel sites with `τ=-1 µs` all export lifetime as `Ud.`, Smax as **0**, and Implied Voc as **0**;
+- raw XML `-1` is retained independently for provenance and scientific availability masking.
+
+This profile is calculation/availability evidence and is independent of the geometry profile selected for a site schedule. It does **not** validate the finite-value Implied-Voc formula across these geometries; the observed compatibility error reaches about **4.918 mV**.
+
+### QSS HighDensityPattern — paired RoundWafer geometry
+
+The same 100-case corpus supplies two nonempty `HighDensityPattern + RoundWafer` QSS pairs: **145 sites** from a 15 × 15 normalized template and **276 sites** from a 20 × 20 template, both on a 100 mm RoundWafer with 7 mm edge exclusion.
+
+The shared geometry resolver preserves coefficient order, restricts the normalized template to the strict unit-circle subset (`x²+y² < 1`), then scales by the EdgeExclusion-adjusted radius. The paired vendor X/Y coordinates agree to a maximum error of **7.03e-14 mm**, establishing `GEOM-HIGHDENSITY-ROUND-001` directly on QSS data.
+
+Observed `HighDensityPattern + SquareCell` runtime geometry remains governed by its separate shared geometry evidence; the RoundWafer QSS pairs do not automatically widen calculation or geometry claims to every HighDensity target combination.
 
 ---
 
