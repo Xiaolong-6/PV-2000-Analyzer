@@ -68,6 +68,18 @@ The Ge option must not be described as a PV-2000 Ge mode. A Ge sample can be mea
 
 The previously documented Si W1 regression (about 2.6% mean difference for minimum Dit and Qtot) predates the Si ni unification. Re-run the private Standard COCOS reference regression before quoting an exact post-change error figure.
 
+## Initial Qc bookkeeping
+
+PV-2000 final-result `Initial Qc` includes the initial charged state before the stored PreProcess attempts. For a PreProcess corona-charge step `ΔQ_pre` and `N_pre` stored dark-vector attempts,
+
+```text
+Initial Qc = (N_pre + 1) × ΔQ_pre
+```
+
+The extra one is required even though the XML contains only `N_pre` PreProcess dark vectors. The 100-case paired final-result corpus validates this bookkeeping exactly on **43 sites across 13 files**, over charge steps ranging from `-5e10` to `-1e14 cm^-2`.
+
+This is a direct/bookkeeping result, not a new Standard COCOS formula. The same regenerated final-result exports retain corrected-light and vendor-version drift in `VLight`, N-type Vsb and downstream flatband/Dit quantities; those branches keep their existing evidence boundary.
+
 ## Standard COCOS
 
 Standard COCOS keeps the measured dark/light XML branch. After Vcpd offset removal, let `D` and `L` be the measured dark and light values and `F` the XML `VsbCorrectionFactor`. The signed result convention is:
