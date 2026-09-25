@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.14.8 — 2026-09-25 (branch)
+
+- Fixed `HighDensityPattern + RoundWafer` schedule reconstruction to apply the vendor-compatible strict circle test directly to stored floating-point coefficients, without subtracting an artificial epsilon from the radius.
+- This restores the 35 × 35 HighDensity schedule to **893** coordinates while preserving the validated 15 × 15 (**145**) and 20 × 20 (**276**) RoundWafer schedules.
+- Added JZero geometry regression coverage for all three dimensions; no scientific JZero calculation changed.
+
 ## v20260925.14.6 — 2026-09-25 (branch)
 
 - Final pre-merge review aligned the durable architecture wording with QSS: whole-dataset acquisition-order profiles are overview surfaces, while selected-point traces remain local detail.
