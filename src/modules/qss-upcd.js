@@ -730,7 +730,13 @@
     function renderShell(){
       const filterState=filterController.snapshot(),
         validN=filterState.validCount,
-        onePoint=d.values.length===1;
+        onePoint=d.values.length===1,
+        mapHelpText=[
+          'The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region.',
+          'The faint rectangular frame is only the plot boundary.',
+          'Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the map to zoom both spatial axes; hold Ctrl/⌘ over one axis to zoom only that direction; double-click restores auto scale.',
+          'Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.'
+        ].join(' ');
       host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Metadata is read directly from the PV-2000 XML. Vendor-exported CSV files are used only for development validation and are not required at runtime.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}\
@@ -799,7 +805,7 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
       </aside><section class="plots overview">
         <div class="panel chart"><header>
           <b>${onePoint?'Measurement position':'Wafer map'}</b>
-          ${help('The solid outline follows the XML target type and nominal size; when EdgeExclusion is present, the dashed inner outline shows the scheduled measurement region. The faint rectangular frame is only the plot boundary. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the map to zoom both spatial axes; hold Ctrl/⌘ over one axis to zoom only that direction; double-click restores auto scale. Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.')}
+          ${help(mapHelpText)}
           <span class="grow"></span>
           <select id="qMetric">
             <option value="lifetime">τeff.d</option>
