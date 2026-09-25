@@ -41,6 +41,42 @@
     tip.classList.add('hidden');
   }
 
+  function formatNumericInputValue(value,{
+    largeThreshold=1e6,
+    smallThreshold=1e-4,
+    significantDigits=6
+  }={}){
+    const n=Number(value);
+    if(!Number.isFinite(n))return'';
+    if(n===0)return'0';
+    const magnitude=Math.abs(n);
+    if(magnitude>=largeThreshold||magnitude<smallThreshold){
+      const digits=Math.max(2,Math.min(12,Math.round(significantDigits))),
+        [mantissa,exponent]=n.toExponential(digits-1).split('e'),
+        compactMantissa=mantissa.replace(/\.?0+$/,'');
+      return `${compactMantissa}e${Number(exponent)}`;
+    }
+    return String(n);
+  }
+
+  function setNumericInputValue(input,value,options){
+    if(!input)return;
+    const exact=Number.isFinite(value)?String(value):'',
+      formatted=formatNumericInputValue(value,options);
+    input.value=formatted;
+    if(input.dataset){
+      input.dataset.rawNumber=exact;
+      input.dataset.formattedNumber=formatted;
+    }
+  }
+
+  function readNumericInputValue(input){
+    const shown=String(input?.value??'').trim(),
+      raw=input?.dataset?.rawNumber,
+      formatted=input?.dataset?.formattedNumber;
+    return raw!==undefined&&shown===formatted?Number(raw):Number(shown);
+  }
+
   function validDataFilterMarkup({
     prefix,
     metrics,
@@ -56,8 +92,8 @@
     const options=Object.values(metrics||{}).map(metric=>
       `<option value="${escapeHtml(metric.key)}"${metric.key===state.metricKey?' selected':''}>${escapeHtml(metric.short||metric.label||metric.key)}</option>`
     ).join('');
-    const lower=Number.isFinite(state.lower)?state.lower:'',
-      upper=Number.isFinite(state.upper)?state.upper:'';
+    const lower=formatNumericInputValue(state.lower),
+      upper=formatNumericInputValue(state.upper);
     return `<section class="panel valid-data-filter"><h3>${escapeHtml(title)} ${help(helpText)}</h3>
       <div class="filter-grid">
         <label>Filter metric<select id="${prefix}Metric">${options}</select></label>
@@ -88,11 +124,14 @@
       count=get('Count'),
       linked=typeof linkedSelect==='string'?host.querySelector(linkedSelect):linkedSelect;
     if(!metric||!lo||!hi)return;
+    const initial=controller.snapshot();
+    setNumericInputValue(lo,initial.lower);
+    setNumericInputValue(hi,initial.upper);
 
     function sync(state){
       metric.value=state.metricKey;
-      lo.value=Number.isFinite(state.lower)?state.lower:'';
-      hi.value=Number.isFinite(state.upper)?state.upper:'';
+      setNumericInputValue(lo,state.lower);
+      setNumericInputValue(hi,state.upper);
       if(count)count.textContent=state.validCount;
       if(linked&&linked.value!==state.metricKey)linked.value=state.metricKey;
       onChange?.(state);
@@ -114,10 +153,22 @@
       try{sync(controller.reset())}catch(error){onError(error.message)}
     };
     get('Apply').onclick=()=>{
-      try{sync(controller.apply(Number(lo.value),Number(hi.value)))}catch(error){onError(error.message)}
+      try{sync(controller.apply(readNumericInputValue(lo),readNumericInputValue(hi)))}catch(error){onError(error.message)}
     };
     return{sync};
   }
 
-  PV.ui={escapeHtml,help,cssVar,setupTooltip,showTooltip,hideTooltip,validDataFilterMarkup,bindValidDataFilter};
+  PV.ui={
+    escapeHtml,
+    help,
+    cssVar,
+    setupTooltip,
+    showTooltip,
+    hideTooltip,
+    formatNumericInputValue,
+    setNumericInputValue,
+    readNumericInputValue,
+    validDataFilterMarkup,
+    bindValidDataFilter
+  };
 })(typeof window!=='undefined'?window:globalThis);

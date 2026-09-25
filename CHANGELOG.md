@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.14.9 — 2026-09-25 (branch)
+
+- Compactified large/small numeric values in editable Valid-data filter and manual-axis text boxes using scientific notation (for example `1e13` or `1.23457e-7`) instead of exposing long digit strings.
+- Normal-scale values remain ordinary decimal text. Programmatically populated inputs retain their exact underlying numeric value until the user actually edits the field, so display formatting alone does not silently change filter or axis semantics.
+- Added shared numeric-input formatter/set/read helpers and regression coverage for scientific display plus exact-value preservation.
+
 ## v20260925.14.6 — 2026-09-25 (branch)
 
 - Final pre-merge review aligned the durable architecture wording with QSS: whole-dataset acquisition-order profiles are overview surfaces, while selected-point traces remain local detail.
