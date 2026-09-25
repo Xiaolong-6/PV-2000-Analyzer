@@ -3,6 +3,8 @@
 
   function roundGrid(radius,pitchX,pitchY,count){
     const pts=[],nx=Math.ceil(radius/pitchX),ny=Math.ceil(radius/pitchY),eps=1e-9;
+    // MapPattern/RoundWafer uses a strict interior. The inward epsilon is a floating-point guard;
+    // do not share this predicate with pseudoSquareGrid or HighDensity circular clipping.
     for(let iy=-ny;iy<=ny;iy++){
       const y=iy*pitchY;
       for(let ix=-nx;ix<=nx;ix++){
@@ -42,6 +44,8 @@
       const y=iy*pitchY;
       for(let ix=-nx;ix<=nx;ix++){
         const x=ix*pitchX;
+        // PseudoSquare MapPattern keeps boundary sites inclusive and guards outward for round-off.
+        // This is intentionally different from roundGrid and HighDensity circular clipping.
         if(x*x+y*y<=r2+eps)pts.push({x,y,row:iy+ny,col:ix+nx});
       }
     }
@@ -350,6 +354,8 @@
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
         scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight,
         candidates=scaleTargetRelativeCoefficients(rawCoefficients,scaleX,scaleY);
+      // HighDensity circular clipping is vendor-parity-sensitive: use strict < r² directly on
+      // stored/scaled coefficients with no epsilon. Odd-grid rounding changes real schedule counts.
       const scheduled=candidates.filter(point=>
         (boundary.shape!=='circle'&&boundary.shape!=='pseudo-square'||
           point.x*point.x+point.y*point.y<boundary.scheduled.radius**2)&&

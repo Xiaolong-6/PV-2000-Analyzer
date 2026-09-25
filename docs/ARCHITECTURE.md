@@ -217,6 +217,14 @@ The geometry resolver returns:
 
 Known target-relative coefficient paths are converted centrally. Unknown coefficient encodings remain unresolved rather than being silently treated as millimetres.
 
+Circular boundary predicates are intentionally **not** one generic helper contract:
+
+- `roundGrid()` uses `x²+y² < r²-1e-9`: MapPattern/RoundWafer is a strict-interior schedule, with an inward floating-point guard. The established 100 mm / 5 mm reference remains 305 sites rather than admitting mathematical boundary sites.
+- `pseudoSquareGrid()` uses `x²+y² <= r²+1e-9`: MapPattern/PseudoSquareCell keeps its circular-mask boundary inclusive and guards outward against floating-point loss. This is a compatibility/numerical policy for that generated raster, not a rule to export to other pattern types.
+- HighDensity circular clipping uses `x²+y² < r²` with **no epsilon** on the stored/scaled coefficients. This is vendor-parity-sensitive: the 35 × 35 RoundWafer template must resolve to 893 sites, and subtracting an artificial epsilon changes the schedule.
+
+Do not consolidate these predicates without new paired coordinate evidence that explicitly covers the affected boundary cases.
+
 Current shared strategies include:
 
 - MapPattern target/pitch grids;
