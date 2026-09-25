@@ -658,8 +658,7 @@
     ctx.fillRect(0,0,W,H);
     if(!site||!n)return;
 
-    const x=Array.from({length:n},(_,i)=>i+1),
-      autoX=[1,Math.max(2,n)],
+    const autoX=[1,Math.max(2,n)],
       autoY=finiteRange([...dark,...light]),
       xr=PV.plot.resolve(autoX,zoom?.x),
       yr=PV.plot.resolve(autoY,zoom?.y),

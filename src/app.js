@@ -2,13 +2,12 @@
   const PV=root.PV2000;
   const $=q=>document.querySelector(q);
   const collator=new Intl.Collator(undefined,{numeric:true,sensitivity:'base'});
-  let current=null,folderFiles=[],folderIndex=-1,pendingFallbackDirection=0;
+  let current=null,folderFiles=[],folderIndex=-1;
 
   function setStatus(t){$('#status').textContent=t||''}
   function clearFolderContext(){
     folderFiles=[];
     folderIndex=-1;
-    pendingFallbackDirection=0;
     syncFolderNav();
   }
   function syncFolderNav(){
@@ -104,7 +103,6 @@
       else if(ok)setStatus('Folder authorized. Use ← / → to load adjacent XML files.');
       return;
     }
-    pendingFallbackDirection=0;
     $('#folderXmlFallback').click();
   }
   async function navigateFolder(step){
@@ -125,7 +123,6 @@
     folderFiles=fallbackFolderEntries(e.target.files);
     folderIndex=current?folderFiles.findIndex(entry=>entry.name===current.file.name):-1;
     syncFolderNav();
-    pendingFallbackDirection=0;
     if(!folderFiles.length)setStatus('No XML files found in the selected folder.');
     else if(folderIndex<0)setStatus('The current XML is not in the selected folder.');
     else setStatus('Folder authorized. Use ← / → to load adjacent XML files.');

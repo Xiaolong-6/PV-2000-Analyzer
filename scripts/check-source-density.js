@@ -20,17 +20,19 @@ for(const file of files){
   lines.forEach((line,index)=>{
     const trimmed=line.trimStart();
     const semicolons=(line.match(/;/g)||[]).length;
-    const markup=trimmed.startsWith('<')||line.includes('`');
-    const denseStatement=line.length>300&&semicolons>=3&&!markup;
-    const denseFunction=line.length>500&&/\bfunction\s+[A-Za-z_$]/.test(line)&&!markup;
-    if(denseStatement||denseFunction){
+    const standaloneMarkup=trimmed.startsWith('<');
+    const denseStatement=line.length>300&&semicolons>=3&&!standaloneMarkup&&!line.includes('`');
+    const denseFunction=line.length>500&&/\bfunction\s+[A-Za-z_$]/.test(line);
+    const denseTemplate=line.length>1200&&!standaloneMarkup&&line.includes('`');
+    const denseMarkup=standaloneMarkup&&line.length>1200;
+    if(denseStatement||denseFunction||denseTemplate||denseMarkup){
       failures.push(path.relative(repoRoot,file)+':'+(index+1)+' ('+line.length+' chars, '+semicolons+' semicolons)');
     }
   });
 }
 
 if(failures.length){
-  console.error('Dense source lines detected. Split executable statements before committing:');
+  console.error('Dense source lines detected. Split executable statements or oversized single-line templates before committing:');
   failures.forEach(item=>console.error('  - '+item));
   process.exitCode=1;
 }else{

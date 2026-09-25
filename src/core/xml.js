@@ -1,7 +1,11 @@
 (function(root){
   const PV=root.PV2000=root.PV2000||{};
   const lname=e=>e?(e.localName||e.nodeName?.split(':').pop()):'';
-  const children=e=>e?[...e.children]:[];
+  const children=e=>{
+    if(!e)return[];
+    if(e.children)return Array.from(e.children);
+    return Array.from(e.childNodes||[]).filter(node=>node.nodeType===1);
+  };
   const direct=(e,n)=>children(e).find(c=>lname(c)===n)||null;
   const directs=(e,n)=>children(e).filter(c=>lname(c)===n);
   const text=(e,n,d='')=>{const x=direct(e,n);return x?x.textContent.trim():d};
@@ -11,7 +15,7 @@
   const exclusionPolygons=target=>children(direct(target,'Exclusions'))
     .filter(shape=>attrType(shape)==='Quadrilateral')
     .map(shape=>pointList(direct(shape,'Vertices'))).filter(points=>points.length>=3);
-  function attrType(e){if(!e)return'';for(const a of [...e.attributes])if(a.localName==='type'||a.name==='xsi:type')return a.value;return''}
+  function attrType(e){if(!e)return'';for(const a of Array.from(e.attributes||[]))if(a.localName==='type'||a.name==='xsi:type')return a.value;return''}
   function parse(textContent){
     const doc=new DOMParser().parseFromString(textContent,'application/xml');
     if(doc.querySelector('parsererror'))throw new Error('XML parse failed');

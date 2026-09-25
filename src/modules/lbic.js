@@ -733,8 +733,7 @@
       keys=Object.keys(it?.beams||{});
       if(!beamKey||!it?.beams?.[beamKey])beamKey=keys[0]||'';
       const beam=it?.beams?.[beamKey],
-      metrics=beam?.metrics||{},
-      mkeys=visibleMetrics(metrics).map(m=>m.key);
+      metrics=beam?.metrics||{};
       if(!metricKey||!metrics[metricKey]||(!showAdvanced&&metrics[metricKey].tier!=='primary'))metricKey=defaultMetricKey(metrics);
       return{it,beam,metrics,metric:metrics[metricKey]}}
     function metricOptions(metrics){return visibleMetrics(metrics).map(m=>`<option value="${esc(m.key)}">${esc(m.label)}${m.status==='inferred'?' · inferred':''}</option>`).join('')}
@@ -745,7 +744,7 @@
           st=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
         return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
-    function renderShell(){const {it,beam,metrics,metric}=current(),
+    function renderShell(){const {it,beam,metrics}=current(),
       controller=ensureFilter(it,metrics),
       filterState=controller.snapshot(),
       filterMetrics=visibleMetricMap(metrics),
@@ -757,7 +756,21 @@
       stepText=pseudo?`${fmt(d.pitchX,4)} × ${fmt(d.pitchY,4)} mm`:`${d.nx>1?fmt(d.width/(d.nx-1),4):'—'} × ${d.ny>1?fmt(d.height/(d.ny-1),4):'—'} mm`,
       measurementMode=flagState(d.measureCurrent)===false&&flagState(d.measureDirect)===true&&flagState(d.measureDiffuse)===true?'Reflectance only':flagState(d.measureCurrent)===true?'Current + optical':'From XML flags';
       host.innerHTML=`<div class="module-grid lbic-module"><aside class="side">
-      <section class="panel"><h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3><dl class="meta">${metaRow('Result',d.resultName)}${metaRow('Recipe',d.name)}${metaRow('Substrate',d.substrateId)}${metaRow('Status',d.status)}${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}${metaRow('Pattern',patternText)}${metaRow(pseudo?'Target':'Region',regionText)}${metaRow(pseudo?'Pitch':'Step',stepText)}${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?(d.geometryComplete?'Point count matches the complete reconstructed geometry schedule.':'The XML is a partial acquisition. Available DataItems are mapped to the leading X-fast / ascending-Y schedule; this partial coordinate path is shown but not vendor-validated.'):'Coordinate reconstruction is unavailable for this point count / geometry combination.')}${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl></section>
+      <section class="panel">\
+<h3>Measurement ${help('LBIC metadata and raw channels are read from the imported XML. Pattern/Name is display metadata only; raster geometry uses structured Region/Dimension or validated MapPattern target geometry.')}</h3>\
+<dl class="meta">${metaRow('Result',d.resultName)}\
+${metaRow('Recipe',d.name)}\
+${metaRow('Substrate',d.substrateId)}\
+${metaRow('Status',d.status)}\
+${metaRow('Mode',measurementMode,'Active result channels follow the XML MeasureCurrent / MeasureDirectReflectance / MeasureScatteredReflectance flags. Disabled BeamData fields may still exist as placeholders and are not treated as measured results.')}\
+${metaRow('Pattern',patternText)}\
+${metaRow(pseudo?'Target':'Region',regionText)}\
+${metaRow(pseudo?'Pitch':'Step',stepText)}\
+${metaRow('Points',`${it?.pointCount||0} / ${d.expectedPointCount||'—'}`,pointOk?(d.geometryComplete?'Point count matches the complete reconstructed geometry schedule.':'The XML is a partial acquisition. Available DataItems are mapped to the leading X-fast / ascending-Y schedule; this partial coordinate path is shown but not vendor-validated.'):'Coordinate reconstruction is unavailable for this point count / geometry combination.')}\
+${metaRow('Laser',Number.isFinite(laser.wavelengthNm)?`${fmt(laser.wavelengthNm,0)} nm · power ${fmt(laser.power)}`:`Beam ${beamKey}`)}\
+${metaRow('Photon flux',Number.isFinite(laser.photonFlux)?fmt(laser.photonFlux,5):'—','FluxCache is associated by beam/laser index and is used for EQE/IQE calculation when present.')}\
+${metaRow('Reference parity',d.geometryStatus==='partial'?'partial acquisition · inferred':beam?.referenceFamily?`validated · ${beam.referenceFamily}`:'unvalidated combination','Validated LBIC families are documented in REFERENCE_PROFILES.md. Numeric parameters may vary inside an established semantic path; new pattern/channel/result semantics still require paired vendor regression.')}</dl>\
+</section>
       <section class="panel"><h3>View ${help('Primary quantities follow the active XML measurement flags. Current-enabled validated scans expose Current / Reflectivity / IQE. Reflectance-only scans default to Reflectivity and do not synthesize Current, EQE or IQE from disabled placeholder fields. Advanced exposes active raw/intermediate channels. New semantic paths still require paired PV-2000 regression.')}</h3><div class="setting-row"><label>Iteration<select id="lIter">${a.iterations.map((_,i)=>`<option value="${i}">Iteration ${i+1}</option>`).join('')}</select></label><label>Wavelength / beam<select id="lBeam">${beamOptions(it)}</select></label><label>Quantity<select id="lMetric">${metricOptions(metrics)}</select></label><label>Color scale<select id="lScale"><option value="full">Full range</option><option value="p1p99">1–99% display clip</option></select></label><label><input id="lAdvanced" type="checkbox" ${showAdvanced?'checked':''}> Advanced raw / intermediate channels</label></div></section>
       ${PV.ui.validDataFilterMarkup({
         prefix:'lFilter',
@@ -811,13 +824,13 @@
         
     }
     function redraw(){
-      const {it,beam,metrics,metric}=current();
+      const {it,metrics,metric}=current();
       if(!metric)return;
       const controller=ensureFilter(it,metrics),
         filterState=controller.snapshot(),
         displayMask=controller.metricMask(metric);
       selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));
-      const rg=drawMap(host.querySelector('#lMap'),d,metric,displayMask,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
+      drawMap(host.querySelector('#lMap'),d,metric,displayMask,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
       const bins=drawHist(host.querySelector('#lHist'),metric,displayMask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
       xp=drawProfile(host.querySelector('#lXProfile'),d,metric,displayMask,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
       yp=drawProfile(host.querySelector('#lYProfile'),d,metric,displayMask,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
