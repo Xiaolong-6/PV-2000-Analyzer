@@ -829,24 +829,13 @@
         ${metaRow('Status',d.status)}
         ${metaRow('Pattern',`${d.patternName||d.patternType||'—'} · ${fmt(d.pitchX,2)} × ${fmt(d.pitchY,2)} mm`)}
         ${metaRow('Target',d.targetType==='SquareCell'?`${fmt(d.targetWidth,1)} × ${fmt(d.targetHeight,1)} mm ${d.targetType}`:`${fmt(d.diameter,1)} mm ${d.targetType||'—'}`)}
-        ${metaRow('Edge exclusion',`${fmt(d.edgeExclusion,2)} mm`)}
-        ${metaRow(
-          'Sites',
-          d.geometryStatus==='partial'&&Number.isFinite(d.expectedPointCount)
-            ?`${d.sites.length} / ${d.expectedPointCount} (${fmt(100*d.completionFraction,1)}%)`
-            :String(d.sites.length),
-          d.geometryStatus==='partial'
-            ?'The XML ended before the full target/pitch schedule completed. Available DataItems are mapped onto the leading acquisition-order coordinate prefix; this partial coordinate interpretation is inferred, not vendor-validated.'
-            :'Number of acquired map sites.'
-        )}
-        ${d.geometryStatus==='partial'?metaRow('Geometry','partial acquisition · inferred','Partial-map coordinates preserve the canonical X-fast / ascending-Y schedule prefix and are excluded from validated profile parity.'):''}
-        ${metaRow('Readings/site',fmt(d.readingsPerSite,0),isVcpd?'PV-2000 VcpdMeasurement NumberOfReadings.':'PV-2000 recipe setting for repeated VCPD readings averaged at each ISC site.')}
-        ${!isVcpd&&Number.isFinite(d.measurementInterval)?metaRow('Interval',`${fmt(d.measurementInterval,4)} s`):''}
-        ${isVcpd?metaRow('Illumination',d.lightOn==='true'?'On':d.lightOn==='false'?'Off':d.lightOn||'—'):''}
-        ${metaRow('Vcpd offset',`${fmt(d.offset,7)} V`,isVcpd?'Stored at the Vcpd iteration level. The current validated VCPD reference has 0 V; non-zero offset behavior is a new profile.':'Subtracted from the dark raw mean before reporting Vcpd Dark.')}
-        ${isVcpd?'':metaRow('VSB factor',fmt(d.factor,5),'Applied to the dark-minus-light raw mean difference before VSB and reported Vcpd Light are formed.')}
-        ${metaRow('Coordinates',d.coordinateSource)}
       </dl></section>
+      <section class="panel current-dataset-panel"><h3>Current dataset ${help('Acquisition completeness and coordinate availability for the imported XML. Partial geometry remains explicitly inferred rather than promoted to validated parity.')}</h3><div class="validation">
+        <div><b>${d.sites.length}</b><span>XML sites</span></div>
+        <div><b>${d.geometryStatus==='partial'&&Number.isFinite(d.expectedPointCount)?`${d.sites.length} / ${d.expectedPointCount}`:'complete'}</b><span>acquisition schedule</span></div>
+        <div><b>${d.coords.length} / ${d.sites.length}</b><span>coordinates</span></div>
+        <div><b>${filterController.snapshot().validCount} / ${d.sites.length}</b><span>pass filter</span></div>
+      </div></section>
       ${PV.ui.validDataFilterMarkup({
         prefix:'iFilter',
         metrics:a.metrics,
@@ -857,6 +846,14 @@
       })}
       <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max use only sites passing the active Valid-data filter and availability mask. Stdev is the sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="iSummaryBody">${statRows()}</tbody></table></div></section>
       <details class="panel"><summary>Acquisition metadata</summary><dl class="meta">
+        ${metaRow('Edge exclusion',`${fmt(d.edgeExclusion,2)} mm`)}
+        ${metaRow('Readings/site',fmt(d.readingsPerSite,0),isVcpd?'PV-2000 VcpdMeasurement NumberOfReadings.':'PV-2000 recipe setting for repeated VCPD readings averaged at each ISC site.')}
+        ${!isVcpd&&Number.isFinite(d.measurementInterval)?metaRow('Interval',`${fmt(d.measurementInterval,4)} s`):''}
+        ${isVcpd?metaRow('Illumination',d.lightOn==='true'?'On':d.lightOn==='false'?'Off':d.lightOn||'—'):''}
+        ${metaRow('Vcpd offset',`${fmt(d.offset,7)} V`,isVcpd?'Stored at the Vcpd iteration level. The current validated VCPD reference has 0 V; non-zero offset behavior is a new profile.':'Subtracted from the dark raw mean before reporting Vcpd Dark.')}
+        ${isVcpd?'':metaRow('VSB factor',fmt(d.factor,5),'Applied to the dark-minus-light raw mean difference before VSB and reported Vcpd Light are formed.')}
+        ${metaRow('Coordinate source',d.coordinateSource)}
+        ${d.geometryStatus==='partial'?metaRow('Geometry status','partial acquisition · inferred','Partial-map coordinates preserve the canonical X-fast / ascending-Y schedule prefix and are excluded from validated profile parity.'):''}
         ${metaRow('Chuck temperature',`${fmt(d.temperatureC,2)} °C`)}
         ${metaRow('Measurement velocity',fmt(d.measurementVelocity,4))}
         ${metaRow('Rastering',d.doRastering||'—')}
