@@ -19,7 +19,7 @@ Across the paired maps:
 - Tau maximum absolute difference is about **2.06e-11 µs**;
 - vendor `Ud.` availability for DL/Tau has **zero mismatches**.
 
-The ten standard pairs include 1649-site maps with only one, 49 and zero finite DL/Tau sites, as well as maps with mostly finite results. The nine newly audited exports include one separate enhanced N-type pair; its 28 finite DL/Tau values do not match the standard formula, so that calculation path remains outside the validated envelopes.
+The ten standard pairs include 1649-site maps with only one, 49 and zero finite DL/Tau sites, as well as maps with mostly finite results. The nine newly audited exports include one separate enhanced N-type pair; its 28 finite DL/Tau values do not match the standard formula, so that calculation path remains outside the validated envelopes. The private validator reports that pair as **Enhanced diagnostic** evidence: raw SPV8/SPV6 must still match, while no standard-profile PASS is claimed for DL/Tau.
 
 ## Calculation outline
 
