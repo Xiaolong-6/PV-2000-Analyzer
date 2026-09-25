@@ -737,7 +737,7 @@ Reflectivity_display = clamp(Rraw, 0%, 100%)
 ```
 
 - the reference contains four 656 nm sites with negative `Rraw`; PV-2000 displays Reflectivity = 0% at those sites;
-- IQE uses the **unclamped raw optical sum** in the denominator, while `Rraw >= 100%` remains non-computable:
+- IQE uses the **unclamped raw optical sum** in the denominator; an exact 100% raw sum is singular:
 
 ```
 EQE[%] = Current[µA] * 1e-6 / (1.602e-19 C) / photonFlux * 100
@@ -754,7 +754,6 @@ The map uses equal physical X/Y scale, shows the nominal `PseudoSquareCell` outl
 
 **Still not validated**
 
-- diffusion-length (`DL`) calculation. The paired CSV contains DL, but the XML does not expose a raw DL channel and this profile does not establish the proprietary DL algorithm;
 - multi-iteration LBIC semantics;
 - other target/pattern encodings;
 - different raw channel/result combinations.
@@ -764,6 +763,14 @@ The map uses equal physical X/Y scale, shows the nominal `PseudoSquareCell` outl
 Examples include another coordinate encoding, another target-shape scheduling rule, coupled cross-beam calculations, a different unit convention, a different raw BeamData channel set, or a different vendor output/validity path.
 
 Ordinary changes in pseudo-square Width/Height/Diameter/EdgeExclusion, pitch, beam count, wavelength, power and finite FluxCache values stay inside this family when the same independent per-beam path applies.
+
+### LBIC-CALC-DL-MULTIWAVELENGTH-005 — cross-beam diffusion length
+
+One private 961-site, four-wavelength XML/vendor CSV pair has 956 finite DL values and five `Ud.` values. Three further four-wavelength one/five-point pairs add seven entirely `Ud.` DL sites. The 961-site pair validates the finite numeric path with a 700–1000 nm XML wavelength range, 2000 µm maximum and current-plus-scattered-reflection IQE inputs. For every selected beam, convert wavelength and iteration temperature to silicon penetration depth, fit `1/IQE` against depth at the same site, and set `DL = intercept/slope` only for a finite result in `(0, MaxDLValue]`.
+
+The maximum finite DL difference is **1.66e-11 µm** across 956 sites. All **12** unavailable sites across the four pairs agree with vendor `Ud.`; the DL summary differs by at most **1.07e-11 µm**. The 656 nm beam is excluded from the numeric pair by its stored 700–1000 nm range. The direct-plus-scattered five-point pair contributes unavailable-value evidence only; a finite direct-plus-scattered DL result is still unvalidated. Geometry is matched by its own profile, including `GEOM-MAP-SQUARE-001` for the finite map and `GEOM-FIVEPOINT-SQUARE-001` for the five-point blank case.
+
+New optical channel semantics, a missing flux, duplicate wavelengths, multiple iterations, or altered validity/model branches remain outside this DL profile. The runtime never reads vendor CSV during import.
 
 ### LBIC-REFLECTANCE-003 — reflectance-only SquareRegionPattern family
 

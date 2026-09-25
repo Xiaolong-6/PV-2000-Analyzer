@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.1 — 2026-09-25
+
+- Added the XML-only cross-beam LBIC diffusion-length result for the paired current-plus-scattered path. One 961-site vendor pair matches 956 finite DL values within 1.66e-11 µm and five undefined sites; three additional four-wavelength pairs confirm seven more undefined sites.
+- Expanded shared geometry with paired SquareRegion/RoundWafer, NinePoint/RoundWafer, FivePoint/SquareCell and polygon-clipped HighDensity/PseudoSquareCell profiles. All four coordinate sets match real vendor CSVs to floating-point precision without changing scientific calculation profiles.
+- Added independent private pointwise DL and geometry validators; private reference files remain untracked. Updated validation envelopes, algorithm notes, Wiki and handoff.
+
 ## v20260924.5 — 2026-09-24
 
 - Decoupled calculation-profile, geometry-profile and quantity-level validation metadata across the measurement-domain architecture, preserving existing validated numerical paths while allowing geometry evidence to evolve independently.

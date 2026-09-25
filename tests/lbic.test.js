@@ -74,10 +74,52 @@ test('IQE reproduces the fast2 first exported point',()=>{
   assert.ok(Math.abs(iqe-6.55755035953282)<1e-13);
 });
 
+test('multi-wavelength DL fits inverse IQE against penetration depth and respects blanking',()=>{
+  const depths=[952,855,984].map(w=>L.penetrationDepthUm(w,0)),
+    iqe=[91.1055855100519,90.3288092764988,82.8295415608055];
+  assert.ok(Math.abs(L.diffusionLengthUm(depths,iqe,2000)-925.899933817009)<1e-9);
+  assert.ok(Number.isNaN(L.diffusionLengthUm(depths,[iqe[0],NaN,iqe[2]],2000)));
+  assert.ok(Number.isNaN(L.diffusionLengthUm(depths,iqe,500)));
+  assert.ok(Number.isNaN(L.diffusionLengthUm(depths.slice(0,1),iqe.slice(0,1),2000)));
+});
+
+test('cross-beam DL is exposed only for the paired scattered-reflection calculation path',()=>{
+  const wavelengths=[952,855,656,984],
+    values=[91.1055855100519,90.3288092764988,95.8390111346475,82.8295415608055],
+    flux=2.4e15,
+    beams=Object.fromEntries(wavelengths.map((w,index)=>[index,{key:index,channels:{
+      Current:[values[index]/100*1.602e-19*flux*1e6*(1-5/100)],
+      DirectReflection:[0],ScatteredReflection:[5]
+    }}]));
+  const d={iterations:[{pointCount:1,temperatureC:0,beams}],
+    laserByKey:Object.fromEntries(wavelengths.map((w,index)=>[index,{index,wavelengthNm:w,photonFlux:flux}])),
+    dlRange:{min:700,max:1000},maxDLValue:2000,currentUnit:'μA',
+    measureCurrent:'true',measureDirect:'false',measureDiffuse:'true'};
+  const analyzed=L.analyze(d).iterations[0].beams;
+  assert.equal(analyzed[3].metrics.__dl.status,'validated');
+  assert.equal(analyzed[0].metrics.__dl,analyzed[1].metrics.__dl);
+  assert.equal(analyzed[2].metrics.__dl,undefined);
+  const disabled=L.analyze({...d,measureDiffuse:'false'}).iterations[0].beams;
+  assert.ok(Object.values(disabled).every(b=>!b.metrics.__dl));
+});
+
 test('PV-2000-compatible IQE blanks calculated values above 100 percent',()=>{
   assert.ok(Number.isNaN(L.iqePercent(50,60)));
   assert.ok(Number.isNaN(L.iqePercent(10,100)));
   assert.ok(Math.abs(L.iqePercent(40,20)-50)<1e-12);
+  assert.ok(Number.isNaN(L.iqePercent(-0.05,25)));
+  assert.ok(Math.abs(L.iqePercent(-0.05,150)-0.1)<1e-12);
+});
+
+test('negative stored Current blanks the vendor Current result while signed optical intermediate remains available',()=>{
+  const raw={key:1,channels:{Current:[-1.519],DirectReflection:[0],ScatteredReflection:[155.621745550633]}},
+    beam=L.deriveBeam(raw,{index:1,wavelengthNm:952,photonFlux:2411851354173466},
+      {currentUnit:'μA',measureCurrent:'true',measureDirect:'false',measureDiffuse:'true',iterationCount:1});
+  const current=Object.values(beam.metrics).find(m=>m.concept==='current'),
+    iqe=Object.values(beam.metrics).find(m=>m.concept==='iqe');
+  assert.ok(Number.isNaN(current.values[0]));
+  assert.equal(beam.metrics.__rawCurrent.values[0],-1.519);
+  assert.ok(Math.abs(iqe.values[0]-0.706805808739036)<1e-12);
 });
 
 test('validated LBIC family is defined by measurement/result path, not exact numeric settings',()=>{

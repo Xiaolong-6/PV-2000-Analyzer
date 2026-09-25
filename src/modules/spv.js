@@ -72,6 +72,8 @@
       iterationData=X.direct(md,'IterationData'),iteration=iterationData?X.children(iterationData).find(e=>X.lname(e)==='Iteration'):null,
       dataNode=X.direct(iteration,'Data'),items=dataNode?X.children(dataNode).filter(e=>X.lname(e)==='DataItem'):[],
       pattern=X.direct(m,'Pattern'),target=X.direct(m,'Target'),pitch=X.direct(pattern,'Pitch'),targetSize=X.direct(target,'Size'),
+      rawCoefficients=X.pointList(X.direct(pattern,'Coefficients')),
+      exclusionPolygons=X.exclusionPolygons(target),
       settings={
         multiplier:X.num(m,'Multiplier',1000),oxideThickness:X.num(md,'OxideThickness',X.num(m,'OxideThickness',0)),
         wavelength8:X.num(md,'Wavelength8',NaN),wavelength6:X.num(md,'Wavelenght6',NaN),
@@ -90,7 +92,8 @@
       diameter=X.num(target,'Diameter',Number.isFinite(common.radius)?2*common.radius:NaN),
       edgeExclusion=X.num(target,'EdgeExclusion',X.num(m,'EdgeExclusion',NaN)),
       pitchX=X.num(pitch,'X',NaN),pitchY=X.num(pitch,'Y',NaN),
-      geometryModel=G.resolveMeasurementGeometry({patternType,targetType,pointCount:sites.length,diameter,
+      geometryModel=G.resolveMeasurementGeometry({patternType,targetType,rawCoefficients,exclusionPolygons,
+        pointCount:sites.length,diameter,
         targetWidth:X.num(targetSize,'Width',NaN),targetHeight:X.num(targetSize,'Height',NaN),edgeExclusion,
         substrateShape:common.shapeType,substrateRadius:common.radius,pitchX,pitchY}),
       coords=geometryModel.pointsMm,

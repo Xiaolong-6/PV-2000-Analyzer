@@ -6,6 +6,11 @@
   const directs=(e,n)=>children(e).filter(c=>lname(c)===n);
   const text=(e,n,d='')=>{const x=direct(e,n);return x?x.textContent.trim():d};
   const num=(e,n,d=NaN)=>{const raw=text(e,n,'');if(raw==='')return d;const v=Number(raw);return Number.isFinite(v)?v:d};
+  const pointList=node=>children(node).map(point=>({x:num(point,'X'),y:num(point,'Y')}))
+    .filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y));
+  const exclusionPolygons=target=>children(direct(target,'Exclusions'))
+    .filter(shape=>attrType(shape)==='Quadrilateral')
+    .map(shape=>pointList(direct(shape,'Vertices'))).filter(points=>points.length>=3);
   function attrType(e){if(!e)return'';for(const a of [...e.attributes])if(a.localName==='type'||a.name==='xsi:type')return a.value;return''}
   function parse(textContent){
     const doc=new DOMParser().parseFromString(textContent,'application/xml');
@@ -19,5 +24,5 @@
     type,name:text(job,'Name',''),resultName:text(job,'ResultName',''),status:text(job,'Status',''),start:text(exec,'StartTime',''),end:text(exec,'EndTime',''),elapsed:text(exec,'ElapsedTime',''),
     substrateId:text(sub,'SubstrateId',''),lotId:text(sub,'LotId',''),description:text(sub,'Description',''),shapeType:attrType(shape),radius:num(shape,'Radius'),header:headerPairs(measurement)
   }}
-  PV.xml={lname,children,direct,directs,text,num,attrType,parse,common,headerPairs};
+  PV.xml={lname,children,direct,directs,text,num,pointList,exclusionPolygons,attrType,parse,common,headerPairs};
 })(typeof window!=='undefined'?window:globalThis);

@@ -201,11 +201,12 @@ Profile gates must describe **categorical semantic branches**, not filenames, sa
 
 ### Canonical measurement geometry
 
-`src/core/geometry.js` owns Pattern/Target-to-physical-coordinate interpretation for migrated coordinate paths. Raw XML coefficients are preserved separately from physical millimetre coordinates. CET extends the same contract to `FixedPointsPattern/PointValues`: those explicit point values are treated as absolute millimetre coordinates, while fixed 5/9-point `Coefficients` remain target-relative and are scaled by the scheduled target extent.
+`src/core/geometry.js` owns Pattern/Target-to-physical-coordinate interpretation for migrated coordinate paths. Raw XML coefficients are preserved separately from physical millimetre coordinates. CET extends the same contract to `FixedPointsPattern/PointValues`: those explicit point values are treated as absolute millimetre coordinates, while fixed 5/9-point `Coefficients` remain target-relative and are scaled by the scheduled target extent. HighDensity/PseudoSquare coordinates are first scaled to the scheduled target and circularly clipped, then physical-mm target exclusion polygons are applied in XML order.
 
 The geometry resolver returns:
 
 - `rawCoefficients` — XML coefficients exactly as parsed;
+- `exclusionPolygons` — stored target polygons in physical millimetres when present;
 - `pointsMm` — canonical physical site coordinates in millimetres when the coordinate strategy is known;
 - nominal sample boundary;
 - scheduled measurement boundary after EdgeExclusion;

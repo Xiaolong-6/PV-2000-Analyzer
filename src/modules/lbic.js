@@ -106,6 +106,8 @@
       pitchY=X.num(pitch,'Y',NaN),
       target=X.direct(m,'Target'),
       targetSize=X.direct(target,'Size'),
+      rawCoefficients=X.pointList(X.direct(pattern,'Coefficients')),
+      exclusionPolygons=X.exclusionPolygons(target),
       targetType=X.attrType(target),
       targetWidth=X.num(targetSize,'Width',NaN),
       targetHeight=X.num(targetSize,'Height',NaN),
@@ -123,6 +125,8 @@
       geometryModel=GEO.resolveMeasurementGeometry({
         patternType,
         targetType,
+        rawCoefficients,
+        exclusionPolygons,
         pointCount:actual,
         diameter,
         targetWidth,
@@ -187,6 +191,8 @@
       measureDirect:X.text(m,'MeasureDirectReflectance',''),
       measureDiffuse:X.text(m,'MeasureScatteredReflectance',''),
       averaging:X.num(m,'Averaging',NaN),
+      dlRange:{min:X.num(X.direct(m,'DLWavelenghtRange'),'Min',NaN),max:X.num(X.direct(m,'DLWavelenghtRange'),'Max',NaN)},
+      maxDLValue:X.num(m,'MaxDLValue',NaN),
       iterations,
       raw:parsed
     };
@@ -194,7 +200,28 @@
   const rawReflectance=(direct,diffuse)=>Number.isFinite(direct)&&Number.isFinite(diffuse)?direct+diffuse:NaN;
   const totalReflectance=(direct,diffuse)=>{const v=rawReflectance(direct,diffuse);return Number.isFinite(v)?Math.max(0,Math.min(100,v)):NaN};
   const eqePercent=(currentMicroA,photonFlux)=>Number.isFinite(currentMicroA)&&Number.isFinite(photonFlux)&&photonFlux>0?(currentMicroA*1e-6/Q_PV2000/photonFlux)*100:NaN;
-  const iqePercent=(eqe,totalR)=>{if(!Number.isFinite(eqe)||!Number.isFinite(totalR)||totalR>=100)return NaN;const v=eqe/(1-totalR/100);return Number.isFinite(v)&&v<=100?v:NaN};
+  const iqePercent=(eqe,totalR)=>{if(!Number.isFinite(eqe)||!Number.isFinite(totalR)||totalR===100)return NaN;const v=eqe/(1-totalR/100);return Number.isFinite(v)&&v>=0&&v<=100?v:NaN};
+  function penetrationDepthUm(wavelengthNm,temperatureC){
+    if(!Number.isFinite(wavelengthNm)||wavelengthNm<=0)return NaN;
+    const dt=temperatureC>=15&&temperatureC<=45?temperatureC-21:0,
+      energy=12395/(10*wavelengthNm),
+      corrected=energy+0.001*(1.3*energy-1)*dt,
+      absorption=84.732*corrected/1.2395-76.417;
+    return absorption!==0?10000/(absorption*absorption):NaN;
+  }
+  function diffusionLengthUm(depths,iqeValues,maxValue){
+    if(depths.length<2||depths.length!==iqeValues.length||!Number.isFinite(maxValue)||maxValue<=0)return NaN;
+    const inverse=iqeValues.map(v=>Number.isFinite(v)&&v>0?1/v:NaN);
+    if(inverse.some(v=>!Number.isFinite(v))||depths.some(v=>!Number.isFinite(v)))return NaN;
+    const n=depths.length,
+      meanX=depths.reduce((sum,v)=>sum+v,0)/n,
+      meanY=inverse.reduce((sum,v)=>sum+v,0)/n,
+      xx=depths.reduce((sum,v)=>sum+(v-meanX)**2,0),
+      xy=depths.reduce((sum,v,i)=>sum+(v-meanX)*(inverse[i]-meanY),0),
+      slope=xy/xx,
+      result=(meanY-slope*meanX)/slope;
+    return Number.isFinite(result)&&result>0&&result<=maxValue?result:NaN;
+  }
   function referenceFamily(raw,laser,d){
     const unit=/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,'')),
       iterationCount=d.iterationCount??1,
@@ -222,7 +249,9 @@
     for(const [name,values] of Object.entries(raw?.channels||{})){
       const concept=conceptFor(name);
       if(!channelActive(concept,d))continue;
-      metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:values.slice(),source:'raw XML',status:'raw',profileId:family||null,validation:referenceProfile?'validated':'raw',concept,xmlName:name,tier:tierFor(concept)};
+      const hasNegativeCurrent=concept==='current'&&referenceProfile&&values.some(v=>Number.isFinite(v)&&v<0);
+      metrics[name]={key:name,label:labelFor(name),short:labelFor(name),unit:unitFor(name,d),values:hasNegativeCurrent?values.map(v=>v<0?NaN:v):values.slice(),source:hasNegativeCurrent?'raw XML; negative vendor Current is unavailable':'raw XML',status:'raw',profileId:family||null,validation:referenceProfile?'validated':'raw',concept,xmlName:name,tier:tierFor(concept)};
+      if(hasNegativeCurrent)metrics.__rawCurrent={key:'__rawCurrent',label:'Stored Current (signed)',short:'Stored Current',unit:unitFor(name,d),values:values.slice(),source:'raw XML BeamData/Current (signed, including vendor-undefined values)',status:'raw',profileId:null,validation:'raw',concept:'rawcurrent',xmlName:name,tier:'advanced'};
     }
 
     let total=findMetric(metrics,'total'),
@@ -255,8 +284,8 @@
       current=findMetric(metrics,'current');
     const flux=laser?.photonFlux;
     if(!eqe&&current&&Number.isFinite(flux)&&/^[µμu]a$/i.test(String(d.currentUnit||'').replace(/\s/g,''))){
-      const key='__eqe';
-      metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:current.values.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',profileId:family||null,validation:'inferred',concept:'eqe',tier:'advanced'};
+      const key='__eqe',storedCurrent=raw?.channels?.[current.xmlName]||current.values;
+      metrics[key]={key,label:'EQE',short:'EQE',unit:'%',values:storedCurrent.map(v=>eqePercent(v,flux)),source:referenceProfile?'intermediate constrained by IQE regression; q=1.602e-19 C':'candidate: current / (q × photon flux)',status:'inferred',profileId:family||null,validation:'inferred',concept:'eqe',tier:'advanced'};
     }
 
     eqe=findMetric(metrics,'eqe');
@@ -270,7 +299,7 @@
         short:'IQE',
         unit:'%',
         values:eqe.values.map((v,i)=>iqePercent(v,opticalValues[i])),
-        source:referenceProfile?'PV-2000 reproduced: EQE / (1 - raw optical reflectivity); calculated IQE > 100% is blank':'candidate: EQE / (1 - reflectivity), >100% invalid',
+        source:referenceProfile?'PV-2000 reproduced: EQE / (1 - raw optical reflectivity); retain 0–100%':'candidate: EQE / (1 - reflectivity), retain 0–100%',
         status:referenceProfile?'validated':'inferred',
         profileId:family||null,
         validation:referenceProfile?'validated':'inferred',
@@ -286,7 +315,23 @@
         beams={},
         profileContext={...d,beamCount:keys.size,iterationCount:d.iterations.length,pointCount:it.pointCount};for(const key of [...keys].sort((a,b)=>Number(a)-Number(b)))beams[key]=deriveBeam(it.beams[key]||{key:Number(key),channels:{}},
         d.laserByKey[key]||{index:Number(key),photonFlux:d.flux[key]},
-        profileContext);return{...it,beams}})}}
+        profileContext);
+        const selected=Object.values(beams).filter(beam=>beam.laser.wavelengthNm>=d.dlRange?.min&&beam.laser.wavelengthNm<=d.dlRange?.max),
+          wavelengths=new Set(selected.map(beam=>beam.laser.wavelengthNm)),
+          supported=d.iterations.length===1&&selected.length>=2&&wavelengths.size===selected.length&&
+            selected.every(beam=>beam.referenceFamily==='LBIC-CALC-CURRENT-SCATTERED-002'&&findMetric(beam.metrics,'iqe')),
+          depths=selected.map(beam=>penetrationDepthUm(beam.laser.wavelengthNm,it.temperatureC));
+        if(supported&&depths.every(Number.isFinite)&&Number.isFinite(d.maxDLValue)){
+          const values=Array.from({length:it.pointCount},(_,index)=>diffusionLengthUm(depths,
+            selected.map(beam=>findMetric(beam.metrics,'iqe').values[index]),d.maxDLValue));
+          // DL is one cross-beam result; expose it from any selected beam without recalculation.
+      const dl={key:'__dl',label:'Diffusion length',short:'DL',unit:'µm',values,
+            source:'PV-2000 reproduced: linear fit of 1/IQE versus silicon penetration depth; intercept/slope',
+            status:'validated',profileId:'LBIC-CALC-DL-MULTIWAVELENGTH-005',validation:'validated',
+            concept:'dl',tier:'primary'};
+          for(const beam of selected)beam.metrics[dl.key]=dl;
+        }
+        return{...it,beams}})}}
   function qtile(a,p){const z=(a||[]).filter(Number.isFinite).slice().sort((x,y)=>x-y);if(!z.length)return NaN;const q=(z.length-1)*p,i=Math.floor(q),f=q-i;return z[i]+(z[Math.min(i+1,z.length-1)]-z[i])*f}
   function range(values,mode='full'){const z=values.filter(Number.isFinite);if(!z.length)return{lo:NaN,hi:NaN};return mode==='p1p99'?{lo:qtile(z,.01),hi:qtile(z,.99)}:{lo:Math.min(...z),hi:Math.max(...z)}}
   function niceTicks(lo,hi,n=5){
@@ -830,8 +875,9 @@
         headers=['Index','Row','Column','X [mm]','Y [mm]','Pass active filter','Filter beam','Filter metric','Filter lower','Filter upper'],
         series=[];
         for(const [bk,b] of beamEntries)for(const m of Object.values(b.metrics)){
+          if(m.concept==='dl'&&series.includes(m.values))continue;
           const wl=Number.isFinite(b.laser?.wavelengthNm)?`${b.laser.wavelengthNm}nm`:`beam${bk}`;
-          headers.push(`${wl} ${m.label}${m.unit?` [${m.unit}]`:''} (${m.status})`);
+          headers.push(`${m.concept==='dl'?'':`${wl} `}${m.label}${m.unit?` [${m.unit}]`:''} (${m.status})`);
           series.push(m.values)}const n=it.pointCount,
         rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',!!filterState.selection.activeMask[i],beamKey,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper,...series.map(v=>v[i])]);
         PV.exporter.csv(`${safe(d.resultName)}_LBIC_all.csv`,headers,rows)};
@@ -840,7 +886,7 @@
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.lbic={familyId:'lbic',capabilities:{map:true,distribution:true,lineProfiles:true,validDataFilter:true},types:['LBICMeasurement'],parse,analyze,render,conceptFor,rawReflectance,totalReflectance,eqePercent,iqePercent,deriveBeam,referenceFamily,isReferenceProfile,profilePoints,range,Q_PV2000};
+    PV.modules.lbic={familyId:'lbic',capabilities:{map:true,distribution:true,lineProfiles:true,validDataFilter:true},types:['LBICMeasurement'],parse,analyze,render,conceptFor,rawReflectance,totalReflectance,eqePercent,iqePercent,penetrationDepthUm,diffusionLengthUm,deriveBeam,referenceFamily,isReferenceProfile,profilePoints,range,Q_PV2000};
     PV.registry.register(PV.modules.lbic);
     
 })(typeof window!=='undefined'?window:globalThis);

@@ -17,9 +17,13 @@
     ['GEOM-MAP-PSEUDOSQUARE-001','MapPattern','PseudoSquareCell','pseudo-square-target-pitch-grid'],
     ['GEOM-HIGHDENSITY-SQUARE-001','HighDensityPattern','SquareCell','target-relative-high-density'],
     ['GEOM-HIGHDENSITY-ROUND-001','HighDensityPattern','RoundWafer','target-relative-high-density'],
+    ['GEOM-HIGHDENSITY-PSEUDOSQUARE-001','HighDensityPattern','PseudoSquareCell','target-relative-high-density'],
     ['GEOM-SQUAREREGION-SQUARE-001','SquareRegionPattern','SquareCell','explicit-region-grid'],
+    ['GEOM-SQUAREREGION-ROUND-001','SquareRegionPattern','RoundWafer','explicit-region-grid'],
     ['GEOM-FIVEPOINT-ROUND-001','FivePointPattern','RoundWafer','target-relative-fixed-point-pattern'],
-    ['GEOM-NINEPOINT-SQUARE-001','NinePointPattern','SquareCell','target-relative-fixed-point-pattern']
+    ['GEOM-FIVEPOINT-SQUARE-001','FivePointPattern','SquareCell','target-relative-fixed-point-pattern'],
+    ['GEOM-NINEPOINT-SQUARE-001','NinePointPattern','SquareCell','target-relative-fixed-point-pattern'],
+    ['GEOM-NINEPOINT-ROUND-001','NinePointPattern','RoundWafer','target-relative-fixed-point-pattern']
   ].forEach(([id,patternType,targetType,interpretation])=>PV.profiles.register({
     id,
     axis:'geometry',

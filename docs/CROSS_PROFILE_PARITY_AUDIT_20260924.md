@@ -205,7 +205,7 @@ No formula change is required for ISC/VCPD. JZero formula changes are explicitly
 5. preserve Direct + Scattered behavior when both channels are active;
 6. regress Current, Reflectivity, IQE, summaries and blanking pointwise.
 
-Calculated DL remains unsupported.
+At the date of this audit, calculated DL was unsupported. The later 2026-09-25 four-pair regression established the current-plus-scattered DL path; see `docs/ALGORITHMS_LBIC.md` for the current envelope.
 
 ### P3 — QSS-µPCD
 

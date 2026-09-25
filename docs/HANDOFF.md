@@ -1,11 +1,11 @@
-# Agent handoff — 2026-09-24
+# Agent handoff — 2026-09-25
 
 ## Current baseline
 
-- Current main baseline before this branch: `v20260924.4` audit baseline.
-- Feature branch: `feat/validation-decoupling-p0-p6`.
-- Target follow-up: validation-axis separation plus paired Leakage/SPV implementation.
-- Scope: complete P0–P6 from the cross-profile audit without widening unsupported scientific branches.
+- Main baseline for this branch: `v20260924.5` (P0–P6 validation decoupling and paired Leakage/SPV already merged).
+- Feature branch: `feat/lbic-dl-parity-geometry-profiles`.
+- Scope: paired LBIC multi-wavelength DL calculation and four independent geometry-profile expansions from the 100-case private corpus.
+- Private regression: run `scripts/validate_lbic_dl_reference.py` on the four XML/CSV DL pairs and `scripts/validate_geometry_profiles.py` on the four selected geometry pairs. Reference files stay ignored in `private/`.
 
 ## Cross-profile parity / geometry-decoupling audit
 
@@ -72,7 +72,9 @@ Current validated families are:
 - `LBIC-MULTI-002` — independent current-enabled multi-beam MapPattern + PseudoSquareCell;
 - `LBIC-REFLECTANCE-003` — reflectance-only SquareRegionPattern with inactive zero Current placeholders.
 
-Calculated diffusion length remains unsupported.
+Calculated DL is now implemented for the current-plus-scattered multi-wavelength path (`LBIC-CALC-DL-MULTIWAVELENGTH-005`). A 961-point pair validates 956 finite DL cells within 1.66e-11 µm and five `Ud.` cells. Three additional one/five-point pairs have seven `Ud.` DL cells; none provides finite direct-plus-scattered DL evidence. The latter optical branch remains withheld.
+
+Four new paired geometry combinations resolve independently of calculation profiles: SquareRegion/RoundWafer (400 sites), NinePoint/RoundWafer (9), FivePoint/SquareCell (5), and HighDensity/PseudoSquareCell (176). The HighDensity path scales normalized XML coefficients, applies the circular scheduled boundary, and excludes three physical target polygons before indexing results. All four coordinate comparisons are within 2.01e-14 mm.
 
 ### QSS / DIT
 
@@ -122,7 +124,7 @@ Never publish private reference files or proprietary vendor material merely to m
 ## Remaining high-priority scientific gaps
 
 1. Dual QSS: extend `QSS-INJ-RESULT-001` only when new real pairs cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
-2. LBIC: establish calculated diffusion-length behavior from matching real output before implementing DL.
+2. LBIC: obtain finite direct-plus-scattered DL evidence before widening the coupled calculation profile; retain the existing four-pair private regression gate.
 3. Expand JZero/CET/geometry profiles only when a categorical new path is exercised by paired vendor output.
 4. SPV: extend beyond the standard paired map path only with matching vendor output for enhanced, texture, parsed-signal or other categorical branches.
 5. Leakage: extend beyond the paired one-point acquisition path only with matching vendor output.
