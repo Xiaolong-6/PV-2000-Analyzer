@@ -75,7 +75,9 @@ test('Dit results summary is card-based and does not depend on a wide three-colu
   assert.match(src,/results-summary-panel/);
   assert.match(src,/result-card-values/);
   assert.doesNotMatch(src,/Results summary[^]*<table><thead><tr><th>Parameter<\/th><th>Valid-site mean<\/th><th>Current site<\/th>/);
-  assert.match(css,/\.dit-module \.result-card-values\{[^}]*grid-template-columns:minmax\(0,1\.45fr\) minmax\(0,\.55fr\)/);
+  assert.match(css,/\.dit-module \.result-card-values\{[^}]*grid-template-columns:1fr/);
+  const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Measurement metadata'));
+  assert.doesNotMatch(summary,/Current site/);
 });
 
 test('desktop zoom does not use portrait-only mobile fallback on fine pointers',()=>{
@@ -531,4 +533,10 @@ test('QSS smooth rendering is compatible with high-DPI canvas transforms',()=>{
   const qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
   assert.doesNotMatch(qss,/createImageData|putImageData/);
   assert.match(qss,/ctx\.fillRect\(px,py,step,step\)/);
+});
+
+test('DIT analysis rebuild keeps the displayed map metric and filter metric synchronized',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.match(src,/const key=metrics\[preferredKey\]\?preferredKey:'Qtot';\n      mapKey=key;/);
+  assert.match(src,/linkedSelect:'#ditMapMetric'/);
 });
