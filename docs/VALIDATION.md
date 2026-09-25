@@ -167,7 +167,7 @@ This evidence promotes the lifetime/Smax calculation path independently of geome
 
 ### Valid-data filtering
 
-The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw / PV-2000 style can retain the sentinel for parity inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
+The valid-range UI is an analyzer feature rather than a vendor-output replication. Availability and filtering are intentionally separate: non-positive lifetime sentinels are unavailable by default, then the user-controlled lower/upper range filters the remaining available sites. Raw XML/controller values can retain the sentinel for provenance inspection. Tests lock support-mask behavior so unavailable sites do not distort scientific histograms, smooth maps or summaries. This is also important for quarter wafers/coupons where geometrically scheduled sites outside the sample would otherwise corrupt the summary.
 
 ## Dual QSS injection sweep — paired raw XML/CSV regression
 
