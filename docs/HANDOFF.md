@@ -1,5 +1,9 @@
 # Agent handoff — 2026-09-25
 
+## Current dataset adaptive summary layout (v20260925.25)
+
+Dedicated analyzer **Current dataset** panels now use one compact count-adaptive presentation. Wide sidebars divide the row evenly across the analyzer's actual metric count (currently 3 in Dual QSS, 4 in most analyzers and 5 in JZero), so there is no empty fourth slot or orphan fifth item. At the medium two-column workspace, the panel becomes compact label/value rows rather than a forced card grid. The inner metric cards were removed only for Current dataset; other validation/status components keep their existing treatment. ISC/VCPD displays the completed acquisition schedule as **Complete**.
+
 ## Geometry boundary-contract hardening (v20260925.21)
 
 The canonical geometry core deliberately keeps three different circular predicates. `roundGrid()` is strict with an inward `1e-9` guard; `pseudoSquareGrid()` is inclusive with an outward `1e-9` guard; HighDensity circular clipping is strict with no epsilon. The HighDensity rule is directly parity-sensitive: the 35 × 35 RoundWafer coefficient template resolves to 893 sites only when the stored floating-point coefficients are tested directly without subtracting an artificial epsilon. Dedicated regression tests now lock all three edge semantics, and architecture documentation warns against merging them into one helper without new paired boundary evidence.
@@ -22,7 +26,7 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.24`.
+- Public main: `v20260925.25`.
 - No active feature branch is required to complete the 100-case closure.
 - Final private 100-case matrix against this baseline: **71 scoped PASS + 16 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
