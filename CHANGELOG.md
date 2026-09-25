@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.14.7 — 2026-09-25 (branch)
+
+- Compactified the LBIC sidebar View panel into a two-column stacked-label control grid, matching the visual language used by Valid-data filter instead of mixing left-label/right-control rows with stacked fields.
+- Normalized sidebar select/input height, padding and label spacing between View and Valid-data filter, and changed the Advanced raw/intermediate toggle to a compact full-width inline row.
+
 ## v20260925.14.6 — 2026-09-25 (branch)
 
 - Final pre-merge review aligned the durable architecture wording with QSS: whole-dataset acquisition-order profiles are overview surfaces, while selected-point traces remain local detail.
