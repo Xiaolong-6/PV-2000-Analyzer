@@ -352,7 +352,7 @@
         candidates=scaleTargetRelativeCoefficients(rawCoefficients,scaleX,scaleY);
       const scheduled=candidates.filter(point=>
         (boundary.shape!=='circle'&&boundary.shape!=='pseudo-square'||
-          point.x*point.x+point.y*point.y<boundary.scheduled.radius**2-1e-9)&&
+          point.x*point.x+point.y*point.y<boundary.scheduled.radius**2)&&
         !exclusionPolygons.some(vertices=>pointInPolygon(point,vertices))
       );
       useSchedule(scheduled);
