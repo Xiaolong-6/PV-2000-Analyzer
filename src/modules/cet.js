@@ -444,7 +444,7 @@
           color=finite?mapColor(t):'#777',
           pass=mask[index],
           x=Xp(point.x),y=Yp(point.y);
-        out+=`<g class="map-site" data-site="${index}" opacity="${pass?1:.28}"><title>Site ${index+1}: ${metric.short} ${finite?fmt(value,5):'—'} ${metric.unit}; X ${fmt(point.x,2)} mm, Y ${fmt(point.y,2)} mm${pass?'':' · excluded'}</title><circle cx="${x}" cy="${y}" r="12" fill="${color}" stroke="${index===site?'var(--text)':'var(--border)'}" stroke-width="${index===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="8" font-weight="700">${index+1}</text></g>`;
+        out+=`<g class="map-site" data-site="${index}" opacity="${pass?1:.28}"><title>Site ${index+1}: ${metric.short} ${finite?fmt(value,5):'—'} ${metric.unit}; X ${fmt(point.x,2)} mm, Y ${fmt(point.y,2)} mm${pass?'':' · excluded'}</title><circle cx="${x}" cy="${y}" r="12" fill="${color}" stroke="${index===site?'var(--text)':'var(--border)'}" stroke-width="${index===site?3:1.4}"/><text x="${x}" y="${y+3}" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">${index+1}</text></g>`;
       });
       out+=`<text x="${width/2}" y="${height-3}" text-anchor="middle" fill="var(--muted)" font-size="11">X [mm]</text><text x="11" y="${height/2}" transform="rotate(-90 11 ${height/2})" text-anchor="middle" fill="var(--muted)" font-size="11">Y [mm]</text>`;
       svg.innerHTML=out;

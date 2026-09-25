@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.14.4 — 2026-09-25 (branch)
+
+- Updated regression expectations for the deliberate synchronized active-quantity behavior and semantic overview/detail class names.
+- Raised the remaining 8 px CET/DIT map-site labels to 10 px so no scientific SVG keeps the pre-refactor micro-label size.
+
 ## v20260925.14.3 — 2026-09-25 (branch)
 
 - Split dense UI event/render code introduced by the workspace migration so the strengthened source-density gate can inspect it normally.

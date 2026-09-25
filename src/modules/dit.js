@@ -839,7 +839,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         out+=`<g data-site="${i}" class="map-site">
           <title>Site ${i+1}: ${txt} ${unit}; ${state}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title>
           <circle cx="${x}" cy="${y}" r="${active?12:8}" fill="${fill}" stroke="${stroke}" stroke-width="${i===site?3:1.4}"/>
-          <text x="${x}" y="${y+3}" text-anchor="middle" fill="${textFill}" font-size="8" font-weight="700">${i+1}</text>
+          <text x="${x}" y="${y+3}" text-anchor="middle" fill="${textFill}" font-size="10" font-weight="700">${i+1}</text>
         </g>`;
       });
       svg.innerHTML=out;

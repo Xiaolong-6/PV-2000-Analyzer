@@ -66,7 +66,7 @@ test('Dual QSS measurement-position visualization stays out of the sidebar',()=>
 
 test('Dual QSS initial render draws immediately without a control change',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
-  assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\n    \}\n    redraw\(\);\n  \}/);
+  assert.match(src,/host\.querySelector\('#dqExportTransient'\)\.onclick=[^]*\n    \}\n    redraw\(\);\n    PV\.plot\.observeResize\(host,redraw\);\n  \}/);
 });
 
 test('Dit results summary is card-based and does not depend on a wide three-column table',()=>{
@@ -335,7 +335,7 @@ test('QSS runtime omits fixed reference-validation card and exposes manual axes 
   assert.match(qss,/axisControls\('qMapAxes'\)/);
   assert.match(qss,/axisControls\('qHistAxes'/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
-  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots">'));
+  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots overview">'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
 });
 
