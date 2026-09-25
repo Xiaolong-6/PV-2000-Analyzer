@@ -241,7 +241,7 @@
         calc=data.calculationProfile?`${data.calculationProfile.status} · ${data.calculationProfile.id}`:'inferred',
         geom=data.geometryProfile?`${data.geometryProfile.status} · ${data.geometryProfile.id}`:'inferred',
         targetText=data.targetType==='RoundWafer'&&Number.isFinite(data.diameter)
-          ?`Ø${fmt(data.diameter,1)} mm · edge ${fmt(data.edgeExclusion,1)} mm`
+          ?`Ø${fmt(data.diameter,1)} mm${Number.isFinite(data.edgeExclusion)?` · edge ${fmt(data.edgeExclusion,1)} mm`:''}`
           :data.targetType||'—',
         finiteDl=analysis.metrics.dl.values.filter(Number.isFinite).length;
       host.innerHTML=`<div class="module-grid spv-module"><aside class="side">
