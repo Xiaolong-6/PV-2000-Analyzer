@@ -153,6 +153,10 @@
       feConstant:X.num(m,'FeConstant',NaN),lidConstant:X.num(m,'LIDConstant',NaN),qssRangeMin:X.num(qssRange,'Min',NaN),qssRangeMax:X.num(qssRange,'Max',NaN),raw:parsed};
   }
   function smax(tauUs,Wum){return (Wum*1e-4)/(2*tauUs*1e-6)}
+  function pv2000SmaxResult(tauUs,Wum){
+    if(!Number.isFinite(tauUs)||!Number.isFinite(Wum)||Wum<=0)return NaN;
+    return tauUs<=0?0:smax(tauUs,Wum);
+  }
   function generation(I_sun,Wum,OF){return 2.38e17*I_sun/(Wum*1e-4)*OF}
   function egSi(T){return 1.17-4.73e-4*T*T/(T+636)}
   function niCompat(T){
@@ -163,6 +167,10 @@
     const I=(d.qssMilli||0)/1000,W=d.waferThickness,OF=d.opticalFactor,Nd=d.doping,TK=Number.isFinite(d.temperatureC)?d.temperatureC+273.15:300;
     if(![tauUs,I,W,OF,Nd,TK].every(Number.isFinite)||tauUs<=0||I<=0||W<=0||Nd<=0)return NaN;
     const dn=generation(I,W,OF)*tauUs*1e-6,ni=niCompat(TK);return k*TK/q*Math.log(dn*(Nd+dn)/(ni*ni));
+  }
+  function pv2000ImpliedVocResult(tauUs,d){
+    if(!Number.isFinite(tauUs))return NaN;
+    return tauUs<=0?0:impliedVoc(tauUs,d);
   }
   function impliedVocManual(tauUs,d){
     const I=(d.qssMilli||0)/1000,W=d.waferThickness,OF=d.opticalFactor,Nd=d.doping,TK=Number.isFinite(d.temperatureC)?d.temperatureC+273.15:300;
@@ -208,7 +216,7 @@
     },lifetime=a.metrics.lifetime.values;
     const vocMaterial=opts.vocModel==='physical-ge'?'Ge':'Si',
       physical=opts.vocModel==='physical-si'||opts.vocModel==='physical-ge';
-    a.metrics.voc.values=lifetime.map(v=>physical?impliedVocPhysical(v,d,vocMaterial):impliedVoc(v,d));
+    a.metrics.voc.values=lifetime.map(v=>physical?impliedVocPhysical(v,d,vocMaterial):pv2000ImpliedVocResult(v,d));
     a.metrics.voc.profileId=physical?`QSS-ANALYZER-VOC-${vocMaterial.toUpperCase()}-001`:null;
     a.metrics.voc.validation=physical?'analyzer-optional':'inferred';
     a.metrics.voc.label=`Implied Voc (${((d.qssMilli||0)/1000).toFixed(2)} sun)`;
@@ -228,16 +236,15 @@
   }
   function analyze(d,options={}){
     const lifetime=d.values.slice(),
-      smaxVals=lifetime.map(v=>smax(v,d.waferThickness)),
+      smaxVals=lifetime.map(v=>pv2000SmaxResult(v,d.waferThickness)),
       vocManual=lifetime.map(v=>impliedVocManual(v,d)),
-      highDensity=d.patternType==='HighDensityPattern',
       calculationProfile={
         id:'QSS-CALC-LIFETIME-SMAX-001',
-        status:highDensity?'numeric-validated-availability-inferred':'validated'
+        status:'validated'
       },
       a={metrics:{
-        lifetime:{key:'lifetime',profileId:'QSS-STORED-LIFETIME-001',validation:'stored-controller',label:`τeff.d (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'τeff.d',unit:'µs',values:lifetime,help:'Small-perturbation (differential) carrier lifetime measured under the selected steady-state illumination. PV-2000 may export controller-unsupported sites as Ud.; raw XML values are preserved.'},
-        smax:{key:'smax',profileId:calculationProfile.id,validation:calculationProfile.status,label:`Smax (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Smax',unit:'cm/s',values:smaxVals,help:'PV-2000-compatible Smax = W/(2τ). Raw controller sentinel/unsupported sites are preserved numerically; scientific filtering remains separate from vendor export blanking.'},
+        lifetime:{key:'lifetime',profileId:'QSS-STORED-LIFETIME-001',validation:'stored-controller',label:`τeff.d (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'τeff.d',unit:'µs',values:lifetime,help:'Small-perturbation (differential) carrier lifetime stored by the controller. Raw XML sentinel values such as −1 µs are preserved for provenance; paired PV-2000 result exports represent those sites as Ud.'},
+        smax:{key:'smax',profileId:calculationProfile.id,validation:calculationProfile.status,label:`Smax (${((d.qssMilli||0)/1000).toFixed(2)} sun)`,short:'Smax',unit:'cm/s',values:smaxVals,help:'PV-2000-compatible Smax = W/(2τ) for positive lifetime. Paired exports show controller sentinel sites as a numeric 0 placeholder while lifetime itself is Ud.; scientific filtering remains separate from result placeholders.'},
         voc:{key:'voc',profileId:null,validation:'inferred',label:'Implied Voc',short:'Implied Voc',unit:'V',values:[],help:''},
         srv:{key:'srv',profileId:'QSS-ANALYZER-SRV-001',validation:'analyzer-optional',label:'SRV',short:'SRV',unit:'cm/s',values:[],help:''}
       },calculationProfile,geometryProfile:d.geometryProfile||null,audit:{
@@ -709,7 +716,7 @@ ${metaRow('Status',d.status,'PV-2000 execution status recorded in the result XML
 ${metaRow('Result time',d.end,'Measurement completion timestamp from ExecutionInfo/EndTime.')}\
 ${metaRow('Elapsed',d.elapsed,'Total elapsed execution time recorded by PV-2000.')}\
 ${metaRow('Pattern',`${d.patternName} · ${fmt(d.pitchX)} × ${fmt(d.pitchY)} mm`,'Measurement pattern and effective X/Y site pitch. MapPattern uses target/pitch geometry; SquareRegionPattern uses Region + Dimension in X-fast, ascending-Y acquisition order; HighDensityPattern uses the explicit normalized Coefficients in XML order. SquareCell uses the full coefficient grid; RoundWafer keeps only coefficient sites with x²+y²<1, then scales them by the EdgeExclusion-adjusted radius.')}\
-${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer MapPattern and SquareCell SquareRegionPattern coordinate paths have paired vendor regression references. HighDensityPattern and centered SquareCell MapPattern remain inferred until matching vendor X/Y exports are supplied.')}\
+${metaRow('Target',targetSummary(),'Target geometry stored by the XML. RoundWafer MapPattern and SquareCell SquareRegionPattern coordinate paths have paired vendor regression references. HighDensityPattern + RoundWafer is also paired against vendor X/Y exports; other QSS pattern/target combinations remain governed by their separately resolved geometry evidence.')}\
 ${metaRow('QSS intensity',`${fmt((d.qssMilli||0)/1000)} sun`,'Steady-state illumination intensity used during the QSS-µPCD map measurement. XML stores this recipe value in mSun.')}\
 ${metaRow('Laser power',`${fmt(d.laserPower)} E11`,'PV-2000 pulsed-laser power setting used for the small-perturbation decay measurement.')}\
 ${metaRow('uPCD avg mode',fmt(d.avgMode),'Transient averaging mode resolved from the XML Averaging index/AveragingValues list.')}\
@@ -720,7 +727,7 @@ ${metaRow('Probe / bias',`${d.probe||'—'} / ${d.bias||'—'}`,'Microwave probe
         </dl></section>
         <section class="panel"><h3>Analysis controls ${help('These are Analyzer interpretation controls, not PV-2000 recipe parameters. Lifetime handling changes only scientific availability; raw XML lifetime values remain preserved. PV-2000 compatible is the vendor-comparison path for Implied Voc, while Physical Si/Ge are optional Analyzer estimates.')}</h3>
           <div class="filter-grid qss-analysis-grid">
-            <label>Lifetime handling<select id="qInvalidMode"><option value="exclude"${excludeInvalid?' selected':''}>Scientific — exclude τ ≤ 0</option><option value="raw"${excludeInvalid?'':' selected'}>Raw vendor values</option></select></label>
+            <label>Lifetime handling<select id="qInvalidMode"><option value="exclude"${excludeInvalid?' selected':''}>Scientific — exclude τ ≤ 0</option><option value="raw"${excludeInvalid?'':' selected'}>Raw XML/controller values</option></select></label>
             <label>Implied Voc model<select id="qVocModel"><option value="pv2000"${analysisOptions.vocModel==='pv2000'?' selected':''}>PV-2000 compatible</option><option value="physical-si"${analysisOptions.vocModel==='physical-si'?' selected':''}>Physical Si · Analyzer</option><option value="physical-ge"${analysisOptions.vocModel==='physical-ge'?' selected':''}>Physical Ge · Analyzer</option></select></label>
           </div>
           <div class="filter-actions"><span class="grow"></span><button id="qApplyAnalysis">Apply analysis</button></div>
@@ -857,7 +864,7 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,generation,impliedVoc,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,pv2000SmaxResult,generation,impliedVoc,pv2000ImpliedVocResult,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);
