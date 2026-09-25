@@ -239,6 +239,11 @@ def validate(xml_path, csv_path):
     return results
 
 
+def is_enhanced(xml_path):
+    root = ET.parse(xml_path).getroot()
+    return text(child(root, 'Measurement'), 'UseEnhancedMode').lower() == 'true'
+
+
 def audit_enhanced(xml_path, csv_path):
     root = ET.parse(xml_path).getroot()
     if text(child(root, 'Measurement'), 'UseEnhancedMode').lower() != 'true':
@@ -253,10 +258,11 @@ def audit_enhanced(xml_path, csv_path):
     standard_comparison = [max_error([row[i] for row in standard], [row[i] for row in vendor])
                            for i in (0, 1)]
     available = [sum(math.isfinite(row[i]) for row in vendor) for i in (0, 1)]
-    print(f'SPV ENHANCED AUDIT {xml_path.name}: {len(vendor)} sites, '
+    print(f'SPV ENHANCED DIAGNOSTIC {xml_path.name}: {len(vendor)} sites, '
           f'finite DL/Tau={available}, raw max errors={[error for error, _ in raw_errors]}, '
           f'standard-path max errors={[error for error, _ in standard_comparison]}, '
-          f'standard-path mask mismatches={[mask for _, mask in standard_comparison]}')
+          f'standard-path mask mismatches={[mask for _, mask in standard_comparison]}, '
+          'separate enhanced calculation profile remains unvalidated')
 
 
 def pair_paths(value):
@@ -279,7 +285,7 @@ def main():
         return 0
     for value in args:
         xml_path, csv_path = pair_paths(value)
-        if enhanced:
+        if enhanced or is_enhanced(xml_path):
             audit_enhanced(xml_path, csv_path)
             continue
         results = validate(xml_path, csv_path)
