@@ -9,6 +9,22 @@ test('wide app shell fixes toolbar/footer and gives all three equal-width panes 
   assert.match(css,/\.app-footer\{[^}]*margin:0[^}]*background:var\(--bg\)/);
 });
 
+test('Current dataset adapts cleanly to three, four or five summary items',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
+    dual=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8'),
+    jzero=fs.readFileSync(require.resolve('../src/modules/jzero.js'),'utf8');
+  assert.match(css,/\.current-dataset-panel \.validation\{display:flex;gap:0\}/);
+  assert.match(css,/\.current-dataset-panel \.validation>div\{flex:1 1 0;[^}]*border:0[^}]*border-radius:0[^}]*padding:2px 9px[^}]*text-align:left/);
+  assert.match(css,/@media\(max-width:1200px\)\{[^}]*\.current-dataset-panel \.validation\{display:grid;grid-template-columns:1fr;gap:0\}/);
+  assert.match(css,/\.current-dataset-panel \.validation>div\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;[^}]*border-top:1px solid var\(--border\)/);
+  const dualPanel=dual.slice(dual.indexOf('current-dataset-panel'),dual.indexOf('</section>',dual.indexOf('current-dataset-panel'))),
+    jzeroPanel=jzero.slice(jzero.indexOf('current-dataset-panel'),jzero.indexOf('</section>',jzero.indexOf('current-dataset-panel')));
+  assert.equal((dualPanel.match(/<div><b>/g)||[]).length,3);
+  assert.equal((jzeroPanel.match(/<div><b>/g)||[]).length,5);
+  assert.match(isc,/:'Complete'}<\/b><span>acquisition schedule/);
+});
+
 test('measurement domain primitives load before profile and module code',()=>{
   const build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8');
   const validity=build.indexOf("'src/core/validity.js'");
