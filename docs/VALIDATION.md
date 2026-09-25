@@ -9,7 +9,7 @@ The central registry of validated reference envelopes is `docs/REFERENCE_PROFILE
 
 Public reference data do not change the runtime contract: the analyzer still consumes XML only. CSV/XPS/screenshots are test and reverse-engineering evidence. A public dataset also does not by itself prove the PV-2000 internal algorithm; the validation label applies only to the observed input→output envelope.
 
-## SPV — paired standard-map regression
+## SPV — independent calculation and geometry regression
 
 Two private 1649-site `SPVMeasurement` XML + numeric CSV pairs establish `SPV-CALC-STANDARD-001`.
 
@@ -25,6 +25,10 @@ Two private 1649-site `SPVMeasurement` XML + numeric CSV pairs establish `SPV-CA
 One pair contains only one finite DL/Tau site; the other contains 49. Raw SPV channels remain present at all measured sites where DL/Tau are unavailable.
 
 The validated calculation envelope is the standard non-enhanced, non-texture, non-parsed-signal, measured-linearity branch exercised by the pairs. The recovered DLL also shows a historical parameter-order quirk in which the stored LED6 temperature coefficient is applied to SPV8 and LED8 to SPV6; runtime and the validator preserve that behavior. Other SPV branches remain inferred until paired output extends the calculation profile.
+
+The 100-case corpus adds **nine** paired SPV exports. Eight standard pairs cover **3213 sites**: five positive-oxide pairs extend `SPV-CALC-STANDARD-001`, while three zero-oxide/zero-reflectivity pairs establish `SPV-CALC-ZERO-OXIDE-002`. All **1542 finite DL/Tau sites** in these new pairs agree pointwise (new-pair maxima 5.52e-12 µm and 7.15e-13 µs), and no value or raw-channel availability masks differ. Geometry is independently checked: 877-, 1649- and 221-site RoundWafer maps, NinePoint/RoundWafer, OnePoint/RoundWafer and HighDensity/PseudoSquareCell are complete; a terminated 59-site HighDensity/SquareCell acquisition matches the vendor coordinate prefix but stays partial.
+
+The remaining enhanced N-type pair has 69 raw SPV sites and 28 finite vendor DL/Tau values. Raw channels match; the standard formula on those 28 sites differs by as much as 296.64 µm (DL) and 420.23 µs (Tau). It remains an unimplemented enhanced calculation profile. Run `python scripts/validate_spv_reference.py private/spv-01.xml ...` for standard pairs and `python scripts/validate_spv_reference.py --audit-enhanced private/spv-04.xml` for the enhanced audit. CSV is never a runtime input.
 
 ## Leakage — paired VSASS / LI regression
 

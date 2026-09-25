@@ -350,12 +350,12 @@
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
         scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight,
         candidates=scaleTargetRelativeCoefficients(rawCoefficients,scaleX,scaleY);
-      pointsMm=candidates.filter(point=>
+      const scheduled=candidates.filter(point=>
         (boundary.shape!=='circle'&&boundary.shape!=='pseudo-square'||
           point.x*point.x+point.y*point.y<boundary.scheduled.radius**2-1e-9)&&
         !exclusionPolygons.some(vertices=>pointInPolygon(point,vertices))
       );
-      if(pointCount!=null&&pointsMm.length!==pointCount)pointsMm=[];
+      useSchedule(scheduled);
       if(pointsMm.length){
         sourceSpace='normalized-target-coefficient';
         interpretation='target-relative-high-density';

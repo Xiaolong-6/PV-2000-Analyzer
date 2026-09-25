@@ -10,7 +10,7 @@
 
 ## Current validated path
 
-`SPV-CALC-STANDARD-001` is validated against two real XML + numeric PV-2000 CSV pairs. Both are 4 mm `MapPattern + RoundWafer` maps with 1649 sites and use the standard non-enhanced, non-texture calculation branch.
+`SPV-CALC-STANDARD-001` is validated against seven positive-oxide XML + numeric PV-2000 CSV pairs, including RoundWafer maps and a one-point acquisition. Three additional zero-oxide, zero-reflectivity pairs establish `SPV-CALC-ZERO-OXIDE-002` across HighDensity and NinePoint geometries. All use the non-enhanced, non-texture, measured-linearity P-type path.
 
 Across the paired maps:
 
@@ -19,7 +19,7 @@ Across the paired maps:
 - Tau maximum absolute difference is about **2.06e-11 µs**;
 - vendor `Ud.` availability for DL/Tau has **zero mismatches**.
 
-The two pairs include both a map with only one finite DL/Tau site and a map with 49 finite DL/Tau sites, so the undefined-value branch is part of the regression evidence rather than an assumed display rule.
+The ten standard pairs include 1649-site maps with only one, 49 and zero finite DL/Tau sites, as well as maps with mostly finite results. The nine newly audited exports include one separate enhanced N-type pair; its 28 finite DL/Tau values do not match the standard formula, so that calculation path remains outside the validated envelopes.
 
 ## Calculation outline
 
@@ -43,13 +43,13 @@ The current paired profile does **not** validate:
 - texture-correction-enabled cases;
 - parsed-signal mode;
 - other wavelength/configuration families;
-- alternate optical-correction branches that are not exercised by the paired references.
+- nonzero reflectivity correction in the zero-oxide branch.
 
 Such files may still be structurally readable, but their derived-result status remains inferred until matching vendor output extends the profile.
 
-Ordinary numeric settings such as wavelength, temperature, multiplier and positive oxide-thickness magnitude remain inputs to this same standard formula; they do not create a new calculation profile by themselves.
+Ordinary numeric settings such as wavelength, temperature, multiplier and positive oxide-thickness magnitude remain inputs to the positive-oxide formula; zero oxide with zero reflectivity correction has a separate validated calculation profile.
 
-Geometry validation is tracked separately from calculation validation.
+Geometry validation is tracked separately from calculation validation. A terminated 59-site HighDensity acquisition has exact vendor coordinate-prefix evidence but remains partial geometry.
 
 ## Related documentation
 
