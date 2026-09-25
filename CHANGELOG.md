@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.27 — 2026-09-25
+
+- Hardened `roundGrid()` and shared MapPattern resolution against zero, negative and non-finite pitch values. Invalid RoundWafer map pitches now return unresolved geometry immediately instead of allowing an unbounded schedule loop that could hang the browser.
+- Made XML loading transactional at the application shell: a new dataset becomes current only after its analyzer renderer succeeds; failed loads restore the previous dataset, file/type labels and folder-navigation state.
+- Fixed adjacent-file navigation so a failed XML load cannot advance `folderIndex` to a file that was never successfully opened.
+- Added regression coverage for invalid map pitches and load/navigation commit ordering.
+- Added a generated npm v3 lockfile and changed public CI from `npm install` to `npm ci`, making the Node 22 development-tool dependency graph reproducible and usable by private cross-repository validation.
+
 ## v20260925.26 — 2026-09-25
 
 - Closed the two previously conflicting Dual QSS `FixedPointsPattern + PseudoSquareCell` final-result cases by recovering the vendor saved-vector input rule from managed IL.
