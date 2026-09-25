@@ -21,7 +21,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 4. migrate ISC/VCPD first because their new pairs prove the same calculation across different geometries;
 5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
 6. split LBIC channel semantics from geometry and add the paired current-only / scattered-only paths;
-7. perform the sentinel-aware QSS HighDensity pass;
+7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
 8. investigate DIT historical regenerated-export drift without weakening the stronger original-pair rules;
 9. **completed:** re-audit Dual QSS alternate geometries; keep the result-profile gate because the paired FixedPoints/PseudoSquare evidence conflicts, while preserving the newly proven no-J0 quantity availability rule;
 10. **completed:** Leakage and the paired standard SPV map path are implemented; IntensityScan remains deferred because no trustworthy scientific result export path exists.
