@@ -307,10 +307,15 @@ The original paired reference contains 305 sites. A later private corpus adds **
 
 **Implied Voc compatibility envelope**
 
-- the original 305-point reference instance remains within approximately **0.1 mV** maximum error using the documented compatibility `ni(T)` model;
-- across the later nine-pair RoundWafer corpus, the same model reaches approximately **1.94 mV maximum absolute error** on finite vendor Implied-Voc values;
-- the seven-pair 100-case cross-geometry audit reaches approximately **4.918 mV**, so Implied Voc remains an inferred compatibility quantity outside the tightly regressed original instance;
-- therefore the <0.1 mV figure is an instance-level result, not a family-wide guarantee.
+The managed-DLL path is now reconstructed directly and promoted separately as `QSS-CALC-IMPLIED-VOC-002`:
+
+- vendor constants: `k = 1.38066e-23`, `q = 1.602e-19`, fixed `ni = 1.22e10 cm^-3`;
+- vendor temperature convention: `T = ChuckTemperature + 272.15 K`, with exactly 0 °C replaced by 27 °C on the simple-result path;
+- seven nonempty 100-case cross-geometry pairs: **0 availability mismatches**, maximum absolute Implied-Voc error **5.56e-16 V**;
+- one 7000-site zero-intensity pair: vendor Implied Voc remains `Ud.` throughout, reproduced by the runtime availability rule;
+- five zero-site acquisitions: empty evidence, no numeric promotion.
+
+The earlier approximately 4.918 mV envelope belonged to the superseded fitted compatibility model and is not the current vendor-parity error.
 
 **Analyzer features not claimed as vendor algorithms**
 
@@ -366,7 +371,7 @@ The current reference instance uses Region X = -40 mm, Y = -30 mm, Width = 70 mm
 - effective pitch: **70/34 ≈ 2.058823529 mm** in X and **60/29 ≈ 2.068965517 mm** in Y;
 - all reconstructed X/Y coordinates match the paired PV-2000 CSV point-by-point to floating-point precision.
 
-This reference expands the validated **coordinate reconstruction** envelope. The later 100-case corpus separately validates the cross-geometry lifetime/Smax calculation profile described below; Implied Voc remains a narrower inferred compatibility quantity.
+This reference expands the validated **coordinate reconstruction** envelope. The later 100-case corpus separately validates cross-geometry lifetime/Smax, while the managed-DLL Implied-Voc reconstruction is tracked independently as `QSS-CALC-IMPLIED-VOC-002`.
 
 **Same-family numeric changes**
 
@@ -387,7 +392,15 @@ Across the seven numeric pairs:
 - **39** XML/controller sentinel sites with `τ=-1 µs` all export lifetime as `Ud.`, Smax as **0**, and Implied Voc as **0**;
 - raw XML `-1` is retained independently for provenance and scientific availability masking.
 
-This profile is calculation/availability evidence and is independent of the geometry profile selected for a site schedule. It does **not** validate the finite-value Implied-Voc formula across these geometries; the observed compatibility error reaches about **4.918 mV**.
+This profile is lifetime/Smax calculation and availability evidence and is independent of the geometry profile selected for a site schedule. Finite Implied Voc is validated separately by `QSS-CALC-IMPLIED-VOC-002`.
+
+### QSS-CALC-IMPLIED-VOC-002 — managed-DLL Implied Voc
+
+The current managed DLL reconstructs simple-map Implied Voc from stored lifetime and XML measurement settings using fixed vendor constants and a vendor-specific temperature offset. Across the seven nonempty 100-case QSS pairs, finite and placeholder outputs reproduce the vendor CSV with **0 availability mismatches** and maximum absolute error **5.56e-16 V**.
+
+The output contract also includes two availability rules: non-positive stored lifetime at positive intensity maps to the observed numeric `0` placeholder, while QSS intensity `0` makes the Implied-Voc result unavailable (`Ud.`) even when lifetime is finite. The latter is directly exercised by a 7000-site pair.
+
+This calculation profile is independent of Map/SquareRegion/HighDensity geometry. Optional Analyzer Physical Si / Physical Ge modes are separate analysis models and do not inherit this vendor validation.
 
 ### QSS HighDensityPattern — paired RoundWafer geometry
 

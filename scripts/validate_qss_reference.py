@@ -2,9 +2,9 @@
 """Regression validators for private QSS-µPCD XML + PV-2000 CSV references.
 
 Runtime remains XML-only. Development references validate geometry, stored
-lifetime, Smax, and result availability as separate axes. Implied Voc is
-reported diagnostically because its compatibility model is not promoted to a
-cross-profile numeric guarantee.
+lifetime, Smax, Implied Voc, and result availability as separate axes. The
+PV-2000 Implied Voc path is reconstructed from the current managed DLL and is
+validated independently from geometry.
 """
 from pathlib import Path
 import csv
@@ -20,10 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 TOL_COORD = 1e-9
 TOL_LIFETIME = 1e-9
 TOL_SMAX = 1e-8
-Q = 1.602176634e-19
-K = 1.380649e-23
-KB_EV = 8.617333262145e-5
-NI300_PV2000_COMPAT = 1.517791063348261e10
+TOL_VOC = 1e-12
+PV2000_Q = 1.602e-19
+PV2000_K = 1.38066e-23
+PV2000_NI = 1.22e10
+PV2000_T_OFFSET = 272.15
 
 
 def lname(tag):
@@ -83,30 +84,26 @@ def max_numeric_error(actual, expected):
     return error, mismatch, paired
 
 
-def eg_si(t):
-    return 1.17 - 4.73e-4 * t * t / (t + 636)
-
-
-def ni_compat(t):
-    ref = 300.0
-    ratio = (t / ref) ** 1.5 * math.exp(
-        -eg_si(t) / (2 * KB_EV * t) + eg_si(ref) / (2 * KB_EV * ref)
-    )
-    return NI300_PV2000_COMPAT * ratio
-
-
-def implied_voc(tau_us, intensity_sun, thickness_um, optical_factor, doping, temp_k):
+def implied_voc(tau_us, intensity_milli_sun, thickness_um, optical_factor, doping, chuck_c):
     if not all(math.isfinite(v) for v in (
-        tau_us, intensity_sun, thickness_um, optical_factor, doping, temp_k
+        tau_us, intensity_milli_sun, thickness_um, optical_factor, doping, chuck_c
     )):
         return None
-    if tau_us <= 0 or intensity_sun <= 0 or thickness_um <= 0 or doping <= 0:
+    if intensity_milli_sun <= 0:
         return None
-    w_cm = thickness_um * 1e-4
-    generation = 2.38e17 * intensity_sun / w_cm * optical_factor
-    dn = generation * tau_us * 1e-6
-    ni = ni_compat(temp_k)
-    value = K * temp_k / Q * math.log(dn * (doping + dn) / (ni * ni))
+    if tau_us <= 0:
+        return 0.0
+    if thickness_um <= 0:
+        thickness_um = 200.0
+    if doping <= 0:
+        return None
+    if chuck_c == 0:
+        chuck_c = 27.0
+    temp_k = chuck_c + PV2000_T_OFFSET
+    dn = 2.38e17 * intensity_milli_sun * optical_factor / thickness_um * tau_us * 1e-5
+    value = PV2000_K * temp_k / PV2000_Q * math.log(
+        dn * (doping + dn) / (PV2000_NI * PV2000_NI) + 1.0
+    )
     return value if math.isfinite(value) else None
 
 
@@ -207,7 +204,7 @@ def validate_pair(xml_path, csv_path):
     pre_array = child(child(measurement, "PreProcessings"), "ArrayOfPreProcessSettings")
     pre = children(pre_array)[0] if children(pre_array) else None
     qss_milli = num(pre, "QssLampIntensity")
-    temp_k = num(iteration, "ChuckTemperature", 26.85) + 273.15
+    chuck_c = num(iteration, "ChuckTemperature", 0.0)
 
     expected_lifetime = [
         value if math.isfinite(value) and value > 0 else None
@@ -220,9 +217,8 @@ def validate_pair(xml_path, csv_path):
         for value in values
     ]
     expected_voc = [
-        implied_voc(value, qss_milli / 1000.0, thickness, optical_factor, doping, temp_k)
-        if math.isfinite(value) and value > 0
-        else 0.0 if math.isfinite(value) and value <= 0 else None
+        implied_voc(value, qss_milli, thickness, optical_factor, doping, chuck_c)
+        if math.isfinite(value) else None
         for value in values
     ]
 
@@ -247,15 +243,17 @@ def validate_pair(xml_path, csv_path):
         raise AssertionError(
             f"Smax error={smax_error:g} availability mismatch={smax_mismatch}"
         )
-    if voc_mismatch:
-        raise AssertionError(f"Implied Voc availability mismatch={voc_mismatch}")
+    if voc_mismatch or voc_error > TOL_VOC:
+        raise AssertionError(
+            f"Implied Voc error={voc_error:g} availability mismatch={voc_mismatch}"
+        )
 
     return (
         f"QSS PASS {xml_path.name}: profile={geometry.get('profileId')}; "
         f"points={len(values)}; sentinel={sentinels}; "
         f"X/Y max={coord_error:.3g} mm; lifetime max={lifetime_error:.3g} us; "
         f"Smax max={smax_error:.3g} cm/s; "
-        f"Voc diagnostic max={voc_error:.6g} V over {voc_pairs} finite/placeholder rows"
+        f"Voc max={voc_error:.6g} V over {voc_pairs} finite/placeholder rows"
     )
 
 
@@ -276,7 +274,7 @@ def validate_legacy():
     Nd = num(m, "Doping")
     pre = child(child(child(m, "PreProcessings"), "ArrayOfPreProcessSettings"), "PreProcessSettings")
     qss = num(pre, "QssLampIntensity") / 1000
-    T = 273.15 + num(it, "ChuckTemperature")
+    chuck = num(it, "ChuckTemperature", 0.0)
 
     with csv_path.open(encoding="utf-8-sig") as fh:
         rows = list(csv.reader(fh, delimiter=";"))
@@ -310,16 +308,15 @@ def validate_legacy():
     smax = [W / (2 * value * 1e-6) for value in vals]
     smax_err = max(abs(value - row[3]) for value, row in zip(smax, data_rows))
 
-    G = 2.38e17 * qss / W * OF
-    voc = []
-    for tau in vals:
-        dn = G * tau * 1e-6
-        voc.append(K * T / Q * math.log(dn * (Nd + dn) / ni_compat(T) ** 2))
+    voc = [
+        implied_voc(tau, qss * 1000.0, Wum, OF, Nd, chuck)
+        for tau in vals
+    ]
     voc_err = max(abs(value - row[4]) for value, row in zip(voc, data_rows))
 
     assert coord_err <= 1e-12 and tau_err == 0
     assert smax_err < 1e-9
-    assert voc_err < 1e-4
+    assert voc_err <= TOL_VOC
     print(
         "PASS qss_upcd_example.xml: 305 points; coordinates/lifetime exact; "
         f"Smax max={smax_err:.3g}; Voc max={voc_err:.3g} V; "

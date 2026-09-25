@@ -112,7 +112,7 @@ The export contains 305 rows with X, Y, τeff.d, Smax and Implied Voc, plus vend
 | X/Y coordinates | max abs error 0 mm | validated |
 | τeff.d | max abs error 0 µs | validated |
 | Smax | max abs error ~5e-12 cm/s | validated |
-| Implied Voc | max abs error <9.6e-5 V | validated to <0.1 mV |
+| Implied Voc | max abs error at floating-point roundoff with recovered DLL path | validated |
 | lifetime avg/median/Stdev | 11.658483 / 10.914566 / 3.238539 µs | exact vs export |
 | Smax avg/median/Stdev | 1343.467131 / 1374.310292 / 220.661212 cm/s | exact vs export |
 | PV-2000 Voc avg/median/Stdev | 0.360150235 / 0.359081753 / 0.005384383 V | export reference |
@@ -142,9 +142,9 @@ Pointwise regression on the nine numeric pairs establishes:
 | X/Y coordinates | max abs error 0 mm | validated |
 | XML τeff.d vs CSV | max abs error 0 µs | validated |
 | Smax from `W/(2τ)` | max abs error ~5e-8 cm/s | validated to CSV numeric precision |
-| finite Implied Voc, existing compatibility model | max abs error ~1.94 mV | compatibility close, not vendor-exact |
+| finite Implied Voc, recovered managed-DLL path | floating-point roundoff | validated |
 
-The original 305-point reference remains the tighter <0.1 mV Implied-Voc instance. The expanded corpus demonstrates that this tighter figure must not be generalized to all RoundWafer files.
+The previous fitted compatibility model showed profile-dependent millivolt error. The recovered managed-DLL path supersedes that approximation and is now validated independently.
 
 The older 96-XML corpus establishes that the controller can store **`τeff.d = -1 µs`** as a raw XML sentinel: 76 files contain it, totaling **13,649 of 29,464 XML sites**. The newer 100-case harness corpus resolves the final-result semantics more precisely. Across **39 paired sentinel sites**, PV-2000 exports lifetime as **`Ud.`**, Smax as the numeric placeholder **`0`**, and Implied Voc as **`0`**. Runtime therefore preserves raw XML `-1` for provenance, while PV-2000-compatible derived-result values use the observed placeholders and default scientific analysis excludes non-positive lifetime before user filtering.
 
@@ -169,7 +169,7 @@ The 100-case private corpus supplies two nonempty `QssUpcdMeasurement + HighDens
 
 Across all seven nonempty QSS pairs in that corpus (four SquareRegion/SquareCell, one Map/RoundWafer and two HighDensity/RoundWafer), positive stored lifetime agrees with vendor output to **5.68e-14 µs** and Smax to **5.00e-12 cm/s**. The same pairs contain **39** non-positive controller sentinels; all 39 follow the quantity-specific `Ud. / 0 / 0` lifetime/Smax/Voc result convention described above. Five additional QSS exports are zero-site acquisitions and do not promote a numeric profile.
 
-This evidence promotes the lifetime/Smax calculation path independently of geometry. It does **not** promote Implied Voc to a vendor-exact cross-profile quantity: finite compatibility error in the seven pairs reaches **4.918 mV**. The previously observed SquareCell HighDensity reconstruction and other QSS pattern/target combinations remain governed by their own geometry evidence rather than inheriting validation from RoundWafer.
+This evidence promotes lifetime/Smax independently of geometry. A separate managed-DLL reconstruction now validates Implied Voc as `QSS-CALC-IMPLIED-VOC-002`: the seven nonempty cross-geometry pairs have zero availability mismatches and maximum absolute error **5.56e-16 V**. A 7000-site zero-intensity case confirms vendor `Ud.` availability for the whole Voc column. Geometry remains independently profile-scoped.
 
 ### Valid-data filtering
 

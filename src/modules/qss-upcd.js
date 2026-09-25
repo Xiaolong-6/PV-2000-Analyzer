@@ -1,7 +1,7 @@
 (function(root){
   const PV=root.PV2000=root.PV2000||{},X=PV.xml,S=PV.stats,GEO=PV.geometry,Sel=PV.selection,Profiles=PV.profiles;
   const q=1.602176634e-19,k=1.380649e-23,KB_EV=8.617333262145e-5;
-  const NI300_PV2000_COMPAT=1.517791063348261e10;
+  const PV2000_Q=1.602e-19,PV2000_K=1.38066e-23,PV2000_NI=1.22e10,PV2000_T_OFFSET=272.15;
   const NI300_MANUAL=1.02e10;
   const NI300_GE=2e13;
   const safe=s=>String(s||'PV2000').replace(/[^A-Za-z0-9._-]+/g,'_');
@@ -159,14 +159,15 @@
   }
   function generation(I_sun,Wum,OF){return 2.38e17*I_sun/(Wum*1e-4)*OF}
   function egSi(T){return 1.17-4.73e-4*T*T/(T+636)}
-  function niCompat(T){
-    const ref=300,ratio=(T/ref)**1.5*Math.exp(-egSi(T)/(2*KB_EV*T)+egSi(ref)/(2*KB_EV*ref));
-    return NI300_PV2000_COMPAT*ratio;
-  }
+  function niCompat(){return PV2000_NI}
   function impliedVoc(tauUs,d){
-    const I=(d.qssMilli||0)/1000,W=d.waferThickness,OF=d.opticalFactor,Nd=d.doping,TK=Number.isFinite(d.temperatureC)?d.temperatureC+273.15:300;
-    if(![tauUs,I,W,OF,Nd,TK].every(Number.isFinite)||tauUs<=0||I<=0||W<=0||Nd<=0)return NaN;
-    const dn=generation(I,W,OF)*tauUs*1e-6,ni=niCompat(TK);return k*TK/q*Math.log(dn*(Nd+dn)/(ni*ni));
+    const I=(d.qssMilli||0)/1000,W=Number.isFinite(d.waferThickness)&&d.waferThickness>0?d.waferThickness:200,OF=d.opticalFactor,Nd=d.doping;
+    let tempC=Number.isFinite(d.temperatureC)?d.temperatureC:27;
+    if(tempC===0)tempC=27;
+    const TK=tempC+PV2000_T_OFFSET;
+    if(![tauUs,I,W,OF,Nd,TK].every(Number.isFinite)||tauUs<=0||I<=0||Nd<=0)return NaN;
+    const dn=generation(I,W,OF)*tauUs*1e-6;
+    return PV2000_K*TK/PV2000_Q*Math.log(dn*(Nd+dn)/(PV2000_NI*PV2000_NI)+1);
   }
   function pv2000ImpliedVocResult(tauUs,d){
     if(!Number.isFinite(tauUs))return NaN;
@@ -217,12 +218,12 @@
     const vocMaterial=opts.vocModel==='physical-ge'?'Ge':'Si',
       physical=opts.vocModel==='physical-si'||opts.vocModel==='physical-ge';
     a.metrics.voc.values=lifetime.map(v=>physical?impliedVocPhysical(v,d,vocMaterial):pv2000ImpliedVocResult(v,d));
-    a.metrics.voc.profileId=physical?`QSS-ANALYZER-VOC-${vocMaterial.toUpperCase()}-001`:null;
-    a.metrics.voc.validation=physical?'analyzer-optional':'inferred';
+    a.metrics.voc.profileId=physical?`QSS-ANALYZER-VOC-${vocMaterial.toUpperCase()}-001`:'QSS-CALC-IMPLIED-VOC-002';
+    a.metrics.voc.validation=physical?'analyzer-optional':'validated';
     a.metrics.voc.label=`Implied Voc (${((d.qssMilli||0)/1000).toFixed(2)} sun)`;
     a.metrics.voc.help=physical
       ?`Physical ${vocMaterial} estimate using a material-specific intrinsic-carrier model; this path is not PV-2000-regressed.`
-      :'PV-2000-compatible implied Voc derived from Δn = Gτ and the temperature-dependent silicon-style compatibility model.';
+      :'PV-2000-compatible implied Voc recovered from the managed DLL using its fixed ni, temperature offset, and physical constants.';
     a.metrics.srv.values=opts.srvEnabled
       ?lifetime.map(v=>surfaceRecombinationVelocity(v,d.waferThickness,{
         mode:opts.surfaceMode,bulkLifetimeUs:opts.bulkLifetimeUs,planarSrv:opts.planarSrv,minLifetimeUs:opts.minLifetimeUs
@@ -252,7 +253,7 @@
         rawLifetimeStats:S.summary(lifetime.filter(Number.isFinite)),
         rawSmaxStats:S.summary(smaxVals.filter(Number.isFinite)),
         invalidLifetimeCount:lifetime.filter(v=>Number.isFinite(v)&&v<=0).length,
-        ni300Compat:NI300_PV2000_COMPAT,ni300Manual:NI300_MANUAL,ni300Ge:NI300_GE
+        pv2000Ni:PV2000_NI,pv2000TemperatureOffset:PV2000_T_OFFSET,ni300Manual:NI300_MANUAL,ni300Ge:NI300_GE
       }};
     return applyAnalysisOptions(d,a,options);
   }
@@ -923,7 +924,7 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
     PV.plot.observeResize(host,redraw);
   }
   PV.modules=PV.modules||{};
-    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,pv2000SmaxResult,generation,impliedVoc,pv2000ImpliedVocResult,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_PV2000_COMPAT,NI300_GE}};
+    PV.modules.qss={types:['QssUpcdMeasurement'],parse,analyze,render,smax,pv2000SmaxResult,generation,impliedVoc,pv2000ImpliedVocResult,impliedVocPhysical,niCompat,niPhysical,surfaceRecombinationVelocity,applyAnalysisOptions,intrinsicLifetimeMask,histogram,smoothValueAt,effectiveMapRadius,effectiveMapHalfExtent,highDensityCoords,targetGeometry,insideScheduled,constants:{NI300_MANUAL,NI300_GE,PV2000_NI,PV2000_T_OFFSET,PV2000_K,PV2000_Q}};
     PV.registry.register(PV.modules.qss);
     
 })(typeof window!=='undefined'?window:globalThis);

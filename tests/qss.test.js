@@ -15,7 +15,7 @@ test('wafer-map target geometry separates nominal target and scheduled region',(
   assert.deepEqual(square,{shape:'rect',nominal:{halfWidth:50,halfHeight:50},scheduled:{halfWidth:15,halfHeight:15},extent:50});
 });
 test('Smax formula',()=>{const v=PV2000.modules.qss.smax(11.658483155829508,300);assert.ok(Math.abs(v-1286.617)<0.01)});
-test('PV2000-compatible implied Voc is in reference range',()=>{const d={qssMilli:30,waferThickness:300,opticalFactor:.708,doping:1e14,temperatureC:24.494949494949495};const v=PV2000.modules.qss.impliedVoc(11.658483155829508,d);assert.ok(v>0.35&&v<0.38)});
+test('PV2000-compatible implied Voc uses recovered managed-DLL constants',()=>{const d={qssMilli:1000,waferThickness:200,opticalFactor:1,doping:1e15,temperatureC:25};const v=PV2000.modules.qss.impliedVoc(100,d);assert.ok(Math.abs(v-0.6040241942460298)<1e-14);});
 test('QSS validation metadata separates geometry, stored lifetime, Smax and Voc',()=>{
   const Q=PV2000.modules.qss,
     d={
@@ -33,8 +33,8 @@ test('QSS validation metadata separates geometry, stored lifetime, Smax and Voc'
   assert.equal(a.metrics.lifetime.profileId,'QSS-STORED-LIFETIME-001');
   assert.equal(a.metrics.smax.profileId,'QSS-CALC-LIFETIME-SMAX-001');
   assert.equal(a.metrics.smax.validation,'validated');
-  assert.equal(a.metrics.voc.profileId,null);
-  assert.equal(a.metrics.voc.validation,'inferred');
+  assert.equal(a.metrics.voc.profileId,'QSS-CALC-IMPLIED-VOC-002');
+  assert.equal(a.metrics.voc.validation,'validated');
   assert.deepEqual(Q.intrinsicLifetimeMask(d.values,true),[true,false,true]);
 });
 
@@ -160,7 +160,8 @@ test('QSS paired validator uses shared geometry and quantity-specific sentinel a
   assert.match(src,/zero acquired sites; no numeric profile promoted/);
   assert.match(src,/value if math\.isfinite\(value\) and value > 0 else None/);
   assert.match(src,/else 0\.0 if math\.isfinite\(value\) and value <= 0 else None/);
-  assert.match(src,/Voc diagnostic max=/);
+  assert.match(src,/Voc max=/);
+  assert.match(src,/TOL_VOC/);
 });
 
 test('SRV conversion supports planar and textured/black formulas with optional bulk lifetime',()=>{
