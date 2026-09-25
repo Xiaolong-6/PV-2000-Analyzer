@@ -101,7 +101,7 @@
     el.dataset.zoomable='true';
     el.onwheel=e=>{
       const p=point(el,W,H,e),inside=p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1,onX=p.x>=x0&&p.x<=x1&&p.y>y1&&p.y<=H,onY=p.x<x0&&p.x>=0&&p.y>=y0&&p.y<=y1;
-      if(!inside&&!onX&&!onY)return;
+      if(!inside&&!onX&&!onY||!(e.ctrlKey||e.metaKey))return;
       e.preventDefault();
       const factor=e.deltaY>0?1.18:1/1.18,fx=clamp((p.x-x0)/(x1-x0||1),0,1),fy=clamp((yDown?p.y-y0:y1-p.y)/(y1-y0||1),0,1),next={x:ranges.x.slice(),y:ranges.y.slice()};
       if(inside||onX)next.x=zoomRange(ranges.x,factor,fx,xLog);
@@ -112,8 +112,9 @@
     el.onpointermove=e=>{const p=point(el,W,H,e),
       inside=p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1,
       onX=p.x>=x0&&p.x<=x1&&p.y>y1&&p.y<=H,
-      onY=p.x<x0&&p.x>=0&&p.y>=y0&&p.y<=y1;
-      el.style.cursor=inside?'zoom-in':onX?'ew-resize':onY?'ns-resize':'default'};
+      onY=p.x<x0&&p.x>=0&&p.y>=y0&&p.y<=y1,
+      zoomGesture=e.ctrlKey||e.metaKey;
+      el.style.cursor=zoomGesture?(inside?'zoom-in':onX?'ew-resize':onY?'ns-resize':'default'):'default'};
       
     el.onpointerleave=()=>{el.style.cursor='default'};
   }

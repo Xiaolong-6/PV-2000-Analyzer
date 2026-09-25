@@ -19,22 +19,26 @@ function fakeElement(){
   };
 }
 
-test('wheel inside plot zooms both axes, axis hover zooms one axis, and double click resets',()=>{
+test('plain wheel scroll is left to the pane; Ctrl/Cmd+wheel zooms plots and double click resets',()=>{
   const el=fakeElement(),events=[],resets=[];
   P.bind(el,{W:100,H:100,plotRect:{x0:20,x1:90,y0:10,y1:80},ranges:{x:[0,10],y:[0,20]},onChange:(n,mode)=>events.push({n,mode}),onReset:()=>resets.push(true)});
   let prevented=false;
-  el.onwheel({clientX:50,clientY:50,deltaY:-1,preventDefault(){prevented=true}});
+  el.onwheel({clientX:50,clientY:50,deltaY:-1,ctrlKey:false,metaKey:false,preventDefault(){prevented=true}});
+  assert.equal(prevented,false);
+  assert.equal(events.length,0);
+
+  el.onwheel({clientX:50,clientY:50,deltaY:-1,ctrlKey:true,metaKey:false,preventDefault(){prevented=true}});
   assert.equal(prevented,true);
   assert.equal(events.at(-1).mode,'both');
   assert.notDeepEqual(events.at(-1).n.x,[0,10]);
   assert.notDeepEqual(events.at(-1).n.y,[0,20]);
 
-  el.onwheel({clientX:50,clientY:90,deltaY:-1,preventDefault(){}});
+  el.onwheel({clientX:50,clientY:90,deltaY:-1,ctrlKey:false,metaKey:true,preventDefault(){}});
   assert.equal(events.at(-1).mode,'x');
   assert.notDeepEqual(events.at(-1).n.x,[0,10]);
   assert.deepEqual(events.at(-1).n.y,[0,20]);
 
-  el.onwheel({clientX:10,clientY:40,deltaY:-1,preventDefault(){}});
+  el.onwheel({clientX:10,clientY:40,deltaY:-1,ctrlKey:true,metaKey:false,preventDefault(){}});
   assert.equal(events.at(-1).mode,'y');
   assert.deepEqual(events.at(-1).n.x,[0,10]);
   assert.notDeepEqual(events.at(-1).n.y,[0,20]);
@@ -46,7 +50,7 @@ test('wheel inside plot zooms both axes, axis hover zooms one axis, and double c
 test('downward-Y maps anchor vertical zoom in screen-down direction',()=>{
   const el=fakeElement(),events=[];
   P.bind(el,{W:100,H:100,plotRect:{x0:20,x1:90,y0:10,y1:80},ranges:{x:[0,10],y:[0,100]},yDown:true,onChange:n=>events.push(n)});
-  el.onwheel({clientX:10,clientY:20,deltaY:-1,preventDefault(){}});
+  el.onwheel({clientX:10,clientY:20,deltaY:-1,ctrlKey:true,metaKey:false,preventDefault(){}});
   const next=events.at(-1).y;
   assert.ok(next[0] < 10);
   assert.ok(next[1] < 100);

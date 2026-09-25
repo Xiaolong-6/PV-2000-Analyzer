@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260925.19 — 2026-09-25
+
+- Reworked the wide analyzer shell so toolbar, content and project footer fit exactly inside the viewport. The footer now occupies the bottom shell row and the body no longer contributes a second vertical scrollbar.
+- Kept the three desktop analyzer tracks literally equal-width and made dataset, overview and detail panes the sole vertical scroll owners for their columns.
+- Restored DIT Vcpd–Qc, Dit–Vsb and Vsb–Qc to simultaneous stacked display in the right detail pane; removed the temporary point-analysis tabs/sticky wrapper, eliminating the Axes-control collision seen in DIT.
+- Changed shared plot wheel interaction so ordinary wheel/trackpad motion scrolls the active pane. Plot zoom now requires Ctrl/⌘ + wheel; double-click still restores Auto and Ctrl/⌘ + wheel over an axis still performs axis-only zoom.
+- Updated DIT, QSS, ISC and LBIC hover help plus workspace documentation to match the non-conflicting scroll/zoom contract.
+
+
 ## v20260925.18 — 2026-09-25
 
 - Fixed LBIC Distribution rendering after plot normalization: `PV.plot.canvasFrame()` exposes `ctx`, and reading `frame.context` caused `Cannot read properties of undefined (reading 'clearRect')` during redraw.
