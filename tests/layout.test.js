@@ -77,7 +77,7 @@ test('Dit results summary uses compact Selected-site-style rows without repeated
   assert.doesNotMatch(src,/Valid-site mean ± stdev/);
   assert.doesNotMatch(src,/result-card-values/);
   assert.match(css,/\.compact-summary\{[^}]*grid-template-columns:minmax\(0,1fr\) auto/);
-  const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Measurement metadata'));
+  const summary=src.slice(src.indexOf('id="ditResultsSummary"'),src.indexOf('<summary>Acquisition metadata'));
   assert.doesNotMatch(summary,/Current site|midgapCoverageText\(s\)/);
 });
 
@@ -119,15 +119,22 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
     spv:fs.readFileSync(require.resolve('../src/modules/spv.js'),'utf8'),
     leakage:fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8')
   };
+  const sidebar=src=>{
+    const start=src.indexOf('<aside class="side">'),
+      end=src.indexOf('</aside>',start);
+    assert.ok(start>=0&&end>start,'dedicated analyzer sidebar not found');
+    return src.slice(start,end);
+  };
   const ordered=(src,labels)=>{
+    const side=sidebar(src);
     let last=-1;
     for(const label of labels){
-      const next=src.indexOf(label,last+1);
+      const next=side.indexOf(label,last+1);
       assert.ok(next>last,`expected sidebar order item ${label}`);
       last=next;
     }
   };
-  ordered(sources.dit,['<h3>Measurement ','<h3>Current dataset ','Analysis controls','validDataFilterMarkup','Results summary','<summary>Acquisition metadata ','Recipe charge sequence']);
+  ordered(sources.dit,['<h3>Measurement ','<h3>Current dataset ','${analysisControls()}','validDataFilterMarkup','Results summary','<summary>Acquisition metadata ','Recipe charge sequence']);
   ordered(sources.qss,['<h3>Measurement ','<h3>Current dataset ','<h3>Analysis controls ','Additional SRV analysis','validDataFilterMarkup','<h3>Results summary ','<summary>Full metadata']);
   ordered(sources.dual,['<h3>Measurement ','<h3>Current dataset</h3>','<h3>Comparison overlay</h3>','<h3>Results summary</h3>','<summary>Acquisition metadata</summary>']);
   ordered(sources.jzero,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary ','<summary>Validation / provenance</summary>','<summary>Acquisition metadata</summary>']);
