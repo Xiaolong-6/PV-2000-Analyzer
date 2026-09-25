@@ -10,13 +10,13 @@ The Dit sidebar exposes **Analysis method** rather than one flat list of unrelat
 
 Normal user choices are:
 
-- **Follow XML setting** — the default. `UseCocosII=false` resolves to Standard COCOS; `UseCocosII=true` resolves to **PV2000 COCOS-II (inferred)**.
+- **Follow XML setting** — the default. `UseCocosII=false` resolves to Standard COCOS; `UseCocosII=true` resolves to **PV-2000 COCOS-II (current DLL)**.
 - **Standard COCOS** — force the measured dark/light path regardless of the XML flag.
-- **PV2000 COCOS-II (inferred)** — force the current same-raw-data reverse-engineered model.
+- **PV-2000 COCOS-II (current DLL)** — force the recovered current-DLL compatibility path.
 
 The obsolete guide-only COCOS-II implementation has been removed from the runtime and user interface.
 
-Controls are contextual. **Material** is selected in Analysis controls and defaults to **Silicon (Si)**. COCOS-II EOT and Min/Max Vsb appear only when the inferred PV2000 COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. **Optional Midgap Dit (PCHIP)** is always visible in Analysis controls with a checkbox; it is enabled by default. When unchecked, Midgap Dit and the PCHIP curve are disabled while the discrete Minimum Dit calculation is unchanged. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
+Controls are contextual. **Material** is selected in Analysis controls and defaults to **Silicon (Si)**. COCOS-II EOT and Min/Max Vsb appear only when the current-DLL COCOS-II path is active. Flatband controls remain visible because they feed both Standard COCOS and COCOS-II. **Optional Midgap Dit (PCHIP)** is always visible in Analysis controls with a checkbox; it is enabled by default. When unchecked, Midgap Dit and the PCHIP curve are disabled while the discrete Minimum Dit calculation is unchanged. Applying settings re-renders the analysis while keeping the Analysis controls panel open.
 
 ## Analyzer valid-data filter
 
@@ -112,7 +112,7 @@ Recovered result processing includes:
 
 On the private 13-file / 43-site current-DLL corpus, Vfb/Qsc/Qtot/Qit/Minimum-Dit availability is reproduced exactly and finite numerical differences are at floating-point/interpolation scale.
 
-These values are exposed as **PV-2000 result** quantities. They do not replace the Analyzer's selectable Si/Ge Standard COCOS analysis values, PCHIP Midgap Dit, or inferred COCOS-II results.
+These values are exposed as **PV-2000 result** quantities. They do not replace the Analyzer's selectable Si/Ge Standard COCOS analysis values or optional PCHIP Midgap Dit. The current-DLL COCOS-II result path is validated separately under `DIT-RESULT-COCOSII-DLL-003`.
 
 ## Standard COCOS
 
@@ -148,40 +148,89 @@ This interpretation is **inferred** pending a matching PV-2000 X/Y export. The a
 
 `OnePointPattern` is not a spatial map. The Analyzer still shows the measurement location in spatial context, but its outline and autoscale come from the XML target geometry rather than from the single point's coordinate extent. For `RoundWafer`, the solid outline uses `Diameter/2` and the dashed scheduled boundary uses `Diameter/2 - EdgeExclusion`. A center-only one-point measurement is labelled **Measurement position**, not presented as a heatmap.
 
-## PV2000 COCOS-II (inferred)
+## PV-2000 COCOS-II — recovered current-DLL path
 
-This is now the default COCOS-II path when **Follow XML setting** sees `UseCocosII=true`. Its status is **inferred**, not vendor-exact. It is based on repeated PV-2000 reprocessing of the same raw dataset while changing one adjustment at a time, plus the displayed Vcpd-Qc curves.
+When **Follow XML setting** sees `UseCocosII=true`, the compatibility result layer now follows the recovered current managed-DLL path validated by `DIT-RESULT-COCOSII-DLL-003`.
 
-Current inferred model:
+The important ordering is:
 
-1. retain the same dark V-Q curve and flatband anchor used by the analyzer;
-2. interpret the PV-2000 `COCOS II EOT` numeric setting as **ångström**, not nm;
-3. compute `Cox = 3.9 ε0 / EOT` and synthetic-light slope `dV/dQc = q/Cox`; therefore 100 Å gives ~0.46398 V per 1e12 q/cm²;
-4. create a straight synthetic light curve through the flatband anchor;
-5. use a **signed** surface barrier. For n-type, `Vsb = Vlight,synthetic - Vdark`; p-type uses the opposite polarity so accumulation retains the same sign convention;
-6. use the existing semiconductor-Qsc and adjacent-step variation Dit calculation;
-7. apply `COCOSII Min Vsb` / `COCOSII Max Vsb` only as a signed-Vsb acceptance window for selecting the reported minimum Dit. Defaults are -0.10 V and +0.65 V;
-8. if no Dit segment survives the window, return NaN/invalid rather than PV-2000's apparent 1e99/1e100 sentinel values.
+1. build the normal measured/corrected dark/light arrays and charge grid;
+2. calculate Qsc on that measured-light path;
+3. determine `Vfb` and `Qcfb`;
+4. run `CheckForCOCOSII()`;
+5. calculate Qit from the reconstructed dense arrays;
+6. only then reverse the N-type analysis Vsb axis;
+7. calculate raw/dense Dit and the scalar Minimum Dit.
 
-Evidence from the supplied same-raw-data parameter sweeps: changing Min/Max Vsb changed Dit while VDark, VLight, summary Vsb, Vfb, Qsc, Qtot and Qit remained unchanged; EOT changes affected the COCOS-II result; toggling Back Surface Shift produced no observable output change on this dataset. The exact proprietary Min/Max selection semantics could still contain extra conditions, so the current window rule is the simplest model consistent with the observations.
+COCOS-II therefore **does not determine flatband from its synthetic light branch**. It reconstructs around an already established `Vfb/Qcfb`.
+
+For a valid flatband and `UseCocosII=true`:
+
+```text
+Cox [F/cm²] = 3.453e-5 / CocosIIEOT[Å]
+
+Vlight_COCOSII(Qc)
+  = Vfb + (Qc - Qcfb) * 1.602e-19 / Cox
+
+Vsbr = Vdark - Vlight_COCOSII
+Qsc  = vendor_Qsc(Vsbr)
+```
+
+The same replacement is made on the original/raw charge grid. The compatibility path uses the recovered vendor constants and preprocessing; it is intentionally distinct from the Analyzer's selectable Si/Ge semiconductor model.
+
+For N-type data, the reconstructed direct `VsbrInitial` is sign-reversed **after Qit** for the Dit analysis axis. P-type retains the direct sign.
+
+### COCOS-II Dit window and sentinel semantics
+
+The current DLL uses `VsbMin/VsbMax` as a **segment-validity window for raw Dit**, not as a point filter and not as a Qit window.
+
+For a segment with endpoints `v0, v1`:
+
+- reject it when both `v0` and `v1` are below `VsbMin`;
+- reject it when both are above `VsbMax`;
+- keep a segment that crosses either boundary.
+
+The recovered derivative is then clipped/validated with the legacy rules:
+
+- Dit > `1e14` -> clamp to `1e14`;
+- Dit < `1e9` -> mark that segment unavailable;
+- zero `DeltaVsb` -> unavailable;
+- the last raw element inherits the previous segment state/value internally;
+- the scalar `DitValue` starts at `1e100` and scans only available raw segments.
+
+Consequently, when every COCOS-II raw Dit segment is unavailable, the current DLL can export a **defined `1e100` sentinel** instead of `Ud.`. The compatibility layer preserves that behavior.
+
+### Direct result-table boundary
+
+Controlled vendor probes establish that toggling COCOS-II on the same acquired data does not change the direct result-table values:
+
+- VDark;
+- corrected final-result VLight;
+- direct result-table Vsb;
+- Vfb;
+- Qsc;
+- Qtot;
+- Initial Qc.
+
+COCOS-II changes the reconstructed internal arrays that feed **Dit and Qit**. This distinction is why the module keeps the PV-2000 compatibility result layer separate from the Analyzer's configurable science layer.
 
 ### COCOS-II parameter defaults and suggestions
 
-Missing numeric XML fields no longer collapse to JavaScript zero. An absent Min/Max setting therefore correctly falls back to the inferred defaults `-0.10 V` and `+0.65 V` instead of producing `0/0` and invalidating the calculation.
+Missing numeric XML fields no longer collapse to JavaScript zero. An absent Min/Max setting therefore correctly falls back to the current-DLL defaults `-0.10 V` and `+0.65 V` instead of producing `0/0` and invalidating the calculation.
 
 The analyzer also computes a **data-derived suggestion**:
 
 - EOT suggestion = median dark-accumulation EOT across usable sites, converted to Å;
-- Min/Max suggestion = the inferred vendor default window, expanded outward in 0.05 V steps only when reconstructed signed-Vsb coverage extends beyond the default bounds, with a small margin.
+- Min/Max suggestion = the current-DLL default window, expanded outward in 0.05 V steps only when reconstructed signed-Vsb coverage extends beyond the default bounds, with a small margin.
 
 The suggestion is advisory. If XML contains a positive COCOS-II EOT, the XML value remains applied until the user presses **Use** and then applies the settings. Invalid user settings such as `Max Vsb <= Min Vsb` raise an explicit analysis error and do **not** silently fall back to Standard COCOS.
 
 The UI reports, for the current site, the number of accepted Dit intervals and the Vsb location of the discrete minimum to make Min/Max-window behavior auditable.
 
-`Back Surface Shift` is recorded for traceability but deliberately **not applied**. Its mathematical effect has not been identified.
+`DoBackSurfaceShift` / legacy `BackSurfaceShift` is recorded for traceability but deliberately **not promoted as vendor-validated behavior**. Its active mathematical effect remains outside the controlled COCOS-II validation envelope.
 
 ## Known boundaries
 
-- Current managed-DLL Standard-COCOS final-result `Vfb`, `Qsc`, `Qtot`, `Qit` and Minimum Dit are reproduced under `DIT-RESULT-STANDARD-DLL-002`. Historical PV-2000 releases remain version-scoped and must not be assumed to share identical preprocessing/interpolation/bookkeeping.
+- Current managed-DLL Standard-COCOS final-result `Vfb`, `Qsc`, `Qtot`, `Qit` and Minimum Dit are reproduced under `DIT-RESULT-STANDARD-DLL-002`; current-DLL COCOS-II Dit/Qit reconstruction is reproduced under `DIT-RESULT-COCOSII-DLL-003`. Historical PV-2000 releases remain version-scoped and must not be assumed to share identical preprocessing/interpolation/bookkeeping.
 - A historical charge-derivative diagnostic is retained internally for one release cycle but is absent from the normal UI and chart CSV. The current implementation differentiates `qit = -Qsc - (Qc - Qsurface)`; it is not the validated current-DLL `Qit` result path and must not be presented as one.
 - EOT is always SiO2-equivalent electrical thickness. For any other dielectric or multilayer stack it is not the physical stack thickness; Cox is the more material-independent underlying quantity.

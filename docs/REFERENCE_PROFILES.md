@@ -196,7 +196,7 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 
 **Not validated by this profile**
 
-- PV2000 COCOS-II vendor algorithm.
+- Current-DLL COCOS-II is not part of `DIT-STD-001`; it is validated separately by `DIT-RESULT-COCOSII-DLL-003`.
 - Back Surface Shift behavior outside the supplied adjustment set.
 - Any new Dit XML/data path that changes the extraction behavior materially.
 - Any separately reprocessed/corrected-light export branch that is not uniquely recoverable from the saved XML.
@@ -205,14 +205,14 @@ Private W1 XML plus matching PV-2000 summary/raw exports and development referen
 
 Treat as a new profile when a real dataset introduces a materially different Dit algorithm path or XML structure, including:
 
-- `UseCocosII=true` vendor-output validation;
+- a COCOS-II branch outside the controlled current-DLL envelope in `DIT-RESULT-COCOSII-DLL-003`;
 - a case where Back Surface Shift changes vendor results;
-- new COCOS-II acceptance/window behavior;
+- new COCOS-II acceptance/window behavior not covered by the current-DLL profile;
 - a different pointwise Dit/Vsb export structure;
 - materially different flatband/extraction fields that require new parser or calculation assumptions;
 - independent evidence of a material-specific vendor algorithm; a Ge-named sample/export alone does not establish one because PV-2000 provides no Si/Ge selector in these files.
 
-Current COCOS-II status remains **inferred** until matching vendor pointwise output validates it.
+Current-DLL COCOS-II has its own controlled vendor-validation profile, `DIT-RESULT-COCOSII-DLL-003`; native instrument-recorded `UseCocosII=true` XML/CSV pairs remain unavailable.
 
 ---
 
@@ -233,14 +233,14 @@ Thirteen successful XML/vendor final-result CSV pairs from the private 100-case 
 - Final-result `Vsb = VDark - VLight_result = F × (VDark - VLight_measured)`. This is the direct result-table sign for both doping types and is intentionally separate from the N-type sign transform used by Standard-COCOS analysis arrays. Across all **43 sites**, maximum absolute result-Vsb error is **8.04e-16 V**.
 - `Initial Qc = (N_preprocess + 1) × PreProcess CoronaCharge`, where `N_preprocess` is the number of stored PreProcess dark vectors. All **43 paired sites** match exactly.
 - Twelve of the thirteen paired files independently resolve an existing shared geometry profile; maximum coordinate error is **3.58e-14 mm**.
-- This profile is limited to direct/bookkeeping quantities; current-DLL downstream Standard-COCOS result quantities are validated separately by `DIT-RESULT-STANDARD-DLL-002`.
+- This profile is limited to direct/bookkeeping quantities; current-DLL downstream Standard-COCOS results are validated separately by `DIT-RESULT-STANDARD-DLL-002`, and current-DLL COCOS-II Dit/Qit reconstruction by `DIT-RESULT-COCOSII-DLL-003`.
 
 **Explicitly not promoted**
 
 - Vfb, Qtot, Qit, Qsc and Minimum Dit are **not promoted by `DIT-RESULT-INITIAL-001`**. Their current-DLL Standard-COCOS final-result semantics are independently validated by `DIT-RESULT-STANDARD-DLL-002`; historical releases remain version-scoped.
 - The unresolved `FixedPointsPattern + RoundWafer` geometry case.
 
-Use `scripts/validate_dit_result_reference.py` for this narrow result-table evidence and `scripts/validate_dit_raw_reference.py` for the separate raw-process-row audit. Neither validator widens COCOS-II or the Analyzer-only Ge model.
+Use `scripts/validate_dit_result_reference.py` for this narrow result-table evidence and `scripts/validate_dit_raw_reference.py` for the separate raw-process-row audit. Neither validator by itself widens the Analyzer-only Ge model; COCOS-II has a separate controlled vendor-validation profile.
 
 ---
 
@@ -279,9 +279,56 @@ A separate private Python oracle independently reconstructs the same managed pat
 
 **Scope boundary**
 
-This profile is a **PV-2000 current-DLL compatibility result path**. It is intentionally separate from the Analyzer's user-selectable Standard COCOS scientific quantities, optional Ge model, PCHIP Midgap Dit and inferred COCOS-II path. The Analyzer therefore exposes these fields separately as `PV-2000 result` quantities rather than silently replacing the configurable analysis results.
+This profile is a **PV-2000 current-DLL compatibility result path**. It is intentionally separate from the Analyzer's user-selectable Standard COCOS scientific quantities, optional Ge model and PCHIP Midgap Dit. Current-DLL COCOS-II is covered by the separate `DIT-RESULT-COCOSII-DLL-003` profile. The Analyzer therefore exposes vendor-compatible result fields separately rather than silently replacing configurable analysis results.
 
 It does not establish that older PV-2000 releases used identical downstream bookkeeping/interpolation. Historical paired data can differ and remain version-scoped.
+
+---
+
+
+### DIT-RESULT-COCOSII-DLL-003 — current-DLL controlled COCOS-II result quantities
+
+**Measurement type**
+
+`DITMeasurement`
+
+**Reference material**
+
+Two real one-site DIT acquisitions, one P-type and one N-type, are used as immutable measured-data sources. The private audit preserves all raw measured arrays and changes only COCOS-II routing/configuration fields before re-running the recovered current vendor DLL. The matrix contains **2 Standard-COCOS controls + 10 `UseCocosII=true` variants**.
+
+This is **controlled vendor validation**. The generated CSVs are current-DLL oracle outputs from controlled variants of real acquisitions; they are not original instrument-recorded `UseCocosII=true` XML/CSV pairs.
+
+**Validated / established**
+
+- `Vfb/Qcfb` are determined first from the measured/corrected light path.
+- `CheckForCOCOSII()` then reconstructs the internal light-equivalent branch when flatband is valid.
+- `Cox = 3.453e-5 / CocosIIEOT`, with EOT in Å and Cox in F/cm².
+- `Vlight = Vfb + (Qc - Qcfb) * 1.602e-19 / Cox`.
+- dense and raw `Vsbr/Qsc` arrays are recomputed from that reconstructed light branch.
+- Qit is calculated from reconstructed dense arrays **before** the N-type analysis-axis sign reversal.
+- N-type then reverses the analysis Vsb axis used by the raw Dit derivative; P-type retains the direct sign.
+- `VsbMin/VsbMax` gate Dit **segments**: a segment is rejected only if both endpoints lie below Min or both lie above Max; a boundary-crossing segment is retained.
+- Qit uses the separate configured barrier range and is not gated by `VsbMin/VsbMax`.
+- vendor clipping/unavailability is reproduced, including the defined scalar `1e100` Minimum-Dit sentinel when all COCOS-II raw Dit segments are unavailable.
+- for a fixed acquisition, enabling COCOS-II does not replace direct result-table `VDark`, corrected `VLight`, direct `Vsb`, `Vfb`, `Qsc`, `Qtot` or `Initial Qc`; the reconstructed arrays affect downstream Dit/Qit.
+
+The controlled matrix spans P/N doping, EOT values from **100 Å to 4000 Å**, the default `[-0.10, 0.65] V` window and narrow/wide/sign-shifted window probes. All 12 cases load/export successfully. An independent XML-only oracle matches the generated vendor outputs with maximum absolute differences of approximately:
+
+- Vfb: **4.0e-15 V**
+- Qsc: **2.9e-5 cm^-2**
+- Qtot: **7.9e-3 cm^-2**
+- Minimum Dit: **9.7e-2 cm^-2 eV^-1**
+- Qit: **7.6e-3 cm^-2**
+
+These differences are floating-point noise at the result magnitudes.
+
+**Scope boundary**
+
+- This profile is anchored to the recovered current managed DLL; historical PV-2000 releases remain version-scoped.
+- `DoBackSurfaceShift` is not promoted: no controlled case establishes an active vendor-result change from that branch.
+- The Analyzer-only Ge model and optional PCHIP Midgap Dit remain separate scientific interpretations.
+- A future native instrument-recorded `UseCocosII=true` XML + matching export would strengthen provenance but is not needed to infer the current-DLL formula or ordering.
+- A different COCOS-II formula, field semantics, acceptance rule, preprocessing path or active Back Surface Shift behavior is a **NEW PROFILE**.
 
 ---
 

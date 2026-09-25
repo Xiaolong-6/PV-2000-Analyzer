@@ -18,7 +18,8 @@
     eps0:8.8542e-14,
     epsR:11.9,
     niCm3:1.45e10,
-    profileId:'DIT-RESULT-STANDARD-DLL-002'
+    standardProfileId:'DIT-RESULT-STANDARD-DLL-002',
+    cocosIIProfileId:'DIT-RESULT-COCOSII-DLL-003'
   });
   const materialKey=value=>value==='Ge'?'Ge':'Si';
   const materialProfile=value=>MATERIALS[materialKey(value)];
@@ -231,9 +232,13 @@
       a=locate(qitMin),b=locate(qitMax);
     return Number.isFinite(a)&&Number.isFinite(b)?Math.abs(b-a):NaN;
   }
-  function vendorDitMinimum(qc,vsb,qscValues,type){
+  function vendorDitMinimum(qc,vsb,qscValues,type,useCocosII=false,minVsb=-.1,maxVsb=.65){
     const values=[];
     for(let i=0;i<vsb.length-1;i++){
+      if(useCocosII&&(
+        (vsb[i]<minVsb&&vsb[i+1]<minVsb)||
+        (vsb[i]>maxVsb&&vsb[i+1]>maxVsb)
+      ))continue;
       const dv=vsb[i+1]-vsb[i];
       if(!dv)continue;
       const dqc=(qc[i+1]-qc[i])/dv,
@@ -243,18 +248,41 @@
       if(value<1e9)continue;
       values.push(value);
     }
-    return values.length?Math.min(...values):NaN;
+    // Current DLL initializes DitValue to 1e100 and clears DitValueUd after
+    // scanning the raw intervals, so an all-invalid COCOS-II trace exports a
+    // defined 1e100 sentinel rather than Ud.
+    return values.length?Math.min(...values):(useCocosII?1e100:NaN);
+  }
+
+  function vendorCocosIIReconstruct(qc,vdark,qcInitial,vdarkInitial,flat,d){
+    if(!d.useCocosII)return{enabled:false,available:false};
+    const eot=d.cocosIIEOT,
+      minVsb=d.cocosIIMinVsb,
+      maxVsb=d.cocosIIMaxVsb;
+    if(!flat.available||!(eot>0)||!(maxVsb>minVsb)){
+      return{enabled:true,available:false,eot,minVsb,maxVsb};
+    }
+    const cox=3.453e-5/eot,
+      light=qc.map(charge=>flat.Vfb+(charge-flat.Qcfb)*VENDOR_DIT.q/cox),
+      vsb=vdark.map((value,i)=>value-light[i]),
+      qsc=vsb.map(value=>vendorDitQsc(value,d.doping,d.dopingType,300)),
+      initialLight=qcInitial.map(charge=>flat.Vfb+(charge-flat.Qcfb)*VENDOR_DIT.q/cox),
+      initialVsb=vdarkInitial.map((value,i)=>value-initialLight[i]),
+      initialQsc=initialVsb.map(value=>vendorDitQsc(value,d.doping,d.dopingType,300));
+    return{enabled:true,available:true,eot,minVsb,maxVsb,cox,light,vsb,qsc,initialLight,initialVsb,initialQsc};
   }
   function vendorResultDownstream(site,d){
-    const unavailable={
-      profileId:null,
-      Vfb:NaN,Qcfb:NaN,QcInit:NaN,Qsc:NaN,Qtot:NaN,Qit:NaN,Dit:NaN
-    };
-    if(d.useCocosII||!site.resultProcess)return unavailable;
+    const profileId=d.useCocosII?VENDOR_DIT.cocosIIProfileId:VENDOR_DIT.standardProfileId,
+      unavailable={
+        profileId:null,
+        Vfb:NaN,Qcfb:NaN,QcInit:NaN,Qsc:NaN,Qtot:NaN,Qit:NaN,Dit:NaN,
+        analysisVsb:null,cocosII:null
+      };
+    if(!site.resultProcess)return unavailable;
     const dark=site.resultProcess.dark,
       measuredLight=site.resultProcess.light,
       n=Math.min(dark.length,measuredLight.length)-1;
-    if(n<5)return{...unavailable,profileId:VENDOR_DIT.profileId};
+    if(n<5)return{...unavailable,profileId};
     const vd=dark.slice(1,n+1),
       ml=measuredLight.slice(1,n+1),
       vl=vd.map((v,i)=>finalResultVLight(v,ml[i],d.factor)),
@@ -265,34 +293,50 @@
     }else{
       for(let i=0;i<n;i++)qcInitial[n-1-i]=-i*d.process.charge;
     }
-    const qscInitial=[];
+    let qscInitial=[];
     for(let i=0;i<n;i++){
       const temp=i===0&&!(site.chuckTemperature>0)?296.16:300;
       qscInitial.push(vendorDitQsc(directVsb[i],d.doping,d.dopingType,temp));
     }
     const qc=vendorEvenGrid(3*n,qcInitial[0],qcInitial[n-1]),
-      vdark=vendorSpline(qcInitial,vd,qc),
-      vlight=vendorSpline(qcInitial,vl,qc),
+      vdark=vendorSpline(qcInitial,vd,qc);
+    let vlight=vendorSpline(qcInitial,vl,qc),
       denseVsb=vdark.map((v,i)=>v-vlight[i]),
-      denseQsc=denseVsb.map(v=>vendorDitQsc(v,d.doping,d.dopingType,300)),
-      qcInit=vendorQcInit(qc,vdark,site.VDark),
+      denseQsc=denseVsb.map(v=>vendorDitQsc(v,d.doping,d.dopingType,300));
+    const qcInit=vendorQcInit(qc,vdark,site.VDark),
       initialDirectVsb=finalResultVsb(site.VDark,site.VLight,d.factor),
       resultQsc=vendorDitQsc(initialDirectVsb,d.doping,d.dopingType,300),
       threshold=(d.dopingType==='p'?1:-1)*Math.abs(d.vsbThreshold),
       flat=vendorVfb(qc,denseVsb,vdark,vlight,threshold),
-      Qtot=qcInit.available&&flat.available?qcInit.value-flat.Qcfb:NaN,
+      cocosII=vendorCocosIIReconstruct(qc,vdark,qcInitial,vd,flat,d);
+    let rawVsb=directVsb;
+    if(cocosII.available){
+      vlight=cocosII.light;
+      denseVsb=cocosII.vsb;
+      denseQsc=cocosII.qsc;
+      rawVsb=cocosII.initialVsb;
+      qscInitial=cocosII.initialQsc;
+    }
+    const Qtot=qcInit.available&&flat.available?qcInit.value-flat.Qcfb:NaN,
+      // Vendor order is important: Qit is calculated on the reconstructed
+      // dense arrays before the N-type analysis-axis sign reversal.
       Qit=vendorQit(qc,denseQsc,d.doping,d.dopingType,d.qitMin,d.qitMax),
-      signedVsb=d.dopingType==='p'?directVsb:directVsb.map(v=>-v),
-      Dit=vendorDitMinimum(qcInitial,signedVsb,qscInitial,d.dopingType);
+      signedVsb=d.dopingType==='p'?rawVsb:rawVsb.map(v=>-v),
+      Dit=vendorDitMinimum(
+        qcInitial,signedVsb,qscInitial,d.dopingType,d.useCocosII,
+        d.cocosIIMinVsb,d.cocosIIMaxVsb
+      );
     return{
-      profileId:VENDOR_DIT.profileId,
+      profileId,
       Vfb:flat.Vfb,
       Qcfb:flat.Qcfb,
       QcInit:qcInit.value,
       Qsc:resultQsc,
       Qtot,
       Qit,
-      Dit
+      Dit,
+      analysisVsb:signedVsb,
+      cocosII
     };
   }
   function firstNum(parents,names,d=NaN){for(const p of(Array.isArray(parents)?parents:[parents]))for(const n of names){const v=X.num(p,n,NaN);if(Number.isFinite(v))return v}return d}
@@ -386,9 +430,9 @@
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
       useCocosII:X.text(m,'UseCocosII','false').toLowerCase()==='true',cocosIIEOT:X.num(m,'CocosIIEOT',NaN),
-      cocosIIMinVsb:firstNum([m,md],['CocosIIMinVsb','CocosIIMinVSB','COCOSIIMinVsb','COCOSIIMinVSB'],-0.1),
-      cocosIIMaxVsb:firstNum([m,md],['CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
-      backSurfaceShift:firstBool([m,md],['BackSurfaceShift'],false),
+      cocosIIMinVsb:firstNum([m,md],['VsbMin','CocosIIMinVsb','CocosIIMinVSB','COCOSIIMinVsb','COCOSIIMinVSB'],-0.1),
+      cocosIIMaxVsb:firstNum([m,md],['VsbMax','CocosIIMaxVsb','CocosIIMaxVSB','COCOSIIMaxVsb','COCOSIIMaxVSB'],0.65),
+      backSurfaceShift:firstBool([m,md],['DoBackSurfaceShift','BackSurfaceShift'],false),
       vsbThreshold:firstNum([m,md],['VsbThreshold'],.03),
       qitMin:X.num(qit,'Min',NaN),
       qitMax:X.num(qit,'Max',NaN),
@@ -454,17 +498,26 @@
     return{qinit:qi,qfb,Qtot:qi-qfb,Cox,eot,mox,mfb,slopes:sl,flatIndex:ix,vfbDark:interp(qc,v,qfb)};
   }
   function cocosIIReverse(site,d,f,opts={}){
-    const r=site.rows,qc=r.map(x=>x.Qc),vd=r.map(x=>x.VDark),eps0=8.8541878128e-14;
+    const r=site.rows,qc=r.map(x=>x.Qc),vd=r.map(x=>x.VDark);
     const eotA=Number.isFinite(opts.cocosIIEOT_A)?opts.cocosIIEOT_A:(Number.isFinite(d.cocosIIEOT)&&d.cocosIIEOT>0?d.cocosIIEOT:100);
     const minVsb=Number.isFinite(opts.cocosIIMinVsb)?opts.cocosIIMinVsb:(Number.isFinite(d.cocosIIMinVsb)?d.cocosIIMinVsb:-0.1);
     const maxVsb=Number.isFinite(opts.cocosIIMaxVsb)?opts.cocosIIMaxVsb:(Number.isFinite(d.cocosIIMaxVsb)?d.cocosIIMaxVsb:0.65);
     const anchor=Number.isFinite(f.vfbDark)?f.vfbDark:interp(qc,vd,f.qfb);
-    if(!Number.isFinite(f.qfb)||!Number.isFinite(anchor)||!(eotA>0)||!(maxVsb>minVsb))return{enabled:true,valid:false,algorithm:'pv2000-re',eotA,minVsb,maxVsb,source:'PV2000 inferred'};
-    const slope=q*(eotA*1e-8)/(3.9*eps0),light=qc.map(x=>anchor+slope*(x-f.qfb)),polarity=d.dopingType==='p'?-1:1,vsb=vd.map((v,i)=>polarity*(light[i]-v));
-    return{enabled:true,valid:true,algorithm:'pv2000-re',light,vsb,slope,source:'PV2000 inferred',eotA,minVsb,maxVsb,signed:true,backSurfaceShiftRequested:!!opts.backSurfaceShift,backSurfaceShiftApplied:false};
+    if(!Number.isFinite(f.qfb)||!Number.isFinite(anchor)||!(eotA>0)||!(maxVsb>minVsb))return{enabled:true,valid:false,algorithm:'pv2000-re',eotA,minVsb,maxVsb,source:'PV-2000 current-DLL fallback unavailable'};
+    const cox=3.453e-5/eotA,
+      slope=VENDOR_DIT.q/cox,
+      light=qc.map(x=>anchor+slope*(x-f.qfb)),
+      polarity=d.dopingType==='p'?-1:1,
+      vsb=vd.map((v,i)=>polarity*(light[i]-v));
+    return{enabled:true,valid:true,algorithm:'pv2000-re',light,vsb,slope,cox,source:'PV-2000 current-DLL formula with Analyzer flatband fallback',eotA,minVsb,maxVsb,signed:true,backSurfaceShiftRequested:!!opts.backSurfaceShift,backSurfaceShiftApplied:false};
   }
   function windowedMin(vsb,raw,minVsb,maxVsb){
-    const accepted=raw.map((v,i)=>Number.isFinite(v)&&Number.isFinite(vsb[i])&&vsb[i]>=minVsb&&vsb[i]<=maxVsb);let min=Infinity,minIndex=-1,count=0;
+    const accepted=raw.map((v,i)=>{
+      const v0=vsb[i],v1=vsb[i+1];
+      return Number.isFinite(v)&&Number.isFinite(v0)&&Number.isFinite(v1)&&
+        !((v0<minVsb&&v1<minVsb)||(v0>maxVsb&&v1>maxVsb));
+    });
+    let min=Infinity,minIndex=-1,count=0;
     raw.forEach((v,i)=>{if(accepted[i]){count++;if(v<min){min=v;minIndex=i}}});
     return{min:Number.isFinite(min)?min:NaN,minIndex,accepted,count,total:raw.length};
   }
@@ -568,7 +621,7 @@
       measuredMinVsb=measuredVsb.length?Math.min(...measuredVsb):NaN,
       measuredMaxVsb=measuredVsb.length?Math.max(...measuredVsb):NaN,
       midgapV=midgapTargetV(d),
-      gate=window?windowedMin(x,raw,window.min,window.max):windowedMin(x,raw,-Infinity,Infinity),
+      gate=window?windowedMin(vs,raw,window.min,window.max):windowedMin(vs,raw,-Infinity,Infinity),
       fitX=x.filter((_,i)=>gate.accepted[i]),
       fitY=raw.filter((_,i)=>gate.accepted[i]),
       fit=pchipEnabled?makeCurve(fitX,fitY,d,reject,pchipScale,pchipMethod,pchipMedianWindowV):{mid:NaN,curve:[],knots:[],fitMinVsb:NaN,fitMaxVsb:NaN,midgapCovered:false},
@@ -616,11 +669,20 @@
     const sites=model.sites.map(s=>{
       const f=flat(s,model,accumN),
         vendorResult=vendorResultDownstream(s,d),
+        vendorCocosAnalysis=effective==='pv2000-re'
+          ?vendorResultDownstream(s,{...d,useCocosII:true,cocosIIEOT:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb})
+          :null,
         c2=effective==='pv2000-re'
-          ?cocosIIReverse(s,model,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift})
+          ?(vendorCocosAnalysis?.cocosII?.available
+            ?{...vendorCocosAnalysis.cocosII,valid:true,source:'PV-2000 current-DLL reconstruction'}
+            :cocosIIReverse(s,model,f,{cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift}))
           :{enabled:false,valid:false,source:'standard measured light'},
         requiresC2=effective==='pv2000-re',
-        usedVsb=requiresC2?(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)):null,
+        usedVsb=requiresC2
+          ?(vendorCocosAnalysis?.analysisVsb?.length===s.rows.length
+            ?vendorCocosAnalysis.analysisVsb
+            :(c2.valid?c2.vsb:Array(s.rows.length).fill(NaN)))
+          :null,
         window=effective==='pv2000-re'&&c2.valid?{min:minVsb,max:maxVsb}:null,
         v=variation(s,model,ditReject,usedVsb,pchipScale,window,pchipEnabled,pchipMethod,pchipMedianWindowV),
         mx=finite(v.vsb.map(Math.abs));
@@ -665,7 +727,7 @@
     const keys=['Qtot','Dit','MidgapDit','eot','Cox','Qsc','InitialQc','MaxVsb'],
       stats={};
       keys.forEach(k=>stats[k]=S.summary(sites.filter(x=>x.valid).map(x=>x[k])));
-      const mode=effective==='pv2000-re'?'PV2000 COCOS-II (inferred)':'Standard COCOS';
+      const mode=effective==='pv2000-re'?'PV-2000 COCOS-II (current DLL)':'Standard COCOS';
       return{sites,stats,recommendation,error:settingsError,options:{material,accumN,ditReject,pchipScale,pchipEnabled,pchipMethod,pchipMedianWindowV,cocosMode:requested,effectiveCocosMode:effective,cocosIIEOT_A:eotA,cocosIIMinVsb:minVsb,cocosIIMaxVsb:maxVsb,backSurfaceShift},mode};
       
   }
@@ -797,7 +859,29 @@
       MaxVsb:'Maximum absolute surface-barrier magnitude reached by the analysis Vsb curve; with COCOS-II enabled this uses the reconstructed corrected Vsb.'
     };
       
-    const metaHelp={recipe:'PV-2000 recipe/job name stored in the result XML.',substrate:'Substrate identifier stored with the result.',lot:'Lot identifier stored with the result; it may be empty.',status:'PV-2000 execution status.',start:'Execution start timestamp from the result XML.',end:'Execution completion timestamp from the result XML.',elapsed:'Total elapsed measurement time.',pattern:'Measurement pattern name/type and number of measured sites.',points:'Number of Kelvin-probe samples averaged for each Vcpd reading.',interval:'Time interval between the Vcpd samples used to form each vector.',offset:'Kelvin-probe Vcpd calibration offset stored in MeasurementData and applied to reconstructed Vcpd values.',factor:'Standard COCOS correction factor applied to the measured dark-light Vcpd difference when COCOS-II is disabled.',qitRange:'Surface-barrier range configured for Qit/Dit extraction.',c2:'Whether the XML requests COCOS-II. When true, this analyzer replaces the experimental light curve with a synthetic straight light curve before Dit extraction.',c2eot:'Raw COCOS-II EOT setting stored in the XML. The PV2000 inferred method interprets this vendor value as Å.',preCharge:'Corona charge increment used during barrier adjustment before the main sweep.',preTarget:'Target Vsb range for the barrier-adjustment stage.',preAttempts:'Maximum barrier-adjustment attempts and number of extra scans.',processCharge:'Positive/negative corona charge increment used during the main Process sweep.',processTarget:'Target measurement range for terminating the main Process sweep.',processAttempts:'Maximum Process attempts and number of extra scans.'};
+    const metaHelp={
+      recipe:'PV-2000 recipe/job name stored in the result XML.',
+      substrate:'Substrate identifier stored with the result.',
+      lot:'Lot identifier stored with the result; it may be empty.',
+      status:'PV-2000 execution status.',
+      start:'Execution start timestamp from the result XML.',
+      end:'Execution completion timestamp from the result XML.',
+      elapsed:'Total elapsed measurement time.',
+      pattern:'Measurement pattern name/type and number of measured sites.',
+      points:'Number of Kelvin-probe samples averaged for each Vcpd reading.',
+      interval:'Time interval between the Vcpd samples used to form each vector.',
+      offset:'Kelvin-probe Vcpd calibration offset stored in MeasurementData and applied to reconstructed Vcpd values.',
+      factor:'Standard COCOS correction factor applied to the measured dark-light Vcpd difference when COCOS-II is disabled.',
+      qitRange:'Surface-barrier range configured for Qit/Dit extraction.',
+      c2:'Whether the XML requests COCOS-II. The current DLL establishes Vfb/Qcfb first, then reconstructs the internal light-equivalent branch used by Dit/Qit.',
+      c2eot:'Raw COCOS-II EOT setting stored in the XML. Current-DLL vendor probes confirm this value is interpreted in Å.',
+      preCharge:'Corona charge increment used during barrier adjustment before the main sweep.',
+      preTarget:'Target Vsb range for the barrier-adjustment stage.',
+      preAttempts:'Maximum barrier-adjustment attempts and number of extra scans.',
+      processCharge:'Positive/negative corona charge increment used during the main Process sweep.',
+      processTarget:'Target measurement range for terminating the main Process sweep.',
+      processAttempts:'Maximum Process attempts and number of extra scans.'
+    };
       
     const md=(label,value,tip)=>`<dt>${esc(label)} ${help(tip)}</dt><dd>${value}</dd>`;
     const midgapCoverageText=s=>{
@@ -821,14 +905,14 @@
       return `<details id="ditAnalysisControls" class="panel" ${analysisOpen?'open':''}><summary>Analysis controls</summary>
         <div class="setting-row compact-settings analysis-method-row">
           ${field('Material','Analyzer semiconductor model used by Qsc, flatband semiconductor capacitance, variation/Minimum Dit and theoretical Midgap Dit. PV-2000 itself has no Si/Ge material selector. Si is the default Analyzer model; Ge uses the legacy MATLAB constants ni=2E13 cm⁻³ and εr=16.2.',`<select id="ditMaterial"><option value="Si">Silicon (Si)</option><option value="Ge">Germanium (Ge)</option></select>`)}
-          ${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the inferred PV2000 COCOS-II implementation.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV2000 COCOS-II (inferred)</option></select>`)}
+          ${field('Analysis method','Choose how this XML is analyzed. Follow XML setting maps UseCocosII=false to Standard COCOS and UseCocosII=true to the recovered current-DLL COCOS-II path.',`<select id="ditCocosMode"><option value="xml">Follow XML setting</option><option value="standard">Standard COCOS</option><option value="pv2000-re">PV-2000 COCOS-II (current DLL)</option></select>`)}
         </div>
         ${o.material==='Ge'?`<div class="analysis-resolved"><b>Ge Analyzer model:</b> legacy MATLAB compatibility · ni = 2E13 cm⁻³ · εr = 16.2 · PV-2000 has no material selector</div>`:''}
         ${analysis.error?`<div class="analysis-error">${esc(analysis.error)} Invalid settings are not silently corrected or replaced.</div>`:''}
-        ${isPv?`<div class="control-section-title">COCOS-II ${help('Inferred, not vendor-exact. Back Surface Shift exists in PV-2000 but its mathematical effect is not identified, so it is not applied.')}</div><div class="setting-row compact-settings">
-          ${field('EOT [Å]','PV2000 inferred mode: SiO₂-equivalent EOT in ångström. The synthetic-light slope is q/Cox with Cox=3.9ε₀/EOT.',`<input id="ditCocosEotA" type="number" min="0.001" step="any" value="${o.cocosIIEOT_A}">`)}
-          ${field('Min Vsb [V]','Lower signed-Vsb acceptance bound used when selecting the PV2000-style minimum Dit.',`<input id="ditCocosMin" type="number" step="any" value="${o.cocosIIMinVsb}">`)}
-          ${field('Max Vsb [V]','Upper signed-Vsb acceptance bound used when selecting the PV2000-style minimum Dit.',`<input id="ditCocosMax" type="number" step="any" value="${o.cocosIIMaxVsb}">`)}
+        ${isPv?`<div class="control-section-title">COCOS-II ${help('Current-DLL reconstruction is vendor-validated for the recovered UseCocosII/EOT/Vsb-window path. Back Surface Shift remains outside this validation envelope and is not applied by the Analyzer-side configurable path.')}</div><div class="setting-row compact-settings">
+          ${field('EOT [Å]','Current-DLL COCOS-II: SiO₂-equivalent EOT in ångström. The vendor path uses Cox=3.453e-5/EOT [F/cm²] and reconstructs the internal light-equivalent branch around Vfb/Qcfb.',`<input id="ditCocosEotA" type="number" min="0.001" step="any" value="${o.cocosIIEOT_A}">`)}
+          ${field('Min Vsb [V]','Lower signed-Vsb segment-validity bound. A segment crossing this boundary remains eligible, matching the current DLL.',`<input id="ditCocosMin" type="number" step="any" value="${o.cocosIIMinVsb}">`)}
+          ${field('Max Vsb [V]','Upper signed-Vsb segment-validity bound. A segment crossing this boundary remains eligible, matching the current DLL.',`<input id="ditCocosMax" type="number" step="any" value="${o.cocosIIMaxVsb}">`)}
         </div>${recommendation}${diagnostics}`:''}
         <div class="control-section-title">Flatband</div><div class="setting-row compact-settings">${field('Accumulation points','Number of deepest-accumulation dark V–Q points used to determine Cox/EOT and the flatband-capacitance criterion. Minimum Dit (PV2000-style) is taken directly from accepted discrete Dit–Vsb points; PCHIP does not change it.',`<input id="ditAccumN" type="number" min="3" max="20" value="${o.accumN}">`)}</div>
         <div class="control-section-title optional-section-title"><label class="option-toggle"><input id="ditUsePchip" type="checkbox" ${o.pchipEnabled?'checked':''}> Optional Midgap Dit (PCHIP)</label> ${help('Optional analysis. Median-binned PCHIP is the default; PCHIP (original) preserves the previous raw-point preprocessing. Both estimate Midgap Dit only and never change Minimum Dit (PV2000-style).')}</div>
@@ -959,9 +1043,9 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
             ${midgapCoverageText(s)?`<div class="note" style="margin-top:7px">${esc(midgapCoverageText(s))}</div>`:''}
           </section>
         <div class="panel chart"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVcpdAxes')}<button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 640 360"></svg></div></div>
-        <div class="panel chart"><header><b>Dit–Vsb</b>${help('Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 640 360"></svg></div></div>
-        <div class="panel chart"><header><b>Vsb–Qc</b>${help('Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
-        <details class="panel"><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV2000 inferred mode uses the flatband anchor, EOT in Å, signed Vsb, and Min/Max Vsb for reported-minimum Dit acceptance. Back Surface Shift remains unresolved and is not applied.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
+        <div class="panel chart"><header><b>Dit–Vsb</b>${help('Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV-2000 current-DLL mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 640 360"></svg></div></div>
+        <div class="panel chart"><header><b>Vsb–Qc</b>${help('Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV-2000 current-DLL mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
+        <details class="panel"><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV-2000 current-DLL mode reconstructs the internal light branch after Vfb/Qcfb, uses EOT in Å, and applies Min/Max Vsb to Dit segment validity. Back Surface Shift remains outside the validated envelope.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
       </section></div>`;
       host.querySelector('#ditMapMetric').value=mapKey;
         host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;
@@ -1144,7 +1228,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       svg.innerHTML=parts.join('');
       PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.vsb=n;drawVsb()},onReset:()=>{zoom.vsb={x:null,y:null};drawVsb()}});
       PV.plot.bindAxisControls(host,'ditVsbAxes',zoom.vsb,n=>{zoom.vsb=n;drawVsb()});
-      host.querySelector('#ditVsbLegend').innerHTML='<span><i style="background:var(--blue)"></i>'+(analysis.options.effectiveCocosMode==='pv2000-re'?'PV2000 inferred Vsb':'Standard measured Vsb')+'</span>'+(analysis.options.effectiveCocosMode!=='standard'?'<span><i style="background:var(--soft)"></i>standard measured Vsb</span>':'')+'<span class="green">│ flatband</span>';
+      host.querySelector('#ditVsbLegend').innerHTML='<span><i style="background:var(--blue)"></i>'+(analysis.options.effectiveCocosMode==='pv2000-re'?'PV-2000 current-DLL Vsb':'Standard measured Vsb')+'</span>'+(analysis.options.effectiveCocosMode!=='standard'?'<span><i style="background:var(--soft)"></i>standard measured Vsb</span>':'')+'<span class="green">│ flatband</span>';
       host.querySelector('#ditVsbMeta').textContent=`max |Vsb| ${fmt(s.MaxVsb,3)} V`}
     function drawDit(){
       const s=analysis.sites[site],
@@ -1272,6 +1356,8 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
     vendorOutlierCount,
     vendorRejectedMean,
     vendorDitQsc,
+    vendorDitMinimum,
+    vendorCocosIIReconstruct,
     vendorResultDownstream,
     vendorDitModel:VENDOR_DIT,
     initialQcFromPreprocess,

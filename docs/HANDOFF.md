@@ -9,6 +9,12 @@ The canonical geometry core deliberately keeps three different circular predicat
 The Wiki science layer was audited against current runtime and validation documents. SPV, Leakage, Dual QSS, LBIC and ISC/VCPD now explain measurement physics, governing equations, assumptions and interpretation in addition to compatibility/validation boundaries. Stale Dual-QSS output wording and contradictory SPV Enhanced-N validation wording were removed. `docs:check` now guards the scientific-page equation/validation baseline and selected known stale contradictions.
 
 
+## DIT current-DLL COCOS-II closure (v20260925.24)
+
+The public compatibility layer implements the recovered current managed-DLL COCOS-II result path as `DIT-RESULT-COCOSII-DLL-003`. Private controlled-vendor evidence uses unchanged real P/N measured arrays with COCOS-II routing/EOT/Vsb-window perturbations; all 12 control/probe cases export successfully and the independent XML-only oracle reproduces Vfb/Qsc/Qtot/Dit/Qit at floating-point scale. This is controlled vendor validation, not a claim that a native instrument-recorded `UseCocosII=true` pair exists.
+
+Maintenance-critical ordering is measured-light flatband -> COCOS-II internal light/Vsb/Qsc reconstruction -> Qit -> N-type analysis-axis sign reversal -> raw Dit. `VsbMin/VsbMax` gate Dit segments, and the all-unavailable COCOS-II Minimum-Dit scalar remains the vendor `1e100` sentinel. `DoBackSurfaceShift`, Analyzer Ge and optional PCHIP remain outside this vendor-validation envelope.
+
 ## LBIC Distribution regression fix (v20260925.18)
 
 LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matching `PV.plot.canvasFrame()`. The previous `frame.context` access caused a `clearRect` TypeError on LBIC redraw. A drawing regression test covers the shared canvas-frame path.
@@ -16,7 +22,7 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.23`.
+- Public main: `v20260925.24`.
 - No active feature branch is required to complete the 100-case closure.
 - Final private 100-case matrix against this baseline: **71 scoped PASS + 16 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
@@ -36,7 +42,7 @@ That validation-axis separation is now established. The completed sequence was:
 5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
 6. **completed:** split LBIC calculation semantics from geometry; the 100-case closure validates eight current+scattered numeric pairs / 27,376 sites plus one five-site direct+scattered pair, while two zero-site exports remain diagnostic and finite direct+scattered DL remains withheld;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; `QSS-CALC-IMPLIED-VOC-002` now reproduces current-DLL finite/placeholder Implied Voc with zero availability mismatches and 5.56e-16 V maximum error;
-8. **completed:** DIT final-result closure now covers initial VDark, corrected final-result VLight, direct result-table Vsb, Initial Qc and the current managed-DLL Standard-COCOS downstream Vfb/Qsc/Qtot/Qit/Minimum-Dit path across 13 pairs / 43 sites. `DIT-RESULT-STANDARD-DLL-002` has zero availability mismatches; historical PV-2000 releases remain version-scoped evidence rather than an active blocker;
+8. **completed:** DIT final-result closure covers initial VDark, corrected final-result VLight, direct result-table Vsb, Initial Qc and the current managed-DLL Standard-COCOS downstream Vfb/Qsc/Qtot/Qit/Minimum-Dit path across 13 pairs / 43 sites. `DIT-RESULT-STANDARD-DLL-002` has zero availability mismatches. Controlled real-acquisition vendor-DLL probes close current-DLL COCOS-II as `DIT-RESULT-COCOSII-DLL-003`; historical releases and active Back Surface Shift remain version/profile-scoped;
 9. **completed:** re-audit Dual QSS final-result branches; three current-style OnePoint rows pass independently of target geometry, the no-J0 maximum-quantity availability rule is preserved, and four empty + one legacy + two conflicting FixedPoints cases are explicit diagnostics;
 10. **completed:** Leakage and the paired standard SPV map paths are implemented; `SPV-CALC-ENHANCED-N-003` now reproduces the paired N-type Enhanced finite-wafer/back-surface result, while Enhanced P-type and other categorical branches remain gated; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
@@ -92,7 +98,7 @@ Four new paired geometry combinations resolve independently of calculation profi
 
 QSS preserves raw lifetime and intrinsic sentinel validity separately from the user Valid-data filter. Smax and current-DLL simple-map Implied Voc are vendor-validated independently of geometry; `QSS-CALC-IMPLIED-VOC-002` reproduces seven nonempty cross-geometry pairs with zero availability mismatches and 5.56e-16 V maximum error. Optional Physical Si/Ge Voc and SRV remain Analyzer-side interpretation paths.
 
-DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight, direct result-table Vsb and Initial Qc on 13 final-result pairs / 43 sites. `DIT-RESULT-STANDARD-DLL-002` separately validates current managed-DLL Vfb, Qsc, Qtot, Qit and Minimum Dit on the same 43 sites with zero availability mismatches. N-type result Vsb and signed Standard-COCOS analysis Vsb intentionally use different semantics; historical releases remain version-scoped. The Ge material option is an Analyzer model and COCOS-II remains inferred.
+DIT keeps site filtering downstream of scientific calculation. Minimum Dit remains the discrete PV-2000-style result; optional PCHIP affects Midgap Dit/fitted curve only. `DIT-RESULT-INITIAL-001` validates initial VDark, corrected final-result VLight, direct result-table Vsb and Initial Qc on 13 final-result pairs / 43 sites. `DIT-RESULT-STANDARD-DLL-002` separately validates current managed-DLL Standard-COCOS Vfb/Qsc/Qtot/Qit/Minimum-Dit on the same corpus. `DIT-RESULT-COCOSII-DLL-003` separately validates the current-DLL COCOS-II reconstruction/order/window/sentinel path through controlled vendor probes. N-type result Vsb and signed analysis Vsb intentionally use different semantics; historical releases remain version-scoped. The Ge material option and optional PCHIP remain Analyzer-side science.
 
 ## Architecture state
 
@@ -136,7 +142,7 @@ Never publish private reference files or proprietary vendor material merely to m
 
 ## Remaining high-priority scientific gaps
 
-The **current-DLL DIT Standard-COCOS final-result path is closed** through `DIT-RESULT-STANDARD-DLL-002`. Historical PV-2000 DIT behavior remains version-scoped evidence, not an active blocker for the current validated profile.
+The **current-DLL DIT Standard-COCOS and COCOS-II result paths are closed** through `DIT-RESULT-STANDARD-DLL-002` and `DIT-RESULT-COCOSII-DLL-003`. Historical PV-2000 DIT behavior and active Back Surface Shift remain version/profile-scoped evidence.
 
 1. **LBIC finite direct-plus-scattered DL:** obtain at least one finite paired vendor oracle before widening the current DL calculation envelope.
 2. **Dual QSS categorical branches:** explain the conflicting FixedPoints/PseudoSquare result branch, or obtain paired evidence for Auger correction, alternate source selections, different 1000-mSun placement or another result branch.
