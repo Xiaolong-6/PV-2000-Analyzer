@@ -212,7 +212,7 @@ test('Dit explanatory prose lives in hover help instead of persistent note parag
   assert.doesNotMatch(src,/COCOS-II and PCHIP can be used together:[^']*<\/p>/);
   assert.doesNotMatch(src,/<p class="note analysis-note">/);
   assert.match(src,/Optional Midgap Dit \(PCHIP\).*help\('Optional analysis\./);
-  assert.match(src,/COCOS-II .*help\('Inferred, not vendor-exact/);
+  assert.match(src,/COCOS-II .*help\('Current-DLL reconstruction is vendor-validated/);
 });
 
 

@@ -121,7 +121,7 @@ Share additional lifetime/J0 helpers only if regression proves no change to curr
 
 ### DIT
 
-DIT has the most coupled calculation and UI path. Further extraction should be incremental and regression-led. Standard COCOS, inferred COCOS-II, material models, Minimum Dit and optional Midgap PCHIP must remain separable concepts.
+DIT has the most coupled calculation and UI path. Further extraction should be incremental and regression-led. Standard COCOS, the current-DLL COCOS-II compatibility result path, Analyzer material models, Minimum Dit and optional Midgap PCHIP must remain separable concepts.
 
 ### LBIC
 

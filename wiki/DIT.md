@@ -183,31 +183,33 @@ Q_{it}
 
 The result represents an integrated charge difference over the selected surface-potential interval.
 
-## 8. COCOS-II reference behavior
+## 8. COCOS-II current-DLL behavior
 
-A COCOS-II compatibility path can reconstruct the illuminated-equivalent branch from a flat-band reference and oxide capacitance.
+The recovered current managed DLL applies COCOS-II **after** flatband has been determined from the measured/corrected light branch. This ordering is now covered by `DIT-RESULT-COCOSII-DLL-003`.
 
-A useful relation is
+For a valid `Vfb/Qcfb`:
 
 ```math
-C_{\rm ox}
-=
-\frac{\varepsilon_{\rm ox}}{{\rm EOT}}.
+C_{\rm ox} = \frac{3.453\times 10^{-5}}{{\rm EOT}[\AA]}
 ```
 
-The reconstructed light-side potential can then be written in the form
+with `Cox` in F/cm², followed by
 
 ```math
-V_{\rm light}
+V_{\rm light,II}
 =
 V_{fb}
 +
-\frac{(Q_c-Q_{c,fb})q}{C_{\rm ox}}.
+\frac{(Q_c-Q_{c,fb})\,1.602\times10^{-19}}{C_{\rm ox}}.
 ```
 
-Surface band bending and $Q_{\rm sc}$ are subsequently evaluated from this reconstructed branch.
+The DLL recomputes internal `Vsb = Vdark - Vlight,II` and `Qsc` on both dense and raw charge grids. Qit is evaluated on the reconstructed dense branch before the N-type analysis-axis sign reversal. Minimum Dit then uses the raw reconstructed branch with the doping-dependent sign convention.
 
-The project keeps validation status attached to the specific COCOS-II profile because the acceptance window and compatibility details are version/profile dependent.
+`VsbMin/VsbMax` are Dit **segment-validity** limits: a segment is rejected only when both endpoints lie below Min or both lie above Max. A segment crossing a boundary is retained. Qit uses its own configured barrier range.
+
+The current DLL also preserves a non-obvious sentinel: when every COCOS-II raw Dit segment is unavailable, scalar Minimum Dit can remain a defined `1e100` value.
+
+Controlled vendor probes based on real P- and N-type acquisition traces establish these semantics and the EOT/window response. They are vendor-DLL oracle outputs, not native instrument-recorded `UseCocosII=true` pairs. `DoBackSurfaceShift` remains outside the validated envelope.
 
 ## 9. Back-surface shift
 
@@ -238,6 +240,10 @@ The analyzer currently supports silicon and a legacy-compatible germanium model.
 
 ## 12. Validation status
 
-Current project evidence contains validated Standard-COCOS-related reference behavior and profile-specific DIT regressions. `DIT-RESULT-INITIAL-001` validates final-result initial VDark, corrected VLight, direct result-table Vsb and Initial Qc across 13 paired files / 43 sites. `DIT-RESULT-STANDARD-DLL-002` separately validates the current-DLL final-result Vfb/Qsc/Qtot/Qit/Minimum-Dit path on the same corpus with zero availability mismatches. These PV-2000 compatibility quantities remain distinct from the Analyzer's configurable Si/Ge Standard COCOS and optional PCHIP outputs. COCOS-II retains its documented inferred status.
+DIT validation is split by semantic path. `DIT-RESULT-INITIAL-001` validates final-result initial VDark, corrected VLight, direct result-table Vsb and Initial Qc across 13 paired files / 43 sites. `DIT-RESULT-STANDARD-DLL-002` separately validates the current-DLL Standard-COCOS Vfb/Qsc/Qtot/Qit/Minimum-Dit path on the same paired corpus with zero availability mismatches.
 
-Exact validation envelopes are maintained in docs/REFERENCE_PROFILES.md.
+`DIT-RESULT-COCOSII-DLL-003` adds **controlled vendor validation** of the recovered current-DLL COCOS-II path. Two real P/N acquisitions supply unchanged measured arrays; 10 `UseCocosII=true` parameter variants plus two controls are re-run through the vendor DLL. An independent XML-only oracle reproduces all 12 outputs at floating-point scale.
+
+These PV-2000 compatibility result paths remain distinct from the Analyzer's configurable Si/Ge scientific model and optional Midgap PCHIP. The Ge option is Analyzer-only. Native instrument-recorded COCOS-II XML/CSV pairs are still unavailable, and active Back Surface Shift behavior remains unvalidated.
+
+Exact validation envelopes are maintained in `docs/REFERENCE_PROFILES.md`.

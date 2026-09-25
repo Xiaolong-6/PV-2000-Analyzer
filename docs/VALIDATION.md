@@ -351,7 +351,7 @@ Status: **paired validation — `DIT-RESULT-STANDARD-DLL-002`**.
 
 This explicitly version-scoped profile reconstructs the **current managed-DLL Standard COCOS final-result path** for downstream Vfb/Qsc/Qtot/Qit/Minimum-Dit quantities. Across the same 13 paired files / 43 sites, browser-runtime comparison has **zero availability mismatches**. Maximum absolute errors are about **1.03e-13 V (Vfb)**, **5.49e-4 cm^-2 (Qsc)**, **3.47e-2 cm^-2 (Qtot)**, **3.81e-1 cm^-2 eV^-1 (Minimum Dit)** and **2.93e-3 cm^-2 (Qit)**.
 
-This downstream profile is kept separate from the Analyzer's configurable Standard COCOS scientific path because the recovered vendor implementation uses its own silicon constants, preprocessing and availability rules. It also does not widen COCOS-II or the Analyzer-only Ge model.
+This downstream profile is kept separate from the Analyzer's configurable Standard COCOS scientific path because the recovered vendor implementation uses its own silicon constants, preprocessing and availability rules. It does not widen the Analyzer-only Ge model. COCOS-II is validated separately by `DIT-RESULT-COCOSII-DLL-003`.
 
 Run the narrow direct/bookkeeping final-result validator with:
 
@@ -361,22 +361,40 @@ python scripts/validate_dit_result_reference.py <result.xml> <vendor-result.csv>
 
 This validator is intentionally separate from `validate_dit_raw_reference.py`, which remains the stronger raw-process-row audit.
 
-### PV2000 COCOS-II (inferred)
+### Current-DLL COCOS-II downstream result quantities
 
-Status: **inferred**, not vendor-exact.
+Status: **controlled vendor validation — `DIT-RESULT-COCOSII-DLL-003`**.
 
-A read-only inventory of the supplied historical backup (5,710 XMLs, including 2,659 `DITMeasurement` files), the supplied software data archive (62 DIT XMLs), and the private Ge/COCOS measurement collection (220 DIT XMLs) found no DIT file with `UseCocosII=true`. These datasets therefore cannot upgrade the XML-driven COCOS-II path to validated, irrespective of the software-package or folder name.
+No archived DIT XML in the available historical corpora originally had `UseCocosII=true`. To exercise the real vendor branch without inventing measurement data, the private audit starts from one real P-type and one real N-type DIT acquisition, preserves every measured raw array, changes only COCOS-II routing/configuration fields, and re-runs the recovered current vendor DLL through the Windows export harness.
 
-The current default COCOS-II path is derived from a same-raw-data adjustment series rather than a vendor algorithm disclosure. The supplied reprocessed exports established these behavioral constraints:
+The matrix contains two Standard-COCOS controls plus **10 `UseCocosII=true` variants** spanning:
 
-- vendor EOT value 100 is consistent with 100 Å (10 nm): the corresponding synthetic-line slope is ~0.464 V per 1e12 q/cm²;
-- changing COCOS-II Min/Max Vsb affected reported Dit but did not alter exported VDark, VLight, summary Vsb, Vfb, Qsc, Qtot or Qit;
-- the observed transition behavior is consistent with Min/Max acting late in Dit selection rather than in Vcpd reconstruction;
-- Back Surface Shift True/False produced identical supplied exports for this dataset.
+- P-type and N-type calculation branches;
+- `CocosIIEOT` values from 100 Å through 4000 Å;
+- the default signed Vsb window `[-0.10, 0.65] V`;
+- narrow, wide and sign-shifted Vsb-window probes.
 
-The implementation therefore labels this path **inferred**. Its Min/Max rule is the current best-fit model and should be tightened if a pointwise vendor Dit-Vsb export or a dataset where Back Surface Shift is active becomes available.
+All **12 controlled cases** load and export successfully. An independent XML-only oracle reproduces every generated vendor result. Maximum absolute differences across the controlled matrix are approximately **4.0e-15 V (Vfb)**, **2.9e-5 cm^-2 (Qsc)**, **7.9e-3 cm^-2 (Qtot)**, **9.7e-2 cm^-2 eV^-1 (Minimum Dit)** and **7.6e-3 cm^-2 (Qit)**, i.e. floating-point noise at the result magnitudes.
 
-Follow XML setting now resolves `UseCocosII=true` to this inferred path. That routing choice is intentional: it reflects the strongest available same-raw-data evidence. It does **not** upgrade the algorithm's validation label.
+Recovered current-DLL semantics are:
+
+1. measured/corrected Standard-COCOS arrays establish `Vfb/Qcfb` first;
+2. when `UseCocosII=true` and flatband is valid, `CheckForCOCOSII()` computes
+   `Cox = 3.453e-5 / CocosIIEOT` with EOT in Å and Cox in F/cm²;
+3. the internal light-equivalent branch is rebuilt as
+   `Vlight = Vfb + (Qc - Qcfb) * 1.602e-19 / Cox`;
+4. internal `Vsbr` and `Qsc` are recomputed on both the dense and original charge grids;
+5. Qit is calculated on the reconstructed dense arrays **before** the N-type analysis-axis sign reversal;
+6. N-type then reverses the analysis Vsb axis used by the raw Dit derivative;
+7. `VsbMin/VsbMax` gate **Dit segments**: a segment is rejected only when both endpoints lie below Min or both lie above Max; a boundary-crossing segment is retained;
+8. Qit uses the separate configured barrier range and is not gated by the Dit Vsb window;
+9. the current DLL preserves its clipping/unavailability rules, including the defined `1e100` Minimum-Dit sentinel when every COCOS-II raw Dit segment is unavailable.
+
+A second important boundary is now established: enabling COCOS-II does **not** replace the direct result-table `VDark`, `VLight`, `Vsb`, `Vfb`, `Qsc`, `Qtot` or `Initial Qc` values for a fixed acquisition. COCOS-II changes the internal reconstruction that feeds Dit/Qit. The runtime therefore exposes the exact vendor-compatible COCOS-II result layer separately from the Analyzer's configurable Si/Ge/PCHIP scientific layer.
+
+This status is intentionally called **controlled vendor validation**, not paired validation. The generated COCOS-II CSVs are vendor-DLL oracle outputs from controlled variants of real acquisitions, not original instrument-export XML/CSV pairs recorded with `UseCocosII=true`. A future native COCOS-II instrument pair would strengthen provenance but is no longer required to infer the current-DLL formula or branch ordering.
+
+`DoBackSurfaceShift` remains outside this validation envelope. Its active mathematical effect is not promoted by these controlled probes.
 
 ### UI / control regression expectations
 
@@ -384,7 +402,7 @@ The Analysis controls panel must remain open after Apply/recalculation. Method-s
 
 - Material selector is present in Analysis controls, defaults to Si, and offers Ge without inferring material from sample/substrate names;
 - Standard COCOS: no COCOS-II EOT or Min/Max inputs;
-- PV2000 COCOS-II (inferred): EOT, Min Vsb and Max Vsb are exposed;
+- PV-2000 COCOS-II (current DLL): EOT, Min Vsb and Max Vsb are exposed;
 - no legacy/guide-based COCOS-II user path remains;
 - Flatband accumulation points remain shared;
 - **Optional Midgap Dit (PCHIP)** is always visible with a default-on checkbox;
@@ -396,7 +414,7 @@ The Analysis controls panel must remain open after Apply/recalculation. Method-s
 
 The primary **Minimum Dit (PV2000-style)** must remain unchanged when only PCHIP method, median width, interpolation scale, outlier threshold, or enabled state changes. Those settings may change Midgap Dit and the fitted curve only. The 10 mV default is an analyzer behavior selected from the supplied raw Dit–Vsb comparison, not a claim about PV-2000's proprietary fitting algorithm.
 
-COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb.
+COCOS-II parameter validation must not silently fall back to Standard COCOS. Missing numeric XML settings must use their fallback/NaN semantics rather than being parsed as numeric zero. The current-site COCOS-II diagnostics should expose accepted interval count and minimum-Dit Vsb. XML `VsbMin/VsbMax` are the primary current-DLL field names; legacy aliases remain parser fallbacks.
 
 In multi-column layouts, the left functional sidebar is independently scrollable/sticky within the viewport. Sidebar children must not flex-shrink to fit the viewport; they remain intrinsic-height blocks so overflow is real and the sidebar scroll container can scroll. Scrolling it must not move the plot columns. Fine-pointer desktop zoom must not trigger the portrait/mobile fallback merely because the viewport becomes taller than wide; the portrait/tablet fallback requires coarse-pointer input, while <=700 px remains the true narrow-width fallback. Dit Results summary must not require horizontal scrolling: parameter, valid-site mean and current-site values are rendered as responsive cards.
 

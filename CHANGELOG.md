@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.24 — 2026-09-25
+
+- Promoted the recovered current managed-DLL DIT COCOS-II path to controlled vendor validation as `DIT-RESULT-COCOSII-DLL-003`, while keeping native instrument-recorded `UseCocosII=true` pairing as a provenance distinction rather than pretending it exists.
+- Implemented the exact current-DLL ordering and reconstruction in the PV-2000 compatibility result layer: measured-light flatband first, `Cox = 3.453e-5 / EOT[Å]`, reconstructed dense/raw light-Vsb-Qsc arrays, Qit before N-type Vsb sign reversal, and segment-based `VsbMin/VsbMax` Dit validity.
+- Preserved vendor clipping/unavailability details including the defined `1e100` Minimum-Dit sentinel when every COCOS-II raw Dit segment is unavailable; direct result-table VDark/VLight/Vsb/Vfb/Qsc/Qtot/Initial Qc stay separate from the reconstructed Dit/Qit path.
+- Added regression tests for the exact COCOS-II formula, dedicated result profile, segment-window semantics, sentinel behavior and current XML field names (`VsbMin`, `VsbMax`, `DoBackSurfaceShift`).
+- Updated validation, algorithm, reference-profile, README, measurement-family, Wiki, handoff, architecture and maintainer documentation. `DoBackSurfaceShift` and the Analyzer-only Ge/PCHIP paths remain outside the COCOS-II vendor-validation envelope.
+
 ## v20260925.23 — 2026-09-25
 
 - Recovered the QSS-µPCD simple-map Implied-Voc current-DLL path and promoted it as `QSS-CALC-IMPLIED-VOC-002`: fixed `ni=1.22e10 cm^-3`, vendor `k/q`, and `T = ChuckTemperature + 272.15 K` with the zero-temperature fallback.
