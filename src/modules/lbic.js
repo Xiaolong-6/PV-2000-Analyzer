@@ -743,7 +743,6 @@
       controller=ensureFilter(it,metrics),
       filterState=controller.snapshot(),
       filterMetrics=visibleMetricMap(metrics),
-      pointOk=it&&d.coords.length===it.pointCount,
       laser=beam?.laser||{},
       pseudo=d.patternType==='MapPattern'&&d.targetType==='PseudoSquareCell',
       patternText=pseudo?`${d.patternDisplayName||d.patternType} · PseudoSquareCell`:`${d.patternDisplayName||d.patternType} · ${fmt(d.nx,0)} × ${fmt(d.ny,0)}`,
