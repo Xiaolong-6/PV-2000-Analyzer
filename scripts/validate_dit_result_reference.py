@@ -10,12 +10,14 @@ Strict gates are intentionally narrow:
 - shared geometry coordinates when a complete geometry profile resolves;
 - initial VDark stored in XML;
 - final-result corrected VLight reconstructed from the XML correction factor;
+- final-result Vsb reconstructed as VDark - corrected VLight;
 - Initial Qc preprocess bookkeeping.
 
-Vsb remains diagnostic because the regenerated N-type final-result exports use
-the current-DLL direct sign while the stronger historical Standard-COCOS
-reference uses the doping-aware sign convention.  This script must not be used
-to widen Standard COCOS or COCOS-II calculation claims.
+Final-result Vsb is intentionally distinct from the doping-aware signed Vsb
+used by the Standard-COCOS analysis arrays.  In the recovered vendor DLL,
+CreateDataValues exports the direct result sign while StartDitCalculation
+separately applies the N-type sign transform to analysis arrays.  This script
+must not be used to widen downstream Standard COCOS or COCOS-II claims.
 """
 from __future__ import annotations
 
@@ -154,7 +156,7 @@ def xml_rows(path):
         initial_light = scalar_mean(child(item, "InitialVcpdLight")) - offset
         direct = factor * (initial_dark - initial_light)
         result_light = initial_dark - direct
-        vsb = -direct if doping_type == "n" else direct
+        vsb = direct
         pred = child(item, "PreProcessData")
         attempts = len(kids(child(pred, "VcpdDark")))
         initial_qc = (attempts + 1) * pre_step if math.isfinite(pre_step) else math.nan
@@ -241,6 +243,8 @@ def main():
         raise AssertionError(f"VDark max={vdark_error:g} availability mismatch={vdark_mask}")
     if light_mask or light_error > 1e-9:
         raise AssertionError(f"VLight max={light_error:g} availability mismatch={light_mask}")
+    if vsb_mask or vsb_error > 1e-9:
+        raise AssertionError(f"Vsb max={vsb_error:g} availability mismatch={vsb_mask}")
     if initial_mask or initial_error > 1e-6:
         raise AssertionError(
             f"InitialQc max={initial_error:g} availability mismatch={initial_mask}"
@@ -254,8 +258,8 @@ def main():
     print(
         f"DIT RESULT PASS {args.xml.name}: sites={len(actual)}; geometry={geometry_text}; "
         f"VDark max={vdark_error:.3g} V; VLight max={light_error:.3g} V; "
-        f"InitialQc max={initial_error:.3g} cm^-2; "
-        f"Vsb diagnostic max={vsb_error:.6g} V/mask{vsb_mask}; doping={doping_type}"
+        f"Vsb max={vsb_error:.3g} V; InitialQc max={initial_error:.3g} cm^-2; "
+        f"doping={doping_type}"
     )
     return 0
 

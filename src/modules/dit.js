@@ -18,10 +18,14 @@
     const direct=factor*(vdark-vlight);
     return type==='n'?-direct:direct;
   };
-  const finalResultVLight=(vdark,measuredLight,factor)=>
+  const finalResultVsb=(vdark,measuredLight,factor)=>
     Number.isFinite(vdark)&&Number.isFinite(measuredLight)&&Number.isFinite(factor)
-      ?vdark-factor*(vdark-measuredLight)
+      ?factor*(vdark-measuredLight)
       :NaN;
+  const finalResultVLight=(vdark,measuredLight,factor)=>{
+    const vsb=finalResultVsb(vdark,measuredLight,factor);
+    return Number.isFinite(vsb)?vdark-vsb:NaN;
+  };
   const initialQcFromPreprocess=(darkVectorCount,chargeStep)=>{
     if(!Number.isFinite(darkVectorCount)||darkVectorCount<0||!Number.isFinite(chargeStep))return NaN;
     return (darkVectorCount+1)*chargeStep;
@@ -100,12 +104,12 @@
         const vd=d[j]-off,
           vl=l[j]-off,
           vsb=standardVsb(vd,vl,factor,dopingType);
-        rows.push({Qc:(j-1)*qstep,VDark:vd,VLight:vl,ResultVLight:finalResultVLight(vd,vl,factor),Vsb:vsb,rawDiff:vl-vd});
+        rows.push({Qc:(j-1)*qstep,VDark:vd,VLight:vl,ResultVLight:finalResultVLight(vd,vl,factor),ResultVsb:finalResultVsb(vd,vl,factor),Vsb:vsb,rawDiff:vl-vd});
       }
       const id=scalarMean(X.direct(it,'InitialVcpdDark'))-off,
         il=scalarMean(X.direct(it,'InitialVcpdLight'))-off,
         iv=standardVsb(id,il,factor,dopingType);
-      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,ResultVLight:finalResultVLight(id,il,factor),Vsb:iv,InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)});
+      sites.push({rows,coord:coords[si]||null,VDark:id,VLight:il,ResultVLight:finalResultVLight(id,il,factor),ResultVsb:finalResultVsb(id,il,factor),Vsb:iv,InitialQc:initialQcFromPreprocess(X.children(X.direct(pred,'VcpdDark')).length,prestep)});
     });
     const qit=X.direct(m,'QitBarrierRange');
     return{...c,doping:X.num(m,'Doping',1.5e15),dopingType,factor,offset:off,sites,
@@ -566,7 +570,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       </aside><section class="plots overview">
         <div class="panel chart map-panel"><header>${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}${help('Wheel inside the map zooms both spatial axes; wheel over an axis zooms only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}<span class="grow"></span><select id="ditMapMetric"><option value="Qtot">Qtot</option><option value="Dit">Minimum Dit (PV2000-style)</option><option value="MidgapDit" ${analysis.options.pchipEnabled?'':'disabled'}>Midgap Dit (PCHIP)</option><option value="EOT">EOT</option><option value="Cox">Cox</option><option value="Qsc">Qsc</option><option value="InitialQc">Initial Qc</option><option value="MaxVsb">Max |Vsb|</option></select>${PV.plot.axisControls('ditMapAxes')}<button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button></header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 360"></svg></div></div>
       </section><section class="plots detail">
-        <section class="panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd></dl></section>
+        <section class="panel"><h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3><div class="site-controls"><button id="ditPrev">‹</button><select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select><button id="ditNext">›</button><span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span></div><dl class="meta" style="margin-top:8px"><dt>Status</dt><dd>${esc(siteFilterState)}</dd><dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd><dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd><dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd><dt>PV-2000 result Vsb</dt><dd>${fmt(s.ResultVsb,6)} V</dd><dt>Analysis Vsb</dt><dd>${fmt(s.Vsb,6)} V</dd><dt>Initial Qc</dt><dd>${sci(s.InitialQc,4)} cm⁻²</dd></dl></section>
         <div class="panel chart"><header><b>Vcpd–Qc</b>${help('Dark and measured light Kelvin-probe potentials versus deposited corona charge. Point-line display; data points are smaller than the yellow initial-condition marker. Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. For COCOS-II XMLs, the reconstructed synthetic light curve is also shown. Yellow = initial projection; green = flatband charge.')}<span class="chart-meta" id="ditVcpdMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVcpdAxes')}<button id="e1" title="Export the current-site Vcpd/Qc data, including reconstructed COCOS-II light values when available.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVcpdLegend"></div><svg id="d1" viewBox="0 0 640 360"></svg></div></div>
         <div class="panel chart"><header><b>Dit–Vsb</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Interface-state density versus Vsb uses a logarithmic Y axis, so manual Y limits must stay positive. Standard COCOS uses doping-aware signed Vsb from the measured dark/light difference and XML correction factor. PV2000 inferred mode uses signed Vsb; gray points fall outside its Min/Max Vsb acceptance window. Green is the optional PCHIP interpolation used for Midgap Dit; it does not determine the PV2000-style minimum.')}<span class="chart-meta" id="ditDitMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditDitAxes')}<button id="e2" title="Export current-site Vsb and variation-method Dit.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditDitLegend"></div><svg id="d2" viewBox="0 0 640 360"></svg></div></div>
         <div class="panel chart"><header><b>Vsb–Qc</b>${help('Wheel inside the plot zooms both axes; wheel over an axis zooms only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV2000 inferred mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
@@ -648,7 +652,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
           renderShell()}};
         applyBtn.onclick=()=>rebuild();
         
-      host.querySelector('#e1').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vcpd.csv`,['Qc','VDark','Measured VLight','PV-2000 result VLight','Analysis Vsb','COCOS-II synthetic VLight'],s.rows.map((r,i)=>[r.Qc,r.VDark,r.VLight,r.ResultVLight,s.analysisVsb[i],s.c2?.light?.[i]??'']));
+      host.querySelector('#e1').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vcpd.csv`,['Qc','VDark','Measured VLight','PV-2000 result VLight','PV-2000 result Vsb','Analysis Vsb','COCOS-II synthetic VLight'],s.rows.map((r,i)=>[r.Qc,r.VDark,r.VLight,r.ResultVLight,r.ResultVsb,s.analysisVsb[i],s.c2?.light?.[i]??'']));
         
       host.querySelector('#e2').onclick=()=>{
         const fitMethod=analysis.options.pchipEnabled?(analysis.options.pchipMethod==='median'?'Median-binned PCHIP':'PCHIP (original)'):'Off',
@@ -659,7 +663,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         midgapTarget=s.midgapV;
         PV.exporter.csv(`Dit_site${site+1}_Dit.csv`,['Vsb','Variation Dit','Accepted by COCOS-II window','Midgap fit method','Median Vsb window [mV]','Interpolation scale','PCHIP outlier limit','Midgap target Vsb [V]','Midgap status'],s.rows.slice(0,-1).map((r,i)=>[s.analysisVsb[i],s.ditRaw[i],s.ditAccepted?.[i]===false?'NO':'YES',fitMethod,medianMv,scale,reject,midgapTarget,midgapStatus]))};
         
-      host.querySelector('#e3').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vsb.csv`,['Qc','Raw standard Vsb',analysis.options.effectiveCocosMode==='pv2000-re'?'Analysis signed Vsb':'Analysis Vsb'],s.rows.map((r,i)=>[r.Qc,r.Vsb,s.analysisVsb[i]]));
+      host.querySelector('#e3').onclick=()=>PV.exporter.csv(`Dit_site${site+1}_Vsb.csv`,['Qc','PV-2000 result Vsb','Raw standard analysis Vsb',analysis.options.effectiveCocosMode==='pv2000-re'?'Analysis signed Vsb':'Analysis Vsb'],s.rows.map((r,i)=>[r.Qc,r.ResultVsb,r.Vsb,s.analysisVsb[i]]));
         host.querySelector('#e4').onclick=()=>{
         const [label,unit]=mapSpec(mapKey),
           filterState=filterController.snapshot(),
@@ -866,6 +870,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
     materialProfile,
     materials:MATERIALS,
     standardVsb,
+    finalResultVsb,
     finalResultVLight,
     initialQcFromPreprocess,
     spatialEnvelope

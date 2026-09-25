@@ -230,14 +230,14 @@ Thirteen successful XML/vendor final-result CSV pairs from the private 100-case 
 
 - Initial `VDark` is reconstructed directly from `InitialVcpdDark` minus the stored offset; maximum paired error is **3.55e-15 V**.
 - Final-result `VLight` is the correction-factor reconstruction `VDark - F × (VDark - VLight_measured)`, where `F` is the XML `VsbCorrectionFactor`. All **43 paired sites** agree at floating-point scale; maximum absolute error is about **3.8e-15 V**.
+- Final-result `Vsb = VDark - VLight_result = F × (VDark - VLight_measured)`. This is the direct result-table sign for both doping types and is intentionally separate from the N-type sign transform used by Standard-COCOS analysis arrays. Across all **43 sites**, maximum absolute result-Vsb error is **8.04e-16 V**.
 - `Initial Qc = (N_preprocess + 1) × PreProcess CoronaCharge`, where `N_preprocess` is the number of stored PreProcess dark vectors. All **43 paired sites** match exactly.
 - Twelve of the thirteen paired files independently resolve an existing shared geometry profile; maximum coordinate error is **3.58e-14 mm**.
 - The profile is independent of Standard-COCOS Dit/Qtot/Qsc formula validation.
 
 **Explicitly not promoted**
 
-- Regenerated N-type final-result Vsb, whose two paired rows use the opposite sign from the stronger original Standard-COCOS evidence. The corrected `VLight` result is validated independently and does not change that Vsb sign boundary.
-- Vfb, Qtot, Qit, Qsc and Minimum Dit from these regenerated final-result exports.
+- Vfb, Qtot, Qit, Qsc and Minimum Dit from these regenerated final-result exports. The recovered DLL confirms that their signed analysis arrays are a separate semantic path from the direct final-result Vsb.
 - The unresolved `FixedPointsPattern + RoundWafer` geometry case.
 
 Use `scripts/validate_dit_result_reference.py` for this narrow result-table evidence and `scripts/validate_dit_raw_reference.py` for the separate raw-process-row audit. Neither validator widens COCOS-II or the Analyzer-only Ge model.

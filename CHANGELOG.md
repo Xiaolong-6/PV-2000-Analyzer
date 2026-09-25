@@ -1,5 +1,16 @@
 # Changelog
 
+## v20260925.14.1 — 2026-09-25 (branch)
+
+- Merged the latest main baseline (`v20260925.14`) into the workspace-UI branch while preserving the new DIT result-Vsb semantics alongside the UI refactor.
+
+## v20260925.14 — 2026-09-25
+
+- Resolved the remaining DIT N-type Vsb ambiguity by recovering the vendor result-path semantics: `CreateDataValues()` exports direct `Vsb = VDark - VLight_result`, while `StartDitCalculation()` separately applies the N-type sign transform to Standard-COCOS analysis arrays.
+- Added an explicit runtime `ResultVsb` quantity and exposed **PV-2000 result Vsb** separately from **Analysis Vsb** without changing the existing doping-aware Standard COCOS calculation.
+- Promoted final-result Vsb to a strict paired gate alongside VDark, corrected VLight and Initial Qc for the 13-file / 43-site DIT result corpus; maximum absolute Vsb error is **8.04e-16 V**.
+- Narrowed the remaining DIT evidence wall to downstream Vfb/Qtot/Qit/Qsc/Dit historical/current parity; no flatband or Dit formula was widened.
+
 ## v20260925.13.6 — 2026-09-25 (branch)
 
 - Migrated QSS-uPCD, Dual QSS and Leakage to the semantic workspace contract.
