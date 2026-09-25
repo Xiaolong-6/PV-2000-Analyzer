@@ -78,6 +78,11 @@
       c8=spv8*factor/Math.log(1+factor);
       c6=spv8/Math.log(1+factor)*(Math.pow(1+factor,spv6/spv8)-1);
     }
+    // VENDOR-COMPATIBILITY QUIRK — DO NOT "FIX" THE CROSS-MAPPING.
+    // The recovered PV-2000 DLL historically applies the stored LED6 temperature coefficient to SPV8,
+    // and the stored LED8 coefficient to SPV6. Keeping this parameter-order mismatch is required for
+    // vendor parity; tests/spv.test.js has a nonzero, unequal-coefficient regression that must fail if
+    // someone later rewires these coefficients to the seemingly natural LED6->SPV6 / LED8->SPV8 order.
     const t8=1/(1+s.temperatureCorrection6*(s.ledTemperature-26)),t6=1/(1+s.temperatureCorrection8*(s.ledTemperature-26));
     if(s.oxideThickness<=0){
       const r8=Math.max(0,Math.min(1,s.reflectivity8)),r6=Math.max(0,Math.min(1,s.reflectivity6));
