@@ -114,6 +114,10 @@ The two paired exports contain nine vendor result quantities. The XML-only runti
 
 Basore uses the configured `JZeroIntensity` range and the raw XML `Values` lifetime path. K-S J0 uses the corrected steady-state lifetime / Δn path and the configured `DefaultDeltaN` window. Vendor-zero/undefined behavior is preserved for the paired profile.
 
+A 100-case no-J0 pair adds one explicit availability rule. With `CalculateJZeroParams=false`, PV-2000 still reports teff.d, teff.SS, Δn, Smax and Implied Voc, but exports `teff.SS Max` and the corresponding maximum-Smax as `Ud.`. The runtime may still compute an internal maximum while processing the curve, but it does not expose that maximum as a vendor-compatible result unless J0 calculation is requested.
+
+The same audit found two historical `FixedPointsPattern + PseudoSquareCell` final-result rows with conflicting parity. One nearly matches the current reconstruction; the other differs materially. Because Pattern/Target alone does not explain the split, those files remain outside `QSS-INJ-RESULT-001` rather than weakening the gate.
+
 The current runtime deliberately rejects this compatibility result path when `UseAugerCorrection=true`; the Auger branch is reverse-engineered but has no real paired numeric result case yet.
 
 Run the public validator launcher with:

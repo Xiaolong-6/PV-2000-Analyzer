@@ -23,7 +23,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 6. split LBIC channel semantics from geometry and add the paired current-only / scattered-only paths;
 7. perform the sentinel-aware QSS HighDensity pass;
 8. investigate DIT historical regenerated-export drift without weakening the stronger original-pair rules;
-9. re-audit Dual QSS alternate geometries before relaxing its result-profile gate;
+9. **completed:** re-audit Dual QSS alternate geometries; keep the result-profile gate because the paired FixedPoints/PseudoSquare evidence conflicts, while preserving the newly proven no-J0 quantity availability rule;
 10. **completed:** Leakage and the paired standard SPV map path are implemented; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
@@ -50,7 +50,7 @@ The landing page intentionally separates dedicated analyzers, the Generic Inspec
 
 The canonical raw lifetime remains `TransientInfo@LifeTime`, with XML `Values` kept as a distinct stored vector/fallback. The expanded private raw corpus contains 273 exact XML/CSV pairs and 5833 injection points.
 
-`QSS-INJ-RESULT-001` now reconstructs the complete nine-scalar vendor result path for two real non-Auger Back/Back XML+CSV pairs. QDC matches original DLL internals to ≤7.92e-11 absolute error; teff.d, teff.SS, teff.SS Max, Δn, both Smax values, implied Voc, Basore J0 and K-S J0 all match the numeric vendor exports within floating-point tolerances, including the LowPower Basore/Δn `Ud.` states. Runtime remains XML-only.
+`QSS-INJ-RESULT-001` reconstructs the complete nine-scalar vendor result path for the established non-Auger Back/Back pairs. The 100-case audit adds three compatible nonempty OnePoint rows and confirms a quantity-level no-J0 rule: when `CalculateJZeroParams=false`, vendor `teff.SS Max` and maximum-Smax remain `Ud.` even though other scalar results are finite. Two historical FixedPoints/PseudoSquare rows conflict numerically, so the final-result geometry gate is intentionally not widened. Runtime remains XML-only.
 
 ### JZero
 
@@ -123,7 +123,7 @@ Never publish private reference files or proprietary vendor material merely to m
 
 ## Remaining high-priority scientific gaps
 
-1. Dual QSS: extend `QSS-INJ-RESULT-001` only when new real pairs cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
+1. Dual QSS: keep the current result-profile gate; extend only when new real pairs explain the conflicting historical FixedPoints branch, or cover Auger correction, alternate source selections, different 1000-mSun placement or another categorical result branch.
 2. LBIC: obtain finite direct-plus-scattered DL evidence before widening the coupled calculation profile; retain the existing four-pair private regression gate.
 3. JZero: retain `JZERO-CALC-001` for the paired two-iteration lifetime/Smax/Basore path; widen Implied Voc only if a new paired categorical path explains the current ~19–21 mV legacy offsets. CET/geometry profiles still require paired categorical evidence.
 4. SPV: extend beyond the standard paired map path only with matching vendor output for enhanced, texture, parsed-signal or other categorical branches.

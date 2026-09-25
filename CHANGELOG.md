@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.6 — 2026-09-25
+
+- Audited all ten harness-generated Dual QSS exports in the 100-case corpus: four are empty acquisitions, one is a legacy laser-power/Lifetime-only branch, and five contain current-style final-result rows.
+- Fixed the no-J0 availability branch proven by a real pair: when `CalculateJZeroParams=false`, `teff.SS Max` and maximum-Smax remain vendor `Ud.` instead of being exposed from an internally computable maximum.
+- Kept the final-result geometry gate unchanged after two historical FixedPoints/PseudoSquare pairs produced conflicting parity; one is close to the current reconstruction while the other differs materially.
 ## v20260925.5 — 2026-09-25
 
 - Closed the remaining high-value JZero opportunity from the 100-case private corpus: eight numeric XML/vendor CSV pairs validate the two-intensity lifetime, Smax and Basore J0 calculation independently across OnePoint, SquareRegion, HighDensity and Map geometries.
