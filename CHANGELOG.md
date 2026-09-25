@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.16.1 — 2026-09-25 (branch)
+## v20260925.17 — 2026-09-25
 
 - Made the wide desktop workspace a true equal-width three-pane layout with independent vertical scrolling for dataset/analysis state, whole-sample overview and point/local detail.
 - DIT now uses a larger 640×500 wafer-map surface and a sticky Selected site / Measurement point header with Vcpd–Qc, Dit–Vsb, Vsb–Qc and All point-analysis tabs. Pane scroll positions survive shell rebuilds.
