@@ -426,13 +426,14 @@ Matching private references use the same basename under `private/reference/vcpd/
 
 ## LBIC raster — paired XML + PV-2000 export/display regression
 
-The current evidence establishes three validated LBIC families:
+Historical composite evidence is retained under `LBIC-SINGLE-001`, `LBIC-MULTI-002` and `LBIC-REFLECTANCE-003`. Current validation also exposes the calculation axis independently:
 
-- `LBIC-SINGLE-001`: one beam, `SquareRegionPattern`, active Current + DirectReflection + ScatteredReflection → Current / Reflectivity / IQE;
-- `LBIC-MULTI-002`: multiple independent beams, `MapPattern + PseudoSquareCell`, the same active per-beam raw/result path;
-- `LBIC-REFLECTANCE-003`: one beam, `SquareRegionPattern`, `MeasureCurrent=false`, Direct/Scattered active → Reflectivity only.
+- `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001`: active Current + Direct + Scattered → Current / Reflectivity / IQE;
+- `LBIC-CALC-CURRENT-SCATTERED-002`: active Current + Scattered, Direct disabled → Current / Reflectivity / IQE;
+- `LBIC-CALC-CURRENT-ONLY-003`: active Current only;
+- `LBIC-CALC-REFLECTANCE-ONLY-004`: Current disabled with zero placeholder, Direct + Scattered active → Reflectivity only.
 
-The current-enabled set contains five paired XML/CSV references: four 51×51/101×101 single-beam rasters plus one **54,449-point** four-beam reference (984, 952, 855 and 656 nm).
+The older current-enabled references contain four 51×51/101×101 single-beam rasters plus one **54,449-point** four-beam direct+scattered reference. The 100-case corpus adds **nine numeric XML/CSV pairs** and **two zero-site diagnostics**. Eight numeric pairs exercise `LBIC-CALC-CURRENT-SCATTERED-002` across OnePoint/SquareCell, Map/SquareCell, SquareRegion/RoundWafer and SquareRegion/SquareCell for **27,376 sites**; one five-site FivePoint/SquareCell pair exercises `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001`. Calculation and geometry are validated independently.
 
 The reflectance-only corpus contains **62 XML files**. All 62 use `MeasureCurrent=false`, `MeasureDirectReflectance=true`, `MeasureScatteredReflectance=true`; their BeamData still include `Current`, but every supplied Current value is exactly zero. **44** of those XMLs have **60 matching PV-2000 XPS result printouts** because several measurements were printed at more than one display color scale.
 
@@ -447,6 +448,9 @@ A browser smoke sweep of the built analyzer imported **all 62 XMLs**. For every 
 | PseudoSquareCell schedule | 54,449 reconstructed = 54,449 export rows | validated |
 | PseudoSquare X/Y | pointwise max error 0 mm | validated |
 | Current | nonnegative raw XML vs CSV pointwise when active; negative stored Current becomes vendor `Ud.` while its signed XML value remains in Advanced | validated for observed paths |
+| 100-case current+scattered expansion | 8 numeric pairs / 27,376 sites; Current exact, Reflectivity exact to roundoff, IQE max error ≈9.95e-14 %-point; availability masks agree | validated calculation path across independently resolved geometries |
+| 100-case direct+scattered expansion | 5-site FivePoint/SquareCell; X/Y max ≈7.11e-15 mm; Current exact; Reflectivity/IQE max error ≈4.26e-14 %-point | validated calculation + independent geometry evidence |
+| zero-site LBIC exports | 2 paired files with zero DataItems / zero vendor rows | diagnostic only; no numeric profile promoted |
 | disabled Current placeholder | reflectance-only corpus: Current=0 everywhere but `MeasureCurrent=false`; suppressed from measured results | validated semantic handling |
 | displayed Reflectivity | `clamp(DirectReflection + ScatteredReflection, 0, 100)` | validated |
 | reflectance-only XPS summaries | 60 XPS Average / Median / sample Stdev / Min / Max comparisons; max discrepancy <0.005 %-point | validated to XPS display rounding |

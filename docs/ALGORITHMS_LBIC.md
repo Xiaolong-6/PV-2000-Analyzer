@@ -80,6 +80,8 @@ Status: **validated for the MapPattern + PseudoSquareCell coordinate rule in LBI
 
 Status: **raw XML when active; pointwise reproduced by the supplied current-enabled PV-2000 CSV exports**. Disabled placeholder Current is not treated as measured data.
 
+The 100-case closure extends this evidence across geometry: eight current+scattered numeric pairs contribute **27,376 sites**, and one direct+scattered FivePoint/SquareCell pair contributes five sites. The shared validator resolves geometry independently, then checks Current / Reflectivity / IQE quantity availability and summaries. Current is exact across these pairs; maximum finite IQE difference is about **9.95e-14 percentage point**. Two additional paired current+scattered exports contain zero acquired sites and are diagnostic only.
+
 ### Reflectivity
 
 For the validated profile, PV-2000 `Reflectivity [%]` is reproduced point-by-point by:
@@ -218,7 +220,7 @@ Z [µm] = 10000 / a²
 
 Fit `1 / IQE` versus `Z` at each site using the wavelengths inside the stored range; `DL [µm] = intercept / slope`. An unavailable input, non-finite fit, or a result outside `(0, MaxDLValue]` makes DL unavailable. The 656 nm beam in the reference four-beam map lies outside its 700–1000 nm DL range.
 
-One private 961-point `MapPattern + SquareCell` XML/CSV pair establishes **956 numeric DL values and 5 `Ud.` sites**. Pointwise maximum DL error is **1.66e-11 µm**; IQE maximum error is **8.53e-14 percentage points** and the DL summary error is **1.07e-11 µm**. Three additional four-wavelength one/five-point paired exports contain 1, 5 and 1 entirely unavailable DL sites and confirm blanking only. The five-point case uses direct plus scattered reflectance, so its all-unavailable output does not validate finite DL for that optical path. Runtime exposes validated calculated DL for the current-plus-scattered optical path with two or more distinct qualifying wavelengths; the direct-plus-scattered DL path remains withheld pending a finite numeric pair. Geometry validation is independent.
+One private 961-point `MapPattern + SquareCell` XML/CSV pair establishes **956 numeric DL values and 5 `Ud.` sites**. Pointwise maximum DL error is **1.66e-11 µm**; IQE maximum error is **8.53e-14 percentage points** and the DL summary error is **1.07e-11 µm**. Three additional four-wavelength one/five-point paired exports contain 1, 5 and 1 entirely unavailable DL sites and confirm blanking only. The 100-case matrix now runs these DL-bearing files through both the general per-beam/geometry validator and the dedicated DL validator. The five-point case uses direct plus scattered reflectance, so its all-unavailable output does not validate finite DL for that optical path. Runtime exposes validated calculated DL for the current-plus-scattered optical path with two or more distinct qualifying wavelengths; the direct-plus-scattered DL path remains withheld pending a finite numeric pair. Geometry validation is independent.
 
 ## Private regression command
 

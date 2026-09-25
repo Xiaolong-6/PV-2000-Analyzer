@@ -20,7 +20,7 @@ Next work should therefore start with validation-axis separation, not with anoth
 3. change validators to emit calculation / geometry / quantity outcomes separately;
 4. migrate ISC/VCPD first because their new pairs prove the same calculation across different geometries;
 5. **completed:** migrate JZero validation to geometry-independent lifetime/Smax/Basore parity while keeping Implied Voc on a narrower quantity envelope;
-6. split LBIC channel semantics from geometry and add the paired current-only / scattered-only paths;
+6. **completed:** split LBIC calculation semantics from geometry; the 100-case closure validates eight current+scattered numeric pairs / 27,376 sites plus one five-site direct+scattered pair, while two zero-site exports remain diagnostic and finite direct+scattered DL remains withheld;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; Implied Voc remains inferred;
 8. **partially completed:** final-result direct/bookkeeping audit validates initial VDark and fixes the Initial Qc off-by-one; corrected-light/N-type/flatband/Dit regenerated-export drift remains an evidence boundary and the stronger original-pair Standard COCOS rules are unchanged;
 9. **completed:** re-audit Dual QSS alternate geometries; keep the result-profile gate because the paired FixedPoints/PseudoSquare evidence conflicts, while preserving the newly proven no-J0 quantity availability rule;
@@ -66,11 +66,9 @@ The historical `CET-9PT-SQUARE-001` pair now feeds two runtime validation axes: 
 
 ### LBIC
 
-Current validated families are:
+Historical composite evidence remains `LBIC-SINGLE-001`, `LBIC-MULTI-002` and `LBIC-REFLECTANCE-003`. The runtime/validator now tracks decoupled calculation profiles `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001`, `LBIC-CALC-CURRENT-SCATTERED-002`, `LBIC-CALC-CURRENT-ONLY-003` and `LBIC-CALC-REFLECTANCE-ONLY-004` independently of shared geometry profiles.
 
-- `LBIC-SINGLE-001` — current-enabled single-beam SquareRegionPattern;
-- `LBIC-MULTI-002` — independent current-enabled multi-beam MapPattern + PseudoSquareCell;
-- `LBIC-REFLECTANCE-003` — reflectance-only SquareRegionPattern with inactive zero Current placeholders.
+The 100-case closure adds eight numeric current+scattered pairs (27,376 sites), one five-site direct+scattered pair and two zero-site diagnostics. Current / Reflectivity / IQE and their availability rules pass pointwise; geometry is resolved separately.
 
 Calculated DL is now implemented for the current-plus-scattered multi-wavelength path (`LBIC-CALC-DL-MULTIWAVELENGTH-005`). A 961-point pair validates 956 finite DL cells within 1.66e-11 µm and five `Ud.` cells. Three additional one/five-point pairs have seven `Ud.` DL cells; none provides finite direct-plus-scattered DL evidence. The latter optical branch remains withheld.
 

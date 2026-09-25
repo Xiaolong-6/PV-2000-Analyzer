@@ -111,11 +111,16 @@ One private 961-point XML/vendor CSV pair validates 956 numeric DL values (maxim
 
 ## Validation status
 
-The current validated families are:
+Historical composite evidence bundles remain:
 
 - `LBIC-SINGLE-001`;
 - `LBIC-MULTI-002`;
 - `LBIC-REFLECTANCE-003`.
-- `LBIC-CALC-DL-MULTIWAVELENGTH-005` for the cross-beam DL calculation.
 
-Their exact geometry/channel/profile boundaries and numerical tolerances are recorded in the repository validation documentation.
+Calculation semantics are now tracked independently as `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001`, `LBIC-CALC-CURRENT-SCATTERED-002`, `LBIC-CALC-CURRENT-ONLY-003` and `LBIC-CALC-REFLECTANCE-ONLY-004`, with geometry resolved by the shared geometry profiles.
+
+The 100-case closure contributes **eight numeric current+scattered pairs / 27,376 sites**, one five-site direct+scattered pair and two zero-site diagnostics. Current is exact, finite IQE agrees to about **9.95×10⁻¹⁴ percentage point** at worst, and the paired geometries agree to about **4.26×10⁻¹⁴ mm** at worst.
+
+`LBIC-CALC-DL-MULTIWAVELENGTH-005` remains separately scoped. Finite DL is validated for the current+scattered cross-beam path; the direct+scattered five-point pair contains only `Ud.` DL and therefore does not justify finite DL on that optical branch.
+
+Exact numerical tolerances and evidence boundaries are maintained in the repository validation documentation.

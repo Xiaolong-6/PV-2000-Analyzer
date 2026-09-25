@@ -637,7 +637,24 @@ Examples include:
 
 ---
 
-### LBIC-SINGLE-001 — single-beam Current/Reflectivity/IQE family
+### LBIC decoupled calculation profiles
+
+The current runtime and validators keep **calculation semantics** separate from geometry. Historical composite evidence bundles below remain valid, but a Pattern/Target change does not create a new calculation profile when the same pointwise channel/result path is confirmed by paired output.
+
+- `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001` — active Current, DirectReflection and ScatteredReflection. Reflectivity uses the raw Direct+Scattered sum for IQE and a 0–100% clamp for display.
+- `LBIC-CALC-CURRENT-SCATTERED-002` — active Current and ScatteredReflection with Direct disabled. ScatteredReflection itself is the raw optical reflectivity used by displayed Reflectivity and IQE.
+- `LBIC-CALC-CURRENT-ONLY-003` — active Current with both reflectance measurements disabled; Current is vendor-facing while EQE remains an Analyzer intermediate.
+- `LBIC-CALC-REFLECTANCE-ONLY-004` — Current disabled, Direct+Scattered active, stored zero Current treated as an inactive placeholder; Reflectivity is the vendor-facing quantity.
+
+The 100-case corpus adds **eight numeric current+scattered pairs / 27,376 sites** spanning OnePoint/SquareCell, Map/SquareCell, SquareRegion/RoundWafer and SquareRegion/SquareCell. Current matches the vendor result exactly, Reflectivity agrees to floating-point precision, finite IQE differs by at most about **9.95e-14 percentage point**, and availability/blanking agrees point-by-point. Their shared geometry profiles reproduce X/Y with maximum error about **4.26e-14 mm**. Two further current+scattered files are zero-site acquisitions and remain diagnostic only.
+
+A five-site `FivePointPattern + SquareCell` direct+scattered pair independently validates `LBIC-CALC-CURRENT-DIRECT-SCATTERED-001` on `GEOM-FIVEPOINT-SQUARE-001`: Current is exact and Reflectivity/IQE differ by at most about **4.26e-14 percentage point**. Its DL column is entirely `Ud.`; this does not establish finite direct+scattered DL.
+
+Negative stored Current follows quantity-specific availability: the vendor Current result is `Ud.`, while the signed raw XML value remains available as provenance. IQE retains only finite results in the inclusive **0–100%** interval and uses the unclamped raw optical reflectivity.
+
+---
+
+## LBIC-SINGLE-001 — single-beam Current/Reflectivity/IQE family
 
 **Measurement type**
 
