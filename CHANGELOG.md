@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260925.1.1 — 2026-09-25 (feature branch)
+## v20260925.2 — 2026-09-25
 
 - Expanded SPV paired evidence with eight standard-mode XML/vendor CSV pairs: five extend the positive-oxide calculation, and three establish the zero-oxide/zero-reflectivity correction path. Across 3213 sites, 1542 finite DL/Tau values and every availability mask match the vendor output.
 - Preserved the coordinate prefix of a terminated 59-site HighDensity/SquareCell acquisition as partial geometry; seven other new standard pairs match complete geometry profiles.
