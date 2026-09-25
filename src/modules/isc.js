@@ -834,7 +834,7 @@
         <div><b>${d.sites.length}</b><span>XML sites</span></div>
         <div><b>${d.geometryStatus==='partial'&&Number.isFinite(d.expectedPointCount)?`${d.sites.length} / ${d.expectedPointCount}`:'complete'}</b><span>acquisition schedule</span></div>
         <div><b>${d.coords.length} / ${d.sites.length}</b><span>coordinates</span></div>
-        <div><b>${filterController.snapshot().validCount} / ${d.sites.length}</b><span>pass filter</span></div>
+        <div><b id="iDatasetValid">${filterController.snapshot().validCount} / ${d.sites.length}</b><span>pass filter</span></div>
       </div></section>
       ${PV.ui.validDataFilterMarkup({
         prefix:'iFilter',
@@ -879,6 +879,8 @@
         zoom.hist={x:null,y:null};
         host.querySelector('#iSummaryBody').innerHTML=statRows();
         host.querySelector('#iSelected').innerHTML=selectedHtml();
+        const datasetValid=host.querySelector('#iDatasetValid');
+        if(datasetValid)datasetValid.textContent=`${state.validCount} / ${state.siteCount}`;
         redraw();
       }
     });
