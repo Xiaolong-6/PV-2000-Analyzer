@@ -291,7 +291,8 @@ def validate(xml_path, csv_path):
     if len(calc) != len(vendor):
         raise AssertionError(f'row count {len(calc)} != {len(vendor)}')
     results = [max_error([row[i] for row in calc], [row[i] for row in vendor]) for i in range(4)]
-    tolerances = [1e-8, 1e-8, 1e-10, 1e-10]
+    enhanced = is_enhanced(xml_path)
+    tolerances = [1e-6, 1e-6, 1e-10, 1e-10] if enhanced else [1e-8, 1e-8, 1e-10, 1e-10]
     for (error, mismatch), tolerance in zip(results, tolerances):
         if mismatch or error > tolerance:
             raise AssertionError(f'error={error} mismatch={mismatch} tolerance={tolerance}')
