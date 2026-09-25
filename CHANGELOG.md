@@ -1,5 +1,15 @@
 # Changelog
 
+## v20260925.11 — 2026-09-25
+
+- Modernized the Dual QSS final-result validator to match the current decoupled calculation/geometry architecture; runtime scientific calculations are unchanged.
+- Closed the ten-export 100-case Dual QSS matrix as **3 numeric PASS + 7 diagnostics**, replacing the stale validator result of **1 PASS + 1 FAIL + 8 NEW_PROFILE**.
+- Validated three current-style non-Auger Back/Back `OnePointPattern` rows, including a `SquareCell` target resolved independently through `GEOM-ONEPOINT-CENTER-001`.
+- Locked the no-J0 availability rule: when `CalculateJZeroParams=false`, vendor `teff.SS Max`, maximum-Smax and J0 outputs remain unavailable while teff.d/teff.SS/Δn/Smax/Voc may remain finite.
+- Classified four zero-result acquisitions, one legacy Laser-Power/Lifetime-only export and two conflicting FixedPoints/PseudoSquare rows as non-promoting diagnostics.
+- Updated validation/profile/algorithm/Wiki/handoff documentation so target geometry is no longer described as part of the Dual QSS calculation gate.
+
+
 ## v20260925.10 — 2026-09-25
 
 - Refined final 100-case validator semantics without changing runtime scientific calculations.
