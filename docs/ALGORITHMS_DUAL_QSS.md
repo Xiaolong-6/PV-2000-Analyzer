@@ -56,9 +56,24 @@ Other raw-path regression results:
 - **11,660,167** paired Time/Voltage samples match XML exactly at exported precision;
 - non-positive raw lifetimes are retained for diagnosis.
 
+### Point averaging and repeated `Values` vectors
+
+The 100-case corpus exposes one additional saved-data semantic that matters to final-result reconstruction. A `QssDataItem` may contain more than one lifetime vector under `Values`.
+
+Managed-IL tracing of the current vendor DLL establishes the exact input rule inside `QssMeasurement.InitValuesForScan()`:
+
+```text
+DoPointAveraging = false: lifetime[i] = Values[0][i]
+DoPointAveraging = true:  lifetime[i] = mean(Values[*][i])
+```
+
+The true branch is implemented by `QssDataItem.GetLifeTimeAsVector(i).Average()`. `Intensity` and `Power` continue to use their first saved vectors. `PointAverageCount` is metadata about the requested acquisition count; it is not itself the calculation switch.
+
+The public parser therefore preserves every saved lifetime vector. The user-facing raw injection curve still uses `TransientInfo@LifeTime`, while the vendor-compatible scalar-result path uses the effective `Values` lifetime defined above.
+
 ## Paired numeric result profile — QSS-INJ-RESULT-001
 
-Two **real, matching DualQssMeasurement XML + numeric PV-2000 final-result CSV pairs** establish the current vendor-compatible result path for `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back`, with `UseAugerCorrection=false`.
+Two **real, matching DualQssMeasurement XML + numeric PV-2000 final-result CSV pairs** establish the original vendor-compatible result path for `OnePointPattern + RoundWafer`, `ProbeSelection=Back`, `QssBiasSelection=Back`, with `UseAugerCorrection=false`. The 100-case corpus adds three compatible OnePoint rows plus two one-site `FixedPointsPattern + PseudoSquareCell` rows. The latter are now closed by the recovered point-averaging input rule rather than by a separate FixedPoints formula.
 
 The browser reconstructs the result table from XML only. The CSV is used only by the private regression workflow.
 
@@ -94,7 +109,7 @@ When the bias source is Back and the QDC-filtered measured curve contains at lea
 
 The class name in the vendor assembly is `CubicSplineInterpolator`, but managed IL shows that it calls ALGLIB `buildakimaspline`; the implemented compatibility path is therefore specifically **log-log Akima**, not a generic cubic spline.
 
-The base path evaluates `teff.d (1 Sun)` from XML `Values` using the vendor clamped linear interpolation rule. The Dual QSS path overwrites `teff.SS (1 Sun)` only when 1000 mSun lies inside the corrected steady-state domain. Otherwise the base clamped value remains. This reproduces both current real pairs without sample-name-specific logic.
+The base path evaluates `teff.d (1 Sun)` from the effective XML `Values` lifetime using the vendor clamped linear interpolation rule: first vector when point averaging is disabled, pointwise arithmetic mean across saved vectors when it is enabled. The Dual QSS path overwrites `teff.SS (1 Sun)` only when 1000 mSun lies inside the corrected steady-state domain. Otherwise the base clamped value remains.
 
 ### Final scalar parity
 
@@ -112,11 +127,13 @@ The two paired exports contain nine vendor result quantities. The XML-only runti
 | Implied Voc (1 Sun) [V] | 0.596218597067025 | 0.588201537608459 | max abs error ≈ **4.4e-16 V** |
 | K-S Emitter J0 [fA/cm²] | 128.40923475899 | 863.446682273861 | max abs error ≈ **7.3e-12 fA/cm²** |
 
-Basore uses the configured `JZeroIntensity` range and the raw XML `Values` lifetime path. K-S J0 uses the corrected steady-state lifetime / Δn path and the configured `DefaultDeltaN` window. Vendor-zero/undefined behavior is preserved for the paired profile.
+Basore uses the configured `JZeroIntensity` range and the same effective XML `Values` lifetime path. K-S J0 uses the corrected steady-state lifetime / Δn path and the configured `DefaultDeltaN` window. Vendor-zero/undefined behavior is preserved for the paired profile.
 
 A 100-case no-J0 pair adds one explicit availability rule. With `CalculateJZeroParams=false`, PV-2000 still reports teff.d, teff.SS, Δn, Smax and Implied Voc, but exports `teff.SS Max` and the corresponding maximum-Smax as `Ud.`. The runtime may still compute an internal maximum while processing the curve, but it does not expose that maximum as a vendor-compatible result unless J0 calculation is requested.
 
-The same audit found two historical `FixedPointsPattern + PseudoSquareCell` final-result rows with conflicting parity. One nearly matches the current reconstruction; the other differs materially. Because Pattern/Target alone does not explain the split, those files remain outside `QSS-INJ-RESULT-001` rather than weakening the gate.
+The two previously conflicting `FixedPointsPattern + PseudoSquareCell` rows are now explained by saved-vector semantics. The non-averaged file has `DoPointAveraging=false` and one saved lifetime vector; the 3avg file has `DoPointAveraging=true` and three saved lifetime vectors. Replacing the old first-vector-only reconstruction with the vendor pointwise mean closes the 3avg row without changing any downstream QSS/J0 formula: teff.d is exact; teff.SS error ≈ **1.14e-13 µs**; teff.SS Max ≈ **2.27e-13 µs**; Basore J0 ≈ **2.84e-14 fA/cm²**; Δn relative error ≈ **2.17e-15**; K-S J0 ≈ **7.82e-13 fA/cm²**; Implied Voc ≈ **1.11e-16 V**.
+
+These are one-site FixedPoints acquisitions. Multi-site FixedPoints remains outside the final-result evidence envelope.
 
 The current runtime deliberately rejects this compatibility result path when `UseAugerCorrection=true`; the Auger branch is reverse-engineered but has no real paired numeric result case yet.
 
@@ -165,7 +182,7 @@ Logarithmic X is the default because the supplied schedules span orders of magni
 
 Six additional `OnePointPattern` XMLs exercise high-range injection schedules with `CalculateJZeroParams=true`, `IncludeKSJ0=true`, `UseAugerCorrection=false` and `DefaultDeltaN=5e16`. They confirm that these recipe requests occur on the same raw Dual QSS schema and that the one-point geometry remains meaningful context.
 
-No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The original two-pair core plus three compatible 100-case current-style OnePoint rows now support `QSS-INJ-RESULT-001`; these six XML-only files still do not widen that validation envelope.
+No matching PV-2000 result-table export was supplied for these six measurements. They expand runtime/metadata coverage only. The original two-pair core plus three compatible 100-case OnePoint rows and two paired one-site FixedPoints rows now support `QSS-INJ-RESULT-001`; these six XML-only files still do not widen that validation envelope.
 
 ## Remaining compatibility boundaries
 
@@ -180,4 +197,4 @@ Still outside the validated browser compatibility envelope:
 - generalization of the scalar result path to the broader 273-pair raw-export corpus;
 - vendor LP/HP stitching semantics, if any.
 
-The raw 273-pair corpus and the numeric final-result profile remain separate evidence sets. The 100-case final-result validator classifies three compatible OnePoint rows as PASS and four empty acquisitions, one legacy Lifetime-only branch and two conflicting FixedPoints/PseudoSquare rows as diagnostics. New categorical branches require their own real XML + matching numeric PV-2000 CSV before the runtime profile is widened.
+The raw 273-pair corpus and the numeric final-result profile remain separate evidence sets. The 100-case final-result validator now classifies **five** nonempty single-site rows as PASS (three OnePoint plus two FixedPoints) and keeps **five** cases diagnostic (four empty acquisitions plus one legacy Lifetime-only branch). New categorical branches require their own real XML + matching numeric PV-2000 CSV before the runtime profile is widened.

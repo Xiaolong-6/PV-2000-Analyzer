@@ -26,9 +26,9 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.25`.
-- No active feature branch is required to complete the 100-case closure.
-- Final private 100-case matrix against this baseline: **71 scoped PASS + 16 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
+- Public main: `v20260925.26`.
+- Closure branch: `fix/dual-qss-fixedpoints-point-averaging-v26`.
+- Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
 ## Cross-profile parity / geometry-decoupling audit
@@ -47,7 +47,7 @@ That validation-axis separation is now established. The completed sequence was:
 6. **completed:** split LBIC calculation semantics from geometry; the 100-case closure validates eight current+scattered numeric pairs / 27,376 sites plus one five-site direct+scattered pair, while two zero-site exports remain diagnostic and finite direct+scattered DL remains withheld;
 7. **completed:** sentinel-aware QSS closure validates seven numeric pairs across SquareRegion/Map/HighDensity, including 39 `-1` controller sentinels with vendor `Ud./0/0` lifetime/Smax/Voc result semantics; `QSS-CALC-IMPLIED-VOC-002` now reproduces current-DLL finite/placeholder Implied Voc with zero availability mismatches and 5.56e-16 V maximum error;
 8. **completed:** DIT final-result closure covers initial VDark, corrected final-result VLight, direct result-table Vsb, Initial Qc and the current managed-DLL Standard-COCOS downstream Vfb/Qsc/Qtot/Qit/Minimum-Dit path across 13 pairs / 43 sites. `DIT-RESULT-STANDARD-DLL-002` has zero availability mismatches. Controlled real-acquisition vendor-DLL probes close current-DLL COCOS-II as `DIT-RESULT-COCOSII-DLL-003`; historical releases and active Back Surface Shift remain version/profile-scoped;
-9. **completed:** re-audit Dual QSS final-result branches; three current-style OnePoint rows pass independently of target geometry, the no-J0 maximum-quantity availability rule is preserved, and four empty + one legacy + two conflicting FixedPoints cases are explicit diagnostics;
+9. **completed:** re-audit Dual QSS final-result branches; three current-style OnePoint rows pass independently of target geometry, the no-J0 maximum-quantity availability rule is preserved, and managed-IL tracing closes both one-site FixedPoints rows via the `DoPointAveraging` saved-vector rule. Four empty + one legacy cases remain diagnostics;
 10. **completed:** Leakage and the paired standard SPV map paths are implemented; `SPV-CALC-ENHANCED-N-003` now reproduces the paired N-type Enhanced finite-wafer/back-surface result, while Enhanced P-type and other categorical branches remain gated; IntensityScan remains deferred because no trustworthy scientific result export path exists.
 
 The detailed evidence and implementation sequence are recorded in `docs/CROSS_PROFILE_PARITY_AUDIT_20260924.md`.
@@ -74,7 +74,7 @@ The landing page intentionally separates dedicated analyzers, the Generic Inspec
 
 The canonical raw lifetime remains `TransientInfo@LifeTime`, with XML `Values` kept as a distinct stored vector/fallback. The expanded private raw corpus contains 273 exact XML/CSV pairs and 5833 injection points.
 
-`QSS-INJ-RESULT-001` reconstructs the complete nine-scalar vendor result path for the established non-Auger Back/Back pairs. The 100-case audit adds three compatible nonempty OnePoint rows and confirms a quantity-level no-J0 rule: when `CalculateJZeroParams=false`, vendor `teff.SS Max` and maximum-Smax remain `Ud.` even though other scalar results are finite. Two historical FixedPoints/PseudoSquare rows conflict numerically, so the final-result geometry gate is intentionally not widened. Runtime remains XML-only.
+`QSS-INJ-RESULT-001` reconstructs the complete nine-scalar vendor result path for the established non-Auger Back/Back pairs. The 100-case audit adds three compatible nonempty OnePoint rows and two one-site FixedPoints/PseudoSquare rows. The former FixedPoints conflict is closed: `DoPointAveraging=false` uses the first saved `Values` lifetime vector, while `DoPointAveraging=true` uses the pointwise arithmetic mean across all saved lifetime vectors. The existing downstream QSS/J0 calculation then matches both rows at floating-point scale. The no-J0 maximum-quantity availability rule remains unchanged. Multi-site FixedPoints is still outside the evidence envelope. Runtime remains XML-only.
 
 ### JZero
 
@@ -149,7 +149,7 @@ Never publish private reference files or proprietary vendor material merely to m
 The **current-DLL DIT Standard-COCOS and COCOS-II result paths are closed** through `DIT-RESULT-STANDARD-DLL-002` and `DIT-RESULT-COCOSII-DLL-003`. Historical PV-2000 DIT behavior and active Back Surface Shift remain version/profile-scoped evidence.
 
 1. **LBIC finite direct-plus-scattered DL:** obtain at least one finite paired vendor oracle before widening the current DL calculation envelope.
-2. **Dual QSS categorical branches:** explain the conflicting FixedPoints/PseudoSquare result branch, or obtain paired evidence for Auger correction, alternate source selections, different 1000-mSun placement or another result branch.
+2. **Dual QSS remaining categorical branches:** obtain paired evidence for multi-site FixedPoints, Auger correction, alternate source selections, different 1000-mSun placement, non-steady-state/laser-power output or another result branch.
 3. **SPV remaining categorical branches:** Enhanced N-type is validated; Enhanced P-type, texture correction, parsed-signal and manual-linearity paths still require their own paired evidence.
 4. **IntensityScan:** scientific result support remains blocked by the vendor result API/invocation path; XML structure alone is not sufficient.
 5. **Unsupported families:** CV, Frequency Scan, Voc/Voc Mapping, Fe/LID, Surface Passivation, Junction Lifetime, Sheet Resistance/Eddy, Height and other known families still require real XML + matching numeric vendor output before a dedicated scientific analyzer is added.

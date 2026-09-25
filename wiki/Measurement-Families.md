@@ -8,7 +8,7 @@ This page separates **dedicated runtime analyzers** from measurement families th
 |---|---|---|---|
 | [DIT / COCOS](DIT) | `DITMeasurement` | corrected Kelvin-probe/corona data plus analyzer-derived semiconductor/Dit results | implemented; validation is path/profile dependent; current-DLL COCOS-II is controlled-vendor validated under `DIT-RESULT-COCOSII-DLL-003` |
 | [QSS-µPCD](QSS-uPCD) | `QssUpcdMeasurement` | stored/controller lifetime plus derived Smax/Voc and optional Analyzer SRV | implemented; lifetime/Smax and current-DLL simple-map Implied Voc are vendor-validated independently of geometry |
-| [Dual QSS](Dual-QSS) | `DualQssMeasurement` | stored injection/transient data plus profile-scoped steady-state/Voc/J0 reconstruction | implemented; raw path validated; two-pair `QSS-INJ-RESULT-001` validates the non-Auger Back/Back final scalar result table |
+| [Dual QSS](Dual-QSS) | `DualQssMeasurement` | stored injection/transient data plus profile-scoped steady-state/Voc/J0 reconstruction | implemented; raw path validated; `QSS-INJ-RESULT-001` covers the non-Auger Back/Back single-site scalar path for OnePoint plus one-site FixedPoints, including vendor point-averaging semantics |
 | [Emitter J0](Emitter-J0) | `JZeroMeasurement` | two lifetime states plus derived Smax/Voc/J0 | implemented; lifetime/Smax/Basore validated across paired geometries and current-DLL Voc validated as `JZERO-VOC-COMPAT-001` across the cross-profile harness corpus |
 | [ISC](ISC-and-VCPD) | `ISCMeasurement` | corrected/derived repeated Kelvin-probe readings | implemented; paired map profile validated |
 | [VCPD](ISC-and-VCPD) | `VcpdMeasurement` | stored/averaged Kelvin-probe readings | implemented; separate paired map profile validated |

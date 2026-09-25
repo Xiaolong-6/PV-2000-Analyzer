@@ -8,7 +8,7 @@ This page is the repository-level index of dedicated analyzer support. “Implem
 |---|---|---|---|
 | `DITMeasurement` | Dit / COCOS | Vcpd/Vsb curves, discrete Minimum Dit, optional Midgap Dit, Qsc, Qtot, Cox/EOT, site filtering and spatial context | Standard COCOS remains profile-scoped; `DIT-RESULT-INITIAL-001` validates direct/bookkeeping fields; `DIT-RESULT-STANDARD-DLL-002` validates current-DLL Standard-COCOS downstream results; `DIT-RESULT-COCOSII-DLL-003` validates current-DLL COCOS-II Dit/Qit through controlled vendor probes; Analyzer Ge/PCHIP remain separate |
 | `QssUpcdMeasurement` | QSS-µPCD | lifetime map, Smax, PV-2000-compatible implied Voc, optional physical Si/Ge estimate, optional Analyzer SRV, filtering/maps/distribution/profiles | paired Map/SquareRegion/HighDensity-Round geometry; cross-geometry lifetime/Smax + sentinel semantics validated; `QSS-CALC-IMPLIED-VOC-002` validates current-DLL simple-map Implied Voc independently of geometry |
-| `DualQssMeasurement` | QSS Injection | one-point injection sweep, canonical raw lifetime, stored transients, LP/HP/repeat overlays, paired vendor-compatible teff.d/teff.SS/teff.SS Max/Δn/Smax/Voc/Basore J0/K-S J0 result table and exports | 273 raw XML/CSV pairs / 5833 points plus two-pair `QSS-INJ-RESULT-001`; full non-Auger Back/Back scalar result parity validated for those two real pairs |
+| `DualQssMeasurement` | QSS Injection | single-site injection sweep, canonical raw lifetime, stored transients, LP/HP/repeat overlays, paired vendor-compatible teff.d/teff.SS/teff.SS Max/Δn/Smax/Voc/Basore J0/K-S J0 result table and exports | 273 raw XML/CSV pairs / 5833 points plus `QSS-INJ-RESULT-001`; non-Auger Back/Back scalar parity covers the original two OnePoint pairs, three additional OnePoint rows and two one-site FixedPoints rows with validated point-averaging semantics |
 | `JZeroMeasurement` | Emitter J0 | two lifetime/Smax/Voc channels, Basore J0, map/distribution/filter/export; incomplete acquisitions degrade per quantity | `JZERO-CALC-001` lifetime/Smax/Basore validated across paired geometries; current-DLL Implied Voc validated separately as geometry-independent `JZERO-VOC-COMPAT-001` across 12 harness pairs / 15,886 finite values |
 | `ISCMeasurement` | ISC | Vcpd Dark, Vcpd Light, VSB, repeated-reading inspection, map/distribution/filter/export | paired `MapPattern + SquareCell` path validated |
 | `VcpdMeasurement` | VCPD | Vcpd Dark, map/distribution/filter/export | paired `MapPattern + RoundWafer` path validated |
@@ -49,7 +49,7 @@ XML-only files may justify parser work, raw-value display or an explicitly **inf
 
 ## Current high-value validation gaps
 
-- Dual QSS: broaden `QSS-INJ-RESULT-001` only when new real XML+CSV pairs exercise Auger correction, alternate source selections, different 1000-mSun placement or other categorical result branches.
+- Dual QSS: broaden `QSS-INJ-RESULT-001` only when new real XML+CSV pairs exercise multi-site FixedPoints, Auger correction, alternate source selections, different 1000-mSun placement or other categorical result branches.
 - LBIC: the paired current-plus-scattered multi-wavelength DL path is validated; obtain a finite direct-plus-scattered DL pair before extending that optical branch.
 - JZero/CET/other implemented families: expand categorical geometry/result envelopes only when matching vendor output exercises the new path.
 - SPV: broaden only when new paired files exercise Enhanced P-type, texture/manual-linearity/parsed-signal or other optical categorical branches.

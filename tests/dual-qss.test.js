@@ -50,6 +50,29 @@ test('Dual QSS vector parsing accepts direct numeric children as well as vendor 
   assert.equal(d.points[1].power,2.5e13);
 });
 
+test('Dual QSS parser preserves point-average lifetime vectors and applies vendor mean semantics',()=>{
+  const xml=fs.readFileSync(path.join(__dirname,'fixtures','dual-qss-point-average-minimal.xml'),'utf8');
+  const d=parseFixture(xml);
+  assert.equal(d.patternType,'FixedPointsPattern');
+  assert.equal(d.targetType,'PseudoSquareCell');
+  assert.equal(d.doPointAveraging,'true');
+  assert.equal(d.pointAverageCount,3);
+  assert.equal(d.fixedPointCount,1);
+  assert.equal(d.lifetimeVectors.length,3);
+  assert.deepEqual(d.lifetimeVectors[0],[210,183,150]);
+  assert.deepEqual(d.points.map(p=>p.lifetime),[210,180,150]);
+  assert.deepEqual(d.points[1].lifetimeRepeats,[183,180,177]);
+  assert.equal(d.points[1].lifetimeFirst,183);
+  assert.deepEqual(d.geometryModel.pointsMm,[{x:0,y:0}]);
+});
+
+test('Dual QSS point averaging is controlled by DoPointAveraging, not PointAverageCount alone',()=>{
+  const rows=[[100,200],[110,190],[90,210]];
+  assert.deepEqual(PV2000.modules.dualQss.effectiveLifetimeVector(rows,'false'),[100,200]);
+  assert.deepEqual(PV2000.modules.dualQss.effectiveLifetimeVector(rows,'true'),[100,200]);
+  assert.deepEqual(PV2000.modules.dualQss.effectiveLifetimeVector([[100,200],[120,220]],'true'),[110,210]);
+});
+
 test('Dual QSS range classification separates supplied low/high schedules',()=>{
   assert.equal(PV2000.modules.dualQss.classifyRange([1,2,3,5,464]),'Low-range injection');
   assert.equal(PV2000.modules.dualQss.classifyRange([30,33,46,3162]),'High-range injection');
@@ -113,6 +136,18 @@ test('Dual QSS does not invent unpaired interior interpolation or profile varian
   });
   assert.equal(squareTarget.available,true);
   assert.equal(squareTarget.value,200);
+  const fixedOne=PV2000.modules.dualQss.pairedTeffdOneSun({
+    ...base,patternType:'FixedPointsPattern',fixedPointCount:1,
+    points:[{intensityMilli:1000,lifetime:200}]
+  });
+  assert.equal(fixedOne.available,true);
+  assert.equal(fixedOne.value,200);
+  const fixedMany=PV2000.modules.dualQss.pairedTeffdOneSun({
+    ...base,patternType:'FixedPointsPattern',fixedPointCount:2,
+    points:[{intensityMilli:1000,lifetime:200}]
+  });
+  assert.equal(fixedMany.available,false);
+  assert.equal(fixedMany.rule,'outside-paired-profile');
   const wrongPattern=PV2000.modules.dualQss.pairedTeffdOneSun({
     ...base,patternType:'SquareRegionPattern',
     points:[{intensityMilli:1000,lifetime:200}]
@@ -219,13 +254,37 @@ test('Dual QSS no-J0 result keeps vendor teff.SS Max and Smax Max unavailable',(
   assert.equal(r.smaxMax.rule,'not-requested');
 });
 
+test('Dual QSS final-result calculation accepts only paired one-site FixedPoints semantics',()=>{
+  const transient=()=>({
+    amplitude:5,
+    points:Array.from({length:20},(_,i)=>({x:i,y:20-i}))
+  });
+  const base={
+    patternType:'FixedPointsPattern',fixedPointCount:1,targetType:'PseudoSquareCell',
+    probe:'Back',bias:'Back',augerCorrection:'false',calculateJ0:'false',includeKsJ0:'true',
+    waferThickness:450,opticalFactor:1,doping:1e16,temperatureC:25,
+    validQdcRange:{min:.9,max:1.1},jZeroIntensity:{min:1,max:5},
+    points:[
+      {intensityMilli:681,lifetime:190,transient:transient()},
+      {intensityMilli:1000,lifetime:1731.481394,transient:transient()},
+      {intensityMilli:1468,lifetime:1600,transient:transient()}
+    ]
+  };
+  assert.equal(PV2000.modules.dualQss.pairedDualResults(base).available,true);
+  const multiple=PV2000.modules.dualQss.pairedDualResults({...base,fixedPointCount:2});
+  assert.equal(multiple.available,false);
+  assert.equal(multiple.rule,'outside-paired-profile');
+});
 
-test('Dual QSS result validator separates OnePoint calculation parity from diagnostic branches',()=>{
+
+test('Dual QSS result validator separates paired single-site calculation parity from diagnostics',()=>{
   const src=fs.readFileSync(require.resolve('../scripts/validate_dual_qss_result_reference.py'),'utf8');
   assert.match(src,/DUAL-QSS DIAGNOSTIC/);
   assert.match(src,/legacy Laser Power \/ Lifetime-only result branch/);
   assert.match(src,/zero acquired result rows/);
-  assert.match(src,/outside QSS-INJ-RESULT-001 OnePoint calculation envelope/);
+  assert.match(src,/saved lifetime\s+vectors pointwise/);
+  assert.match(src,/FixedPointsPattern/);
+  assert.doesNotMatch(src,/outside QSS-INJ-RESULT-001 OnePoint calculation envelope/);
   assert.match(src,/CalculateJZeroParams=false expects teff\.SS Max \/ Smax Max to be Ud\./);
   assert.match(src,/resolve_xml_geometry/);
   assert.doesNotMatch(src,/paired result profile expects RoundWafer/);

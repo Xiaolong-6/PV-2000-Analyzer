@@ -6,12 +6,35 @@
   const anum=(e,n,d=NaN)=>{const raw=e?.getAttribute?.(n);if(raw===null||raw===undefined||raw==='')return d;const v=Number(raw);return Number.isFinite(v)?v:d};
   const astr=(e,n,d='')=>e?.getAttribute?.(n)??d;
   function directPath(e,names){for(const n of names){e=X.direct(e,n);if(!e)return null}return e}
-  function vector(e,n){
+  function vectors(e,n){
     const holder=X.direct(e,n);
     if(!holder)return[];
-    const direct=X.children(holder),nested=direct.length===1?X.children(direct[0]):[];
-    const values=nested.length?nested:direct;
-    return values.map(x=>Number(x.textContent)).filter(Number.isFinite);
+    const direct=X.children(holder);
+    if(!direct.length)return[];
+    const wrapped=direct.some(row=>X.children(row).length);
+    const rows=wrapped?direct.map(row=>X.children(row)): [direct];
+    return rows.map(row=>row.map(x=>Number(x.textContent)).filter(Number.isFinite)).filter(row=>row.length);
+  }
+  function vector(e,n){return vectors(e,n)[0]||[]}
+  function effectiveLifetimeVector(rows,pointAveraging=false){
+    const first=rows?.[0]||[];
+    if(String(pointAveraging||'').toLowerCase()!=='true'||rows.length<=1)return first.slice();
+    return first.map((_,i)=>{
+      const column=rows.map(row=>Number(row[i]));
+      return column.every(Number.isFinite)?column.reduce((sum,v)=>sum+v,0)/column.length:NaN;
+    });
+  }
+  function absolutePatternPoints(pattern){
+    const holder=X.direct(pattern,'PointValues');
+    if(!holder)return[];
+    return X.children(holder).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)}))
+      .filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+  }
+  function resultPatternSupported(d){
+    if(d?.patternType==='OnePointPattern')return true;
+    if(d?.patternType!=='FixedPointsPattern')return false;
+    const count=Number.isFinite(d?.fixedPointCount)?d.fixedPointCount:d?.geometryModel?.pointsMm?.length;
+    return count===1;
   }
   function nodeRange(e,n,lo,hi){
     const r=X.direct(e,n);
@@ -31,7 +54,7 @@
   function lifetimeLabel(source='transient'){return source==='values'?'XML Values lifetime':'Lifetime'}
   function pairedTeffdOneSun(d){
     const unavailable=rule=>({value:NaN,available:false,rule,profileId:'QSS-INJ-RESULT-001',validation:'unavailable'});
-    if(d?.patternType!=='OnePointPattern'||d?.probe!=='Back'||d?.bias!=='Back'){
+    if(!resultPatternSupported(d)||d?.probe!=='Back'||d?.bias!=='Back'){
       return unavailable('outside-paired-profile');
     }
     const pairs=(d.points||[])
@@ -291,7 +314,7 @@
   }
   function pairedDualResults(d){
     const unavailable=rule=>({available:false,profileId:'QSS-INJ-RESULT-001',validation:'unavailable',rule});
-    if(d?.patternType!=='OnePointPattern'||d?.probe!=='Back'||d?.bias!=='Back')return unavailable('outside-paired-profile');
+    if(!resultPatternSupported(d)||d?.probe!=='Back'||d?.bias!=='Back')return unavailable('outside-paired-profile');
     if(boolValue(d.augerCorrection))return unavailable('auger-unvalidated');
     const values=d.points.map(p=>p.lifetime),intensity=d.points.map(p=>p.intensityMilli);
     if(values.length!==intensity.length||values.length<3)return unavailable('invalid-vectors');
@@ -362,8 +385,27 @@
   function parse(parsed){
     const m=parsed.measurement,c=X.common(parsed),it=directPath(m,['MeasurementData','IterationData','Iteration']),data=X.direct(it,'Data'),item=X.children(data).find(e=>X.lname(e)==='DataItem');
     if(!item)throw new Error('Dual QSS XML has no QssDataItem.');
-    const values=vector(item,'Values'),intensity=vector(item,'Intensity'),power=vector(item,'Power'),tr=X.direct(item,'Transients'),transients=tr?X.children(tr).filter(e=>X.lname(e)==='TransientInfo').map(parseTransient):[],n=Math.max(values.length,intensity.length,power.length,transients.length),pattern=X.direct(m,'Pattern'),target=X.direct(m,'Target'),coeff=X.direct(pattern,'Coefficients'),rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[];
-    const points=Array.from({length:n},(_,i)=>({intensityMilli:intensity[i],intensitySun:Number.isFinite(intensity[i])?intensity[i]/1000:NaN,lifetime:values[i],power:power[i],transient:transients[i]||null}));
+    const pattern=X.direct(m,'Pattern'),target=X.direct(m,'Target'),
+      pointAveraging=X.text(m,'DoPointAveraging','false'),
+      pointAverageCount=X.num(m,'PointAverageCount',NaN),
+      lifetimeVectors=vectors(item,'Values'),
+      values=effectiveLifetimeVector(lifetimeVectors,pointAveraging),
+      intensity=vector(item,'Intensity'),power=vector(item,'Power'),
+      tr=X.direct(item,'Transients'),
+      transients=tr?X.children(tr).filter(e=>X.lname(e)==='TransientInfo').map(parseTransient):[],
+      n=Math.max(values.length,intensity.length,power.length,transients.length),
+      coeff=X.direct(pattern,'Coefficients'),
+      rawCoefficients=coeff?X.children(coeff).map(p=>({x:X.num(p,'X',NaN),y:X.num(p,'Y',NaN)})):[],
+      absolutePoints=absolutePatternPoints(pattern);
+    const points=Array.from({length:n},(_,i)=>({
+      intensityMilli:intensity[i],
+      intensitySun:Number.isFinite(intensity[i])?intensity[i]/1000:NaN,
+      lifetime:values[i],
+      lifetimeFirst:lifetimeVectors[0]?.[i],
+      lifetimeRepeats:lifetimeVectors.map(row=>row[i]),
+      power:power[i],
+      transient:transients[i]||null
+    }));
     const targetDiameter=X.num(target,'Diameter',NaN),targetEdge=X.num(target,'EdgeExclusion',NaN),measurementEdge=X.num(m,'EdgeExclusion',NaN),
       targetSize=X.direct(target,'Size'),
       targetWidth=X.num(targetSize,'Width',NaN),
@@ -374,6 +416,7 @@
         patternType:X.attrType(pattern),
         targetType:X.attrType(target),
         rawCoefficients,
+        absolutePoints,
         pointCount:1,
         diameter,
         targetWidth,
@@ -388,14 +431,27 @@
       geometryProfile=resolvedGeometryProfile
         ?{id:resolvedGeometryProfile.id,status:resolvedGeometryProfile.status}
         :{id:null,status:geometryModel.pointsMm.length?'inferred':'unsupported'};
-    return{...c,points,intensity,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,geometryProfile,rawCoefficients,targetType:X.attrType(target),targetWidth,targetHeight,diameter,edgeExclusion,waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),measurementVelocity:X.num(it,'MeasurementVelocity'),validQdcRange:nodeRange(m,'ValidQdcRange',.9,1.1),jZeroIntensity:nodeRange(m,'JZeroIntensity',1,5)};
+    return{...c,points,intensity,lifetimeVectors,doPointAveraging:pointAveraging,pointAverageCount,
+      fixedPointCount:absolutePoints.length,rangeClass:classifyRange(intensity),patternType:X.attrType(pattern),
+      patternName:X.text(pattern,'Name',''),coord:geometryModel.pointsMm[0]||{x:0,y:0},geometryModel,geometryProfile,
+      rawCoefficients,absolutePoints,targetType:X.attrType(target),targetWidth,targetHeight,diameter,edgeExclusion,
+      waferThickness:X.num(m,'WaferThickness',Number(c.header['Wafer Thickness'])),opticalFactor:X.num(m,'OpticalFactor'),
+      doping:X.num(m,'Doping'),dopingType:X.text(m,'DopingType',''),laserPower:X.num(m,'LaserPower'),
+      qssLampIntensity:X.num(m,'QssLampIntensity'),evaluationModeIndex:X.num(m,'EvalutationMode'),
+      probe:X.text(m,'ProbeSelection',''),bias:X.text(m,'QssBiasSelection',''),saveTransient:X.text(m,'SaveTransient',''),
+      autoSetting:X.text(m,'DoAutoSetting',''),calculateJ0:X.text(m,'CalculateJZeroParams',''),
+      includeKsJ0:X.text(m,'IncludeKSJ0',''),augerCorrection:X.text(m,'UseAugerCorrection',''),
+      deltaTauLimit:X.num(m,'DeltaTauLimitForJ0Calc'),defaultDeltaN:X.num(m,'DefaultDeltaN'),
+      defaultDeltaNRange:X.num(m,'DefaultDeltaNRangeInPercentage'),temperatureC:X.num(it,'ChuckTemperature'),
+      measurementVelocity:X.num(it,'MeasurementVelocity'),validQdcRange:nodeRange(m,'ValidQdcRange',.9,1.1),
+      jZeroIntensity:nodeRange(m,'JZeroIntensity',1,5)};
   }
   function measurementGeometry(d){
     const resolved=d?.geometryModel;
     if(resolved?.shape==='circle'&&Number.isFinite(resolved.nominal?.radius)){
       return{
         kind:'round',
-        onePoint:d?.patternType==='OnePointPattern',
+        onePoint:resultPatternSupported(d),
         radius:resolved.nominal.radius,
         innerRadius:Number.isFinite(resolved.scheduled?.radius)?resolved.scheduled.radius:NaN,
         coord:d?.coord||resolved.pointsMm?.[0]||{x:0,y:0}
@@ -404,7 +460,7 @@
     if(resolved?.shape==='rect'&&Number.isFinite(resolved.nominal?.halfWidth)&&Number.isFinite(resolved.nominal?.halfHeight)){
       return{
         kind:'rect',
-        onePoint:d?.patternType==='OnePointPattern',
+        onePoint:resultPatternSupported(d),
         halfWidth:resolved.nominal.halfWidth,
         halfHeight:resolved.nominal.halfHeight,
         innerHalfWidth:resolved.scheduled?.halfWidth,
@@ -418,7 +474,7 @@
       radius=Number.isFinite(targetRadius)?targetRadius:Number.isFinite(substrateRadius)?substrateRadius:fallbackRadius,
       innerRadius=Number.isFinite(radius)&&Number.isFinite(d?.edgeExclusion)?Math.max(0,radius-d.edgeExclusion):NaN,
       coord={x:Number.isFinite(d?.coord?.x)?d.coord.x:0,y:Number.isFinite(d?.coord?.y)?d.coord.y:0};
-    return{kind:Number.isFinite(radius)?'round':'unknown',onePoint:d?.patternType==='OnePointPattern',radius,innerRadius,coord};
+    return{kind:Number.isFinite(radius)?'round':'unknown',onePoint:resultPatternSupported(d),radius,innerRadius,coord};
   }
   function positionHtml(d){
     const g=measurementGeometry(d);
@@ -749,7 +805,7 @@ ${positionHtml(d)}\
   PV.modules=PV.modules||{};
   PV.modules.dualQss={
     types:['DualQssMeasurement'],
-    parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,
+    parse,analyze,render,parseTransient,classifyRange,lifetimeValue,lifetimeLabel,vectors,effectiveLifetimeVector,resultPatternSupported,
     pairedTeffdOneSun,pairedDualResults,qdcDetails,minpackSmooth,augmentLogAkima,
     injectionLevel,impliedVoc,smax,ksJ0,basoreJ0,resultRow,pointRows,measurementGeometry
   };
