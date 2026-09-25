@@ -13,7 +13,7 @@ This page separates **dedicated runtime analyzers** from measurement families th
 | [ISC](ISC-and-VCPD) | `ISCMeasurement` | corrected/derived repeated Kelvin-probe readings | implemented; paired map profile validated |
 | [VCPD](ISC-and-VCPD) | `VcpdMeasurement` | stored/averaged Kelvin-probe readings | implemented; separate paired map profile validated |
 | [CET / EOT](CV-and-CET) | `CETMeasurement` | corona/CPD sweep plus fitted capacitance/EOT | implemented; `CET-9PT-SQUARE-001` validates the current fixed-point path |
-| [LBIC](LBIC) | `LBICMeasurement` | measured photocurrent/reflection channels plus derived Reflectivity/IQE | implemented; three current reference-profile families; calculated DL unsupported |
+| [LBIC](LBIC) | `LBICMeasurement` | measured photocurrent/reflection channels plus derived Reflectivity/IQE and paired cross-beam DL | implemented; current-plus-scattered DL numeric profile validated, other optical DL paths require separate evidence |
 | [SPV / Diffusion Length](SPV) | `SPVMeasurement` | raw SPV8/SPV6 plus compatibility DL and DL-derived Tau | implemented; paired 4 mm RoundWafer standard path validated |
 | [Leakage](Leakage) | `LeakageMeasurement` | offset-corrected transient interpolation to VSASS+/VSASS- plus LI | implemented; two paired one-point cases validate the current extraction path |
 

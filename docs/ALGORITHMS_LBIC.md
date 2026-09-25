@@ -118,18 +118,18 @@ For the validated profile:
 IQE_raw[%] = EQE[%] / (1 - Rraw[%] / 100)
 ```
 
-PV-2000 output behavior observed in all four references is:
+PV-2000 output behavior, including the new one-point and five-point pairs, is:
 
 ```
-if Rraw >= 100%:
+if Rraw == 100% or IQE_raw is not finite:
     IQE = blank
-else if IQE_raw > 100%:
+else if IQE_raw < 0% or IQE_raw > 100%:
     IQE = blank
 else:
     IQE = IQE_raw
 ```
 
-Using `q_PV2000 = 1.602e-19 C`, the finite IQE values reproduce the vendor exports to approximately 1e-12 percentage-point scale. Exported blank IQE points are also reproduced by the >100%/non-computable rule.
+Using `q_PV2000 = 1.602e-19 C`, finite IQE values reproduce the vendor exports to approximately 1e-12 percentage-point scale. The raw optical sum can exceed 100% while negative current yields a finite positive IQE; a private one-point pair establishes that unusual vendor behavior. A negative current itself is displayed as unavailable by the vendor.
 
 In `LBIC-MULTI-002`, the vendor's displayed Reflectivity is clamped to 0–100%, but IQE still uses the **unclamped raw optical sum** `Rraw` in the denominator. This distinction is required by four 656 nm points where `Rraw < 0`: PV-2000 displays Reflectivity = 0% while its IQE matches the negative raw sum.
 
@@ -203,22 +203,22 @@ The internal data model accepts arbitrary beam keys and joins each beam to its l
 
 The 54,449-point four-beam `LBIC-MULTI-002` pair validates **independent per-beam** Current / Reflectivity / IQE handling for 984, 952, 855 and 656 nm within one measurement. Beam count, wavelength, power and finite FluxCache values may vary inside this family when every beam follows the same independent channel/result path.
 
-Status: **validated for the independent multi-beam `MapPattern + PseudoSquareCell` family**. Coupled cross-beam calculations remain outside that validation envelope.
+Status: **validated for the independent multi-beam `MapPattern + PseudoSquareCell` family**. Cross-beam DL has its own validation envelope below.
 
 ## Diffusion length
 
-The manual indicates that LBIC measurements at different penetration depths can be used to determine minority-carrier diffusion length. This project deliberately does not invent that vendor algorithm.
+`LBIC-CALC-DL-MULTIWAVELENGTH-005` uses the XML beam keys, flux cache, `DLWavelenghtRange`, `MaxDLValue` and iteration chuck temperature. The measured Current and scattered reflectance yield IQE for each qualifying wavelength. For wavelength `λ` in nm and chuck temperature `T` in °C, the compatibility penetration depth is:
 
-Status: **unsupported for calculated diffusion length** unless XML contains a raw vendor channel.
+```text
+dT = (15 <= T <= 45) ? T - 21 : 0
+E = 12395 / (10 * λ)
+a = 84.732 * (E + 0.001 * (1.3 * E - 1) * dT) / 1.2395 - 76.417
+Z [µm] = 10000 / a²
+```
 
-To implement it later, require:
+Fit `1 / IQE` versus `Z` at each site using the wavelengths inside the stored range; `DL [µm] = intercept / slope`. An unavailable input, non-finite fit, or a result outside `(0, MaxDLValue]` makes DL unavailable. The 656 nm beam in the reference four-beam map lies outside its 700–1000 nm DL range.
 
-1. a real multi-wavelength LBIC XML where the relevant measurement is enabled;
-2. the matching PV-2000 diffusion-length map/export;
-3. wavelength/beam/flux metadata;
-4. any recipe fields that affect optical correction or penetration depth.
-
-Reverse-engineer the actual pair, add pointwise regression, then expose the calculation.
+One private 961-point `MapPattern + SquareCell` XML/CSV pair establishes **956 numeric DL values and 5 `Ud.` sites**. Pointwise maximum DL error is **1.66e-11 µm**; IQE maximum error is **8.53e-14 percentage points** and the DL summary error is **1.07e-11 µm**. Three additional four-wavelength one/five-point paired exports contain 1, 5 and 1 entirely unavailable DL sites and confirm blanking only. The five-point case uses direct plus scattered reflectance, so its all-unavailable output does not validate finite DL for that optical path. Runtime exposes validated calculated DL for the current-plus-scattered optical path with two or more distinct qualifying wavelengths; the direct-plus-scattered DL path remains withheld pending a finite numeric pair. Geometry validation is independent.
 
 ## Private regression command
 
@@ -236,6 +236,7 @@ Run:
 
 ```bash
 npm run validate:lbic
+python scripts/validate_lbic_dl_reference.py private/result.xml private/result.csv
 ```
 
 The validator checks current-enabled families pointwise against CSV for geometry, Current, Reflectivity, IQE blanking and summary statistics. For `LBIC-REFLECTANCE-003`, it checks the XML Direct+Scattered Reflectivity summary against matching XPS Average / Median / sample Stdev / Min / Max at vendor display precision. Numeric wavelength/power/flux/geometry values may vary. It reports NEW PROFILE only when the semantic input/output path changes; incomplete SquareRegion acquisitions remain partial/inferred rather than validated.

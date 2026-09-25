@@ -398,13 +398,13 @@ A browser smoke sweep of the built analyzer imported **all 62 XMLs**. For every 
 | SquareRegionPattern coordinates, complete scans | pointwise max error 0 mm in paired CSV references | validated |
 | PseudoSquareCell schedule | 54,449 reconstructed = 54,449 export rows | validated |
 | PseudoSquare X/Y | pointwise max error 0 mm | validated |
-| Current | raw XML vs CSV pointwise when `MeasureCurrent` is active | validated |
+| Current | nonnegative raw XML vs CSV pointwise when active; negative stored Current becomes vendor `Ud.` while its signed XML value remains in Advanced | validated for observed paths |
 | disabled Current placeholder | reflectance-only corpus: Current=0 everywhere but `MeasureCurrent=false`; suppressed from measured results | validated semantic handling |
 | displayed Reflectivity | `clamp(DirectReflection + ScatteredReflection, 0, 100)` | validated |
 | reflectance-only XPS summaries | 60 XPS Average / Median / sample Stdev / Min / Max comparisons; max discrepancy <0.005 %-point | validated to XPS display rounding |
 | negative reflectivity display edge | four 656 nm sites clamp to 0% in current-enabled multi-beam reference | validated |
 | compatibility charge constant | `q = 1.602e-19 C` | validated for current-enabled IQE path |
-| IQE denominator | uses the **unclamped raw optical sum**; `Rraw >= 100%` is unavailable | validated for current-enabled families |
+| IQE denominator | uses the **unclamped raw optical sum**; retains finite `0–100%` results, including the paired negative-current / >100%-reflection corner | validated for observed paths |
 | IQE finite values | ~1e-12 %-point for single-beam refs; ~1e-13 %-point for multi-beam ref | validated |
 | reflectance-only EQE/IQE | not synthesized because current measurement is disabled | validated semantic handling |
 | vendor unavailable IQE | blank / `Ud.` represented as unavailable and excluded from summaries | validated |
@@ -412,7 +412,7 @@ A browser smoke sweep of the built analyzer imported **all 62 XMLs**. For every 
 | independent multi-beam switching | four-beam paired reference | validated |
 | incomplete SquareRegion acquisition | one 61×61 recipe contains 2814/3721 points; leading schedule prefix is displayed | partial / inferred |
 | EQE as standalone vendor output | vendor CSV does not expose it | inferred intermediate |
-| calculated diffusion length (DL) | CSV contains DL but XML does not expose a raw DL channel and the vendor algorithm is not established | unsupported |
+| calculated diffusion length (DL) | four additional private XML/CSV pairs: one 961-point numeric map plus three all-`Ud.` one/five-point cases; 956/956 finite values agree to ≤1.66e-11 µm and all 12 unavailable sites agree | validated for current-plus-scattered cross-beam path; direct-plus-scattered finite DL unvalidated |
 
 For the multi-beam reference, the XML geometry is Target Size 125 × 125 mm, Diameter 150 mm, EdgeExclusion 3 mm and Pitch 0.5 × 0.5 mm. The scheduled lattice uses halfWidth = halfHeight = 59.5 mm and radius = 72 mm; it is X-fast with ascending Y. First/last sites are (-40.5, -59.5) and (40.5, 59.5) mm.
 
@@ -432,3 +432,15 @@ Numeric changes such as wavelength, power, finite FluxCache, raster size/pitch a
 
 Runtime remains XML-only. CSV/XPS references are never consulted when a user imports an XML.
 
+### Independent geometry expansions from the 100-case private corpus
+
+The shared resolver and separate geometry registry now include four more Pattern/Target combinations, each checked point-by-point against a real paired vendor export:
+
+| Geometry profile | Paired sites | Maximum X/Y Euclidean error |
+|---|---:|---:|
+| `GEOM-SQUAREREGION-ROUND-001` | 400 | 7.54e-15 mm |
+| `GEOM-NINEPOINT-ROUND-001` | 9 | 2.01e-14 mm |
+| `GEOM-FIVEPOINT-SQUARE-001` | 5 | 7.11e-15 mm |
+| `GEOM-HIGHDENSITY-PSEUDOSQUARE-001` | 176 | 2.01e-14 mm |
+
+The HighDensity/PseudoSquare case uses 225 XML coefficients, a circular scheduled boundary and three target exclusion polygons; these leave 176 exported sites in vendor order. The polygons are physical millimetre shapes and are applied after target-relative coefficient scaling. These four checks validate **coordinates** for their named geometry paths. SPV enhanced mode, other calculation branches and any incomplete acquisition keep their independent scientific evidence boundaries. Reproduce a paired geometry check with `python scripts/validate_geometry_profiles.py private/result.xml private/result.csv GEOM-...`.

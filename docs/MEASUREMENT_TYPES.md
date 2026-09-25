@@ -50,7 +50,7 @@ XML-only files may justify parser work, raw-value display or an explicitly **inf
 ## Current high-value validation gaps
 
 - Dual QSS: broaden `QSS-INJ-RESULT-001` only when new real XML+CSV pairs exercise Auger correction, alternate source selections, different 1000-mSun placement or other categorical result branches.
-- LBIC: calculated diffusion length remains unsupported until the vendor DL transformation is established from matching real output.
+- LBIC: the paired current-plus-scattered multi-wavelength DL path is validated; obtain a finite direct-plus-scattered DL pair before extending that optical branch.
 - JZero/CET/other implemented families: expand categorical geometry/result envelopes only when matching vendor output exercises the new path.
 - SPV/Leakage: broaden only when new paired files exercise enhanced SPV, texture/reflectivity variants, parsed-signal mode, multi-point Leakage or other categorical branches.
 - New families: implement directly on the current measurement-domain architecture only after the real XML + numeric-export gate is met.

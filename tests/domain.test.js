@@ -98,6 +98,29 @@ test('unknown coefficient semantics never become physical mm implicitly',()=>{
   assert.equal(g.interpretation,'unresolved');
 });
 
+test('pseudo-square high-density coefficients respect the circular edge and physical polygon exclusions',()=>{
+  const coefficients=Array.from({length:15*15},(_,index)=>({
+    x:(index%15-7)/7,y:(Math.floor(index/15)-7)/7
+  })),
+    rectangle=(x1,x2)=>[{x:x1,y:-78},{x:x2,y:-78},{x:x2,y:78},{x:x1,y:78}],
+    g=PV2000.geometry.resolveMeasurementGeometry({
+      patternType:'HighDensityPattern',targetType:'PseudoSquareCell',
+      rawCoefficients:coefficients,
+      exclusionPolygons:[rectangle(-5.5,5.5),rectangle(-58.7,-47.5),rectangle(47.5,58.5)],
+      pointCount:176,targetWidth:156,targetHeight:156,diameter:205,edgeExclusion:8
+    });
+  assert.equal(g.pointsMm.length,176);
+  assert.ok(Math.abs(g.pointsMm[0].x+60)<1e-12);
+  assert.equal(g.pointsMm[0].y,-70);
+  assert.equal(g.geometryStatus,'complete');
+  assert.equal(PV2000.profiles.resolveGeometry({geometryModel:g}).id,'GEOM-HIGHDENSITY-PSEUDOSQUARE-001');
+  const noExclusion=PV2000.geometry.resolveMeasurementGeometry({
+    patternType:'HighDensityPattern',targetType:'PseudoSquareCell',rawCoefficients:coefficients,
+    pointCount:176,targetWidth:156,targetHeight:156,diameter:205,edgeExclusion:8
+  });
+  assert.equal(noExclusion.geometryStatus,'unavailable');
+});
+
 
 test('shared selection keeps intrinsic support, user filter and active mask separate',()=>{
   const Q=PV2000.quantity,V=PV2000.validity;

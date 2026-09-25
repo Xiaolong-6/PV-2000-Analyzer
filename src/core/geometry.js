@@ -74,6 +74,18 @@
     return Array.isArray(points)&&points.every(p=>p&&Number.isFinite(p.x)&&Number.isFinite(p.y));
   }
 
+  function pointInPolygon(point,vertices){
+    let inside=false;
+    for(let i=0,j=vertices.length-1;i<vertices.length;j=i++){
+      const a=vertices[i],b=vertices[j],
+        cross=(point.x-a.x)*(b.y-a.y)-(point.y-a.y)*(b.x-a.x);
+      if(Math.abs(cross)<1e-9&&point.x>=Math.min(a.x,b.x)-1e-9&&point.x<=Math.max(a.x,b.x)+1e-9&&
+        point.y>=Math.min(a.y,b.y)-1e-9&&point.y<=Math.max(a.y,b.y)+1e-9)return true;
+      if((a.y>point.y)!==(b.y>point.y)&&point.x<(b.x-a.x)*(point.y-a.y)/(b.y-a.y)+a.x)inside=!inside;
+    }
+    return inside;
+  }
+
   function scheduleForPointCount(points,pointCount,{allowPartialPrefix=false}={}){
     const scheduled=Array.isArray(points)?points:[],
       expected=scheduled.length,
@@ -209,6 +221,7 @@
     points=[],
     pointsMm=null,
     rawCoefficients=[],
+    exclusionPolygons=[],
     edgeExclusion=NaN,
     acquisitionOrder='unknown',
     provenance='unavailable',
@@ -232,6 +245,7 @@
       points:physical,
       pointsMm:physical,
       rawCoefficients:Array.from(rawCoefficients||[]),
+      exclusionPolygons:Array.from(exclusionPolygons||[]),
       edgeExclusion,
       acquisitionOrder,
       provenance,
@@ -251,6 +265,7 @@
     patternType='',
     targetType='',
     rawCoefficients=[],
+    exclusionPolygons=[],
     absolutePoints=[],
     pointCount=null,
     diameter=NaN,
@@ -331,12 +346,16 @@
         evidenceStatus='inferred';
         acquisitionOrder='xml point order';
       }
-    }else if(patternType==='HighDensityPattern'&&boundary.scheduled&&(boundary.shape==='circle'||boundary.shape==='rect')){
+    }else if(patternType==='HighDensityPattern'&&boundary.scheduled&&['circle','rect','pseudo-square'].includes(boundary.shape)){
       const scaleX=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfWidth,
-        scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight;
-      pointsMm=scaleTargetRelativeCoefficients(
-        rawCoefficients,scaleX,scaleY,pointCount,{circular:boundary.shape==='circle'}
+        scaleY=boundary.shape==='circle'?boundary.scheduled.radius:boundary.scheduled.halfHeight,
+        candidates=scaleTargetRelativeCoefficients(rawCoefficients,scaleX,scaleY);
+      pointsMm=candidates.filter(point=>
+        (boundary.shape!=='circle'&&boundary.shape!=='pseudo-square'||
+          point.x*point.x+point.y*point.y<boundary.scheduled.radius**2-1e-9)&&
+        !exclusionPolygons.some(vertices=>pointInPolygon(point,vertices))
       );
+      if(pointCount!=null&&pointsMm.length!==pointCount)pointsMm=[];
       if(pointsMm.length){
         sourceSpace='normalized-target-coefficient';
         interpretation='target-relative-high-density';
@@ -391,6 +410,7 @@
       scheduled:resolvedScheduled,
       pointsMm,
       rawCoefficients,
+      exclusionPolygons,
       edgeExclusion,
       acquisitionOrder,
       provenance:boundary.source,
@@ -413,6 +433,7 @@
     scheduleForPointCount,
     isIncompleteAcquisitionStatus,
     scaleTargetRelativeCoefficients,
+    pointInPolygon,
     absolutePointSchedule,
     targetEnvelope,
     resolveMeasurementGeometry,

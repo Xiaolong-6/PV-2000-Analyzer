@@ -63,6 +63,8 @@ The compatibility calculation uses the **unclipped raw optical sum** in this den
 
 Vendor-unavailable/non-computable IQE remains unavailable rather than being replaced with a numerical zero.
 
+For the paired negative-current corner, PV-2000 blanks the displayed Current while the signed raw current remains a separate Advanced value. Its IQE calculation still uses that signed value and the unclipped reflectivity, so a raw reflection above 100% can yield a finite positive IQE.
+
 No IQE is synthesized for the reflectance-only profile because current is not measured.
 
 ## Single-beam and multi-beam measurements
@@ -103,9 +105,9 @@ Changing only the displayed quantity does not silently change the filter metric.
 
 ## Calculated diffusion length
 
-Some vendor LBIC outputs can contain diffusion length, but the current XML reference path does not expose a raw DL channel and the vendor calculation has not been established from matching XML→numeric output.
+The analyzer calculates DL for the paired current-plus-scattered multi-wavelength path. It selects wavelengths inside the XML `DLWavelenghtRange`, converts each wavelength and the iteration temperature to a silicon penetration depth, fits `1/IQE` against depth at each site, and reports `intercept/slope` in µm when the fit is finite and lies within the XML `MaxDLValue`. DL is a shared result across the selected wavelengths, so the same DL map is available from each qualifying beam.
 
-Calculated diffusion length is therefore **unsupported** in the analyzer.
+One private 961-point XML/vendor CSV pair validates 956 numeric DL values (maximum error 1.66e-11 µm) and five unavailable sites. Three one/five-point pairs confirm seven additional unavailable sites. Finite DL for the direct-plus-scattered optical combination has no matching numeric reference and remains unavailable in the analyzer. The XML alone is sufficient when using the application; CSV is only regression evidence.
 
 ## Validation status
 
@@ -114,5 +116,6 @@ The current validated families are:
 - `LBIC-SINGLE-001`;
 - `LBIC-MULTI-002`;
 - `LBIC-REFLECTANCE-003`.
+- `LBIC-CALC-DL-MULTIWAVELENGTH-005` for the cross-beam DL calculation.
 
 Their exact geometry/channel/profile boundaries and numerical tolerances are recorded in the repository validation documentation.
