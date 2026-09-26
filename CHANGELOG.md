@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260926.2.1 — 2026-09-26
+## v20260926.3 — 2026-09-26
 
 - Added a PR-preview delivery pipeline that consumes only successful public-CI artifacts, publishes each same-repository PR under a stable GitHub Pages subpath, and creates a matching temporary GitHub prerelease with the single-file analyzer and ZIP build.
 - Preview prereleases are replaced on every successful PR update and removed together with their Pages directory when the PR is merged or closed.
