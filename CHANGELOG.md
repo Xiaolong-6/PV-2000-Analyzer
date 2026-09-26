@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260926.3.1 — 2026-09-26 (branch)
+## v20260926.4 — 2026-09-26
 
 - DIT-only layout refinement: multi-point `Selected site` now sits directly below the Wafer map so map navigation and the selected-site readout remain one spatial inspection surface.
 - The right DIT detail column remains focused on Vcpd–Qc, Dit–Vsb, Vsb–Qc and Flatband extraction; scientific calculations, parsing, geometry, validation and exports are unchanged.
