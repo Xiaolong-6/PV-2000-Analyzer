@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.30.1 — 2026-09-26
+
+- Tightened the analyzer workspace UI contract without changing scientific calculations: selected-point cards now use one shared visual state badge, including newly explicit Valid-data state in CET/SPV and data availability in Leakage.
+- Axes/Bins header popovers are now mutually exclusive and reserve temporary chart-header space while open, so their controls no longer cover the plot surface.
+- Preserved the existing equal three-column layout, compact adaptive Current dataset panels, active-quantity synchronization and one-point population-plot suppression already present on main.
+- Added layout regressions for non-overlapping header popovers and cross-family selected-point state treatment.
+
 ## v20260925.30 — 2026-09-25
 
 - Fixed chart-header flex overflow found by the new real-XML Chromium smoke: DIT's long dynamic chart metadata could retain its intrinsic no-wrap width and push the Axes/Export controls outside the right-hand pane even at a 1600 px wide three-column workspace.

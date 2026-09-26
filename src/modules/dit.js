@@ -1031,7 +1031,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
               <span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span>
             </div>
             <dl class="meta" style="margin-top:8px">
-              <dt>Status</dt><dd>${esc(siteFilterState)}</dd>
+              ${PV.ui.selectionStateRow(siteFilterState,{label:'Status'})}
               <dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd>
               <dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd>
               <dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd>

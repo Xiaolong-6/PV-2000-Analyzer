@@ -41,6 +41,27 @@
     tip.classList.add('hidden');
   }
 
+  function selectionStateFor(filterState,index,{intrinsicValid=true}={}){
+    if(!intrinsicValid)return'ALGORITHM INVALID';
+    const selection=filterState?.selection;
+    if(!selection)return'UNAVAILABLE';
+    return selection.supportMask?.[index]
+      ?(selection.activeMask?.[index]?'VALID':'FILTERED')
+      :'UNAVAILABLE';
+  }
+
+  function selectionStateBadge(state,{title=''}={}){
+    const raw=String(state||'UNAVAILABLE').trim().toUpperCase(),
+      active=['VALID','ACTIVE','AVAILABLE','DISPLAYED'].includes(raw),
+      filtered=['FILTERED','EXCLUDED'].includes(raw),
+      tone=active?'active':filtered?'filtered':'unavailable';
+    return `<span class="selection-state selection-state-${tone}"${title?` title="${escapeHtml(title)}"`:''}>${escapeHtml(raw)}</span>`;
+  }
+
+  function selectionStateRow(state,{label='Valid-data state',title=''}={}){
+    return `<dt>${escapeHtml(label)}</dt><dd>${selectionStateBadge(state,{title})}</dd>`;
+  }
+
   function formatNumericInputValue(value,{
     largeThreshold=1e6,
     smallThreshold=1e-4,
@@ -165,6 +186,9 @@
     setupTooltip,
     showTooltip,
     hideTooltip,
+    selectionStateFor,
+    selectionStateBadge,
+    selectionStateRow,
     formatNumericInputValue,
     setNumericInputValue,
     readNumericInputValue,

@@ -811,7 +811,7 @@
         state=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';
       return`<dl class="meta">
         ${metaRow('Point',String(selected+1))}
-        ${metaRow('Valid-data state',state,'UNAVAILABLE means the selected filter quantity is not available at this site. FILTERED means it is available but outside the active numeric range.')}
+        ${PV.ui.selectionStateRow(state,{title:'UNAVAILABLE means the selected filter quantity is not available at this site. FILTERED means it is available but outside the active numeric range.'})}
         ${metaRow('Coordinate',p?`X ${fmt(p.x,2)} mm · Y ${fmt(p.y,2)} mm`:'—')}
         ${metaRow('Vcpd Dark',`${fmt(s.dark,6)} V`)}
         ${isVcpd?'':metaRow('Vcpd Light',`${fmt(s.light,6)} V`)}

@@ -1,4 +1,14 @@
-# Agent handoff — 2026-09-25
+# Agent handoff — 2026-09-26
+
+## Analyzer workspace UI contract follow-up (v20260925.30.1)
+
+Branch: `ui/analyzer-workspace-contract-20260926` (do not merge without review).
+
+This follow-up applies the remaining actionable items from the UI source/mock to the current main rather than repeating the completed workspace refactor. Current dataset adaptive density, equal semantic columns, active metric/filter synchronization and one-point Distribution suppression were already present on `v20260925.30`.
+
+The branch adds one shared selected-point state language across DIT, QSS-uPCD, JZero, ISC/VCPD, LBIC, CET, SPV and Leakage. CET/SPV now expose the selected site's Valid-data state; Leakage exposes AVAILABLE/UNAVAILABLE because it has no user filter. Axes/Bins popovers now close sibling popovers and reserve temporary header space while open, preventing controls from covering the plot surface.
+
+No scientific equation, XML parser, reference profile or validation envelope is changed.
 
 ## Real-browser chart-header hardening (v20260925.30)
 

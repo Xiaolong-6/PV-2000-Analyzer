@@ -39,8 +39,25 @@
     const n=Math.max(5,Math.min(200,Math.round(Number(bins)||30)));
     return `<details class="axis-popover bin-popover" data-bin-controls="${id}"><summary title="Set histogram bin count.">Bins</summary><div class="axis-popover-card bin-popover-card"><label class="axis-bin-control" title="More bins make narrower bars; fewer bins make wider bars.">Bin count<input type="number" min="5" max="200" step="1" value="${n}" data-bin-count></label></div></details>`;
   }
+  function bindHeaderPopover(box){
+    const header=box?.closest?.('header');
+    if(!header||box.__pvHeaderPopoverBound)return;
+    box.__pvHeaderPopoverBound=true;
+    const sync=()=>{
+      if(box.open){
+        header.querySelectorAll('.axis-popover[open]').forEach(peer=>{
+          if(peer!==box)peer.open=false;
+        });
+      }
+      header.classList.toggle('has-axis-popover-open',!!header.querySelector('[data-axis-controls][open]'));
+      header.classList.toggle('has-bin-popover-open',!!header.querySelector('[data-bin-controls][open]'));
+    };
+    box.addEventListener?.('toggle',sync);
+    sync();
+  }
   function bindAxisControls(root,id,state,onChange,{xLog=false,yLog=false,swapped=false,onSwap=null}={}){
     const box=root?.querySelector(`[data-axis-controls="${id}"]`);if(!box)return;
+    bindHeaderPopover(box);
     const input=k=>box.querySelector(`[data-axis="${k}"]`),
       set=(axis,loKey,hiKey)=>{
         const r=finiteRange(state?.[axis])?state[axis]:null;
@@ -78,6 +95,7 @@
   }
   function bindBinControls(root,id,bins,onChange){
     const box=root?.querySelector(`[data-bin-controls="${id}"]`);if(!box)return;
+    bindHeaderPopover(box);
     const input=box.querySelector('[data-bin-count]');
     if(!input)return;
     input.value=String(Math.max(5,Math.min(200,Math.round(Number(bins)||30))));

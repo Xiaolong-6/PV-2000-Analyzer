@@ -456,7 +456,7 @@
         metricKey:defaultMetric
       });
     const options=()=>Object.values(a.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
-    const selectedHtml=()=>{const state=filterController.snapshot(),pt=d.coords[selected],support=state.selection.supportMask[selected],active=state.selection.activeMask[selected],status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';return `<dl class="meta">${meta('Point',selected+1)}${meta('Valid-data state',status)}${meta('Coordinate',pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—')}${Object.values(a.metrics).map(m=>meta(m.short,Number.isFinite(m.values[selected])?`${fmt(m.values[selected],5)} ${m.unit}`:'—')).join('')}</dl>`};
+    const selectedHtml=()=>{const state=filterController.snapshot(),pt=d.coords[selected],support=state.selection.supportMask[selected],active=state.selection.activeMask[selected],status=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';return `<dl class="meta">${meta('Point',selected+1)}${PV.ui.selectionStateRow(status)}${meta('Coordinate',pt?`X ${fmt(pt.x,2)} mm · Y ${fmt(pt.y,2)} mm`:'—')}${Object.values(a.metrics).map(m=>meta(m.short,Number.isFinite(m.values[selected])?`${fmt(m.values[selected],5)} ${m.unit}`:'—')).join('')}</dl>`};
     const meta=(k,v,h='')=>`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
     const target=()=>{
       if(d.targetType==='PseudoSquareCell')return `${fmt(d.targetWidth)} × ${fmt(d.targetHeight)} mm pseudo-square · Ø${fmt(d.diameter)} mm mask · edge ${fmt(d.edgeExclusion)} mm`;

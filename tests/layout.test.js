@@ -676,3 +676,30 @@ test('chart metadata can shrink without pushing Axes or Export controls outside 
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/\.chart-meta\{[^}]*min-width:0;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/);
 });
+
+
+test('Axes and Bins popovers reserve header space and are mutually exclusive',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    plot=fs.readFileSync(require.resolve('../src/core/plot.js'),'utf8');
+  assert.match(css,/\.chart header\.has-axis-popover-open\{[^}]*height:auto;[^}]*padding-bottom:112px/);
+  assert.match(css,/\.chart header\.has-bin-popover-open:not\(\.has-axis-popover-open\)\{[^}]*height:auto;[^}]*padding-bottom:58px/);
+  assert.match(plot,/function bindHeaderPopover\(box\)/);
+  assert.match(plot,/header\.querySelectorAll\('\.axis-popover\[open\]'\)/);
+  assert.match(plot,/peer!==box\)peer\.open=false/);
+  assert.match(plot,/classList\.toggle\('has-axis-popover-open'/);
+  assert.match(plot,/classList\.toggle\('has-bin-popover-open'/);
+});
+
+test('selected-point panels use explicit state badges across filter and non-filter families',()=>{
+  const ui=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
+  assert.match(ui,/function selectionStateFor\(/);
+  assert.match(ui,/function selectionStateBadge\(/);
+  assert.match(ui,/function selectionStateRow\(/);
+  for(const file of ['dit.js','qss-upcd.js','jzero.js','isc.js','lbic.js','cet.js','spv.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/selectionStateRow\(/,file+' must render a selected-point state badge');
+  }
+  const leakage=fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8');
+  assert.match(leakage,/id="leakDataState"/);
+  assert.match(leakage,/selectionStateBadge\(hasResult\?'AVAILABLE':'UNAVAILABLE'\)/);
+});
