@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260925.30.3 — 2026-09-26
+
+- Updated the axis-control markup regression to match the new button-based natural-flow control while preserving the stronger structural assertions added in v20260925.30.2.
+
 ## v20260925.30.2 — 2026-09-26
 
 - Replaced the first-pass absolute Axes/Bins popovers and fixed 112/168 px padding reservations with a full-width, content-height settings row in normal chart-header flow; controls remain mutually exclusive and cannot exceed the chart container width.

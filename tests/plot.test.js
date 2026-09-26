@@ -74,7 +74,7 @@ test('equal-aspect auto ranges expand only the constrained axis and preserve cen
 
 test('manual axis control markup is a reusable header popover with independent X/Y limits',()=>{
   const html=P.axisControls('demoAxes');
-  assert.match(html,/class="axis-popover"/);
+  assert.match(html,/class="axis-popover axis-popover-toggle"/);
   assert.match(html,/class="axis-popover-card"/);
   assert.match(html,/data-axis-toggle="demoAxes"/);
   assert.match(html,/data-axis-controls="demoAxes" hidden/);
