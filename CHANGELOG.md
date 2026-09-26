@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260926.4 — 2026-09-26
+
+- DIT-only layout refinement: multi-point `Selected site` now sits directly below the Wafer map so map navigation and the selected-site readout remain one spatial inspection surface.
+- The right DIT detail column remains focused on Vcpd–Qc, Dit–Vsb, Vsb–Qc and Flatband extraction; scientific calculations, parsing, geometry, validation and exports are unchanged.
+- Added a documented DIT-specific exception to the general workspace column contract plus structural regression coverage.
+
 ## v20260926.3 — 2026-09-26
 
 - Added a PR-preview delivery pipeline that consumes only successful public-CI artifacts, publishes each same-repository PR under a stable GitHub Pages subpath, and creates a matching temporary GitHub prerelease with the single-file analyzer and ZIP build.
