@@ -657,7 +657,7 @@ test('DIT keeps all three local scientific plots visible and grids single-point 
   assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
   assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
   assert.match(css,/\.dit-module\.dit-one-point \.overview \.map-stage\{height:300px\}/);
-  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,[^\{]*\{grid-column:1\/-1\}/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,[^\{]*\{grid-column:auto\}/);
   assert.doesNotMatch(css,/dit-detail-tabs|data-dit-detail/);
 });
 
@@ -753,7 +753,7 @@ test('single-point analyzers use a sidebar plus two-column analysis grid while m
   assert.match(css,/\.module-grid\.single-point-workspace>\.single-analysis-workspace\{[^}]*grid-column:2;[^}]*grid-row:1/);
   assert.match(css,/\.single-analysis-workspace\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css,/\.single-analysis-workspace>\.plots\{display:contents\}/);
-  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,\.dit-module\.single-point-workspace \.detail>details\{grid-column:1\/-1\}/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,\.dit-module\.single-point-workspace \.detail>\.dit-flatband-panel\{grid-column:auto\}/);
   const checks=[
     ['qss-upcd.js',/qss-one-point single-point-workspace/],
     ['jzero.js',/onePoint\?'single-point-workspace'/],
@@ -824,4 +824,19 @@ test('wide DIT OnePoint measurement metadata uses a compact two-pair grid withou
   assert.match(src,/class="meta \$\{d\.patternType==='OnePointPattern'\?'dit-point-meta-grid':''\}"/);
   assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.dit-point-meta-grid\{grid-template-columns:auto minmax\(0,1fr\) auto minmax\(0,1fr\)/);
   assert.doesNotMatch(css,/\.dit-module:not\(\.dit-one-point\) \.dit-point-meta-grid/);
+});
+
+
+test('DIT detail polish keeps diagnostics out of the chart header and pairs Vsb-Qc with flatband',()=>{
+  const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
+    css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    ui=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
+  assert.match(dit,/class="panel dit-flatband-panel"/);
+  assert.match(dit,/compactFit=analysis\.options\.pchipEnabled\?analysis\.mode\+' · '\+fitLabel/);
+  assert.match(dit,/ditMeta\.title=analysis\.options\.pchipEnabled/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.dit-flatband-panel\{align-self:stretch;min-width:0\}/);
+  assert.match(css,/\.single-analysis-workspace\{padding-bottom:24px\}/);
+  assert.match(css,/@media\(min-width:1201px\) and \(max-width:1450px\)\{[\s\S]*\.dit-module\.dit-one-point \.dit-point-meta-grid\{grid-template-columns:minmax\(0,1fr\) auto\}/);
+  assert.match(ui,/badgeTitle=title\|\|\(raw==='UNAVAILABLE'\?detail:''\)/);
+  assert.match(ui,/visibleDetail=raw==='UNAVAILABLE'\?'':detail/);
 });
