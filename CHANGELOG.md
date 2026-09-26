@@ -1,5 +1,18 @@
 # Changelog
 
+## v20260926.3.1 — 2026-09-26 (branch)
+
+- DIT-only layout refinement: multi-point `Selected site` now sits directly below the Wafer map so map navigation and the selected-site readout remain one spatial inspection surface.
+- The right DIT detail column remains focused on Vcpd–Qc, Dit–Vsb, Vsb–Qc and Flatband extraction; scientific calculations, parsing, geometry, validation and exports are unchanged.
+- Added a documented DIT-specific exception to the general workspace column contract plus structural regression coverage.
+
+## v20260926.3 — 2026-09-26
+
+- Added a PR-preview delivery pipeline that consumes only successful public-CI artifacts, publishes each same-repository PR under a stable GitHub Pages subpath, and creates a matching temporary GitHub prerelease with the single-file analyzer and ZIP build.
+- Preview prereleases are replaced on every successful PR update and removed together with their Pages directory when the PR is merged or closed.
+- Reworked Pages deployment around a generated persistent `pages-store` branch so main-site deployments preserve active PR preview directories instead of overwriting them.
+- Kept the privileged publisher on trusted default-branch workflow code and avoided checking out PR code in the write-enabled workflow; external fork PRs are not published automatically.
+
 ## v20260926.1 — 2026-09-26
 
 - Refined the analyzer workspace UI contract while preserving scientific calculations, parsing, geometry semantics, validation envelopes and exports.

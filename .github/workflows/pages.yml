@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -14,25 +14,70 @@ concurrency:
   group: github-pages
   cancel-in-progress: true
 
+env:
+  PREVIEW_STORE_BRANCH: pages-store
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Node
+        if: github.event_name == 'push'
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Install dev tooling
-        run: npm install --ignore-scripts --no-audit --no-fund
+        if: github.event_name == 'push'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Quality gates
+        if: github.event_name == 'push'
         run: npm run check
 
       - name: Build
+        if: github.event_name == 'push'
         run: npm run build
+
+      - name: Refresh main site in persistent Pages store
+        if: github.event_name == 'push'
+        run: |
+          set -euo pipefail
+          store_dir="${RUNNER_TEMP}/pages-store"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git fetch origin "refs/heads/${PREVIEW_STORE_BRANCH}:refs/remotes/origin/${PREVIEW_STORE_BRANCH}"; then
+            git worktree add "${store_dir}" "refs/remotes/origin/${PREVIEW_STORE_BRANCH}"
+          else
+            git worktree add --detach "${store_dir}" HEAD
+            git -C "${store_dir}" checkout --orphan "${PREVIEW_STORE_BRANCH}"
+            git -C "${store_dir}" rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          find "${store_dir}" -mindepth 1 -maxdepth 1             ! -name '.git' ! -name 'preview' -exec rm -rf {} +
+          cp -a dist/. "${store_dir}/"
+          touch "${store_dir}/.nojekyll"
+
+          git -C "${store_dir}" add -A
+          if ! git -C "${store_dir}" diff --cached --quiet; then
+            git -C "${store_dir}" commit -m "pages: main @ ${GITHUB_SHA}"
+            git -C "${store_dir}" push origin "HEAD:refs/heads/${PREVIEW_STORE_BRANCH}"
+          fi
+
+      - name: Checkout persistent Pages store
+        uses: actions/checkout@v6
+        with:
+          ref: pages-store
+          path: site
+
+      - name: Remove deployment Git metadata
+        run: rm -rf site/.git
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -40,15 +85,18 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./dist
+          path: ./site
 
   deploy:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

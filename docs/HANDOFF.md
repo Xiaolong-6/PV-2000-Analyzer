@@ -1,5 +1,17 @@
 # Agent handoff — 2026-09-26
 
+## DIT selected-site placement — candidate v20260926.3.1
+
+PR #113 is a DIT-only workspace exception requested after the multi-point browser review. For multi-point DIT, `Selected site` sits directly below the Wafer map in the overview column so spatial navigation and the selected-site readout stay together. Vcpd–Qc, Dit–Vsb, Vsb–Qc and Flatband extraction remain in the right scientific-detail column. OnePoint ordering remains unchanged because its overview/detail wrappers flatten into the existing single-analysis grid.
+
+No DIT calculation, parser, geometry, validation profile or export semantics change.
+
+## PR preview delivery infrastructure — v20260926.3
+
+Each successful same-repository PR CI build is published as a temporary GitHub prerelease and a stable live Pages preview under `/preview/pr-<number>/`. The prerelease carries `index.html`, `PV-2000-Analyzer.html` and a ZIP build, is replaced on every successful PR update, and is removed when the PR closes. Pages now deploys from a generated persistent `pages-store` branch so refreshing main preserves all active preview directories.
+
+The publisher is intentionally split from untrusted PR execution: it runs from trusted default-branch `workflow_run` code, consumes the already-built CI artifact, and only publishes same-repository PRs. It never checks out PR code with a write token.
+
 ## Analyzer workspace UI contract — merged candidate v20260926.1
 
 PR #111 consolidates the 2026-09-26 analyzer-workspace visual review into one mainline change. The accepted wide-screen contract is:
@@ -68,7 +80,7 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 ## Current baseline
 
 - Public main: `v20260926.3`.
-- Current hardening branch: `fix/dit-selected-site-under-map-20260926`; PR #113 is the DIT selected-site-under-map layout candidate.
+- Current hardening branch: `fix/dit-selected-site-under-map-20260926`; PR #113 is the DIT selected-site-under-map candidate.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 

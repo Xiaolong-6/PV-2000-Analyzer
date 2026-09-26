@@ -1,0 +1,200 @@
+name: Publish PR preview
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+  pull_request:
+    types: [closed]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: pr-preview-publisher
+  cancel-in-progress: false
+
+env:
+  PREVIEW_STORE_BRANCH: pages-store
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          EVENT_PR: ${{ github.event.workflow_run.pull_requests[0].number }}
+        run: |
+          set -euo pipefail
+          pr_number="${EVENT_PR}"
+          if [ -z "${pr_number}" ]; then
+            pr_number="$(gh api "repos/${GITHUB_REPOSITORY}/commits/${HEAD_SHA}/pulls" --jq '.[0].number // empty')"
+          fi
+          if [ -z "${pr_number}" ]; then
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          state="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}" --jq '.state')"
+          if [ "${state}" != "open" ]; then
+            echo "publish=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          echo "publish=true" >> "${GITHUB_OUTPUT}"
+          echo "number=${pr_number}" >> "${GITHUB_OUTPUT}"
+          echo "head_sha=${HEAD_SHA}" >> "${GITHUB_OUTPUT}"
+          echo "run_id=${RUN_ID}" >> "${GITHUB_OUTPUT}"
+
+      - name: Download validated CI build
+        if: steps.pr.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ steps.pr.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          gh run download "${RUN_ID}" --name pv2000-data-viewer-dist --dir dist
+          test -s dist/index.html
+          test -s dist/PV-2000-Analyzer.html
+
+      - name: Package preview build
+        if: steps.pr.outputs.publish == 'true'
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+          zip -j "pv2000-analyzer-pr${PR_NUMBER}.zip" dist/index.html dist/PV-2000-Analyzer.html
+
+      - name: Publish live preview files
+        if: steps.pr.outputs.publish == 'true'
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          store_dir="${RUNNER_TEMP}/pages-store"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git fetch origin "refs/heads/${PREVIEW_STORE_BRANCH}:refs/remotes/origin/${PREVIEW_STORE_BRANCH}"; then
+            git worktree add "${store_dir}" "refs/remotes/origin/${PREVIEW_STORE_BRANCH}"
+          else
+            git worktree add --detach "${store_dir}" HEAD
+            git -C "${store_dir}" checkout --orphan "${PREVIEW_STORE_BRANCH}"
+            git -C "${store_dir}" rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          preview_dir="${store_dir}/preview/pr-${PR_NUMBER}"
+          rm -rf "${preview_dir}"
+          mkdir -p "${preview_dir}"
+          cp dist/index.html "${preview_dir}/index.html"
+          cp dist/PV-2000-Analyzer.html "${preview_dir}/PV-2000-Analyzer.html"
+          touch "${store_dir}/.nojekyll"
+
+          git -C "${store_dir}" add -A
+          if ! git -C "${store_dir}" diff --cached --quiet; then
+            git -C "${store_dir}" commit -m "preview: PR #${PR_NUMBER} @ ${HEAD_SHA}"
+            git -C "${store_dir}" push origin "HEAD:refs/heads/${PREVIEW_STORE_BRANCH}"
+          fi
+
+      - name: Publish preview prerelease
+        if: steps.pr.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          RUN_ID: ${{ steps.pr.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          preview_url="https://${GITHUB_REPOSITORY_OWNER}.github.io/${repo_name}/preview/pr-${PR_NUMBER}/"
+          tag="pr-${PR_NUMBER}-preview"
+          notes="${RUNNER_TEMP}/release-notes.md"
+          cat > "${notes}" <<EOF
+          Automated preview for PR #${PR_NUMBER}.
+
+          - Live preview: ${preview_url}
+          - Pull request: https://github.com/${GITHUB_REPOSITORY}/pull/${PR_NUMBER}
+          - Head commit: ${HEAD_SHA}
+          - CI run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}
+
+          This is a temporary preview prerelease. It is replaced on every successful PR update and removed when the PR is merged or closed.
+          EOF
+
+          gh release delete "${tag}" --cleanup-tag --yes >/dev/null 2>&1 || true
+          gh release create "${tag}"             --target "${HEAD_SHA}"             --title "PR #${PR_NUMBER} Preview"             --notes-file "${notes}"             --prerelease             dist/index.html             dist/PV-2000-Analyzer.html             "pv2000-analyzer-pr${PR_NUMBER}.zip"
+
+      - name: Deploy updated Pages store
+        if: steps.pr.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main
+
+  cleanup:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.action == 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Remove preview files
+        id: store
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          store_dir="${RUNNER_TEMP}/pages-store"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if ! git fetch origin "refs/heads/${PREVIEW_STORE_BRANCH}:refs/remotes/origin/${PREVIEW_STORE_BRANCH}"; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          git worktree add "${store_dir}" "refs/remotes/origin/${PREVIEW_STORE_BRANCH}"
+          preview_dir="${store_dir}/preview/pr-${PR_NUMBER}"
+          if [ ! -e "${preview_dir}" ]; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          rm -rf "${preview_dir}"
+          git -C "${store_dir}" add -A
+          git -C "${store_dir}" commit -m "preview: remove PR #${PR_NUMBER}"
+          git -C "${store_dir}" push origin "HEAD:refs/heads/${PREVIEW_STORE_BRANCH}"
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Remove preview prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh release delete "pr-${PR_NUMBER}-preview" --cleanup-tag --yes >/dev/null 2>&1 || true
+
+      - name: Deploy cleaned Pages store
+        if: steps.store.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main
