@@ -1,5 +1,18 @@
 # Changelog
 
+## v20260926.1 — 2026-09-26
+
+- Refined the analyzer workspace UI contract while preserving scientific calculations, parsing, geometry semantics, validation envelopes and exports.
+- Replaced overlay-style Axes/Bins controls with mutually exclusive, full-width settings rows in normal chart-header flow; settings are container-bounded, content-height driven and covered by structural regressions.
+- Standardized selected-point state across filter-aware families with explicit filter quantity, VALID / FILTERED / UNAVAILABLE reasoning and a distinct ALGORITHM INVALID state; Leakage now reports AVAILABLE / PARTIAL / UNAVAILABLE plus the finite result names.
+- Improved visual hierarchy and readability in light/dark themes, made DIT Analysis controls readable at equal-column widths, and made Axes input layout respond to chart-pane width.
+- Preserved literal equal three-column layout for multi-point analyzers while giving single-point analyzers a sidebar + two-column analysis workspace. Position/geometry and point details share the first row; plot-rich local analysis uses the remaining grid without a long single-column stack.
+- Added explicit sparse-data presentation for VCPD/CET, hiding inapplicable Axes/Bins/Export controls when a curve or population distribution is not meaningful.
+- Removed DIT's implicit (0,0) coordinate fallback: coordinate-free datasets render target geometry only and never infer a center site marker.
+- Kept semantic Current dataset values readable, including the full Dual QSS injection-range label, and added subtle continuation cues to independently scrolling panes.
+- Applied wide-screen single-point density tuning: DIT OnePoint uses a 230 px position surface, 260 px local scientific plots and a compact two-pair Measurement point metadata grid; CET singleton sparse fit uses 140 px. <=1200/mobile and multi-point layouts are unchanged.
+- Browser review at 1363×936 CSS px / 100% covered 14 valid XML imports across 10 measurement families, including a 2601-point LBIC raster; no chart/control overlap or clipping was observed in the reviewed cases. Remaining 1280/1440/1920, mobile and 125% checks are separate responsive QA.
+
 ## v20260925.30 — 2026-09-25
 
 - Fixed chart-header flex overflow found by the new real-XML Chromium smoke: DIT's long dynamic chart metadata could retain its intrinsic no-wrap width and push the Axes/Export controls outside the right-hand pane even at a 1600 px wide three-column workspace.

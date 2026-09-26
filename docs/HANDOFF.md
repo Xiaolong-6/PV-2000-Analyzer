@@ -1,4 +1,21 @@
-# Agent handoff — 2026-09-25
+# Agent handoff — 2026-09-26
+
+## Analyzer workspace UI contract — merged candidate v20260926.1
+
+PR #111 consolidates the 2026-09-26 analyzer-workspace visual review into one mainline change. The accepted wide-screen contract is:
+
+- multi-point analyzers retain literal equal three columns with independent pane scrolling;
+- single-point analyzers use a dataset sidebar plus a two-column analysis workspace, pairing position/geometry with selected-point details and arranging local scientific plots by information density;
+- Axes/Bins open as full-width, natural-flow header settings rows rather than absolute overlays;
+- selected-point state names the active filter quantity and distinguishes VALID, FILTERED, UNAVAILABLE and ALGORITHM INVALID; non-filter Leakage reports actual result availability;
+- sparse VCPD/CET views explain 0/1-value states instead of drawing misleading empty axes;
+- DIT never invents (0,0) when spatial coordinates are absent;
+- wide DIT OnePoint density uses a 230 px position view, 260 px local scientific plots and a compact two-pair point metadata grid; CET singleton sparse fit uses 140 px;
+- <=1200/mobile behavior and multi-point scientific layouts remain unchanged.
+
+The final external browser review of the preceding c6d8d1a head used 1363×936 CSS px / DPR 1 / 100% zoom, imported 14 valid XML samples across 10 measurement families, and specifically confirmed the 2601-point LBIC raster, CET singleton/sparse states, DIT zero-coordinate behavior, Dual QSS long label and other representative families. The only final visual change after that review is the DIT OnePoint point-card compaction; it is presentation-only and covered by the public layout gate. Remaining 1280/1440/1920, mobile and 125% checks are separate responsive QA, not claims of completed browser coverage.
+
+No scientific equation, parser path, geometry calculation, validity profile or export semantics are changed by PR #111.
 
 ## Real-browser chart-header hardening (v20260925.30)
 
@@ -50,8 +67,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260925.30`.
-- Current hardening branch: `fix/chart-header-flex-overflow-20260925`.
+- Public main: `v20260926.1`.
+- Current hardening branch: none; PR #111 is the accepted analyzer-workspace UI baseline.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 

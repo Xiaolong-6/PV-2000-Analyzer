@@ -293,7 +293,7 @@
     return nearestSiteValid&&nearestValidSq<=maxDist*maxDist&&den?num/den:NaN;
   }
   function drawMap(canvas,d,a,key,mode,mask,selected,zoom,onZoom,onSelect,supportMask=null){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:d.values.length===1?'compact':'standard'}),
       m=a.metrics[key],
       vals=m.values,
       p={l:54,r:76,t:28,b:46},
@@ -726,7 +726,7 @@
           const value=Number.isFinite(m.values[selected])?`${fmt(m.values[selected])} ${m.unit}`:'—';
           return metaRow(m.short,value);
         }).join('');
-      return `<dl class="meta">${metaRow('Point',String(selected+1))}${metaRow('Valid-data state',status)}${metaRow('Coordinate',coordinate)}${values}</dl>`;
+      return `<dl class="meta">${metaRow('Point',String(selected+1))}${PV.ui.selectionStateRow(status,{metric:a.metrics[state.metricKey]?.short||state.metricKey})}${metaRow('Coordinate',coordinate)}${values}</dl>`;
     }
     function renderShell(){
       const filterState=filterController.snapshot(),
@@ -738,7 +738,7 @@
           'Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the map to zoom both spatial axes; hold Ctrl/⌘ over one axis to zoom only that direction; double-click restores auto scale.',
           'Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.'
         ].join(' ');
-      host.innerHTML=`<div class="module-grid qss-module"><aside class="side">
+      host.innerHTML=`<div class="module-grid qss-module ${onePoint?'qss-one-point single-point-workspace':''}"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Core XML measurement identity and sample context. Timing and acquisition settings are kept under Full metadata.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}
           ${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}
@@ -808,7 +808,7 @@ ${metaRow('QSS range',`${fmt(d.qssRangeMin)}–${fmt(d.qssRangeMax)}`,'Configure
 ${metaRow('Fe constant',fmt(d.feConstant),'Calibration constant used only when Fe-concentration processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}\
 ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when LID-defect processing is enabled in an appropriate QSS-µPCD/ALID workflow.')}</dl>\
 </details>
-      </aside><section class="plots overview">
+      </aside>${onePoint?'<div class="single-analysis-workspace">':''}<section class="plots overview">
         <div class="panel chart"><header>
           <b>${onePoint?'Measurement position':'Wafer map'}</b>
           ${help(mapHelpText)}
@@ -825,7 +825,7 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         </header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
         ${onePoint?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
         <div class="panel chart"><header><b>Acquisition profile</b>${help('This is a whole-dataset acquisition-order profile. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the profile to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>`}
-      </section><section class="plots detail"><section class="panel"><h3>${d.values.length===1?'Measurement point':'Selected site'}</h3><div id="qSelected">${selectedHtml()}</div></section></section></div>`;
+      </section><section class="plots detail"><section class="panel"><h3>${d.values.length===1?'Measurement point':'Selected site'}</h3><div id="qSelected">${selectedHtml()}</div></section></section>${onePoint?'</div>':''}</div>`;
       host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
         redraw()};

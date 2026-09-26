@@ -386,7 +386,7 @@
   }
 
   function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:d.sites.length===1?'compact':'standard'}),
       metric=a.metrics[key],
       values=metric.values,
       activeValues=values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
@@ -640,17 +640,39 @@
   }
 
   function drawRaw(canvas,d,selected,zoom,onZoom){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
-      site=d.sites[selected],
+    const site=d.sites[selected],
       isVcpd=d.measurementKind==='vcpd',
       dark=site?(isVcpd?site.darkRaw.slice():site.darkRaw.map(v=>v-d.offset)):[],
       light=site&&!isVcpd?site.lightRaw.map(v=>v-d.offset):[],
       n=Math.max(dark.length,light.length),
-      p={l:62,r:18,t:24,b:48};
+      sparse=n<=1,
+      {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:sparse?'compact':'standard'}),
+      p={l:62,r:18,t:24,b:48},
+      clearInteraction=()=>{
+        canvas.onwheel=null;canvas.ondblclick=null;canvas.onpointermove=null;canvas.onpointerleave=null;
+        canvas.style.cursor='default';
+      };
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
     ctx.fillRect(0,0,W,H);
-    if(!site||!n)return;
+    if(!site||!n){
+      clearInteraction();
+      ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.font='600 13px system-ui';
+      ctx.fillText('No stored readings',W/2,H/2);
+      return;
+    }
+    if(n===1){
+      clearInteraction();
+      ctx.textAlign='center';
+      ctx.fillStyle=css('--text');ctx.font='680 18px system-ui';
+      ctx.fillText(isVcpd?'1 raw reading':'1 raw reading pair',W/2,H/2-12);
+      ctx.fillStyle=css('--muted');ctx.font='11px system-ui';
+      const detail=isVcpd
+        ?`Vcpd ${fmt(dark[0],6)} V`
+        :`Dark ${fmt(dark[0],6)} V · Light ${fmt(light[0],6)} V`;
+      ctx.fillText(detail,W/2,H/2+12);
+      return;
+    }
 
     const autoX=[1,Math.max(2,n)],
       autoY=finiteRange([...dark,...light]),
@@ -811,7 +833,7 @@
         state=support?(active?'VALID':'FILTERED'):'UNAVAILABLE';
       return`<dl class="meta">
         ${metaRow('Point',String(selected+1))}
-        ${metaRow('Valid-data state',state,'UNAVAILABLE means the selected filter quantity is not available at this site. FILTERED means it is available but outside the active numeric range.')}
+        ${PV.ui.selectionStateRow(state,{metric:a.metrics[filterState.metricKey]?.short||filterState.metricKey,title:'UNAVAILABLE means the selected filter quantity is not available at this site. FILTERED means it is available but outside the active numeric range.'})}
         ${metaRow('Coordinate',p?`X ${fmt(p.x,2)} mm · Y ${fmt(p.y,2)} mm`:'—')}
         ${metaRow('Vcpd Dark',`${fmt(s.dark,6)} V`)}
         ${isVcpd?'':metaRow('Vcpd Light',`${fmt(s.light,6)} V`)}
@@ -820,7 +842,7 @@
       </dl>`;
     }
 
-    host.innerHTML=`<div class="module-grid isc-module"><aside class="side">
+    host.innerHTML=`<div class="module-grid isc-module ${d.sites.length===1?'single-point-workspace':''}"><aside class="side">
       <section class="panel"><h3>Measurement ${help(measurementHelp)}</h3><dl class="meta">
         ${metaRow('Type',isVcpd?'VCPD · VcpdMeasurement':'ISC · ISCMeasurement')}
         ${metaRow('Result',d.resultName)}
@@ -861,13 +883,13 @@
         ${metaRow('End',d.end||'—')}
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
-    </aside><section class="plots overview">
+    </aside>${d.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview">
       <div class="panel chart"><header><b>${d.sites.length===1?'Measurement position':moduleLabel+' map'}</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
       ${d.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>`}
     </section><section class="plots detail">
       <section class="panel"><h3>${d.sites.length===1?'Measurement point':'Selected site'} ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
-    </section></div>`;
+    </section>${d.sites.length===1?'</div>':''}</div>`;
 
     PV.ui.bindValidDataFilter(host,{
       prefix:'iFilter',
@@ -930,7 +952,11 @@
         });
         PV.plot.bindBinControls(host,'iHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
       }
-      PV.plot.bindAxisControls(host,'iRawAxes',zoom.raw,n=>{
+      const currentSite=d.sites[selected],
+        rawCount=currentSite?Math.max(currentSite.darkRaw?.length||0,isVcpd?0:currentSite.lightRaw?.length||0):0,
+        rawAxesToggle=host.querySelector('[data-axis-toggle="iRawAxes"]');
+      if(rawAxesToggle)rawAxesToggle.hidden=rawCount<=1;
+      if(rawCount>1)PV.plot.bindAxisControls(host,'iRawAxes',zoom.raw,n=>{
         zoom.raw=n;
         redraw();
       });

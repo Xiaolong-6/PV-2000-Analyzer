@@ -20,7 +20,7 @@ test('Current dataset adapts cleanly to three, four or five summary items',()=>{
   assert.match(css,/\.current-dataset-panel \.validation>div\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;[^}]*border-top:1px solid var\(--border\)/);
   const dualPanel=dual.slice(dual.indexOf('current-dataset-panel'),dual.indexOf('</section>',dual.indexOf('current-dataset-panel'))),
     jzeroPanel=jzero.slice(jzero.indexOf('current-dataset-panel'),jzero.indexOf('</section>',jzero.indexOf('current-dataset-panel')));
-  assert.equal((dualPanel.match(/<div><b>/g)||[]).length,3);
+  assert.equal((dualPanel.match(/<\/span><\/div>/g)||[]).length,3);
   assert.equal((jzeroPanel.match(/<div><b>/g)||[]).length,5);
   assert.match(isc,/:'Complete'}<\/b><span>acquisition schedule/);
 });
@@ -412,7 +412,7 @@ test('QSS runtime omits fixed reference-validation card and exposes manual axes 
   assert.match(qss,/axisControls\('qMapAxes'\)/);
   assert.match(qss,/axisControls\('qHistAxes'/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
-  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots overview">'));
+  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('class="plots overview"'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
 });
 
@@ -515,10 +515,15 @@ test('all plot Axes controls are rendered in chart headers immediately before ex
   assert.match(isc,/axisControls\('iRawAxes'\)\}<button id="iExportRaw"/);
 });
 
-test('chart popovers are not clipped and plot wrappers do not force blank vertical space',()=>{
+test('chart settings expand in normal header flow without viewport-width popovers',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/\.panel\.chart\{[^}]*overflow:visible[^}]*position:relative/);
-  assert.match(css,/\.axis-popover-card\{[^}]*z-index:60/);
+  assert.match(css,/\.chart header\{[^}]*flex-wrap:wrap/);
+  assert.match(css,/\.axis-popover-card\{[^}]*order:20;[^}]*flex:1 0 100%;[^}]*width:100%;[^}]*max-width:100%/);
+  assert.match(css,/\.axis-popover-card\[hidden\]\{display:none\}/);
+  assert.doesNotMatch(css,/\.axis-popover-card\{[^}]*position:absolute/);
+  assert.doesNotMatch(css,/\.axis-popover-card\{[^}]*100vw/);
+  assert.doesNotMatch(css,/has-axis-popover-open|padding-bottom:112px|padding-bottom:168px/);
   assert.doesNotMatch(css,/\.canvas-wrap\{[^}]*min-height:300px/);
 });
 
@@ -639,24 +644,27 @@ test('wide desktop equal columns are literal equal tracks, not a narrow-sidebar 
   assert.doesNotMatch(css,/grid-template-columns:minmax\(320px,360px\) minmax\(0,1fr\) minmax\(0,1fr\)/);
 });
 
-test('DIT keeps all three local scientific plots visible in the independently scrollable detail pane',()=>{
+test('DIT keeps all three local scientific plots visible and grids single-point detail without tabs',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.doesNotMatch(src,/data-dit-view=|data-dit-detail=|detailView=/);
   assert.match(src,/<b>Vcpd–Qc<\/b>/);
   assert.match(src,/<b>Dit–Vsb<\/b>/);
   assert.match(src,/<b>Vsb–Qc<\/b>/);
-  assert.match(src,/viewBox="0 0 640 500"/);
+  assert.match(src,/viewBox="0 0 640 \$\{d\.patternType==='OnePointPattern'\?300:500\}"/);
+  assert.match(src,/H=d\.patternType==='OnePointPattern'\?300:500/);
   assert.match(src,/paneScroll=\{/);
   assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
   assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
+  assert.match(css,/\.dit-module\.dit-one-point \.overview \.map-stage\{height:300px\}/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,[^\{]*\{grid-column:1\/-1\}/);
   assert.doesNotMatch(css,/dit-detail-tabs|data-dit-detail/);
 });
 
 test('right-side selected-site typography matches the sidebar hierarchy',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11px/);
-  assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
+  assert.match(css,/\.module-grid \.side \.panel,[^\{]*\.single-analysis-workspace>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11\.5px/);
+  assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord,[^\{]*\.single-analysis-workspace>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
 });
 
 test('DIT does not duplicate Follow XML mapping as a persistent status row',()=>{
@@ -675,4 +683,145 @@ test('QSS compact summary keeps all statistics without repeating five labels per
 test('chart metadata can shrink without pushing Axes or Export controls outside a pane',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/\.chart-meta\{[^}]*min-width:0;[^}]*overflow:hidden;[^}]*text-overflow:ellipsis;[^}]*white-space:nowrap/);
+});
+
+
+test('Axes and Bins use one full-width natural-flow settings row and remain mutually exclusive',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    plot=fs.readFileSync(require.resolve('../src/core/plot.js'),'utf8');
+  assert.match(plot,/data-axis-toggle=/);
+  assert.match(plot,/data-bin-toggle=/);
+  assert.match(plot,/data-axis-controls=.* hidden/);
+  assert.match(plot,/data-bin-controls=.* hidden/);
+  assert.match(plot,/header\.querySelectorAll\('\.axis-popover-card:not\(\[hidden\]\)'\)/);
+  assert.match(plot,/if\(peer!==box\)setOpen\(peer,false\)/);
+  assert.match(plot,/panel\.hidden=!open/);
+  assert.match(plot,/aria-expanded/);
+  assert.match(css,/\.axis-popover-card\{[^}]*flex:1 0 100%/);
+});
+
+test('selected-point panels use explicit state badges across filter and non-filter families',()=>{
+  const ui=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
+  assert.match(ui,/function selectionStateFor\(/);
+  assert.match(ui,/function selectionStateBadge\(/);
+  assert.match(ui,/function selectionStateRow\(/);
+  for(const file of ['dit.js','qss-upcd.js','jzero.js','isc.js','lbic.js','cet.js','spv.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/selectionStateRow\(/,file+' must render a selected-point state badge');
+  }
+  const leakage=fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8');
+  assert.match(leakage,/id="leakDataState"/);
+  assert.match(leakage,/dataState=availableResults\.length===3\?'AVAILABLE':availableResults\.length\?'PARTIAL':'UNAVAILABLE'/);
+  assert.match(leakage,/Available: \$\{availableResults\.join\(', '\)\}/);
+  assert.match(ui,/label='Filter quantity'/);
+  assert.match(ui,/Outside the current range; local data remains inspectable/);
+  for(const file of ['dit.js','qss-upcd.js','jzero.js','isc.js','lbic.js','cet.js','spv.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/selectionStateRow\([^\n]*metric:/,file+' must name the filter quantity beside its state');
+  }
+});
+
+
+test('selection badges are readable and algorithm-invalid is visually distinct',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    ui=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
+  assert.match(css,/\.selection-state\{[^}]*font-size:10\.5px;[^}]*font-weight:650/);
+  assert.match(css,/\.selection-state-invalid\{[^}]*var\(--bad\)/);
+  assert.match(ui,/invalid=raw==='ALGORITHM INVALID'/);
+  assert.match(ui,/tone=invalid\?'invalid'/);
+});
+
+
+test('visual acceptance follow-up improves hierarchy while preserving multi-point equal columns',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
+    qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(css,/:root\{[^}]*--bg:#f4f6f9;[^}]*--panel:#fff/);
+  assert.match(css,/\.panel\{[^}]*border-radius:9px;[^}]*padding:10px/);
+  assert.match(css,/\.dit-module \.analysis-method-row label\{[^}]*grid-template-columns:1fr;[^}]*align-items:stretch/);
+  assert.match(css,/@container \(max-width:520px\)\{\.axis-limit-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/);
+  assert.match(dit,/dit-one-point/);
+  assert.match(qss,/surface:d\.values\.length===1\?'compact':'standard'/);
+  assert.match(qss,/qss-one-point/);
+});
+
+
+test('single-point analyzers use a sidebar plus two-column analysis grid while multi-point defaults stay equal-three-column',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.module-grid\.single-point-workspace\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,2fr\)/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.side\{[^}]*grid-column:1;[^}]*grid-row:1/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.single-analysis-workspace\{[^}]*grid-column:2;[^}]*grid-row:1/);
+  assert.match(css,/\.single-analysis-workspace\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.single-analysis-workspace>\.plots\{display:contents\}/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,\.dit-module\.single-point-workspace \.detail>details\{grid-column:1\/-1\}/);
+  const checks=[
+    ['qss-upcd.js',/qss-one-point single-point-workspace/],
+    ['jzero.js',/onePoint\?'single-point-workspace'/],
+    ['spv.js',/data\.sites\.length===1\?'single-point-workspace'/],
+    ['isc.js',/d\.sites\.length===1\?'single-point-workspace'/],
+    ['cet.js',/data\.sites\.length===1\?'single-point-workspace'/],
+    ['leakage.js',/data\.sites\.length===1\?'single-point-workspace'/],
+    ['dit.js',/dit-one-point single-point-workspace/]
+  ];
+  for(const [file,pattern] of checks){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,pattern,file+' must opt into the single-point workspace only when appropriate');
+    assert.match(src,/single-analysis-workspace/,file+' must wrap single-point overview and detail in the shared analysis grid');
+  }
+});
+
+test('sparse selected-point plots render compact explanatory states instead of empty axes',()=>{
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
+    cet=fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8'),
+    css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(isc,/surface:sparse\?'compact':'standard'/);
+  assert.match(isc,/n===1/);
+  assert.match(isc,/1 raw reading/);
+  assert.match(isc,/rawAxesToggle\.hidden=rawCount<=1/);
+  assert.match(cet,/activeValues\.length<=1/);
+  assert.match(cet,/distribution not meaningful/);
+  assert.match(cet,/points\.length<=1/);
+  assert.match(cet,/At least two points are required to display a fitted trend/);
+  assert.match(cet,/histAxes\.hidden=activeCount<=1/);
+  assert.match(cet,/fitAxes\.hidden=fitCount<=1/);
+  assert.match(cet,/histExport\.hidden=activeCount<=1/);
+  assert.match(cet,/fitExport\.hidden=fitCount===0/);
+  assert.match(css,/\.axis-popover-toggle\[hidden\],\.bin-popover-toggle\[hidden\]\{display:none!important\}/);
+  assert.match(css,/\.sparse-stage\{height:168px!important\}/);
+});
+
+test('DIT never invents a center marker when spatial coordinates are absent',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(src,/coord=s\.coord\|\|\{x:0,y:0\}/);
+  assert.doesNotMatch(src,/analysis\.sites\.map\(x=>x\.coord\|\|\{x:0,y:0\}\)/);
+  assert.match(src,/finiteCoords=coords\.filter/);
+  assert.match(src,/No spatial coordinates/);
+  assert.match(src,/if\(!Number\.isFinite\(p\?\.x\)\|\|!Number\.isFinite\(p\?\.y\)\)return/);
+  assert.match(src,/coordinateN===0\?'<b>Target geometry<\/b>'/);
+});
+
+test('semantic Current dataset values can wrap and scroll panes expose continuation space',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    dual=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
+  assert.match(css,/\.current-dataset-panel \.validation b\.validation-text\{[^}]*white-space:normal;[^}]*overflow:visible;[^}]*text-overflow:clip/);
+  assert.match(dual,/class="validation-text" title="\$\{esc\(d\.rangeClass\)\}"/);
+  assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*padding-bottom:16px;[^}]*box-shadow:inset/);
+});
+
+
+test('wide single-point DIT and CET sparse panels use compact vertical heights without changing narrow layouts',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.single-analysis-workspace \.overview \.map-stage\{height:230px\}/);
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.single-analysis-workspace \.detail>\.chart \.chart-stage\{height:260px\}/);
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.cet-module\.single-point-workspace \.detail \.chart-stage\.sparse-stage\{height:140px!important\}/);
+  assert.doesNotMatch(css,/@media\(max-width:1200px\)[^{]*\{[^}]*height:260px/);
+});
+
+
+test('wide DIT OnePoint measurement metadata uses a compact two-pair grid without affecting multi-point cards',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
+    css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(src,/class="meta \$\{d\.patternType==='OnePointPattern'\?'dit-point-meta-grid':''\}"/);
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.dit-point-meta-grid\{grid-template-columns:auto minmax\(0,1fr\) auto minmax\(0,1fr\)/);
+  assert.doesNotMatch(css,/\.dit-module:not\(\.dit-one-point\) \.dit-point-meta-grid/);
 });

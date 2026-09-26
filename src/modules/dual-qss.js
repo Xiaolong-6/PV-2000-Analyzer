@@ -716,7 +716,7 @@ ${row('Samples',t?.points?.length||0)}</dl>`;
 </section>\
 <section class="panel current-dataset-panel">\
 <h3>Current dataset</h3>\
-<div class="validation"><div><b>${d.points.length}</b><span>injection points</span></div><div><b>${a.validCount} / ${d.points.length}</b><span>positive lifetime</span></div><div><b>${esc(d.rangeClass)}</b><span>injection range</span></div></div>\
+<div class="validation"><div><b>${d.points.length}</b><span>injection points</span></div><div><b>${a.validCount} / ${d.points.length}</b><span>positive lifetime</span></div><div><b class="validation-text" title="${esc(d.rangeClass)}">${esc(d.rangeClass)}</b><span>injection range</span></div></div>\
 </section>\
 <section class="panel">\
 <h3>Comparison overlay</h3>\
