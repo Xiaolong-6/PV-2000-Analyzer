@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260925.30.9 — 2026-09-26
+
+- Updated source-structure layout regressions for the new conditional single-point analysis wrapper: QSS ordering now keys off the semantic overview marker, DIT accepts the wrapped overview selector and asserts its full-width third-plot rule, and selected-detail typography checks cover both direct multi-point panes and wrapped single-point panes.
+
 ## v20260925.30.8 — 2026-09-26
 
 - Replaced the single-point right-hand vertical stack with an internal two-column analysis grid inside the existing sidebar + 2fr workspace. Position/geometry and selected-point details share the first row; plot-rich single-point analyzers distribute meaningful charts across subsequent cells.

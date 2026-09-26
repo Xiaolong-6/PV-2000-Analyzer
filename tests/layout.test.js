@@ -412,7 +412,7 @@ test('QSS runtime omits fixed reference-validation card and exposes manual axes 
   assert.match(qss,/axisControls\('qMapAxes'\)/);
   assert.match(qss,/axisControls\('qHistAxes'/);
   assert.match(qss,/axisControls\('qProfileAxes'\)/);
-  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('</aside><section class="plots overview">'));
+  assert.ok(qss.indexOf('Current dataset')<qss.indexOf('class="plots overview"'));
   assert.match(qss,/edgeExclusion=X\.num\(target,'EdgeExclusion'/);
 });
 
@@ -644,7 +644,7 @@ test('wide desktop equal columns are literal equal tracks, not a narrow-sidebar 
   assert.doesNotMatch(css,/grid-template-columns:minmax\(320px,360px\) minmax\(0,1fr\) minmax\(0,1fr\)/);
 });
 
-test('DIT keeps all three local scientific plots visible in the independently scrollable detail pane',()=>{
+test('DIT keeps all three local scientific plots visible and grids single-point detail without tabs',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.doesNotMatch(src,/data-dit-view=|data-dit-detail=|detailView=/);
@@ -656,14 +656,15 @@ test('DIT keeps all three local scientific plots visible in the independently sc
   assert.match(src,/paneScroll=\{/);
   assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
   assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
-  assert.match(css,/\.dit-module\.dit-one-point>\.overview \.map-stage\{height:300px\}/);
+  assert.match(css,/\.dit-module\.dit-one-point \.overview \.map-stage\{height:300px\}/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,[^\{]*\{grid-column:1\/-1\}/);
   assert.doesNotMatch(css,/dit-detail-tabs|data-dit-detail/);
 });
 
 test('right-side selected-site typography matches the sidebar hierarchy',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11\.5px/);
-  assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
+  assert.match(css,/\.module-grid \.side \.panel,[^\{]*\.single-analysis-workspace>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11\.5px/);
+  assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord,[^\{]*\.single-analysis-workspace>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
 });
 
 test('DIT does not duplicate Follow XML mapping as a persistent status row',()=>{
