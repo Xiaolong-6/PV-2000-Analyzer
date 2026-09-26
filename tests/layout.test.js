@@ -651,16 +651,18 @@ test('DIT keeps all three local scientific plots visible in the independently sc
   assert.match(src,/<b>Vcpd–Qc<\/b>/);
   assert.match(src,/<b>Dit–Vsb<\/b>/);
   assert.match(src,/<b>Vsb–Qc<\/b>/);
-  assert.match(src,/viewBox="0 0 640 500"/);
+  assert.match(src,/viewBox="0 0 640 \$\{d\.patternType==='OnePointPattern'\?300:500\}"/);
+  assert.match(src,/H=d\.patternType==='OnePointPattern'\?300:500/);
   assert.match(src,/paneScroll=\{/);
   assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
   assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
+  assert.match(css,/\.dit-module\.dit-one-point>\.overview \.map-stage\{height:300px\}/);
   assert.doesNotMatch(css,/dit-detail-tabs|data-dit-detail/);
 });
 
 test('right-side selected-site typography matches the sidebar hierarchy',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11px/);
+  assert.match(css,/\.module-grid \.side \.panel,\.module-grid>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11\.5px/);
   assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
 });
 
@@ -726,4 +728,18 @@ test('selection badges are readable and algorithm-invalid is visually distinct',
   assert.match(css,/\.selection-state-invalid\{[^}]*var\(--bad\)/);
   assert.match(ui,/invalid=raw==='ALGORITHM INVALID'/);
   assert.match(ui,/tone=invalid\?'invalid'/);
+});
+
+
+test('visual acceptance follow-up improves hierarchy without changing the equal-column workspace',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
+    qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
+  assert.match(css,/:root\{[^}]*--bg:#f4f6f9;[^}]*--panel:#fff/);
+  assert.match(css,/\.panel\{[^}]*border-radius:9px;[^}]*padding:10px/);
+  assert.match(css,/\.dit-module \.analysis-method-row label\{[^}]*grid-template-columns:1fr;[^}]*align-items:stretch/);
+  assert.match(css,/@container \(max-width:520px\)\{\.axis-limit-grid\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)\}\}/);
+  assert.match(dit,/dit-one-point/);
+  assert.match(qss,/surface:d\.values\.length===1\?'compact':'standard'/);
+  assert.match(qss,/qss-one-point/);
 });

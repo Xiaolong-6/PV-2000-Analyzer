@@ -959,7 +959,7 @@
         algorithmValidN=analysis.sites.filter(item=>item.valid).length,
         coordinateN=analysis.sites.filter(item=>Number.isFinite(item.coord?.x)&&Number.isFinite(item.coord?.y)).length;
         
-      host.innerHTML=`<div class="module-grid dit-module"><aside class="side">
+      host.innerHTML=`<div class="module-grid dit-module ${d.patternType==='OnePointPattern'?'dit-one-point':''}"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Core measurement identity and sample context. Lower-priority timing, instrument and recipe details are kept under Acquisition metadata.')}</h3><dl class="meta">
           ${md('Result',esc(d.resultName||'—'),'Result identifier stored in the PV-2000 XML.')}
           ${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}
@@ -1020,7 +1020,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
           </select>
           ${PV.plot.axisControls('ditMapAxes')}
           <button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button>
-        </header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 500"></svg></div></div>
+        </header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 ${d.patternType==='OnePointPattern'?300:500}"></svg></div></div>
       </section><section class="plots detail">
           <section class="panel dit-selected-panel">
             <h3>${d.patternType==='OnePointPattern'?'Measurement point':'Selected site'} ${help('Site selection is an inspection control. Filtering never removes sites from this selector; it only changes whether the selected site is VALID, FILTERED, UNAVAILABLE or algorithm-invalid for aggregate views.')}</h3>
@@ -1273,7 +1273,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       lo=vv.length?Math.min(...vv):0,
       hi=vv.length?Math.max(...vv):1,
       W=640,
-      H=500,
+      H=d.patternType==='OnePointPattern'?300:500,
       m={l:50,r:24,t:28,b:42},
       coords=analysis.sites.map(x=>x.coord||{x:0,y:0}),
       envelope=spatialEnvelope(d,coords),

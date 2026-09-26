@@ -1,5 +1,13 @@
 # Changelog
 
+## v20260925.30.4 — 2026-09-26
+
+- Applied the first real-browser visual-acceptance follow-up from a 1363×936 / 100% QSS + DIT pass: light mode now uses a subtle workspace background with white panels, dark-mode secondary contrast is stronger, and small sidebar/table/chart-secondary text is modestly enlarged.
+- Reflowed DIT Material / Analysis method controls to full-width stacked fields so long method options do not truncate in an equal-width sidebar.
+- Made Axes limit fields respond to the chart pane width with a container query, switching narrow equal-column charts to a readable 2×2 grid.
+- Reduced low-information one-point position plots: DIT OnePoint maps use a 300 px stage instead of 500 px, and QSS one-point maps use the shared compact canvas surface. Multi-point map sizing and all scientific calculations remain unchanged.
+- Browser verification beyond 1363×936 / 100% remains pending; the PR stays draft.
+
 ## v20260925.30.3 — 2026-09-26
 
 - Updated the axis-control markup regression to match the new button-based natural-flow control while preserving the stronger structural assertions added in v20260925.30.2.

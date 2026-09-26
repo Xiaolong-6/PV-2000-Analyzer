@@ -1,5 +1,18 @@
 # Agent handoff — 2026-09-26
 
+## PR #111 browser visual follow-up (v20260925.30.4)
+
+A real-browser acceptance pass was performed externally against commit `2eebad33` at 1363×936 CSS px / 100% scale. QSS and DIT imported successfully and the natural-flow Axes panel opened without overlap. The pass found remaining presentation issues: light-theme card hierarchy was weak, dark-theme secondary labels were dim/small, DIT Analysis controls truncated long method labels, and one-point position maps consumed disproportionate vertical space.
+
+This follow-up keeps the equal three-column contract and scientific behavior unchanged while:
+- using a subtle light workspace background with white panels and clearer borders;
+- increasing sidebar/detail/table/chart-secondary typography modestly and increasing dark-theme muted contrast;
+- stacking DIT Material / Analysis method labels above full-width controls so long options remain readable;
+- using a container query for 2×2 Axes limits in narrow chart panes rather than relying on browser viewport width;
+- reducing DIT OnePoint measurement-position height from 500 to 300 CSS px and using the shared compact canvas surface for QSS one-point maps.
+
+The PR remains draft. Browser coverage currently established only at 1363×936 / 100%; 1280, 1440, 1920, mobile and 125% zoom remain unverified.
+
 ## PR #111 source-review follow-up (v20260925.30.2)
 
 Branch: `ui/analyzer-workspace-contract-20260926` remains draft-only.
