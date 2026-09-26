@@ -731,7 +731,7 @@ test('selection badges are readable and algorithm-invalid is visually distinct',
 });
 
 
-test('visual acceptance follow-up improves hierarchy without changing the equal-column workspace',()=>{
+test('visual acceptance follow-up improves hierarchy while preserving multi-point equal columns',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
     dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
     qss=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
@@ -742,4 +742,61 @@ test('visual acceptance follow-up improves hierarchy without changing the equal-
   assert.match(dit,/dit-one-point/);
   assert.match(qss,/surface:d\.values\.length===1\?'compact':'standard'/);
   assert.match(qss,/qss-one-point/);
+});
+
+
+test('single-point analyzers use a two-column workspace while multi-point defaults stay equal-three-column',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/\.module-grid\.single-point-workspace\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,2fr\)/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.side\{[^}]*grid-column:1;[^}]*grid-row:1 \/ span 2/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.overview\{[^}]*grid-column:2;[^}]*grid-row:1/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.detail\{[^}]*grid-column:2;[^}]*grid-row:2/);
+  const checks=[
+    ['qss-upcd.js',/qss-one-point single-point-workspace/],
+    ['jzero.js',/onePoint\?'single-point-workspace'/],
+    ['spv.js',/data\.sites\.length===1\?'single-point-workspace'/],
+    ['isc.js',/d\.sites\.length===1\?'single-point-workspace'/],
+    ['cet.js',/data\.sites\.length===1\?'single-point-workspace'/],
+    ['leakage.js',/data\.sites\.length===1\?'single-point-workspace'/],
+    ['dit.js',/dit-one-point single-point-workspace/]
+  ];
+  for(const [file,pattern] of checks){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,pattern,file+' must opt into the single-point workspace only when appropriate');
+  }
+});
+
+test('sparse selected-point plots render compact explanatory states instead of empty axes',()=>{
+  const isc=fs.readFileSync(require.resolve('../src/modules/isc.js'),'utf8'),
+    cet=fs.readFileSync(require.resolve('../src/modules/cet.js'),'utf8'),
+    css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(isc,/surface:sparse\?'compact':'standard'/);
+  assert.match(isc,/n===1/);
+  assert.match(isc,/1 raw reading/);
+  assert.match(isc,/rawAxesToggle\.hidden=rawCount<=1/);
+  assert.match(cet,/activeValues\.length<=1/);
+  assert.match(cet,/distribution not meaningful/);
+  assert.match(cet,/points\.length<=1/);
+  assert.match(cet,/At least two points are required to display a fitted trend/);
+  assert.match(cet,/histAxes\.hidden=activeCount<=1/);
+  assert.match(cet,/fitAxes\.hidden=fitCount<=1/);
+  assert.match(css,/\.sparse-stage\{height:168px!important\}/);
+});
+
+test('DIT never invents a center marker when spatial coordinates are absent',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8');
+  assert.doesNotMatch(src,/coord=s\.coord\|\|\{x:0,y:0\}/);
+  assert.doesNotMatch(src,/analysis\.sites\.map\(x=>x\.coord\|\|\{x:0,y:0\}\)/);
+  assert.match(src,/finiteCoords=coords\.filter/);
+  assert.match(src,/No spatial coordinates/);
+  assert.match(src,/if\(!Number\.isFinite\(p\?\.x\)\|\|!Number\.isFinite\(p\?\.y\)\)return/);
+  assert.match(src,/coordinateN===0\?'<b>Target geometry<\/b>'/);
+});
+
+test('semantic Current dataset values can wrap and scroll panes expose continuation space',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    dual=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
+  assert.match(css,/\.validation b\.validation-text\{[^}]*-webkit-line-clamp:2;[^}]*white-space:normal/);
+  assert.match(dual,/class="validation-text" title="\$\{esc\(d\.rangeClass\)\}"/);
+  assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*padding-bottom:16px;[^}]*box-shadow:inset/);
 });

@@ -220,7 +220,7 @@
     }).join('');
     const finiteLi=analysis.metrics.li.values.filter(Number.isFinite).length,
       targetText=data.targetType||data.geometryModel?.shape||'—';
-    host.innerHTML='<div class="module-grid leakage-module"><aside class="side"><section class="panel"><h3>Measurement</h3><dl class="meta">'+
+    host.innerHTML='<div class="module-grid leakage-module '+(data.sites.length===1?'single-point-workspace':'')+'"><aside class="side"><section class="panel"><h3>Measurement</h3><dl class="meta">'+
       '<dt>Result</dt><dd>'+esc(data.resultName)+'</dd><dt>Recipe</dt><dd>'+esc(data.name)+'</dd><dt>Substrate</dt><dd>'+esc(data.substrateId)+'</dd>'+
       '<dt>Status</dt><dd>'+esc(data.status||'—')+'</dd><dt>Pattern</dt><dd>'+esc(data.patternName||data.patternType)+'</dd><dt>Target</dt><dd>'+esc(targetText)+'</dd></dl></section>'+
       '<section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>'+data.sites.length+'</b><span>XML sites</span></div><div><b>'+finiteLi+'</b><span>finite LI</span></div><div><b>'+data.coords.length+' / '+data.sites.length+'</b><span>coordinates</span></div><div><b>'+(data.measurePositive?'on':'off')+' / '+(data.measureNegative?'on':'off')+'</b><span>positive / negative</span></div></div></section>'+

@@ -174,7 +174,7 @@
     let lo=Math.min(...v),hi=Math.max(...v);if(lo===hi){lo-=.5;hi+=.5}return[lo,hi];
   }
   function drawMap(canvas,data,metric,mask,selected,zoom,onZoom,onSelect){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),p={l:56,r:78,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b,
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:data.sites.length===1?'compact':'standard'}),p={l:56,r:78,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b,
       radius=Math.max(data.diameter/2||0,data.geometryModel.nominal?.radius||0,1)*1.06,
       auto=PV.plot.equalAspectRanges([-radius,radius],[-radius,radius],plotW,plotH),
       xr=PV.plot.resolve(auto.x,zoom.x),yr=PV.plot.resolve(auto.y,zoom.y),
@@ -249,7 +249,7 @@
           ?`Ø${fmt(data.diameter,1)} mm${Number.isFinite(data.edgeExclusion)?` · edge ${fmt(data.edgeExclusion,1)} mm`:''}`
           :data.targetType||'—',
         finiteDl=analysis.metrics.dl.values.filter(Number.isFinite).length;
-      host.innerHTML=`<div class="module-grid spv-module"><aside class="side">
+      host.innerHTML=`<div class="module-grid spv-module ${data.sites.length===1?'single-point-workspace':''}"><aside class="side">
         <section class="panel"><h3>Measurement ${PV.ui.help('Core SPV XML identity and sample context. Signal-channel settings and validation profiles are separated below.')}</h3><dl class="meta"><dt>Result</dt><dd>${esc(data.resultName)}</dd><dt>Recipe</dt><dd>${esc(data.name)}</dd><dt>Substrate</dt><dd>${esc(data.substrateId)}</dd><dt>Status</dt><dd>${esc(data.status)}</dd><dt>Pattern</dt><dd>${esc(data.patternName||data.patternType)}</dd><dt>Target</dt><dd>${esc(targetText)}</dd></dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${data.sites.length}</b><span>XML sites</span></div><div><b>${finiteDl}</b><span>finite DL/Tau</span></div><div><b>${data.coords.length} / ${data.sites.length}</b><span>coordinates</span></div><div><b>${state.validCount} / ${state.siteCount}</b><span>pass filter</span></div></div></section>
         ${PV.ui.validDataFilterMarkup({prefix:'spvFilter',metrics:analysis.metrics,state,helpText:'One site-level mask is shared by summaries, map, Distribution and export. DL/Tau availability remains quantity-specific, so raw SPV8/SPV6 sites are not discarded merely because DL is undefined.'})}

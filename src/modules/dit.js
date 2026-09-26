@@ -933,7 +933,7 @@
       };
       if(!analysis.options.pchipEnabled&&mapKey==='MidgapDit')mapKey='Dit';
       const s=analysis.sites[site],
-        coord=s.coord||{x:0,y:0},
+        coord=s.coord,
         filterState=filterController.snapshot(),
         siteSupport=filterState.selection.supportMask[site],
         siteActive=filterState.selection.activeMask[site],
@@ -959,7 +959,7 @@
         algorithmValidN=analysis.sites.filter(item=>item.valid).length,
         coordinateN=analysis.sites.filter(item=>Number.isFinite(item.coord?.x)&&Number.isFinite(item.coord?.y)).length;
         
-      host.innerHTML=`<div class="module-grid dit-module ${d.patternType==='OnePointPattern'?'dit-one-point':''}"><aside class="side">
+      host.innerHTML=`<div class="module-grid dit-module ${d.patternType==='OnePointPattern'?'dit-one-point single-point-workspace':''}"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Core measurement identity and sample context. Lower-priority timing, instrument and recipe details are kept under Acquisition metadata.')}</h3><dl class="meta">
           ${md('Result',esc(d.resultName||'—'),'Result identifier stored in the PV-2000 XML.')}
           ${md('Recipe',esc(d.name||'—'),metaHelp.recipe)}
@@ -1005,7 +1005,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
 
       </aside><section class="plots overview">
         <div class="panel chart map-panel"><header>
-          ${d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}
+          ${coordinateN===0?'<b>Target geometry</b>':d.patternType==='OnePointPattern'?'<b>Measurement position</b>':'<b>Wafer map</b>'}
           ${help('Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the map to zoom both spatial axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. OnePointPattern shows the scheduled point on the nominal XML target instead of inventing a spatial heatmap. Multi-site data map the selected Dit/COCOS quantity across measured coordinates.')}
           <span class="grow"></span>
           <select id="ditMapMetric">
@@ -1028,7 +1028,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
               <button id="ditPrev">‹</button>
               <select id="ditSite">${analysis.sites.map((x,i)=>`<option value="${i}" ${i===site?'selected':''}>Site ${i+1}${x.valid?'':' ⚠'}</option>`).join('')}</select>
               <button id="ditNext">›</button>
-              <span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span>
+              <span class="coord">${coord?`x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}`:'coordinate unavailable'}</span>
             </div>
             <dl class="meta" style="margin-top:8px">
               ${PV.ui.selectionStateRow(siteFilterState,{metric:metrics[filterState.metricKey]?.short||filterState.metricKey})}
@@ -1275,8 +1275,9 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       W=640,
       H=d.patternType==='OnePointPattern'?300:500,
       m={l:50,r:24,t:28,b:42},
-      coords=analysis.sites.map(x=>x.coord||{x:0,y:0}),
-      envelope=spatialEnvelope(d,coords),
+      coords=analysis.sites.map(x=>x.coord),
+      finiteCoords=coords.filter(p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)),
+      envelope=spatialEnvelope(d,finiteCoords),
       extent=Math.max(1,envelope.radius),
       rawX=[-extent*1.15,extent*1.15],
       rawY=[-extent*1.15,extent*1.15],
@@ -1303,9 +1304,13 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       }
       const geometryNote=envelope.kind==='round'?` · Ø${fmt(envelope.radius*2,0)} mm${Number.isFinite(d.edgeExclusion)?` · exclusion ${fmt(d.edgeExclusion,1)} mm`:''}`:'';
       out+=`<text x="${(m.l+W-m.r)/2}" y="14" text-anchor="middle" fill="var(--muted)" font-size="11">${esc(label)} [${esc(unit)}]${esc(geometryNote)}</text><text x="${(m.l+W-m.r)/2}" y="${H-3}" text-anchor="middle" fill="var(--muted)" font-size="11">X [mm]</text><text x="11" y="${(m.t+H-m.b)/2}" transform="rotate(-90 11 ${(m.t+H-m.b)/2})" text-anchor="middle" fill="var(--muted)" font-size="11">Y [mm]</text>`;
+      if(!finiteCoords.length){
+        out+=`<text x="${(m.l+W-m.r)/2}" y="${(m.t+H-m.b)/2}" text-anchor="middle" fill="var(--muted)" font-size="13" font-weight="650">No spatial coordinates</text><text x="${(m.l+W-m.r)/2}" y="${(m.t+H-m.b)/2+20}" text-anchor="middle" fill="var(--muted)" font-size="10">Target outline only · no site marker is inferred</text>`;
+      }
       analysis.sites.forEach((s,i)=>{
-        const p=coords[i],
-        v=vals[i],
+        const p=coords[i];
+        if(!Number.isFinite(p?.x)||!Number.isFinite(p?.y))return;
+        const v=vals[i],
         z=Number.isFinite(v)?(log&&v>0?Math.log10(v):v):NaN,
         t=Number.isFinite(z)&&hi>lo?(z-lo)/(hi-lo):.5,
         col=Number.isFinite(z)?mapColor(t):'#666',

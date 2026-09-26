@@ -335,7 +335,7 @@
         calculation=data.calculationProfile?`${data.calculationProfile.status} · ${data.calculationProfile.id}`:'inferred',
         geometry=data.geometryProfile?`${data.geometryProfile.status} · ${data.geometryProfile.id}`:'inferred';
       const finiteEot=analysis.metrics.eot.values.filter(Number.isFinite).length;
-      host.innerHTML=`<div class="module-grid cet-module"><aside class="side">
+      host.innerHTML=`<div class="module-grid cet-module ${data.sites.length===1?'single-point-workspace':''}"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Core CET XML identity and sample geometry. Calculation/geometry validation and acquisition constants are separated below.')}</h3><dl class="meta">
           ${meta('Result',data.resultName)}
           ${meta('Recipe',data.name)}
@@ -491,10 +491,15 @@
       if(!svg)return;
       const metric=analysis.metrics[metricKey],
         mask=filterController.metricMask(metric),
+        activeValues=metric.values.filter((value,index)=>mask[index]&&Number.isFinite(value)),
         rows=histogramRows(metric,mask,histBins),
         width=640,height=360,margin={l:62,r:18,t:22,b:42};
-      if(!rows.length){
-        svg.innerHTML='<text x="320" y="180" text-anchor="middle" fill="var(--muted)" font-size="12">No active values</text>';
+      svg.parentElement?.classList.toggle('sparse-stage',activeValues.length<=1);
+      if(activeValues.length<=1){
+        const message=activeValues.length
+          ?`1 active ${esc(metric.short)} value · distribution not meaningful`
+          :'No active values';
+        svg.innerHTML=`<text x="320" y="168" text-anchor="middle" fill="var(--text)" font-size="15" font-weight="650">${message}</text><text x="320" y="194" text-anchor="middle" fill="var(--muted)" font-size="11">Select another quantity or widen the valid-data range to compare a population.</text>`;
         return;
       }
       const qlo=rows[0].lo,qhi=rows[rows.length-1].hi,max=Math.max(1,...rows.map(row=>row.count)),
@@ -542,8 +547,12 @@
         current=data.sites[site],
         points=current.qc.map((x,index)=>({x,y:current.vcpdLight[index]})).filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y)),
         width=640,height=360,margin={l:58,r:18,t:22,b:40};
-      if(!points.length){
-        svg.innerHTML='<text x="320" y="180" text-anchor="middle" fill="var(--muted)" font-size="12">No process Vcpd light data</text>';
+      svg.parentElement?.classList.toggle('sparse-stage',points.length<=1);
+      if(points.length<=1){
+        const message=points.length
+          ?`1 process point · Vcpd light ${fmt(points[0].y,6)} V`
+          :'No process Vcpd light data';
+        svg.innerHTML=`<text x="320" y="168" text-anchor="middle" fill="var(--text)" font-size="15" font-weight="650">${message}</text><text x="320" y="194" text-anchor="middle" fill="var(--muted)" font-size="11">${points.length?'At least two points are required to display a fitted trend.':'No finite point is available for this site.'}</text>`;
         return;
       }
       const xs=points.map(point=>point.x),ys=points.map(point=>point.y),
@@ -618,6 +627,16 @@
       drawMap();
       drawHistogram();
       drawFit();
+      const metric=analysis.metrics[metricKey],
+        mask=filterController.metricMask(metric),
+        activeCount=metric.values.filter((value,index)=>mask[index]&&Number.isFinite(value)).length,
+        fitCount=data.sites[site].qc.map((x,index)=>({x,y:data.sites[site].vcpdLight[index]})).filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y)).length,
+        histAxes=host.querySelector('[data-axis-toggle="cetHistAxes"]'),
+        histBinsToggle=host.querySelector('[data-bin-toggle="cetHistBins"]'),
+        fitAxes=host.querySelector('[data-axis-toggle="cetFitAxes"]');
+      if(histAxes)histAxes.hidden=activeCount<=1;
+      if(histBinsToggle)histBinsToggle.hidden=activeCount<=1;
+      if(fitAxes)fitAxes.hidden=fitCount<=1;
       bindExports();
     }
 

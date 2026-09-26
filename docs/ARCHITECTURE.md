@@ -401,7 +401,9 @@ The **Measurement** panel is deliberately a compact identity block, not a generi
 
 At medium widths (<=1200 CSS px), the left dataset sidebar remains dedicated while the overview/detail regions stack into the second column. Narrow/mobile layouts collapse to one column in semantic order. Fine-pointer portrait desktop layouts must not be forced into the mobile layout solely by orientation.
 
-Single-point datasets use the same semantic three-region workspace but should not spend a full map-sized viewport on one marker. Measurement-position views therefore use a compact plot surface while multi-point maps retain their normal scientific plotting area. This is presentation-only: target geometry, coordinates, selection and exported values are unchanged.
+Single-point datasets preserve the same semantic information hierarchy but switch the wide workspace to **sidebar + one 2fr analysis column**. The compact position/geometry view sits above selected-point/detail content instead of reserving two mostly empty right-hand columns. Multi-point analyzers retain the literal equal-three-column workspace. Measurement-position surfaces remain compact, and this is presentation-only: target geometry, coordinates, selection and exported values are unchanged.
+
+Sparse plots use an explicit small-sample state. Zero values show an empty-data explanation; one value shows a compact readout and suppresses Axes/Bins controls that would imply a meaningful curve or population distribution. Normal axes are rendered only once at least two finite points/values exist for that plot.
 
 Where Map, Distribution and local profiles are alternate views of one site-level Quantity, they share one active displayed quantity with the Valid-data filter by default. Changing either the chart quantity selector or Filter metric updates the other. Diagnostic plots whose scientific meaning is fixed (for example raw acquisition readings or a current-site fit) are not relabelled as alternate result quantities. The selection core retains independent cross-metric masking capability for a future explicit advanced mode.
 

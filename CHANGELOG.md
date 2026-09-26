@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260925.30.5 — 2026-09-26
+
+- Reworked single-point presentation into a two-column sidebar + 2fr workspace contract while preserving the equal-three-column layout for multi-point analyzers.
+- Added compact sparse-data states: VCPD one-reading inspection no longer draws a mostly empty raw axis, and CET 0/1-point fit or distribution views explain the limited sample directly while hiding inapplicable Axes/Bins controls.
+- Removed DIT's implicit (0,0) coordinate fallback. When no spatial coordinates exist, the target outline remains visible but no site marker is inferred; the map is labelled Target geometry and states that coordinates are unavailable.
+- Allowed semantic Current dataset values such as Dual QSS injection range to wrap to two lines with full hover text instead of clipping.
+- Added bottom breathing room and a subtle continuation shadow to independently scrolling panes so additional cards are easier to discover.
+- Kept dense LBIC/ISC multi-point layout, scientific calculations, parser behavior, validation profiles and exports unchanged.
+
 ## v20260925.30.4 — 2026-09-26
 
 - Applied the first real-browser visual-acceptance follow-up from a 1363×936 / 100% QSS + DIT pass: light mode now uses a subtle workspace background with white panels, dark-mode secondary contrast is stronger, and small sidebar/table/chart-secondary text is modestly enlarged.

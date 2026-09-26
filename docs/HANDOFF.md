@@ -1,5 +1,18 @@
 # Agent handoff — 2026-09-26
 
+## PR #111 screenshot follow-up (v20260925.30.5)
+
+A 7-page real-browser review of commit `cb735234` covered ten measurement families at 1363×936 CSS px / DPR 1 / 100% zoom, including LBIC 100/2601, VCPD 1069, ISC 49, SPV 9, Dual QSS 7, CET 5, JZero, Leakage, QSS and DIT 16. Dense LBIC and ISC established the multi-point visual baseline; Axes/Bins inline expansion was confirmed usable.
+
+This follow-up addresses only issues visible in those screenshots:
+- single-point analyzers use sidebar + one 2fr workspace instead of three equal columns with empty right-hand space;
+- VCPD one-reading raw data and CET 0/1-point fit/distribution use compact explanatory states instead of empty scientific axes;
+- DIT with zero coordinates shows target geometry plus “No spatial coordinates” and never substitutes (0,0) or draws a center site marker;
+- semantic Current dataset values such as Dual QSS injection range may occupy two lines with a title tooltip instead of clipping;
+- independently scrolling panes gain bottom breathing room and a subtle continuation shadow.
+
+Multi-point LBIC/ISC equal-three-column layout is intentionally unchanged. Scientific formulas, parsers, geometry calculations, filters and exports are unchanged. The PR remains draft; 1280/1440/1920, mobile and 125% browser coverage are still outstanding.
+
 ## PR #111 browser visual follow-up (v20260925.30.4)
 
 A real-browser acceptance pass was performed externally against commit `2eebad33` at 1363×936 CSS px / 100% scale. QSS and DIT imported successfully and the natural-flow Axes panel opened without overlap. The pass found remaining presentation issues: light-theme card hierarchy was weak, dark-theme secondary labels were dim/small, DIT Analysis controls truncated long method labels, and one-point position maps consumed disproportionate vertical space.

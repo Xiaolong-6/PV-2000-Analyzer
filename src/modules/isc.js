@@ -386,7 +386,7 @@
   }
 
   function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:d.sites.length===1?'compact':'standard'}),
       metric=a.metrics[key],
       values=metric.values,
       activeValues=values.filter((value,index)=>mask?.[index]&&Number.isFinite(value)),
@@ -640,17 +640,39 @@
   }
 
   function drawRaw(canvas,d,selected,zoom,onZoom){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),
-      site=d.sites[selected],
+    const site=d.sites[selected],
       isVcpd=d.measurementKind==='vcpd',
       dark=site?(isVcpd?site.darkRaw.slice():site.darkRaw.map(v=>v-d.offset)):[],
       light=site&&!isVcpd?site.lightRaw.map(v=>v-d.offset):[],
       n=Math.max(dark.length,light.length),
-      p={l:62,r:18,t:24,b:48};
+      sparse=n<=1,
+      {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:sparse?'compact':'standard'}),
+      p={l:62,r:18,t:24,b:48},
+      clearInteraction=()=>{
+        canvas.onwheel=null;canvas.ondblclick=null;canvas.onpointermove=null;canvas.onpointerleave=null;
+        canvas.style.cursor='default';
+      };
     ctx.clearRect(0,0,W,H);
     ctx.fillStyle=css('--chart-bg');
     ctx.fillRect(0,0,W,H);
-    if(!site||!n)return;
+    if(!site||!n){
+      clearInteraction();
+      ctx.fillStyle=css('--muted');ctx.textAlign='center';ctx.font='600 13px system-ui';
+      ctx.fillText('No stored readings',W/2,H/2);
+      return;
+    }
+    if(n===1){
+      clearInteraction();
+      ctx.textAlign='center';
+      ctx.fillStyle=css('--text');ctx.font='680 18px system-ui';
+      ctx.fillText(isVcpd?'1 raw reading':'1 raw reading pair',W/2,H/2-12);
+      ctx.fillStyle=css('--muted');ctx.font='11px system-ui';
+      const detail=isVcpd
+        ?`Vcpd ${fmt(dark[0],6)} V`
+        :`Dark ${fmt(dark[0],6)} V · Light ${fmt(light[0],6)} V`;
+      ctx.fillText(detail,W/2,H/2+12);
+      return;
+    }
 
     const autoX=[1,Math.max(2,n)],
       autoY=finiteRange([...dark,...light]),
@@ -820,7 +842,7 @@
       </dl>`;
     }
 
-    host.innerHTML=`<div class="module-grid isc-module"><aside class="side">
+    host.innerHTML=`<div class="module-grid isc-module ${d.sites.length===1?'single-point-workspace':''}"><aside class="side">
       <section class="panel"><h3>Measurement ${help(measurementHelp)}</h3><dl class="meta">
         ${metaRow('Type',isVcpd?'VCPD · VcpdMeasurement':'ISC · ISCMeasurement')}
         ${metaRow('Result',d.resultName)}
@@ -930,7 +952,11 @@
         });
         PV.plot.bindBinControls(host,'iHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
       }
-      PV.plot.bindAxisControls(host,'iRawAxes',zoom.raw,n=>{
+      const currentSite=d.sites[selected],
+        rawCount=currentSite?Math.max(currentSite.darkRaw?.length||0,isVcpd?0:currentSite.lightRaw?.length||0):0,
+        rawAxesToggle=host.querySelector('[data-axis-toggle="iRawAxes"]');
+      if(rawAxesToggle)rawAxesToggle.hidden=rawCount<=1;
+      if(rawCount>1)PV.plot.bindAxisControls(host,'iRawAxes',zoom.raw,n=>{
         zoom.raw=n;
         redraw();
       });

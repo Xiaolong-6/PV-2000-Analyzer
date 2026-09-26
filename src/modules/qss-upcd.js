@@ -738,7 +738,7 @@
           'Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the map to zoom both spatial axes; hold Ctrl/⌘ over one axis to zoom only that direction; double-click restores auto scale.',
           'Smooth mode is clipped to the scheduled region and uses only valid measured points for interpolation. Points mode shows actual sites.'
         ].join(' ');
-      host.innerHTML=`<div class="module-grid qss-module ${onePoint?'qss-one-point':''}"><aside class="side">
+      host.innerHTML=`<div class="module-grid qss-module ${onePoint?'qss-one-point single-point-workspace':''}"><aside class="side">
         <section class="panel"><h3>Measurement ${help('Core XML measurement identity and sample context. Timing and acquisition settings are kept under Full metadata.')}</h3><dl class="meta">
           ${metaRow('Result',d.resultName,'Result identifier stored in the PV-2000 job XML.')}
           ${metaRow('Recipe',d.name,'PV-2000 recipe/job name used for this measurement.')}

@@ -369,7 +369,7 @@
     }
   }
   function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect,pointsMode=false){
-    const {ctx,W,H}=PV.plot.canvasFrame(canvas),m=a.metrics[key],vals=m.values,p={l:56,r:82,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b;
+    const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:d.coords.length===1?'compact':'standard'}),m=a.metrics[key],vals=m.values,p={l:56,r:82,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b;
     ctx.font='11px system-ui';
     const nominalHalf=Math.max(d.targetWidth/2||0,d.targetHeight/2||0,d.diameter/2||0,1)*1.06;
     let auto=PV.plot.equalAspectRanges([-nominalHalf,nominalHalf],[-nominalHalf,nominalHalf],plotW,plotH),xr=PV.plot.resolve(auto.x,zoom?.x),yr=PV.plot.resolve(auto.y,zoom?.y);
@@ -494,7 +494,7 @@
           `${d.pairedSiteCount} paired sites`
         ].filter(Boolean).join(' · '),
         qssText=[0,1].map(i=>Number.isFinite(d.qssMilli[i])?`${fmt(d.qssMilli[i]/1000,2)} sun`:'—').join(' / ');
-      host.innerHTML=`<div class="module-grid jzero-module"><aside class="side">
+      host.innerHTML=`<div class="module-grid jzero-module ${onePoint?'single-point-workspace':''}"><aside class="side">
         <section class="panel">\
 <h3>Measurement ${help('Core XML measurement identity and sample context. Completeness, validation profiles and lower-priority acquisition settings are separated below.')}</h3>\
 <dl class="meta">${meta('Result',d.resultName)}${meta('Recipe',d.name)}${meta('Substrate',d.substrateId)}${meta('Status',d.status)}${meta('Pattern',pattern())}${meta('Target',target())}${meta('Doping',`${fmt(d.doping)} cm⁻³ ${d.dopingType}`)}</dl>\
