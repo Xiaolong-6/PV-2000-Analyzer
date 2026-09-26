@@ -1,71 +1,17 @@
 # Changelog
 
-## v20260925.30.11 — 2026-09-26
+## v20260926.1 — 2026-09-26
 
-- Compacted the wide-screen DIT OnePoint Measurement point metadata into two label/value pairs per row, preserving every displayed value while reducing remaining vertical scroll.
-- Left DIT multi-point cards, <=1200/mobile layouts, other analyzer families and all scientific behavior unchanged.
-
-## v20260925.30.10 — 2026-09-26
-
-- Applied a final wide-desktop vertical-density pass without changing the single-point analysis-grid structure: DIT OnePoint position is 230 px and its local scientific chart stages are 260 px at >1200 CSS px.
-- Reduced CET singleton sparse fit state to 140 px at >1200 CSS px so a one-process-point explanation no longer consumes full chart height.
-- Kept <=1200 px/mobile behavior, multi-point analyzers, QSS/Leakage/Dual QSS presentation and all scientific/parser/filter/export behavior unchanged.
-
-## v20260925.30.9 — 2026-09-26
-
-- Updated source-structure layout regressions for the new conditional single-point analysis wrapper: QSS ordering now keys off the semantic overview marker, DIT accepts the wrapped overview selector and asserts its full-width third-plot rule, and selected-detail typography checks cover both direct multi-point panes and wrapped single-point panes.
-
-## v20260925.30.8 — 2026-09-26
-
-- Replaced the single-point right-hand vertical stack with an internal two-column analysis grid inside the existing sidebar + 2fr workspace. Position/geometry and selected-point details share the first row; plot-rich single-point analyzers distribute meaningful charts across subsequent cells.
-- DIT single-point now keeps two local curves side-by-side while the third curve and Flatband extraction span the full analysis width; ISC/VCPD, CET and Leakage local detail charts span both analysis columns.
-- Kept the internal analysis grid responsive: it collapses to one analysis column at <=1200 CSS px and to normal document flow on narrow/mobile layouts.
-- Removed the remaining visible ellipsis from semantic Dual QSS Current dataset values by overriding the generic numeric-card nowrap rule.
-- Made sparse-control hiding effective under author CSS; CET now hides Axes/Bins and histogram export for <=1 active distribution value, and hides fit export when no fit point exists.
-- Multi-point equal-three-column layouts and scientific behavior are unchanged.
-
-## v20260925.30.7 — 2026-09-26
-
-- Made the three-item Dual QSS Current dataset cardinality regression independent of value-element attributes after the semantic wrapping class was introduced.
-
-## v20260925.30.6 — 2026-09-26
-
-- Updated the Current dataset structure regression to count semantic value cells with optional classes, preserving the three-item Dual QSS cardinality check after adding the wrapping class.
-
-## v20260925.30.5 — 2026-09-26
-
-- Reworked single-point presentation into a two-column sidebar + 2fr workspace contract while preserving the equal-three-column layout for multi-point analyzers.
-- Added compact sparse-data states: VCPD one-reading inspection no longer draws a mostly empty raw axis, and CET 0/1-point fit or distribution views explain the limited sample directly while hiding inapplicable Axes/Bins controls.
-- Removed DIT's implicit (0,0) coordinate fallback. When no spatial coordinates exist, the target outline remains visible but no site marker is inferred; the map is labelled Target geometry and states that coordinates are unavailable.
-- Allowed semantic Current dataset values such as Dual QSS injection range to wrap to two lines with full hover text instead of clipping.
-- Added bottom breathing room and a subtle continuation shadow to independently scrolling panes so additional cards are easier to discover.
-- Kept dense LBIC/ISC multi-point layout, scientific calculations, parser behavior, validation profiles and exports unchanged.
-
-## v20260925.30.4 — 2026-09-26
-
-- Applied the first real-browser visual-acceptance follow-up from a 1363×936 / 100% QSS + DIT pass: light mode now uses a subtle workspace background with white panels, dark-mode secondary contrast is stronger, and small sidebar/table/chart-secondary text is modestly enlarged.
-- Reflowed DIT Material / Analysis method controls to full-width stacked fields so long method options do not truncate in an equal-width sidebar.
-- Made Axes limit fields respond to the chart pane width with a container query, switching narrow equal-column charts to a readable 2×2 grid.
-- Reduced low-information one-point position plots: DIT OnePoint maps use a 300 px stage instead of 500 px, and QSS one-point maps use the shared compact canvas surface. Multi-point map sizing and all scientific calculations remain unchanged.
-- Browser verification beyond 1363×936 / 100% remains pending; the PR stays draft.
-
-## v20260925.30.3 — 2026-09-26
-
-- Updated the axis-control markup regression to match the new button-based natural-flow control while preserving the stronger structural assertions added in v20260925.30.2.
-
-## v20260925.30.2 — 2026-09-26
-
-- Replaced the first-pass absolute Axes/Bins popovers and fixed 112/168 px padding reservations with a full-width, content-height settings row in normal chart-header flow; controls remain mutually exclusive and cannot exceed the chart container width.
-- Selected-point state now names the active filter quantity and adds a concise reason for FILTERED / UNAVAILABLE; DIT map tooltips now distinguish ALGORITHM INVALID, UNAVAILABLE, FILTERED and VALID consistently.
-- Increased state-badge text to 10.5 px with lighter weight, added a distinct algorithm-invalid treatment, and made Leakage report PARTIAL plus exactly which VSASS/LI results are finite.
-- Replaced fixed-padding source tests with structural regressions that reject absolute/viewport-sized chart settings and ambiguous combined DIT states. Browser screenshot acceptance remains pending before the draft can be considered complete.
-
-## v20260925.30.1 — 2026-09-26
-
-- Tightened the analyzer workspace UI contract without changing scientific calculations: selected-point cards now use one shared visual state badge, including newly explicit Valid-data state in CET/SPV and data availability in Leakage.
-- Axes/Bins header popovers are now mutually exclusive and reserve temporary chart-header space while open, so their controls no longer cover the plot surface.
-- Preserved the existing equal three-column layout, compact adaptive Current dataset panels, active-quantity synchronization and one-point population-plot suppression already present on main.
-- Added layout regressions for non-overlapping header popovers and cross-family selected-point state treatment.
+- Refined the analyzer workspace UI contract while preserving scientific calculations, parsing, geometry semantics, validation envelopes and exports.
+- Replaced overlay-style Axes/Bins controls with mutually exclusive, full-width settings rows in normal chart-header flow; settings are container-bounded, content-height driven and covered by structural regressions.
+- Standardized selected-point state across filter-aware families with explicit filter quantity, VALID / FILTERED / UNAVAILABLE reasoning and a distinct ALGORITHM INVALID state; Leakage now reports AVAILABLE / PARTIAL / UNAVAILABLE plus the finite result names.
+- Improved visual hierarchy and readability in light/dark themes, made DIT Analysis controls readable at equal-column widths, and made Axes input layout respond to chart-pane width.
+- Preserved literal equal three-column layout for multi-point analyzers while giving single-point analyzers a sidebar + two-column analysis workspace. Position/geometry and point details share the first row; plot-rich local analysis uses the remaining grid without a long single-column stack.
+- Added explicit sparse-data presentation for VCPD/CET, hiding inapplicable Axes/Bins/Export controls when a curve or population distribution is not meaningful.
+- Removed DIT's implicit (0,0) coordinate fallback: coordinate-free datasets render target geometry only and never infer a center site marker.
+- Kept semantic Current dataset values readable, including the full Dual QSS injection-range label, and added subtle continuation cues to independently scrolling panes.
+- Applied wide-screen single-point density tuning: DIT OnePoint uses a 230 px position surface, 260 px local scientific plots and a compact two-pair Measurement point metadata grid; CET singleton sparse fit uses 140 px. <=1200/mobile and multi-point layouts are unchanged.
+- Browser review at 1363×936 CSS px / 100% covered 14 valid XML imports across 10 measurement families, including a 2601-point LBIC raster; no chart/control overlap or clipping was observed in the reviewed cases. Remaining 1280/1440/1920, mobile and 125% checks are separate responsive QA.
 
 ## v20260925.30 — 2026-09-25
 

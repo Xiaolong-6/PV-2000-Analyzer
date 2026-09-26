@@ -1,67 +1,21 @@
 # Agent handoff — 2026-09-26
 
-## PR #111 final DIT point-card compaction (v20260925.30.11)
+## Analyzer workspace UI contract — merged candidate v20260926.1
 
-The c6d8d1a browser review confirmed the single-point analysis grid, sparse states, dense LBIC and multi-family layout are visually stable at 1363×936 / 100%. DIT OnePoint still had ~184 px of internal scroll after chart-height compaction. The remaining tall element is the Measurement point metadata card, not the scientific plots.
+PR #111 consolidates the 2026-09-26 analyzer-workspace visual review into one mainline change. The accepted wide-screen contract is:
 
-This final branch-only polish keeps every DIT value but renders the OnePoint Measurement point metadata as two label/value pairs per row at >1200 CSS px. Multi-point DIT cards, <=1200 layouts and all other analyzers are unchanged. No scientific/parser/filter/export behavior changes.
+- multi-point analyzers retain literal equal three columns with independent pane scrolling;
+- single-point analyzers use a dataset sidebar plus a two-column analysis workspace, pairing position/geometry with selected-point details and arranging local scientific plots by information density;
+- Axes/Bins open as full-width, natural-flow header settings rows rather than absolute overlays;
+- selected-point state names the active filter quantity and distinguishes VALID, FILTERED, UNAVAILABLE and ALGORITHM INVALID; non-filter Leakage reports actual result availability;
+- sparse VCPD/CET views explain 0/1-value states instead of drawing misleading empty axes;
+- DIT never invents (0,0) when spatial coordinates are absent;
+- wide DIT OnePoint density uses a 230 px position view, 260 px local scientific plots and a compact two-pair point metadata grid; CET singleton sparse fit uses 140 px;
+- <=1200/mobile behavior and multi-point scientific layouts remain unchanged.
 
-## PR #111 final vertical-density follow-up (v20260925.30.10)
+The final external browser review of the preceding c6d8d1a head used 1363×936 CSS px / DPR 1 / 100% zoom, imported 14 valid XML samples across 10 measurement families, and specifically confirmed the 2601-point LBIC raster, CET singleton/sparse states, DIT zero-coordinate behavior, Dual QSS long label and other representative families. The only final visual change after that review is the DIT OnePoint point-card compaction; it is presentation-only and covered by the public layout gate. Remaining 1280/1440/1920, mobile and 125% checks are separate responsive QA, not claims of completed browser coverage.
 
-The d1a4bf0 browser review at 1363×936 / 100% confirmed that the internal two-column analysis grid is the correct single-point structure. DIT still measured about 1210 px of analysis content inside an ~836 px workspace viewport, leaving ~374 px of internal scroll; CET singleton's one-process-point fit state was semantically correct but still visually taller than its information content warranted.
-
-This revision keeps the grid and ordering unchanged. On wide desktop (>1200 CSS px) only:
-- DIT OnePoint measurement position is capped at 230 px;
-- DIT OnePoint local Vcpd–Qc / Dit–Vsb / Vsb–Qc chart stages use 260 px;
-- CET singleton sparse fit state uses 140 px.
-
-The <=1200 px stacked layout, mobile flow, all multi-point layouts and scientific behavior remain unchanged. QSS, Leakage, Dual QSS and CET sparse-distribution presentation are intentionally frozen from d1a4bf0. PR #111 remains draft and unmerged pending a final browser look.
-
-## PR #111 single-point grid follow-up (v20260925.30.8)
-
-The bf9a856 browser retest confirmed that the previous sidebar + one wide right column solved empty-column waste but overcorrected plot-rich single-point analyzers: DIT, Leakage and CET could become long vertical stacks. The same retest also showed Dual QSS still visibly ellipsizing “High-range injection”, and CET sparse states still exposed controls that implied a meaningful axis/distribution. filecite is not used in repository docs; evidence remains in the review artifact supplied in the project conversation.
-
-This revision keeps the outer single-point split at sidebar + 2fr workspace, but the 2fr workspace is now an internal two-column analysis grid. Position/geometry and selected-point details share the first row. Leakage/ISC/CET main local plots span both analysis columns; DIT places two local curves side-by-side and spans the third plus Flatband extraction across a full row. At <=1200 CSS px the internal grid collapses to one analysis column; mobile remains a normal single-column document flow.
-
-Dual QSS semantic Current dataset values now explicitly override the generic ellipsis rule so long range labels wrap visibly. Hidden sparse Axes/Bins buttons now obey the hidden attribute under author CSS, CET hides histogram export when <=1 active value, and hides fit export when there are zero fit points.
-
-Multi-point LBIC/ISC layout and all scientific/parser/geometry/filter/export semantics remain unchanged. PR #111 remains draft and unmerged.
-
-## PR #111 screenshot follow-up (v20260925.30.5)
-
-A 7-page real-browser review of commit `cb735234` covered ten measurement families at 1363×936 CSS px / DPR 1 / 100% zoom, including LBIC 100/2601, VCPD 1069, ISC 49, SPV 9, Dual QSS 7, CET 5, JZero, Leakage, QSS and DIT 16. Dense LBIC and ISC established the multi-point visual baseline; Axes/Bins inline expansion was confirmed usable.
-
-This follow-up addresses only issues visible in those screenshots:
-- single-point analyzers use sidebar + one 2fr workspace instead of three equal columns with empty right-hand space;
-- VCPD one-reading raw data and CET 0/1-point fit/distribution use compact explanatory states instead of empty scientific axes;
-- DIT with zero coordinates shows target geometry plus “No spatial coordinates” and never substitutes (0,0) or draws a center site marker;
-- semantic Current dataset values such as Dual QSS injection range may occupy two lines with a title tooltip instead of clipping;
-- independently scrolling panes gain bottom breathing room and a subtle continuation shadow.
-
-Multi-point LBIC/ISC equal-three-column layout is intentionally unchanged. Scientific formulas, parsers, geometry calculations, filters and exports are unchanged. The PR remains draft; 1280/1440/1920, mobile and 125% browser coverage are still outstanding.
-
-## PR #111 browser visual follow-up (v20260925.30.4)
-
-A real-browser acceptance pass was performed externally against commit `2eebad33` at 1363×936 CSS px / 100% scale. QSS and DIT imported successfully and the natural-flow Axes panel opened without overlap. The pass found remaining presentation issues: light-theme card hierarchy was weak, dark-theme secondary labels were dim/small, DIT Analysis controls truncated long method labels, and one-point position maps consumed disproportionate vertical space.
-
-This follow-up keeps the equal three-column contract and scientific behavior unchanged while:
-- using a subtle light workspace background with white panels and clearer borders;
-- increasing sidebar/detail/table/chart-secondary typography modestly and increasing dark-theme muted contrast;
-- stacking DIT Material / Analysis method labels above full-width controls so long options remain readable;
-- using a container query for 2×2 Axes limits in narrow chart panes rather than relying on browser viewport width;
-- reducing DIT OnePoint measurement-position height from 500 to 300 CSS px and using the shared compact canvas surface for QSS one-point maps.
-
-The PR remains draft. Browser coverage currently established only at 1363×936 / 100%; 1280, 1440, 1920, mobile and 125% zoom remain unverified.
-
-## PR #111 source-review follow-up (v20260925.30.2)
-
-Branch: `ui/analyzer-workspace-contract-20260926` remains draft-only.
-
-Source review found that the first UI-contract pass still used an absolutely positioned Axes/Bins panel plus fixed 112/168 px header padding. That approach has been removed. Axes/Bins now render as a second, full-width row in normal chart-header flow, so width is constrained by the chart pane and height is content-driven. The mutual-exclusion behavior is retained.
-
-Selected-point state now names the active filter quantity and explains FILTERED / UNAVAILABLE instead of presenting an ambiguous point-wide badge. DIT map tooltips use the same separate ALGORITHM INVALID / UNAVAILABLE / FILTERED / VALID states. Badge typography is raised to 10.5 px with lower weight, ALGORITHM INVALID has its own error treatment, and Leakage reports PARTIAL plus the actual finite result names when only some VSASS/LI quantities exist.
-
-Static/source regressions now reject absolute/viewport-sized chart settings, fixed header padding reservations and the old combined DIT tooltip state. Real-browser screenshot acceptance remains a separate draft gate.
+No scientific equation, parser path, geometry calculation, validity profile or export semantics are changed by PR #111.
 
 ## Real-browser chart-header hardening (v20260925.30)
 
