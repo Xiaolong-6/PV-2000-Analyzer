@@ -405,6 +405,8 @@ Single-point datasets preserve the same semantic information hierarchy but switc
 
 Sparse plots use an explicit small-sample state. Zero values show an empty-data explanation; one value shows a compact readout and suppresses Axes/Bins controls that would imply a meaningful curve or population distribution. Normal axes are rendered only once at least two finite points/values exist for that plot.
 
+On wide desktop (>1200 CSS px), plot-rich single-point pages may use compact vertical chart heights to keep one logical analysis group near a single viewport without reducing horizontal plotting area. The current DIT OnePoint contract uses a ~230 px position surface and ~260 px local scientific plots; CET singleton sparse fit states use ~140 px. These compact heights do not apply to multi-point views or the <=1200 px stacked layout.
+
 Where Map, Distribution and local profiles are alternate views of one site-level Quantity, they share one active displayed quantity with the Valid-data filter by default. Changing either the chart quantity selector or Filter metric updates the other. Diagnostic plots whose scientific meaning is fixed (for example raw acquisition readings or a current-site fit) are not relabelled as alternate result quantities. The selection core retains independent cross-metric masking capability for a future explicit advanced mode.
 
 Family-specific sections may be omitted or renamed when scientifically appropriate. A family must not invent a fake Distribution or heat map merely to fill a column. Generic XML Inspector is exempt.

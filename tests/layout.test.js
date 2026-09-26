@@ -807,3 +807,12 @@ test('semantic Current dataset values can wrap and scroll panes expose continuat
   assert.match(dual,/class="validation-text" title="\$\{esc\(d\.rangeClass\)\}"/);
   assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*padding-bottom:16px;[^}]*box-shadow:inset/);
 });
+
+
+test('wide single-point DIT and CET sparse panels use compact vertical heights without changing narrow layouts',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.single-analysis-workspace \.overview \.map-stage\{height:230px\}/);
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.single-analysis-workspace \.detail>\.chart \.chart-stage\{height:260px\}/);
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.cet-module\.single-point-workspace \.detail \.chart-stage\.sparse-stage\{height:140px!important\}/);
+  assert.doesNotMatch(css,/@media\(max-width:1200px\)[^{]*\{[^}]*height:260px/);
+});

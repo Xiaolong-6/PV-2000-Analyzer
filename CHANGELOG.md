@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260925.30.10 — 2026-09-26
+
+- Applied a final wide-desktop vertical-density pass without changing the single-point analysis-grid structure: DIT OnePoint position is 230 px and its local scientific chart stages are 260 px at >1200 CSS px.
+- Reduced CET singleton sparse fit state to 140 px at >1200 CSS px so a one-process-point explanation no longer consumes full chart height.
+- Kept <=1200 px/mobile behavior, multi-point analyzers, QSS/Leakage/Dual QSS presentation and all scientific/parser/filter/export behavior unchanged.
+
 ## v20260925.30.9 — 2026-09-26
 
 - Updated source-structure layout regressions for the new conditional single-point analysis wrapper: QSS ordering now keys off the semantic overview marker, DIT accepts the wrapped overview selector and asserts its full-width third-plot rule, and selected-detail typography checks cover both direct multi-point panes and wrapped single-point panes.

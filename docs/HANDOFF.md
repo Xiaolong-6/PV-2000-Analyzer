@@ -1,5 +1,16 @@
 # Agent handoff — 2026-09-26
 
+## PR #111 final vertical-density follow-up (v20260925.30.10)
+
+The d1a4bf0 browser review at 1363×936 / 100% confirmed that the internal two-column analysis grid is the correct single-point structure. DIT still measured about 1210 px of analysis content inside an ~836 px workspace viewport, leaving ~374 px of internal scroll; CET singleton's one-process-point fit state was semantically correct but still visually taller than its information content warranted.
+
+This revision keeps the grid and ordering unchanged. On wide desktop (>1200 CSS px) only:
+- DIT OnePoint measurement position is capped at 230 px;
+- DIT OnePoint local Vcpd–Qc / Dit–Vsb / Vsb–Qc chart stages use 260 px;
+- CET singleton sparse fit state uses 140 px.
+
+The <=1200 px stacked layout, mobile flow, all multi-point layouts and scientific behavior remain unchanged. QSS, Leakage, Dual QSS and CET sparse-distribution presentation are intentionally frozen from d1a4bf0. PR #111 remains draft and unmerged pending a final browser look.
+
 ## PR #111 single-point grid follow-up (v20260925.30.8)
 
 The bf9a856 browser retest confirmed that the previous sidebar + one wide right column solved empty-column waste but overcorrected plot-rich single-point analyzers: DIT, Leakage and CET could become long vertical stacks. The same retest also showed Dual QSS still visibly ellipsizing “High-range injection”, and CET sparse states still exposed controls that implied a meaningful axis/distribution. filecite is not used in repository docs; evidence remains in the review artifact supplied in the project conversation.
