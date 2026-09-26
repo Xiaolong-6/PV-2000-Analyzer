@@ -67,8 +67,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260926.1`.
-- Current hardening branch: none; PR #111 is the accepted analyzer-workspace UI baseline.
+- Public main: `v20260926.2`.
+- Current hardening branch: `fix/dit-responsive-detail-polish-20260926`; PR #112 is the DIT responsive-detail polish candidate on top of the accepted #111 workspace baseline.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
