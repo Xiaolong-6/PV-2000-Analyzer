@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260925.30.6 — 2026-09-26
+
+- Updated the Current dataset structure regression to count semantic value cells with optional classes, preserving the three-item Dual QSS cardinality check after adding the wrapping class.
+
 ## v20260925.30.5 — 2026-09-26
 
 - Reworked single-point presentation into a two-column sidebar + 2fr workspace contract while preserving the equal-three-column layout for multi-point analyzers.

@@ -20,7 +20,7 @@ test('Current dataset adapts cleanly to three, four or five summary items',()=>{
   assert.match(css,/\.current-dataset-panel \.validation>div\{display:grid;grid-template-columns:minmax\(0,1fr\) auto;[^}]*border-top:1px solid var\(--border\)/);
   const dualPanel=dual.slice(dual.indexOf('current-dataset-panel'),dual.indexOf('</section>',dual.indexOf('current-dataset-panel'))),
     jzeroPanel=jzero.slice(jzero.indexOf('current-dataset-panel'),jzero.indexOf('</section>',jzero.indexOf('current-dataset-panel')));
-  assert.equal((dualPanel.match(/<div><b>/g)||[]).length,3);
+  assert.equal((dualPanel.match(/<div><b(?:\s+class="[^"]*")?>/g)||[]).length,3);
   assert.equal((jzeroPanel.match(/<div><b>/g)||[]).length,5);
   assert.match(isc,/:'Complete'}<\/b><span>acquisition schedule/);
 });
