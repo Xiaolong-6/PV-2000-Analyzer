@@ -45,10 +45,7 @@
 .single-analysis-workspace>.overview .map-stage{height:240px}
 .single-analysis-workspace>.detail>.chart{min-width:0}
 .isc-module.single-point-workspace .detail>.chart,.cet-module.single-point-workspace .detail>.chart,.leakage-module.single-point-workspace .detail>.chart{grid-column:1/-1}
-.dit-module.single-point-workspace .detail>.chart:last-of-type,.dit-module.single-point-workspace .detail>.dit-flatband-panel{grid-column:auto}
-.dit-module.single-point-workspace .detail>.dit-flatband-panel{align-self:stretch;min-width:0}
-.dit-module.single-point-workspace .detail>.dit-flatband-panel .meta{grid-template-columns:minmax(0,1fr) auto}
-.single-analysis-workspace{scroll-padding-bottom:24px}
+.dit-module.single-point-workspace .detail>.chart:last-of-type,.dit-module.single-point-workspace .detail>.dit-flatband-panel{grid-column:auto}.dit-module.single-point-workspace .detail>.dit-flatband-panel{align-self:stretch;min-width:0}.dit-module.single-point-workspace .detail>.dit-flatband-panel .meta{grid-template-columns:minmax(0,1fr) auto}.single-analysis-workspace{scroll-padding-bottom:24px}
 .single-analysis-workspace::-webkit-scrollbar{width:8px}.single-analysis-workspace::-webkit-scrollbar-thumb{background:var(--button-border);border-radius:8px}
 .sparse-stage{height:168px!important}
 @media(max-width:1200px){#app:not(.hidden){height:auto;min-height:100vh;min-height:100dvh;display:block;overflow:visible}#app:not(.hidden)>.toolbar{position:sticky;top:0}#app:not(.hidden)>.content{height:auto;overflow:visible}.module-grid{height:auto;grid-template-columns:minmax(260px,300px) minmax(0,1fr);align-items:start}.module-grid>.side{grid-column:1;grid-row:1 / span 2;display:flex;position:sticky;top:56px;height:calc(100vh - 66px);height:calc(100dvh - 66px);overflow-y:auto;scrollbar-gutter:stable}.module-grid>.plots{grid-column:2;position:static;top:auto;height:auto;overflow:visible;scrollbar-gutter:auto}.module-grid.single-point-workspace{grid-template-columns:minmax(260px,300px) minmax(0,1fr)}.module-grid.single-point-workspace>.side{grid-column:1;grid-row:1}.module-grid.single-point-workspace>.single-analysis-workspace{grid-column:2;grid-row:1}.single-analysis-workspace{grid-template-columns:1fr;height:auto;overflow:visible;padding-bottom:0;box-shadow:none;scrollbar-gutter:auto}.generic{grid-template-columns:1fr}}
@@ -271,10 +268,6 @@
 @media(min-width:1201px){
   .dit-module.dit-one-point .dit-point-meta-grid{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);column-gap:8px;row-gap:3px}
   .dit-module.dit-one-point .dit-point-meta-grid dt{min-width:0}
-  .dit-module.dit-one-point .dit-point-meta-grid dd{min-width:0}
-  .dit-module.dit-one-point .dit-selected-panel{overflow:visible}
-  .dit-module.dit-one-point .dit-point-meta-grid{font-size:11px}
+  .dit-module.dit-one-point .dit-point-meta-grid dd{min-width:0}.dit-module.dit-one-point .dit-selected-panel{overflow:visible}.dit-module.dit-one-point .dit-point-meta-grid{font-size:11px}
 }
-@media(min-width:1201px) and (max-width:1450px){
-  .dit-module.dit-one-point .dit-point-meta-grid{grid-template-columns:minmax(0,1fr) auto}
-}
+@media(min-width:1201px) and (max-width:1450px){.dit-module.dit-one-point .dit-point-meta-grid{grid-template-columns:minmax(0,1fr) auto}}
