@@ -1,5 +1,9 @@
 # Changelog
 
+## v20260925.30.7 — 2026-09-26
+
+- Made the three-item Dual QSS Current dataset cardinality regression independent of value-element attributes after the semantic wrapping class was introduced.
+
 ## v20260925.30.6 — 2026-09-26
 
 - Updated the Current dataset structure regression to count semantic value cells with optional classes, preserving the three-item Dual QSS cardinality check after adding the wrapping class.
