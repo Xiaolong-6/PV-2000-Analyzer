@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-26
 
+## PR #111 final DIT point-card compaction (v20260925.30.11)
+
+The c6d8d1a browser review confirmed the single-point analysis grid, sparse states, dense LBIC and multi-family layout are visually stable at 1363×936 / 100%. DIT OnePoint still had ~184 px of internal scroll after chart-height compaction. The remaining tall element is the Measurement point metadata card, not the scientific plots.
+
+This final branch-only polish keeps every DIT value but renders the OnePoint Measurement point metadata as two label/value pairs per row at >1200 CSS px. Multi-point DIT cards, <=1200 layouts and all other analyzers are unchanged. No scientific/parser/filter/export behavior changes.
+
 ## PR #111 final vertical-density follow-up (v20260925.30.10)
 
 The d1a4bf0 browser review at 1363×936 / 100% confirmed that the internal two-column analysis grid is the correct single-point structure. DIT still measured about 1210 px of analysis content inside an ~836 px workspace viewport, leaving ~374 px of internal scroll; CET singleton's one-process-point fit state was semantically correct but still visually taller than its information content warranted.

@@ -816,3 +816,12 @@ test('wide single-point DIT and CET sparse panels use compact vertical heights w
   assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.cet-module\.single-point-workspace \.detail \.chart-stage\.sparse-stage\{height:140px!important\}/);
   assert.doesNotMatch(css,/@media\(max-width:1200px\)[^{]*\{[^}]*height:260px/);
 });
+
+
+test('wide DIT OnePoint measurement metadata uses a compact two-pair grid without affecting multi-point cards',()=>{
+  const src=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
+    css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
+  assert.match(src,/class="meta \$\{d\.patternType==='OnePointPattern'\?'dit-point-meta-grid':''\}"/);
+  assert.match(css,/@media\(min-width:1201px\)\{[\s\S]*\.dit-module\.dit-one-point \.dit-point-meta-grid\{grid-template-columns:auto minmax\(0,1fr\) auto minmax\(0,1fr\)/);
+  assert.doesNotMatch(css,/\.dit-module:not\(\.dit-one-point\) \.dit-point-meta-grid/);
+});

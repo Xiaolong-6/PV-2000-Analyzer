@@ -1,5 +1,10 @@
 # Changelog
 
+## v20260925.30.11 — 2026-09-26
+
+- Compacted the wide-screen DIT OnePoint Measurement point metadata into two label/value pairs per row, preserving every displayed value while reducing remaining vertical scroll.
+- Left DIT multi-point cards, <=1200/mobile layouts, other analyzer families and all scientific behavior unchanged.
+
 ## v20260925.30.10 — 2026-09-26
 
 - Applied a final wide-desktop vertical-density pass without changing the single-point analysis-grid structure: DIT OnePoint position is 230 px and its local scientific chart stages are 260 px at >1200 CSS px.

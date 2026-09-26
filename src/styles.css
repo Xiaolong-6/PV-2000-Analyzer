@@ -264,3 +264,9 @@
   .dit-module.dit-one-point .single-analysis-workspace .detail>.chart .chart-stage{height:260px}
   .cet-module.single-point-workspace .detail .chart-stage.sparse-stage{height:140px!important}
 }
+
+@media(min-width:1201px){
+  .dit-module.dit-one-point .dit-point-meta-grid{grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);column-gap:8px;row-gap:3px}
+  .dit-module.dit-one-point .dit-point-meta-grid dt{min-width:0}
+  .dit-module.dit-one-point .dit-point-meta-grid dd{min-width:0}
+}

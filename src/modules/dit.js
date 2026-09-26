@@ -1030,7 +1030,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
               <button id="ditNext">›</button>
               <span class="coord">${coord?`x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}`:'coordinate unavailable'}</span>
             </div>
-            <dl class="meta" style="margin-top:8px">
+            <dl class="meta ${d.patternType==='OnePointPattern'?'dit-point-meta-grid':''}" style="margin-top:8px">
               ${PV.ui.selectionStateRow(siteFilterState,{metric:metrics[filterState.metricKey]?.short||filterState.metricKey})}
               <dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd>
               <dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd>
