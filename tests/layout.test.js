@@ -655,16 +655,18 @@ test('DIT keeps all three local scientific plots visible and grids single-point 
   assert.match(src,/H=d\.patternType==='OnePointPattern'\?300:500/);
   assert.match(src,/paneScroll=\{/);
   assert.match(src,/detailPane\.scrollTop=paneScroll\.detail/);
+  assert.match(src,/<section class="plots overview">[\s\S]*class="panel chart map-panel"[\s\S]*class="panel dit-selected-panel"[\s\S]*<\/section><section class="plots detail">/);
+  assert.doesNotMatch(src,/<section class="plots detail">\s*<section class="panel dit-selected-panel">/);
   assert.match(css,/\.dit-module>\.overview \.map-stage\{height:500px\}/);
   assert.match(css,/\.dit-module\.dit-one-point \.overview \.map-stage\{height:300px\}/);
   assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,[^\{]*\{grid-column:auto\}/);
   assert.doesNotMatch(css,/dit-detail-tabs|data-dit-detail/);
 });
 
-test('right-side selected-site typography matches the sidebar hierarchy',()=>{
+test('DIT selected-site typography matches the sidebar hierarchy below the wafer map',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
-  assert.match(css,/\.module-grid \.side \.panel,[^\{]*\.single-analysis-workspace>\.plots\.detail>\.panel:not\(\.chart\)\{font-size:11\.5px/);
-  assert.match(css,/\.module-grid>\.plots\.detail \.site-controls \.coord,[^\{]*\.single-analysis-workspace>\.plots\.detail \.site-controls \.coord\{font-size:10px\}/);
+  assert.match(css,/\.dit-module>\.overview>\.dit-selected-panel\{font-size:11\.5px;line-height:1\.45\}/);
+  assert.match(css,/\.dit-module>\.overview>\.dit-selected-panel \.site-controls \.coord\{font-size:10px\}/);
 });
 
 test('DIT does not duplicate Follow XML mapping as a persistent status row',()=>{
