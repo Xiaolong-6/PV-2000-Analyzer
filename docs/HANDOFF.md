@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-26
 
+## PR preview delivery infrastructure — v20260926.3
+
+Each successful same-repository PR CI build is published as a temporary GitHub prerelease and a stable live Pages preview under `/preview/pr-<number>/`. The prerelease carries `index.html`, `PV-2000-Analyzer.html` and a ZIP build, is replaced on every successful PR update, and is removed when the PR closes. Pages now deploys from a generated persistent `pages-store` branch so refreshing main preserves all active preview directories.
+
+The publisher is intentionally split from untrusted PR execution: it runs from trusted default-branch `workflow_run` code, consumes the already-built CI artifact, and only publishes same-repository PRs. It never checks out PR code with a write token.
+
 ## Analyzer workspace UI contract — merged candidate v20260926.1
 
 PR #111 consolidates the 2026-09-26 analyzer-workspace visual review into one mainline change. The accepted wide-screen contract is:
@@ -67,8 +73,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260926.2`.
-- Current hardening branch: none; PR #112 is the accepted DIT responsive-detail polish baseline on top of #111.
+- Public main: `v20260926.3`.
+- Current hardening branch: none; PR #114 establishes the PR preview/release delivery baseline.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
