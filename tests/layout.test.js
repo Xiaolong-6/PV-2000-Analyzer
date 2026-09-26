@@ -515,10 +515,15 @@ test('all plot Axes controls are rendered in chart headers immediately before ex
   assert.match(isc,/axisControls\('iRawAxes'\)\}<button id="iExportRaw"/);
 });
 
-test('chart popovers are not clipped and plot wrappers do not force blank vertical space',()=>{
+test('chart settings expand in normal header flow without viewport-width popovers',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/\.panel\.chart\{[^}]*overflow:visible[^}]*position:relative/);
-  assert.match(css,/\.axis-popover-card\{[^}]*z-index:60/);
+  assert.match(css,/\.chart header\{[^}]*flex-wrap:wrap/);
+  assert.match(css,/\.axis-popover-card\{[^}]*order:20;[^}]*flex:1 0 100%;[^}]*width:100%;[^}]*max-width:100%/);
+  assert.match(css,/\.axis-popover-card\[hidden\]\{display:none\}/);
+  assert.doesNotMatch(css,/\.axis-popover-card\{[^}]*position:absolute/);
+  assert.doesNotMatch(css,/\.axis-popover-card\{[^}]*100vw/);
+  assert.doesNotMatch(css,/has-axis-popover-open|padding-bottom:112px|padding-bottom:168px/);
   assert.doesNotMatch(css,/\.canvas-wrap\{[^}]*min-height:300px/);
 });
 
@@ -678,16 +683,18 @@ test('chart metadata can shrink without pushing Axes or Export controls outside 
 });
 
 
-test('Axes and Bins popovers reserve header space and are mutually exclusive',()=>{
+test('Axes and Bins use one full-width natural-flow settings row and remain mutually exclusive',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
     plot=fs.readFileSync(require.resolve('../src/core/plot.js'),'utf8');
-  assert.match(css,/\.chart header\.has-axis-popover-open\{[^}]*height:auto;[^}]*padding-bottom:112px/);
-  assert.match(css,/\.chart header\.has-bin-popover-open:not\(\.has-axis-popover-open\)\{[^}]*height:auto;[^}]*padding-bottom:58px/);
-  assert.match(plot,/function bindHeaderPopover\(box\)/);
-  assert.match(plot,/header\.querySelectorAll\('\.axis-popover\[open\]'\)/);
-  assert.match(plot,/peer!==box\)peer\.open=false/);
-  assert.match(plot,/classList\.toggle\('has-axis-popover-open'/);
-  assert.match(plot,/classList\.toggle\('has-bin-popover-open'/);
+  assert.match(plot,/data-axis-toggle=/);
+  assert.match(plot,/data-bin-toggle=/);
+  assert.match(plot,/data-axis-controls=.* hidden/);
+  assert.match(plot,/data-bin-controls=.* hidden/);
+  assert.match(plot,/header\.querySelectorAll\('\.axis-popover-card:not\(\[hidden\]\)'\)/);
+  assert.match(plot,/if\(peer!==box\)setOpen\(peer,false\)/);
+  assert.match(plot,/panel\.hidden=!open/);
+  assert.match(plot,/aria-expanded/);
+  assert.match(css,/\.axis-popover-card\{[^}]*flex:1 0 100%/);
 });
 
 test('selected-point panels use explicit state badges across filter and non-filter families',()=>{
@@ -701,5 +708,22 @@ test('selected-point panels use explicit state badges across filter and non-filt
   }
   const leakage=fs.readFileSync(require.resolve('../src/modules/leakage.js'),'utf8');
   assert.match(leakage,/id="leakDataState"/);
-  assert.match(leakage,/selectionStateBadge\(hasResult\?'AVAILABLE':'UNAVAILABLE'\)/);
+  assert.match(leakage,/dataState=availableResults\.length===3\?'AVAILABLE':availableResults\.length\?'PARTIAL':'UNAVAILABLE'/);
+  assert.match(leakage,/Available: \$\{availableResults\.join\(', '\)\}/);
+  assert.match(ui,/label='Filter quantity'/);
+  assert.match(ui,/Outside the current range; local data remains inspectable/);
+  for(const file of ['dit.js','qss-upcd.js','jzero.js','isc.js','lbic.js','cet.js','spv.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/selectionStateRow\([^\n]*metric:/,file+' must name the filter quantity beside its state');
+  }
+});
+
+
+test('selection badges are readable and algorithm-invalid is visually distinct',()=>{
+  const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
+    ui=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
+  assert.match(css,/\.selection-state\{[^}]*font-size:10\.5px;[^}]*font-weight:650/);
+  assert.match(css,/\.selection-state-invalid\{[^}]*var\(--bad\)/);
+  assert.match(ui,/invalid=raw==='ALGORITHM INVALID'/);
+  assert.match(ui,/tone=invalid\?'invalid'/);
 });

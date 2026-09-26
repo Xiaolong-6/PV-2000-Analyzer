@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260925.30.2 — 2026-09-26
+
+- Replaced the first-pass absolute Axes/Bins popovers and fixed 112/168 px padding reservations with a full-width, content-height settings row in normal chart-header flow; controls remain mutually exclusive and cannot exceed the chart container width.
+- Selected-point state now names the active filter quantity and adds a concise reason for FILTERED / UNAVAILABLE; DIT map tooltips now distinguish ALGORITHM INVALID, UNAVAILABLE, FILTERED and VALID consistently.
+- Increased state-badge text to 10.5 px with lighter weight, added a distinct algorithm-invalid treatment, and made Leakage report PARTIAL plus exactly which VSASS/LI results are finite.
+- Replaced fixed-padding source tests with structural regressions that reject absolute/viewport-sized chart settings and ambiguous combined DIT states. Browser screenshot acceptance remains pending before the draft can be considered complete.
+
 ## v20260925.30.1 — 2026-09-26
 
 - Tightened the analyzer workspace UI contract without changing scientific calculations: selected-point cards now use one shared visual state badge, including newly explicit Valid-data state in CET/SPV and data availability in Leakage.

@@ -1,14 +1,14 @@
 # Agent handoff — 2026-09-26
 
-## Analyzer workspace UI contract follow-up (v20260925.30.1)
+## PR #111 source-review follow-up (v20260925.30.2)
 
-Branch: `ui/analyzer-workspace-contract-20260926` (do not merge without review).
+Branch: `ui/analyzer-workspace-contract-20260926` remains draft-only.
 
-This follow-up applies the remaining actionable items from the UI source/mock to the current main rather than repeating the completed workspace refactor. Current dataset adaptive density, equal semantic columns, active metric/filter synchronization and one-point Distribution suppression were already present on `v20260925.30`.
+Source review found that the first UI-contract pass still used an absolutely positioned Axes/Bins panel plus fixed 112/168 px header padding. That approach has been removed. Axes/Bins now render as a second, full-width row in normal chart-header flow, so width is constrained by the chart pane and height is content-driven. The mutual-exclusion behavior is retained.
 
-The branch adds one shared selected-point state language across DIT, QSS-uPCD, JZero, ISC/VCPD, LBIC, CET, SPV and Leakage. CET/SPV now expose the selected site's Valid-data state; Leakage exposes AVAILABLE/UNAVAILABLE because it has no user filter. Axes/Bins popovers now close sibling popovers and reserve temporary header space while open, preventing controls from covering the plot surface.
+Selected-point state now names the active filter quantity and explains FILTERED / UNAVAILABLE instead of presenting an ambiguous point-wide badge. DIT map tooltips use the same separate ALGORITHM INVALID / UNAVAILABLE / FILTERED / VALID states. Badge typography is raised to 10.5 px with lower weight, ALGORITHM INVALID has its own error treatment, and Leakage reports PARTIAL plus the actual finite result names when only some VSASS/LI quantities exist.
 
-No scientific equation, XML parser, reference profile or validation envelope is changed.
+Static/source regressions now reject absolute/viewport-sized chart settings, fixed header padding reservations and the old combined DIT tooltip state. Real-browser screenshot acceptance remains a separate draft gate.
 
 ## Real-browser chart-header hardening (v20260925.30)
 

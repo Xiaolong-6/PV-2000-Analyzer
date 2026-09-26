@@ -53,13 +53,25 @@
   function selectionStateBadge(state,{title=''}={}){
     const raw=String(state||'UNAVAILABLE').trim().toUpperCase(),
       active=['VALID','ACTIVE','AVAILABLE','DISPLAYED'].includes(raw),
-      filtered=['FILTERED','EXCLUDED'].includes(raw),
-      tone=active?'active':filtered?'filtered':'unavailable';
+      filtered=['FILTERED','EXCLUDED','PARTIAL'].includes(raw),
+      invalid=raw==='ALGORITHM INVALID',
+      tone=invalid?'invalid':active?'active':filtered?'filtered':'unavailable';
     return `<span class="selection-state selection-state-${tone}"${title?` title="${escapeHtml(title)}"`:''}>${escapeHtml(raw)}</span>`;
   }
 
-  function selectionStateRow(state,{label='Valid-data state',title=''}={}){
-    return `<dt>${escapeHtml(label)}</dt><dd>${selectionStateBadge(state,{title})}</dd>`;
+  function selectionStateNote(state){
+    const raw=String(state||'UNAVAILABLE').trim().toUpperCase();
+    if(raw==='FILTERED')return'Outside the current range; local data remains inspectable.';
+    if(raw==='UNAVAILABLE')return'The selected filter quantity is unavailable at this point.';
+    if(raw==='ALGORITHM INVALID')return'This point is outside the analyzer algorithm-valid population.';
+    if(raw==='VALID')return'Inside the current filter range.';
+    return'';
+  }
+
+  function selectionStateRow(state,{label='Filter quantity',metric='',title='',note=null}={}){
+    const detail=note===null?selectionStateNote(state):String(note||''),
+      metricMarkup=metric?`<span class="selection-state-metric">${escapeHtml(metric)}</span><span class="selection-state-separator" aria-hidden="true">·</span>`:'';
+    return `<dt>${escapeHtml(label)}</dt><dd class="selection-state-value"><span class="selection-state-line">${metricMarkup}${selectionStateBadge(state,{title})}</span>${detail?`<small class="selection-state-note">${escapeHtml(detail)}</small>`:''}</dd>`;
   }
 
   function formatNumericInputValue(value,{

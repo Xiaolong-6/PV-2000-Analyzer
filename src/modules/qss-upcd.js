@@ -726,7 +726,7 @@
           const value=Number.isFinite(m.values[selected])?`${fmt(m.values[selected])} ${m.unit}`:'—';
           return metaRow(m.short,value);
         }).join('');
-      return `<dl class="meta">${metaRow('Point',String(selected+1))}${PV.ui.selectionStateRow(status)}${metaRow('Coordinate',coordinate)}${values}</dl>`;
+      return `<dl class="meta">${metaRow('Point',String(selected+1))}${PV.ui.selectionStateRow(status,{metric:a.metrics[state.metricKey]?.short||state.metricKey})}${metaRow('Coordinate',coordinate)}${values}</dl>`;
     }
     function renderShell(){
       const filterState=filterController.snapshot(),

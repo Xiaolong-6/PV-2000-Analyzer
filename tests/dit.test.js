@@ -377,7 +377,8 @@ test('DIT renderer uses the shared Valid-data filter only for site population vi
   assert.match(src,/filterController\.metricMask\(metrics\[mapKey\]\)/);
   assert.match(src,/Pass valid-data filter/);
   assert.match(src,/ALGORITHM INVALID/);
-  assert.match(src,/FILTERED \/ UNAVAILABLE/);
+  assert.doesNotMatch(src,/FILTERED \/ UNAVAILABLE/);
+  assert.match(src,/!filterSupport\?'UNAVAILABLE':filterActive\?'VALID':'FILTERED'/);
   assert.match(src,/validDataFilter:true/);
   assert.doesNotMatch(src,/filterController[^\n]*variation\(/);
 });

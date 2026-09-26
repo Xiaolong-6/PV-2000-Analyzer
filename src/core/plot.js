@@ -33,27 +33,33 @@
   }
   function axisControls(id,{label='Axes',distribution=false,swapped=false}={}){
     const swap=distribution?`<button type="button" data-axis-swap aria-pressed="${!!swapped}" title="Swap the Distribution count and quantity axes.">Swap axes</button>`:'';
-    return `<details class="axis-popover" data-axis-controls="${id}"><summary title="Set manual numeric X/Y limits.">${label}</summary><div class="axis-popover-card"><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label></div><div class="axis-limit-actions">${swap}<button type="button" data-axis-auto>Auto</button><button type="button" data-axis-apply>Apply</button></div></div></details>`;
+    return `<button type="button" class="axis-popover axis-popover-toggle" data-axis-toggle="${id}" aria-expanded="false" title="Set manual numeric X/Y limits.">${label}</button><div class="axis-popover-card" data-axis-controls="${id}" hidden><div class="axis-limit-grid"><label>X min<input type="number" step="any" data-axis="xmin"></label><label>X max<input type="number" step="any" data-axis="xmax"></label><label>Y min<input type="number" step="any" data-axis="ymin"></label><label>Y max<input type="number" step="any" data-axis="ymax"></label></div><div class="axis-limit-actions">${swap}<button type="button" data-axis-auto>Auto</button><button type="button" data-axis-apply>Apply</button></div></div>`;
   }
   function binControls(id,bins=30){
     const n=Math.max(5,Math.min(200,Math.round(Number(bins)||30)));
-    return `<details class="axis-popover bin-popover" data-bin-controls="${id}"><summary title="Set histogram bin count.">Bins</summary><div class="axis-popover-card bin-popover-card"><label class="axis-bin-control" title="More bins make narrower bars; fewer bins make wider bars.">Bin count<input type="number" min="5" max="200" step="1" value="${n}" data-bin-count></label></div></details>`;
+    return `<button type="button" class="axis-popover axis-popover-toggle bin-popover-toggle" data-bin-toggle="${id}" aria-expanded="false" title="Set histogram bin count.">Bins</button><div class="axis-popover-card bin-popover-card" data-bin-controls="${id}" hidden><label class="axis-bin-control" title="More bins make narrower bars; fewer bins make wider bars.">Bin count<input type="number" min="5" max="200" step="1" value="${n}" data-bin-count></label></div>`;
   }
   function bindHeaderPopover(box){
     const header=box?.closest?.('header');
     if(!header||box.__pvHeaderPopoverBound)return;
+    const id=box.dataset.axisControls||box.dataset.binControls,
+      toggleAttr=box.dataset.axisControls?'data-axis-toggle':'data-bin-toggle',
+      toggle=header.querySelector(`[${toggleAttr}="${id}"]`);
+    if(!toggle)return;
     box.__pvHeaderPopoverBound=true;
-    const sync=()=>{
-      if(box.open){
-        header.querySelectorAll('.axis-popover[open]').forEach(peer=>{
-          if(peer!==box)peer.open=false;
-        });
-      }
-      header.classList.toggle('has-axis-popover-open',!!header.querySelector('[data-axis-controls][open]'));
-      header.classList.toggle('has-bin-popover-open',!!header.querySelector('[data-bin-controls][open]'));
+    box.__pvToggle=toggle;
+    const setOpen=(panel,open)=>{
+      panel.hidden=!open;
+      panel.__pvToggle?.setAttribute('aria-expanded',String(open));
     };
-    box.addEventListener?.('toggle',sync);
-    sync();
+    box.__pvSetOpen=open=>setOpen(box,open);
+    toggle.onclick=()=>{
+      const open=box.hidden;
+      header.querySelectorAll('.axis-popover-card:not([hidden])').forEach(peer=>{
+        if(peer!==box)setOpen(peer,false);
+      });
+      setOpen(box,open);
+    };
   }
   function bindAxisControls(root,id,state,onChange,{xLog=false,yLog=false,swapped=false,onSwap=null}={}){
     const box=root?.querySelector(`[data-axis-controls="${id}"]`);if(!box)return;
@@ -80,11 +86,11 @@
       
     const apply=()=>{try{
       const next={x:read('xmin','xmax',xLog,'X axis'),y:read('ymin','ymax',yLog,'Y axis')};
-      box.open=false;
+      box.__pvSetOpen?.(false);
       onChange?.(next);
     }catch(err){alert(err.message)}};
     box.querySelector('[data-axis-apply]').onclick=apply;
-    box.querySelector('[data-axis-auto]').onclick=()=>{box.open=false;onChange?.({x:null,y:null})};
+    box.querySelector('[data-axis-auto]').onclick=()=>{box.__pvSetOpen?.(false);onChange?.({x:null,y:null})};
 
     const swap=box.querySelector('[data-axis-swap]');
     if(swap){
@@ -106,7 +112,7 @@
         input.value=String(Math.max(5,Math.min(200,Math.round(Number(bins)||30))));
         return;
       }
-      box.open=false;
+      box.__pvSetOpen?.(false);
       onChange?.(n);
     };
     input.onchange=apply;

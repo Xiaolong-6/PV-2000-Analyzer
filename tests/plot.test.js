@@ -76,7 +76,8 @@ test('manual axis control markup is a reusable header popover with independent X
   const html=P.axisControls('demoAxes');
   assert.match(html,/class="axis-popover"/);
   assert.match(html,/class="axis-popover-card"/);
-  assert.match(html,/data-axis-controls="demoAxes"/);
+  assert.match(html,/data-axis-toggle="demoAxes"/);
+  assert.match(html,/data-axis-controls="demoAxes" hidden/);
   for(const k of ['xmin','xmax','ymin','ymax'])assert.match(html,new RegExp(`data-axis="${k}"`));
   assert.match(html,/data-axis-apply/);
   assert.match(html,/data-axis-auto/);
@@ -90,8 +91,9 @@ test('Distribution controls keep Swap axes inside Axes and expose a separate Bin
   assert.match(axes,/class="axis-limit-actions">.*data-axis-swap.*data-axis-auto.*data-axis-apply/);
   assert.doesNotMatch(axes,/axis-extra-row/);
   assert.doesNotMatch(axes,/data-bin-count/);
-  assert.match(bins,/data-bin-controls="histBins"/);
-  assert.match(bins,/>Bins<\/summary>/);
+  assert.match(bins,/data-bin-toggle="histBins"/);
+  assert.match(bins,/>Bins<\/button>/);
+  assert.match(bins,/data-bin-controls="histBins" hidden/);
   assert.match(bins,/data-bin-count/);
   assert.match(bins,/value="42"/);
 });

@@ -1031,7 +1031,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
               <span class="coord">x ${fmt(coord.x,1)} · y ${fmt(coord.y,1)}</span>
             </div>
             <dl class="meta" style="margin-top:8px">
-              ${PV.ui.selectionStateRow(siteFilterState,{label:'Status'})}
+              ${PV.ui.selectionStateRow(siteFilterState,{metric:metrics[filterState.metricKey]?.short||filterState.metricKey})}
               <dt>Initial VDark</dt><dd>${fmt(s.VDark,6)} V</dd>
               <dt>Measured initial VLight</dt><dd>${fmt(s.VLight,6)} V</dd>
               <dt>PV-2000 result VLight</dt><dd>${fmt(s.ResultVLight,6)} V</dd>
@@ -1267,6 +1267,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       const svg=host.querySelector('#d4'),
       [label,unit,log]=mapSpec(mapKey),
       vals=analysis.sites.map(x=>metric(x,mapKey)),
+      filterState=filterController.snapshot(),
       displayMask=filterController.metricMask(metrics[mapKey]),
       vv=vals.filter((v,i)=>displayMask[i]&&Number.isFinite(v)).map(v=>log&&v>0?Math.log10(v):v),
       lo=vv.length?Math.min(...vv):0,
@@ -1311,11 +1312,13 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         x=X(p.x||0),
         y=Y(p.y||0),
         active=!!displayMask[i],
+        filterSupport=!!filterState.selection.supportMask[i],
+        filterActive=!!filterState.selection.activeMask[i],
         txt=mapValue(v,mapKey);
         if(x<m.l||x>W-m.r||y<m.t||y>H-m.b)return;
         const fill=active?col:'transparent',
           stroke=i===site?'var(--text)':!s.valid?'var(--bad)':active?'var(--border)':'var(--muted)',
-          state=!s.valid?'ALGORITHM INVALID':active?'DISPLAYED':'FILTERED / UNAVAILABLE',
+          state=!s.valid?'ALGORITHM INVALID':!filterSupport?'UNAVAILABLE':filterActive?'VALID':'FILTERED',
           textFill=active?'#fff':'var(--muted)';
         out+=`<g data-site="${i}" class="map-site">
           <title>Site ${i+1}: ${txt} ${unit}; ${state}; x=${fmt(p.x,2)}, y=${fmt(p.y,2)}</title>

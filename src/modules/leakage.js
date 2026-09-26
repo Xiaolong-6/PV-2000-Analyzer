@@ -231,8 +231,14 @@
       const current=data.sites[site]||{},pt=current.coord;
       host.querySelector('#leakSite').value=String(site);
       host.querySelector('#leakPositionText').textContent=pt?`${fmt(pt.x,3)}, ${fmt(pt.y,3)} mm`:'—';
-      const hasResult=[current.vsassPositive,current.vsassNegative,current.li].some(Number.isFinite);
-      host.querySelector('#leakDataState').innerHTML=PV.ui.selectionStateBadge(hasResult?'AVAILABLE':'UNAVAILABLE');
+      const availableResults=[
+        ['VSASS+',current.vsassPositive],
+        ['VSASS-',current.vsassNegative],
+        ['LI',current.li]
+      ].filter(([,value])=>Number.isFinite(value)).map(([label])=>label),
+        dataState=availableResults.length===3?'AVAILABLE':availableResults.length?'PARTIAL':'UNAVAILABLE',
+        availabilityNote=availableResults.length?`Available: ${availableResults.join(', ')}`:'No finite derived leakage result at this site.';
+      host.querySelector('#leakDataState').innerHTML=`<span class="selection-state-line">${PV.ui.selectionStateBadge(dataState)}</span><small class="selection-state-note">${esc(availabilityNote)}</small>`;
       host.querySelector('#leakPositive').textContent=`${fmt(current.vsassPositive)} V`;
       host.querySelector('#leakNegative').textContent=`${fmt(current.vsassNegative)} V`;
       host.querySelector('#leakLi').textContent=`${fmt(current.li)} V`;
