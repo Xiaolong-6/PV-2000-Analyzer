@@ -1,5 +1,14 @@
 # Changelog
 
+## v20260925.30.8 — 2026-09-26
+
+- Replaced the single-point right-hand vertical stack with an internal two-column analysis grid inside the existing sidebar + 2fr workspace. Position/geometry and selected-point details share the first row; plot-rich single-point analyzers distribute meaningful charts across subsequent cells.
+- DIT single-point now keeps two local curves side-by-side while the third curve and Flatband extraction span the full analysis width; ISC/VCPD, CET and Leakage local detail charts span both analysis columns.
+- Kept the internal analysis grid responsive: it collapses to one analysis column at <=1200 CSS px and to normal document flow on narrow/mobile layouts.
+- Removed the remaining visible ellipsis from semantic Dual QSS Current dataset values by overriding the generic numeric-card nowrap rule.
+- Made sparse-control hiding effective under author CSS; CET now hides Axes/Bins and histogram export for <=1 active distribution value, and hides fit export when no fit point exists.
+- Multi-point equal-three-column layouts and scientific behavior are unchanged.
+
 ## v20260925.30.7 — 2026-09-26
 
 - Made the three-item Dual QSS Current dataset cardinality regression independent of value-element attributes after the semantic wrapping class was introduced.

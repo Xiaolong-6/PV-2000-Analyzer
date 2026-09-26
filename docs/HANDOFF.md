@@ -1,5 +1,15 @@
 # Agent handoff — 2026-09-26
 
+## PR #111 single-point grid follow-up (v20260925.30.8)
+
+The bf9a856 browser retest confirmed that the previous sidebar + one wide right column solved empty-column waste but overcorrected plot-rich single-point analyzers: DIT, Leakage and CET could become long vertical stacks. The same retest also showed Dual QSS still visibly ellipsizing “High-range injection”, and CET sparse states still exposed controls that implied a meaningful axis/distribution. filecite is not used in repository docs; evidence remains in the review artifact supplied in the project conversation.
+
+This revision keeps the outer single-point split at sidebar + 2fr workspace, but the 2fr workspace is now an internal two-column analysis grid. Position/geometry and selected-point details share the first row. Leakage/ISC/CET main local plots span both analysis columns; DIT places two local curves side-by-side and spans the third plus Flatband extraction across a full row. At <=1200 CSS px the internal grid collapses to one analysis column; mobile remains a normal single-column document flow.
+
+Dual QSS semantic Current dataset values now explicitly override the generic ellipsis rule so long range labels wrap visibly. Hidden sparse Axes/Bins buttons now obey the hidden attribute under author CSS, CET hides histogram export when <=1 active value, and hides fit export when there are zero fit points.
+
+Multi-point LBIC/ISC layout and all scientific/parser/geometry/filter/export semantics remain unchanged. PR #111 remains draft and unmerged.
+
 ## PR #111 screenshot follow-up (v20260925.30.5)
 
 A 7-page real-browser review of commit `cb735234` covered ten measurement families at 1363×936 CSS px / DPR 1 / 100% zoom, including LBIC 100/2601, VCPD 1069, ISC 49, SPV 9, Dual QSS 7, CET 5, JZero, Leakage, QSS and DIT 16. Dense LBIC and ISC established the multi-point visual baseline; Axes/Bins inline expansion was confirmed usable.

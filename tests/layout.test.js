@@ -745,12 +745,14 @@ test('visual acceptance follow-up improves hierarchy while preserving multi-poin
 });
 
 
-test('single-point analyzers use a two-column workspace while multi-point defaults stay equal-three-column',()=>{
+test('single-point analyzers use a sidebar plus two-column analysis grid while multi-point defaults stay equal-three-column',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8');
   assert.match(css,/\.module-grid\.single-point-workspace\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,2fr\)/);
-  assert.match(css,/\.module-grid\.single-point-workspace>\.side\{[^}]*grid-column:1;[^}]*grid-row:1 \/ span 2/);
-  assert.match(css,/\.module-grid\.single-point-workspace>\.overview\{[^}]*grid-column:2;[^}]*grid-row:1/);
-  assert.match(css,/\.module-grid\.single-point-workspace>\.detail\{[^}]*grid-column:2;[^}]*grid-row:2/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.side\{[^}]*grid-column:1;[^}]*grid-row:1/);
+  assert.match(css,/\.module-grid\.single-point-workspace>\.single-analysis-workspace\{[^}]*grid-column:2;[^}]*grid-row:1/);
+  assert.match(css,/\.single-analysis-workspace\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css,/\.single-analysis-workspace>\.plots\{display:contents\}/);
+  assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.chart:last-of-type,\.dit-module\.single-point-workspace \.detail>details\{grid-column:1\/-1\}/);
   const checks=[
     ['qss-upcd.js',/qss-one-point single-point-workspace/],
     ['jzero.js',/onePoint\?'single-point-workspace'/],
@@ -763,6 +765,7 @@ test('single-point analyzers use a two-column workspace while multi-point defaul
   for(const [file,pattern] of checks){
     const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
     assert.match(src,pattern,file+' must opt into the single-point workspace only when appropriate');
+    assert.match(src,/single-analysis-workspace/,file+' must wrap single-point overview and detail in the shared analysis grid');
   }
 });
 
@@ -780,6 +783,9 @@ test('sparse selected-point plots render compact explanatory states instead of e
   assert.match(cet,/At least two points are required to display a fitted trend/);
   assert.match(cet,/histAxes\.hidden=activeCount<=1/);
   assert.match(cet,/fitAxes\.hidden=fitCount<=1/);
+  assert.match(cet,/histExport\.hidden=activeCount<=1/);
+  assert.match(cet,/fitExport\.hidden=fitCount===0/);
+  assert.match(css,/\.axis-popover-toggle\[hidden\],\.bin-popover-toggle\[hidden\]\{display:none!important\}/);
   assert.match(css,/\.sparse-stage\{height:168px!important\}/);
 });
 
@@ -796,7 +802,7 @@ test('DIT never invents a center marker when spatial coordinates are absent',()=
 test('semantic Current dataset values can wrap and scroll panes expose continuation space',()=>{
   const css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
     dual=fs.readFileSync(require.resolve('../src/modules/dual-qss.js'),'utf8');
-  assert.match(css,/\.validation b\.validation-text\{[^}]*-webkit-line-clamp:2;[^}]*white-space:normal/);
+  assert.match(css,/\.current-dataset-panel \.validation b\.validation-text\{[^}]*white-space:normal;[^}]*overflow:visible;[^}]*text-overflow:clip/);
   assert.match(dual,/class="validation-text" title="\$\{esc\(d\.rangeClass\)\}"/);
   assert.match(css,/\.module-grid>\.side,\.module-grid>\.plots\{[^}]*padding-bottom:16px;[^}]*box-shadow:inset/);
 });

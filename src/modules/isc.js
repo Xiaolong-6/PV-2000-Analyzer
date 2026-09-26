@@ -883,13 +883,13 @@
         ${metaRow('End',d.end||'—')}
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
-    </aside><section class="plots overview">
+    </aside>${d.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview">
       <div class="panel chart"><header><b>${d.sites.length===1?'Measurement position':moduleLabel+' map'}</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
       ${d.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>`}
     </section><section class="plots detail">
       <section class="panel"><h3>${d.sites.length===1?'Measurement point':'Selected site'} ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
-    </section></div>`;
+    </section>${d.sites.length===1?'</div>':''}</div>`;
 
     PV.ui.bindValidDataFilter(host,{
       prefix:'iFilter',

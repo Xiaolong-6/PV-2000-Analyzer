@@ -365,14 +365,14 @@
           ${meta('Vcpd offset',Number.isFinite(data.offset)?fmt(data.offset,6)+' V':'—')}
         </dl><p class="note meta-detail">For each site, Qc[i] = i × Process.CoronaCharge. The mean illuminated Vcpd vector is offset-corrected and fitted linearly versus Qc. The historical compatibility constants used here are q = 1.602×10⁻¹⁹ C and EOT[Å] = 34.5 / Cd_internal. Runtime remains XML-only; paired CSV is validation evidence only.</p></details>
       </aside>
-      <section class="plots overview">
+      ${data.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview">
         <div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer / cell map'}</b><span class="grow"></span><select id="cetMetric">${metricOptions()}</select>${PV.plot.axisControls('cetMapAxes')}<button id="cetExportMap">Export</button></header><div class="chart-stage map-stage"><svg id="cetMap" viewBox="0 0 640 360"></svg></div></div>
         ${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('cetHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('cetHistBins',histBins)}<button id="cetExportHist">Export</button></header><div class="chart-stage"><svg id="cetHist" viewBox="0 0 640 360"></svg></div></div>`}
       </section>
       <section class="plots detail">
         <section class="panel"><h3>${data.sites.length===1?'Measurement point':'Selected site'}</h3><div class="site-controls"><button id="cetPrev" title="Previous site">←</button><select id="cetSite">${data.sites.map((_,index)=>`<option value="${index}">Site ${index+1}</option>`).join('')}</select><button id="cetNext" title="Next site">→</button><span class="coord">${esc(point)}</span></div><dl class="meta" style="margin-top:8px">${PV.ui.selectionStateRow(PV.ui.selectionStateFor(state,site),{metric:analysis.metrics[state.metricKey]?.short||state.metricKey})}${meta('EOT',Number.isFinite(current.eot)?fmt(current.eot,4)+' Å':'—')}${meta('Cd',Number.isFinite(current.cd)?fmt(current.cd,4)+' nF/cm²':'—')}${meta('R²',fmt(current.r2,6))}${meta('Fit points',String(current.fitCount))}${meta('Slope',Number.isFinite(current.slope)?current.slope.toExponential(6)+' V·cm²/q':'—')}</dl></section>
         <div class="panel chart"><header><b>Current-site Vcpd light–Qc fit</b><span class="chart-meta">R² ${fmt(current.r2,6)}</span><span class="grow"></span>${PV.plot.axisControls('cetFitAxes')}<button id="cetExportFit">Export</button></header><div class="chart-stage"><svg id="cetFit" viewBox="0 0 640 360"></svg></div></div>
-      </section></div>`;
+      </section>${data.sites.length===1?'</div>':''}</div>`;
 
       host.querySelector('#cetMetric').value=metricKey;
       host.querySelector('#cetSite').value=String(site);
@@ -633,10 +633,14 @@
         fitCount=data.sites[site].qc.map((x,index)=>({x,y:data.sites[site].vcpdLight[index]})).filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y)).length,
         histAxes=host.querySelector('[data-axis-toggle="cetHistAxes"]'),
         histBinsToggle=host.querySelector('[data-bin-toggle="cetHistBins"]'),
-        fitAxes=host.querySelector('[data-axis-toggle="cetFitAxes"]');
+        fitAxes=host.querySelector('[data-axis-toggle="cetFitAxes"]'),
+        histExport=host.querySelector('#cetExportHist'),
+        fitExport=host.querySelector('#cetExportFit');
       if(histAxes)histAxes.hidden=activeCount<=1;
       if(histBinsToggle)histBinsToggle.hidden=activeCount<=1;
+      if(histExport)histExport.hidden=activeCount<=1;
       if(fitAxes)fitAxes.hidden=fitCount<=1;
+      if(fitExport)fitExport.hidden=fitCount===0;
       bindExports();
     }
 
