@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-28
 
+## PR preview cleanup concurrency closure — candidate v20260928.3
+
+Post-merge validation of PR #116 exposed one final GitHub Actions edge case. Workflow-level concurrency still allowed an unrelated `workflow_run` invocation to replace a pending `pull_request_target` cleanup, because GitHub keeps at most one pending run per concurrency group even when `cancel-in-progress` is false. The shared `pages-store-writer` lock is therefore job-scoped now: only the Pages `build`, preview `publish`, and preview `cleanup` jobs enter it. Jobs whose `if` condition is false never occupy the shared queue.
+
+This preserves serialized writes to `pages-store` without allowing skipped/non-mutating workflow invocations to cancel a real cleanup.
+
 ## PR cleanup + selected-state compactness — candidate v20260928.2
 
 PR-preview cleanup now listens on `pull_request_target: closed`, ensuring the cleanup workflow is sourced from trusted default-branch code and still runs after the PR head disappears. This complements the shared non-cancelling `pages-store-writer` concurrency introduced in v20260928.1.
@@ -91,7 +97,7 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260928.2`.
+- Public main: `v20260928.3`.
 - Current hardening branch: `fix/pr-preview-cleanup-ci-20260928`; PR #116 is the cleanup-trigger and selected-state compactness candidate.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
