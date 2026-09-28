@@ -12,11 +12,16 @@ test('PR previews publish only validated same-repository CI artifacts',()=>{
   assert.match(src,/gh workflow run pages\.yml --ref main/);
 });
 
-test('Pages deployment preserves PR previews while refreshing main',()=>{
-  const src=fs.readFileSync(require.resolve('../.github/workflows/pages.yml'),'utf8');
-  assert.match(src,/PREVIEW_STORE_BRANCH: pages-store/);
-  assert.match(src,/! -name 'preview'/);
-  assert.match(src,/ref: pages-store/);
-  assert.match(src,/actions\/upload-pages-artifact@v4/);
-  assert.match(src,/actions\/deploy-pages@v4/);
+test('Pages and PR preview writers serialize access to pages-store without cancelling each other',()=>{
+  const pages=fs.readFileSync(require.resolve('../.github/workflows/pages.yml'),'utf8'),
+    preview=fs.readFileSync(require.resolve('../.github/workflows/pr-preview.yml'),'utf8');
+  for(const src of [pages,preview]){
+    assert.match(src,/group: pages-store-writer/);
+    assert.match(src,/cancel-in-progress: false/);
+  }
+  assert.match(pages,/PREVIEW_STORE_BRANCH: pages-store/);
+  assert.match(pages,/! -name 'preview'/);
+  assert.match(pages,/ref: pages-store/);
+  assert.match(pages,/actions\/upload-pages-artifact@v4/);
+  assert.match(pages,/actions\/deploy-pages@v4/);
 });

@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260928.1 — 2026-09-28
+
+- Fixed the PR-preview/Pages deployment race introduced with the preview-release pipeline: all workflows that mutate or deploy the shared `pages-store` now use one non-cancelling concurrency group, so a PR-close cleanup can no longer cancel the main-branch Pages run that started from the merge.
+- DIT `Flatband extraction` now opens by default while remaining user-collapsible.
+- Added workflow/layout regression coverage for both changes; scientific calculations and exports are unchanged.
+
 ## v20260926.4 — 2026-09-26
 
 - DIT-only layout refinement: multi-point `Selected site` now sits directly below the Wafer map so map navigation and the selected-site readout remain one spatial inspection surface.

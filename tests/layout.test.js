@@ -833,7 +833,7 @@ test('DIT detail polish keeps diagnostics out of the chart header and pairs Vsb-
   const dit=fs.readFileSync(require.resolve('../src/modules/dit.js'),'utf8'),
     css=fs.readFileSync(require.resolve('../src/styles.css'),'utf8'),
     ui=fs.readFileSync(require.resolve('../src/core/ui.js'),'utf8');
-  assert.match(dit,/class="panel dit-flatband-panel"/);
+  assert.match(dit,/class="panel dit-flatband-panel" open/);
   assert.match(dit,/compactFit=analysis\.options\.pchipEnabled\?analysis\.mode\+' · '\+fitLabel/);
   assert.match(dit,/ditMeta\.title=analysis\.options\.pchipEnabled/);
   assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.dit-flatband-panel\{align-self:stretch;min-width:0\}/);
