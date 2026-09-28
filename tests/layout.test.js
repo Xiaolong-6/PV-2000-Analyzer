@@ -839,6 +839,8 @@ test('DIT detail polish keeps diagnostics out of the chart header and pairs Vsb-
   assert.match(css,/\.dit-module\.single-point-workspace \.detail>\.dit-flatband-panel\{align-self:stretch;min-width:0\}/);
   assert.match(css,/\.single-analysis-workspace\{padding-bottom:24px\}/);
   assert.match(css,/@media\(min-width:1201px\) and \(max-width:1450px\)\{[\s\S]*\.dit-module\.dit-one-point \.dit-point-meta-grid\{grid-template-columns:minmax\(0,1fr\) auto\}/);
-  assert.match(ui,/badgeTitle=title\|\|\(raw==='UNAVAILABLE'\?detail:''\)/);
-  assert.match(ui,/visibleDetail=raw==='UNAVAILABLE'\?'':detail/);
+  assert.match(ui,/badgeTitle=title\|\|detail/);
+  assert.doesNotMatch(ui,/selection-state-note/);
+  assert.match(ui,/stacked=raw==='ALGORITHM INVALID'/);
+  assert.match(ui,/selection-state-line-stacked/);
 });
