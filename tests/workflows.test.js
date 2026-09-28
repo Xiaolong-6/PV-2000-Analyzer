@@ -14,13 +14,15 @@ test('PR previews publish only validated same-repository CI artifacts',()=>{
   assert.match(src,/gh workflow run pages\.yml --ref main/);
 });
 
-test('Pages and PR preview writers serialize access to pages-store without cancelling each other',()=>{
+test('Only mutating Pages-store jobs enter the non-cancelling concurrency group',()=>{
   const pages=fs.readFileSync(require.resolve('../.github/workflows/pages.yml'),'utf8'),
-    preview=fs.readFileSync(require.resolve('../.github/workflows/pr-preview.yml'),'utf8');
-  for(const src of [pages,preview]){
-    assert.match(src,/group: pages-store-writer/);
-    assert.match(src,/cancel-in-progress: false/);
-  }
+    preview=fs.readFileSync(require.resolve('../.github/workflows/pr-preview.yml'),'utf8'),
+    pagesHeader=pages.split('jobs:')[0],previewHeader=preview.split('jobs:')[0];
+  assert.doesNotMatch(pagesHeader,/concurrency:/);
+  assert.doesNotMatch(previewHeader,/concurrency:/);
+  assert.match(pages,/jobs:\n  build:\n    concurrency:\n      group: pages-store-writer\n      cancel-in-progress: false/);
+  assert.match(preview,/publish:[\s\S]*?concurrency:\n      group: pages-store-writer\n      cancel-in-progress: false[\s\S]*?runs-on: ubuntu-latest/);
+  assert.match(preview,/cleanup:[\s\S]*?concurrency:\n      group: pages-store-writer\n      cancel-in-progress: false[\s\S]*?runs-on: ubuntu-latest/);
   assert.match(pages,/PREVIEW_STORE_BRANCH: pages-store/);
   assert.match(pages,/! -name 'preview'/);
   assert.match(pages,/ref: pages-store/);
