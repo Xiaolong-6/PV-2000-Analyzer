@@ -20,7 +20,7 @@ test('Only mutating Pages-store jobs enter the non-cancelling concurrency group'
     pagesHeader=pages.split('jobs:')[0],previewHeader=preview.split('jobs:')[0];
   assert.doesNotMatch(pagesHeader,/concurrency:/);
   assert.doesNotMatch(previewHeader,/concurrency:/);
-  assert.match(pages,/jobs:\n  build:\n    concurrency:\n      group: pages-store-writer\n      cancel-in-progress: false/);
+  assert.match(pages,/jobs:\n  build:\n    concurrency:\n      group: \$\{\{ github\.event_name == 'push' && 'pages-store-writer' \|\| format\('pages-deploy-\{0\}', github\.run_id\) \}\}\n      cancel-in-progress: false/);
   assert.match(preview,/publish:[\s\S]*?concurrency:\n      group: pages-store-writer\n      cancel-in-progress: false[\s\S]*?runs-on: ubuntu-latest/);
   assert.match(preview,/cleanup:[\s\S]*?concurrency:\n      group: pages-store-writer\n      cancel-in-progress: false[\s\S]*?runs-on: ubuntu-latest/);
   assert.match(pages,/PREVIEW_STORE_BRANCH: pages-store/);
