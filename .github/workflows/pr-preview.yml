@@ -12,9 +12,6 @@ permissions:
   contents: write
   pull-requests: read
 
-concurrency:
-  group: pages-store-writer
-  cancel-in-progress: false
 
 env:
   PREVIEW_STORE_BRANCH: pages-store
@@ -26,6 +23,9 @@ jobs:
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.head_repository.full_name == github.repository
+    concurrency:
+      group: pages-store-writer
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout trusted main
@@ -151,6 +151,9 @@ jobs:
       github.event_name == 'pull_request_target' &&
       github.event.action == 'closed' &&
       github.event.pull_request.head.repo.full_name == github.repository
+    concurrency:
+      group: pages-store-writer
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout trusted main
