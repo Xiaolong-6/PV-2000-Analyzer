@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260928.2 — 2026-09-28
+
+- Fixed PR-preview cleanup reliability by moving close handling to `pull_request_target`, so cleanup runs from trusted default-branch workflow code instead of the disappearing PR head after merge/close.
+- Moved shared selected-point state explanations out of the main UI and into the status-badge hover/title for VALID, FILTERED, UNAVAILABLE and ALGORITHM INVALID states.
+- Stacked the ALGORITHM INVALID badge below the selected filter quantity to keep the quantity/value row readable.
+- Added regression coverage for the cleanup trigger and compact selected-state presentation; no scientific calculation or export behavior changed.
+
 ## v20260928.1 — 2026-09-28
 
 - Fixed the PR-preview/Pages deployment race introduced with the preview-release pipeline: all workflows that mutate or deploy the shared `pages-store` now use one non-cancelling concurrency group, so a PR-close cleanup can no longer cancel the main-branch Pages run that started from the merge.
