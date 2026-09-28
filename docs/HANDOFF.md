@@ -1,4 +1,10 @@
-# Agent handoff — 2026-09-26
+# Agent handoff — 2026-09-28
+
+## CI/Pages serialization + DIT flatband default — candidate v20260928.1
+
+The PR-preview rollout exposed one post-merge race: the main push started a Pages deployment while the PR-close cleanup immediately dispatched another Pages run. Because `pages.yml` used `cancel-in-progress: true`, the cleanup-triggered deployment cancelled the merge-triggered deployment after its quality/build steps had already passed. Pages and PR-preview workflows now share the repository-wide `pages-store-writer` concurrency group with cancellation disabled, serializing all writes/deployments against the persistent preview store.
+
+DIT `Flatband extraction` is also expanded by default (`details[open]`) and remains manually collapsible. No DIT scientific calculation or export semantics change.
 
 ## DIT selected-site placement — v20260926.4
 
