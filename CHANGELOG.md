@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260928.4 — 2026-09-28
+
+- Excluded read-only `workflow_dispatch` Pages deployments from the shared `pages-store-writer` queue. Only main-push runs that can refresh the persistent Pages store use that lock; dispatch-only deployments get a run-unique concurrency key.
+- This removes the three-run merge race where an already-running preview deployment, the main-push Pages refresh and the PR-close cleanup could otherwise cause GitHub Actions to replace one pending store-writer job.
+- No application or scientific behavior changed.
+
 ## v20260928.3 — 2026-09-28
 
 - Fixed the remaining PR-preview cleanup cancellation: `pages-store-writer` concurrency now applies only to jobs that actually mutate or deploy the shared Pages store, rather than to every workflow invocation.
