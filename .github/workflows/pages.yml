@@ -10,15 +10,15 @@ permissions:
   pages: write
   id-token: write
 
-concurrency:
-  group: pages-store-writer
-  cancel-in-progress: false
 
 env:
   PREVIEW_STORE_BRANCH: pages-store
 
 jobs:
   build:
+    concurrency:
+      group: pages-store-writer
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
