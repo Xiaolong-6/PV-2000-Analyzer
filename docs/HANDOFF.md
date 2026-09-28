@@ -4,7 +4,7 @@
 
 PR-preview cleanup now listens on `pull_request_target: closed`, ensuring the cleanup workflow is sourced from trusted default-branch code and still runs after the PR head disappears. This complements the shared non-cancelling `pages-store-writer` concurrency introduced in v20260928.1.
 
-Selected-point status cards now keep explanatory prose off the main UI. VALID/FILTERED/UNAVAILABLE/ALGORITHM INVALID explanations are attached to the badge title/hover instead. ALGORITHM INVALID is vertically stacked below the filter quantity, avoiding the crowded `Qtot · ALGORITHM INVALID` line seen in DIT. This shared helper change applies consistently to filter-aware analyzers without changing selection semantics.
+Selected-point status cards now keep explanatory prose off the main UI. VALID/FILTERED/UNAVAILABLE/ALGORITHM INVALID explanations are attached to the badge title/hover instead. Every state badge is vertically stacked below the filter quantity value, avoiding crowded lines such as `Qtot · UNAVAILABLE` or `Qtot · ALGORITHM INVALID` and preventing the metric from collapsing into vertical letters in narrow DIT point cards. This shared helper change applies consistently to filter-aware analyzers without changing selection semantics.
 
 ## CI/Pages serialization + DIT flatband default — v20260928.1
 
