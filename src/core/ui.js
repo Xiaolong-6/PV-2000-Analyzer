@@ -69,12 +69,10 @@
   }
 
   function selectionStateRow(state,{label='Filter quantity',metric='',title='',note=null}={}){
-    const raw=String(state||'UNAVAILABLE').trim().toUpperCase(),
-      detail=note===null?selectionStateNote(state):String(note||''),
+    const detail=note===null?selectionStateNote(state):String(note||''),
       badgeTitle=title||detail,
-      stacked=raw==='ALGORITHM INVALID',
-      metricMarkup=metric?`<span class="selection-state-metric">${escapeHtml(metric)}</span>${stacked?'':`<span class="selection-state-separator" aria-hidden="true">·</span>`}`:'';
-    return `<dt>${escapeHtml(label)}</dt><dd class="selection-state-value"><span class="selection-state-line${stacked?' selection-state-line-stacked':''}">${metricMarkup}${selectionStateBadge(state,{title:badgeTitle})}</span></dd>`;
+      metricMarkup=metric?`<span class="selection-state-metric">${escapeHtml(metric)}</span>`:'';
+    return `<dt>${escapeHtml(label)}</dt><dd class="selection-state-value"><span class="selection-state-line selection-state-line-stacked">${metricMarkup}${selectionStateBadge(state,{title:badgeTitle})}</span></dd>`;
   }
 
   function formatNumericInputValue(value,{
