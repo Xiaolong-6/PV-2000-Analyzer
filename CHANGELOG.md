@@ -1,5 +1,11 @@
 # Changelog
 
+## v20260928.3 — 2026-09-28
+
+- Fixed the remaining PR-preview cleanup cancellation: `pages-store-writer` concurrency now applies only to jobs that actually mutate or deploy the shared Pages store, rather than to every workflow invocation.
+- This prevents irrelevant/skipped `workflow_run` invocations from replacing a pending PR-close cleanup in GitHub Actions' single-pending-run concurrency queue.
+- Kept non-cancelling serialization for the main Pages build, PR preview publish and PR preview cleanup jobs; no application or scientific behavior changed.
+
 ## v20260928.2 — 2026-09-28
 
 - Fixed PR-preview cleanup reliability by moving close handling to `pull_request_target`, so cleanup runs from trusted default-branch workflow code instead of the disappearing PR head after merge/close.
