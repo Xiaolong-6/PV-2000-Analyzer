@@ -1,5 +1,11 @@
 # Agent handoff — 2026-09-28
 
+## PR cleanup + selected-state compactness — candidate v20260928.2
+
+PR-preview cleanup now listens on `pull_request_target: closed`, ensuring the cleanup workflow is sourced from trusted default-branch code and still runs after the PR head disappears. This complements the shared non-cancelling `pages-store-writer` concurrency introduced in v20260928.1.
+
+Selected-point status cards now keep explanatory prose off the main UI. VALID/FILTERED/UNAVAILABLE/ALGORITHM INVALID explanations are attached to the badge title/hover instead. Every state badge is vertically stacked below the filter quantity value, avoiding crowded lines such as `Qtot · UNAVAILABLE` or `Qtot · ALGORITHM INVALID` and preventing the metric from collapsing into vertical letters in narrow DIT point cards. This shared helper change applies consistently to filter-aware analyzers without changing selection semantics.
+
 ## CI/Pages serialization + DIT flatband default — v20260928.1
 
 The PR-preview rollout exposed one post-merge race: the main push started a Pages deployment while the PR-close cleanup immediately dispatched another Pages run. Because `pages.yml` used `cancel-in-progress: true`, the cleanup-triggered deployment cancelled the merge-triggered deployment after its quality/build steps had already passed. Pages and PR-preview workflows now share the repository-wide `pages-store-writer` concurrency group with cancellation disabled, serializing all writes/deployments against the persistent preview store.
@@ -85,8 +91,8 @@ LBIC Distribution now reads the shared canvas frame through `frame.ctx`, matchin
 
 ## Current baseline
 
-- Public main: `v20260928.1`.
-- Current hardening branch: none; PR #115 establishes the Pages/preview serialization and DIT flatband-default baseline.
+- Public main: `v20260928.2`.
+- Current hardening branch: `fix/pr-preview-cleanup-ci-20260928`; PR #116 is the cleanup-trigger and selected-state compactness candidate.
 - Updated 100-case classifier outcome after the FixedPoints closure: **73 scoped PASS + 14 intentional diagnostics + 0 FAIL + 0 NEW_PROFILE** across all 87 successful vendor exports.
 - `SPV-CALC-ENHANCED-N-003` is merged and paired-validated on 69 sites: 28 finite DL/Tau, zero availability mismatches, max errors 2.11e-7 µm DL and 1.46e-7 µs Tau.
 
