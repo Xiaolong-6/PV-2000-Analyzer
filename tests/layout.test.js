@@ -841,6 +841,6 @@ test('DIT detail polish keeps diagnostics out of the chart header and pairs Vsb-
   assert.match(css,/@media\(min-width:1201px\) and \(max-width:1450px\)\{[\s\S]*\.dit-module\.dit-one-point \.dit-point-meta-grid\{grid-template-columns:minmax\(0,1fr\) auto\}/);
   assert.match(ui,/badgeTitle=title\|\|detail/);
   assert.doesNotMatch(ui,/selection-state-note/);
-  assert.match(ui,/stacked=raw==='ALGORITHM INVALID'/);
-  assert.match(ui,/selection-state-line-stacked/);
+  assert.match(ui,/selection-state-line selection-state-line-stacked/);
+  assert.doesNotMatch(ui,/selection-state-separator/);
 });
