@@ -3,6 +3,8 @@ const test=require('node:test'),assert=require('node:assert/strict'),fs=require(
 test('PR previews publish only validated same-repository CI artifacts',()=>{
   const src=fs.readFileSync(require.resolve('../.github/workflows/pr-preview.yml'),'utf8');
   assert.match(src,/workflow_run:/);
+  assert.match(src,/pull_request_target:/);
+  assert.doesNotMatch(src,/\n  pull_request:\n/);
   assert.match(src,/conclusion == 'success'/);
   assert.match(src,/head_repository\.full_name == github\.repository/);
   assert.match(src,/gh run download/);
