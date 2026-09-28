@@ -4,7 +4,7 @@
 
 - Fixed PR-preview cleanup reliability by moving close handling to `pull_request_target`, so cleanup runs from trusted default-branch workflow code instead of the disappearing PR head after merge/close.
 - Moved shared selected-point state explanations out of the main UI and into the status-badge hover/title for VALID, FILTERED, UNAVAILABLE and ALGORITHM INVALID states.
-- Stacked the ALGORITHM INVALID badge below the selected filter quantity to keep the quantity/value row readable.
+- Stacked every selected-point status badge below the selected filter quantity value, including UNAVAILABLE and ALGORITHM INVALID, so narrow point cards cannot squeeze metric labels such as `Qtot` into vertical wrapping.
 - Added regression coverage for the cleanup trigger and compact selected-state presentation; no scientific calculation or export behavior changed.
 
 ## v20260928.1 — 2026-09-28
