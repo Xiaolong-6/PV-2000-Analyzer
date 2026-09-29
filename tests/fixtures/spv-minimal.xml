@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>SPV fixture recipe</Name>
+  <ResultName>SPV parser fixture</ResultName>
+  <Status>Finished</Status>
+  <ExecutionInfo><StartTime>2026-09-25T08:00:00</StartTime><EndTime>2026-09-25T08:00:01</EndTime><ElapsedTime>1</ElapsedTime></ExecutionInfo>
+  <Substrate>
+    <SubstrateId>spv-wafer</SubstrateId><LotId>fixture-lot</LotId><Description>Sanitized SPV parser fixture</Description>
+    <SubstrateShape xsi:type="Circle"><Radius>50</Radius></SubstrateShape>
+  </Substrate>
+  <Measurement xsi:type="SPVMeasurement">
+    <Multiplier>1000</Multiplier><LinearityRatioMethod>UseMeasuredLR</LinearityRatioMethod>
+    <ReflectivityCorrection8>0</ReflectivityCorrection8><ReflectivityCorrection6>0</ReflectivityCorrection6>
+    <UseTextureCorrection>false</UseTextureCorrection><TextureCorrection>0.74</TextureCorrection>
+    <UseEnhancedMode>false</UseEnhancedMode><ParseSignals>false</ParseSignals>
+    <WaferThickness>625</WaferThickness><BSRVelocity>10</BSRVelocity><DopingType>PType</DopingType>
+    <Pattern xsi:type="OnePointPattern"><Name>Center</Name><Coefficients><Point><X>0</X><Y>0</Y></Point></Coefficients></Pattern>
+    <Target xsi:type="RoundWafer"><Diameter>100</Diameter><EdgeExclusion>5</EdgeExclusion></Target>
+    <MeasurementData>
+      <OxideThickness>4</OxideThickness><Wavelength8>778</Wavelength8><Wavelenght6>933</Wavelenght6>
+      <TemperatureCorrectionCoefficientLED8>0</TemperatureCorrectionCoefficientLED8>
+      <TemperatureCorrectionCoefficientLED6>0</TemperatureCorrectionCoefficientLED6>
+      <IterationData><Iteration>
+        <ChuckTemperature>24</ChuckTemperature><LEDTemperature>25</LEDTemperature>
+        <SPV8Global>5.329166666666667</SPV8Global><SPV8ReducedGlobal>6.9295</SPV8ReducedGlobal><LineartiyRatioOK>2.00009</LineartiyRatioOK>
+        <Data><DataItem><Signal>
+          <ArrayOfDouble><double>0.0034</double><double>0.0036</double></ArrayOfDouble>
+          <ArrayOfDouble><double>0.0031</double><double>0.0033</double></ArrayOfDouble>
+        </Signal></DataItem></Data>
+      </Iteration></IterationData>
+    </MeasurementData>
+  </Measurement>
+</Job>

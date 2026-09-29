@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>Dual QSS fixture recipe</Name>
+  <ResultName>Dual QSS parser fixture</ResultName>
+  <Status>Finished</Status>
+  <ExecutionInfo>
+    <StartTime>2026-09-25T08:00:00</StartTime>
+    <EndTime>2026-09-25T08:00:01</EndTime>
+    <ElapsedTime>1</ElapsedTime>
+  </ExecutionInfo>
+  <Substrate>
+    <SubstrateId>fixture-wafer</SubstrateId>
+    <LotId>fixture-lot</LotId>
+    <Description>Sanitized parser regression fixture</Description>
+    <SubstrateShape xsi:type="Circle">
+      <Radius>50</Radius>
+    </SubstrateShape>
+  </Substrate>
+  <Measurement xsi:type="DualQssMeasurement">
+    <WaferThickness>180</WaferThickness>
+    <OpticalFactor>0.72</OpticalFactor>
+    <Doping>1e15</Doping>
+    <DopingType>p</DopingType>
+    <LaserPower>1.5</LaserPower>
+    <QssLampIntensity>1000</QssLampIntensity>
+    <EvalutationMode>2</EvalutationMode>
+    <ProbeSelection>Back</ProbeSelection>
+    <QssBiasSelection>Back</QssBiasSelection>
+    <SaveTransient>true</SaveTransient>
+    <DoAutoSetting>false</DoAutoSetting>
+    <CalculateJZeroParams>true</CalculateJZeroParams>
+    <IncludeKSJ0>true</IncludeKSJ0>
+    <UseAugerCorrection>false</UseAugerCorrection>
+    <DeltaTauLimitForJ0Calc>0.05</DeltaTauLimitForJ0Calc>
+    <DefaultDeltaN>1e15</DefaultDeltaN>
+    <DefaultDeltaNRangeInPercentage>10</DefaultDeltaNRangeInPercentage>
+    <ValidQdcRange>
+      <Min>0.9</Min>
+      <Max>1.1</Max>
+    </ValidQdcRange>
+    <JZeroIntensity>
+      <Min>1</Min>
+      <Max>5</Max>
+    </JZeroIntensity>
+    <Pattern xsi:type="OnePointPattern">
+      <Name>Center</Name>
+      <Coefficients>
+        <Point>
+          <X>0</X>
+          <Y>0</Y>
+        </Point>
+      </Coefficients>
+    </Pattern>
+    <Target xsi:type="RoundWafer">
+      <Diameter>100</Diameter>
+      <EdgeExclusion>5</EdgeExclusion>
+    </Target>
+    <MeasurementData>
+      <IterationData>
+        <Iteration>
+          <ChuckTemperature>25</ChuckTemperature>
+          <MeasurementVelocity>1.25</MeasurementVelocity>
+          <Data>
+            <DataItem>
+              <Values>
+                <ArrayOfDouble>
+                  <double>216.4370125</double>
+                  <double>188.5463167</double>
+                </ArrayOfDouble>
+              </Values>
+              <Intensity>
+                <ArrayOfDouble>
+                  <double>681</double>
+                  <double>1000</double>
+                </ArrayOfDouble>
+              </Intensity>
+              <Power>
+                <ArrayOfDouble>
+                  <double>2.0e13</double>
+                  <double>2.5e13</double>
+                </ArrayOfDouble>
+              </Power>
+              <Transients>
+                <TransientInfo LifeTime="216.431" Evaluation="Sl/1024" Delta="5000" PreTrigger="100" AutoCursor="1" TimeCursor="1200" Average="128" Amplitude="20" Microwave="10.4" LaserPower="1.5e13" Voltage="100" Offset="30" TimeBase="10000">
+                  <Transient>
+                    <SmallPoint X="0" Y="10"/>
+                    <SmallPoint X="5" Y="12"/>
+                  </Transient>
+                </TransientInfo>
+                <TransientInfo LifeTime="188.54" Evaluation="Sl/1024" Delta="5000" PreTrigger="100" AutoCursor="1" TimeCursor="1200" Average="128" Amplitude="18" Microwave="10.4" LaserPower="1.6e13" Voltage="100" Offset="30" TimeBase="10000">
+                  <Transient>
+                    <SmallPoint X="0" Y="9"/>
+                    <SmallPoint X="5" Y="11"/>
+                  </Transient>
+                </TransientInfo>
+              </Transients>
+            </DataItem>
+          </Data>
+        </Iteration>
+      </IterationData>
+    </MeasurementData>
+  </Measurement>
+</Job>

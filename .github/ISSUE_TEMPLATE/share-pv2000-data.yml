@@ -1,0 +1,62 @@
+name: Share PV-2000 data
+description: Provide a matching PV-2000 XML + numeric vendor output to extend or validate analyzer support.
+title: "[Data] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Public upload notice:** anything attached to this issue is publicly accessible. Do not upload a file if employer, university, customer, collaborator or vendor restrictions are unclear.
+
+        The preferred reference is a raw PV-2000 XML plus the matching numeric CSV/export. Full XPS/vendor reports, manuals, binaries, debug symbols, decompiled material and full-interface screenshots should remain private unless you have specific redistribution rights. If a screenshot is needed, use only the minimum view required to establish the relevant result/settings.
+  - type: dropdown
+    id: measurement
+    attributes:
+      label: Measurement family
+      options:
+        - Dit / COCOS
+        - QSS-µPCD
+        - ISC
+        - LBIC
+        - Other / unsupported
+    validations:
+      required: true
+  - type: textarea
+    id: request
+    attributes:
+      label: What should the analyzer support or reproduce?
+      placeholder: Result, channel, algorithm path, map, export, or behavior you want added/checked.
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Reference files
+      description: Drag the raw PV-2000 XML and matching numeric CSV/export here, or link a data-only pull request under reference_data/. Add a minimal screenshot only when necessary and when you have publication rights.
+      placeholder: Drop cleared public files here or paste links.
+    validations:
+      required: true
+  - type: textarea
+    id: settings
+    attributes:
+      label: Relevant PV-2000 settings
+      placeholder: Include settings that may affect interpretation. Leave blank only if none are relevant.
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Publication, licensing and pairing checks
+      options:
+        - label: The XML and vendor output belong to the same measurement/result context.
+          required: true
+        - label: I have read and agree to the [Reference Data Contribution License](https://github.com/Xiaolong-6/PV-2000-Analyzer/blob/main/REFERENCE_DATA_LICENSE.md) for every file I submit here.
+          required: true
+        - label: I own/control, or have obtained, the rights and organizational approvals needed to publish and license these files for the uses described there.
+          required: true
+        - label: The submission contains no confidential/customer material, vendor manuals, proprietary binaries, PDB/debug symbols, decompiled source, credentials or personal data that should remain private.
+          required: true
+        - label: Any anonymization is limited to identifiers/names and does not silently alter scientific values.
+          required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        If you later submit copyrightable code, documentation, tests or UI material through a pull request, the separate repository CLA also applies.

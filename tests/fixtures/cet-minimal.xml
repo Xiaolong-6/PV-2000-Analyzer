@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>CET fixture recipe</Name>
+  <ResultName>CET parser fixture</ResultName>
+  <Status>Finished</Status>
+  <ExecutionInfo><StartTime>2026-09-25T08:00:00</StartTime><EndTime>2026-09-25T08:00:01</EndTime><ElapsedTime>1</ElapsedTime></ExecutionInfo>
+  <Substrate>
+    <SubstrateId>cet-wafer</SubstrateId><LotId>fixture-lot</LotId><Description>Sanitized CET parser fixture</Description>
+    <SubstrateShape xsi:type="Circle"><Radius>50</Radius></SubstrateShape>
+  </Substrate>
+  <Measurement xsi:type="CETMeasurement">
+    <NumberOfDataPoints>3</NumberOfDataPoints>
+    <MeasurementInterval>0.25</MeasurementInterval>
+    <Pattern xsi:type="OnePointPattern"><Name>Center</Name><Coefficients><Point><X>0</X><Y>0</Y></Point></Coefficients></Pattern>
+    <Target xsi:type="RoundWafer"><Diameter>100</Diameter><EdgeExclusion>5</EdgeExclusion></Target>
+    <Process><Settings><CoronaCharge>1e11</CoronaCharge></Settings></Process>
+    <MeasurementData>
+      <VcpdOffset>0.01</VcpdOffset>
+      <IterationData><Iteration>
+        <ChuckTemperature>25</ChuckTemperature>
+        <Data><DataItem><ProcessData><VcpdLight>
+          <ArrayOfDouble><double>-1.0</double><double>-1.2</double></ArrayOfDouble>
+          <ArrayOfDouble><double>-2.0</double><double>-2.2</double></ArrayOfDouble>
+          <ArrayOfDouble><double>-3.0</double><double>-3.2</double></ArrayOfDouble>
+        </VcpdLight></ProcessData></DataItem></Data>
+      </Iteration></IterationData>
+    </MeasurementData>
+  </Measurement>
+</Job>

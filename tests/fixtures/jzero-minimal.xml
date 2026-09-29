@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>JZero fixture recipe</Name>
+  <ResultName>JZero parser fixture</ResultName>
+  <Status>Finished</Status>
+  <ExecutionInfo><StartTime>2026-09-25T08:00:00</StartTime><EndTime>2026-09-25T08:00:02</EndTime><ElapsedTime>2</ElapsedTime></ExecutionInfo>
+  <Substrate>
+    <SubstrateId>jzero-wafer</SubstrateId><LotId>fixture-lot</LotId><Description>Sanitized JZero parser fixture</Description>
+    <SubstrateShape xsi:type="Circle"><Radius>50</Radius></SubstrateShape>
+  </Substrate>
+  <Measurement xsi:type="JZeroMeasurement">
+    <WaferThickness>200</WaferThickness><OpticalFactor>1</OpticalFactor><Doping>1.5e16</Doping><DopingType>PType</DopingType>
+    <LaserPower>1.5</LaserPower><ProbeSelection>Back</ProbeSelection><QssBiasSelection>Back</QssBiasSelection>
+    <DoRastering>false</DoRastering><DoAutoSetting>false</DoAutoSetting><SaveTransient>false</SaveTransient>
+    <PreProcessings>
+      <PreProcessing><Settings><QssLampIntensity>1000</QssLampIntensity></Settings></PreProcessing>
+      <PreProcessing><Settings><QssLampIntensity>3000</QssLampIntensity></Settings></PreProcessing>
+    </PreProcessings>
+    <Pattern xsi:type="OnePointPattern"><Name>Center</Name><Coefficients><Point><X>0</X><Y>0</Y></Point></Coefficients></Pattern>
+    <Target xsi:type="RoundWafer"><Diameter>100</Diameter><EdgeExclusion>5</EdgeExclusion></Target>
+    <MeasurementData><IterationData>
+      <Iteration><ChuckTemperature>25</ChuckTemperature><MeasurementVelocity>1.1</MeasurementVelocity><TauSteadyStateFactor>0.9</TauSteadyStateFactor><QDCValue>1.0</QDCValue><Data><DataItem><Value>200.25</Value></DataItem></Data></Iteration>
+      <Iteration><ChuckTemperature>26</ChuckTemperature><MeasurementVelocity>1.2</MeasurementVelocity><TauSteadyStateFactor>0.8</TauSteadyStateFactor><QDCValue>1.1</QDCValue><Data><DataItem><Value>125.5</Value></DataItem></Data></Iteration>
+    </IterationData></MeasurementData>
+  </Measurement>
+</Job>
