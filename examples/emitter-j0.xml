@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<!-- Built-in synthetic physical Emitter J0 demo. The second-intensity lifetime field follows the first-intensity nine-point spatial pattern with a controlled 18% lifetime reduction, producing positive Basore J0 and finite paired results. Demonstration only; not validation evidence. -->
 <Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Measurement xsi:type="JZeroMeasurement">
     <MeasurementData>
@@ -42,31 +42,31 @@
         <Iteration xsi:type="UpcdIterationData">
           <Data>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>53.8515935497</Value>
+              <Value>43.06313667</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>46.8398421913</Value>
+              <Value>33.40370914</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>49.3836803586</Value>
+              <Value>31.91771015</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>52.9537539037</Value>
+              <Value>38.21931469</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>51.6152256778</Value>
+              <Value>39.38312284</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>46.5764914899</Value>
+              <Value>32.63218114</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>50.789925144</Value>
+              <Value>36.48028631</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>47.8862431046</Value>
+              <Value>30.19684952</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>47.4002974623</Value>
+              <Value>28.33311803</Value>
             </DataItem>
           </Data>
           <ChuckTemperature>23.6012743873</ChuckTemperature>
