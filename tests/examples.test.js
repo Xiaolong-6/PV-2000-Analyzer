@@ -56,7 +56,7 @@ test('all landing examples are explicitly sanitized and use the intended measure
   for(const [fileName,type] of cases){
     const {xml,parsed}=parsedExample(fileName);
     assert.match(xml,/Built-in (?:sanitized|synthetic).*demo/i);
-    assert.match(xml,/sanitized example/);
+    assert.match(xml,/Demonstration only; not validation evidence/i);
     assert.equal(parsed.type,type,fileName);
     assert.doesNotMatch(xml,/(Yameng|MarkoY|markoy|Alex_AlN|Hannu|Toni|Paivikki|Guillaume|PB10B|NC6B|QM129|SC_meas|STech|ES552|CSUN)/i,fileName);
     assert.doesNotMatch(xml,/<(?:StartTime|EndTime)>201[3-7]-/,fileName);
@@ -74,9 +74,29 @@ test('all landing examples pass the real dedicated parser and analyzer',()=>{
     assert.ok(analysis,fileName);
     if(parsed.type==='DITMeasurement')assert.equal(analysis.sites[0]?.valid,true,'DIT example must be algorithm-valid');
     if(parsed.type==='DualQssMeasurement')assert.equal(analysis.vendorResult?.available,true,'Dual QSS example must expose a finite vendor-compatible result table');
+    if(parsed.type==='QssUpcdMeasurement'){
+      assert.ok(analysis.metrics.lifetime.values.filter(Number.isFinite).length>=25,'QSS example must contain a useful finite lifetime population');
+    }
+    if(parsed.type==='JZeroMeasurement'){
+      const j0=analysis.metrics.j0.values;
+      assert.ok(j0.length>=5&&j0.every(value=>Number.isFinite(value)&&value>0),'JZero example must expose positive finite Basore J0');
+    }
+    if(parsed.type==='VcpdMeasurement'){
+      const v=analysis.metrics.dark.values[0];
+      assert.ok(Number.isFinite(v)&&v>0&&v<2,'VCPD example must have a plausible finite contact potential');
+    }
+    if(parsed.type==='CETMeasurement'){
+      assert.ok(analysis.metrics.eot.values.some(value=>Number.isFinite(value)&&value>0),'CET example must expose finite positive EOT');
+      assert.ok(analysis.metrics.r2.values.some(value=>Number.isFinite(value)&&value>.95),'CET example must expose a meaningful fit');
+    }
     if(parsed.type==='SPVMeasurement'){
-      assert.ok(Number.isFinite(analysis.sites[0]?.dl),'SPV example must expose finite DL');
-      assert.ok(Number.isFinite(analysis.sites[0]?.tau),'SPV example must expose finite lifetime');
+      assert.ok(Number.isFinite(analysis.metrics.dl.values[0])&&analysis.metrics.dl.values[0]>0,'SPV example must expose finite positive DL');
+      assert.ok(Number.isFinite(analysis.metrics.tau.values[0])&&analysis.metrics.tau.values[0]>0,'SPV example must expose finite positive lifetime');
+    }
+    if(parsed.type==='LeakageMeasurement'){
+      assert.ok(Number.isFinite(analysis.metrics.positive.values[0]),'Leakage example must expose finite VSASS+');
+      assert.ok(Number.isFinite(analysis.metrics.negative.values[0]),'Leakage example must expose finite VSASS-');
+      assert.ok(Number.isFinite(analysis.metrics.li.values[0]),'Leakage example must expose finite LI');
     }
   }
 });
