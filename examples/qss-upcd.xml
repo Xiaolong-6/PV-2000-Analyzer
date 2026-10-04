@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<!-- Built-in synthetic physical QSS-µPCD demo. The 10×10 lifetime field is a smooth center-high recombination map (roughly 0.5–1.1 ms), generated independently of the private measurement values while retaining its representative XML schema and geometry. Demonstration only; not validation evidence. -->
 <Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Measurement xsi:type="QssUpcdMeasurement">
     <MeasurementData>
@@ -7,315 +7,315 @@
         <Iteration xsi:type="UpcdIterationData">
           <Data>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>693.231593912</Value>
+              <Value>558.074912</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>645.885652771</Value>
+              <Value>609.710496</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>647.861436114</Value>
+              <Value>651.383909</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>815.772102519</Value>
+              <Value>674.032965</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>956.905872951</Value>
+              <Value>672.912496</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1060.2338654</Value>
+              <Value>650.005833</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>984.905082068</Value>
+              <Value>614.062542</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>988.184401906</Value>
+              <Value>577.25639</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1040.55144733</Value>
+              <Value>549.740073</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>831.033451309</Value>
+              <Value>535.168248</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>802.856575016</Value>
+              <Value>585.871905</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>556.942279798</Value>
+              <Value>653.078006</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>460.160806861</Value>
+              <Value>718.717945</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>599.011265669</Value>
+              <Value>768.51784</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>806.347693391</Value>
+              <Value>789.608184</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1061.35794147</Value>
+              <Value>776.383016</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1011.54869844</Value>
+              <Value>733.8939</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1126.29425846</Value>
+              <Value>675.920402</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>970.757575273</Value>
+              <Value>618.454066</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>704.172648523</Value>
+              <Value>572.646737</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>654.48050416</Value>
+              <Value>614.320149</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>376.930798566</Value>
+              <Value>697.319173</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>328.025987068</Value>
+              <Value>789.608184</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>345.836592716</Value>
+              <Value>871.118267</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>656.088926744</Value>
+              <Value>919.365488</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>923.209921567</Value>
+              <Value>919.365488</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1049.36657609</Value>
+              <Value>871.118267</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1039.73516016</Value>
+              <Value>789.608184</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>970.050316673</Value>
+              <Value>697.319173</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>744.771798548</Value>
+              <Value>614.320149</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>437.177223462</Value>
+              <Value>637.901133</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>395.073082052</Value>
+              <Value>733.8939</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>417.319215548</Value>
+              <Value>849.719495</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>541.663518644</Value>
+              <Value>960.190802</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>639.835555416</Value>
+              <Value>1033.967742</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>900.482785916</Value>
+              <Value>1047.19291</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1175.56927861</Value>
+              <Value>994.814742</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1098.66817425</Value>
+              <Value>892.517038</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>964.344602089</Value>
+              <Value>768.51784</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>861.561407801</Value>
+              <Value>651.126301</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>840.071043874</Value>
+              <Value>650.005833</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>875.717518461</Value>
+              <Value>752.544424</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>718.601744225</Value>
+              <Value>882.301728</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>761.973905889</Value>
+              <Value>1011.061078</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>871.751192007</Value>
+              <Value>1101.802788</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>926.036950246</Value>
+              <Value>1124.709451</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1041.68859016</Value>
+              <Value>1071.031501</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>990.373758158</Value>
+              <Value>956.429247</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1046.37182896</Value>
+              <Value>812.514847</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>902.54331251</Value>
+              <Value>672.912496</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>946.478274187</Value>
+              <Value>646.46216</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>934.468909771</Value>
+              <Value>746.81064</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>912.948324974</Value>
+              <Value>876.567944</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>884.155269614</Value>
+              <Value>1007.517405</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>952.463464019</Value>
+              <Value>1101.802788</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1012.05246611</Value>
+              <Value>1128.253124</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1057.53186329</Value>
+              <Value>1076.765285</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>905.383731191</Value>
+              <Value>962.163031</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>932.990302956</Value>
+              <Value>816.05852</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>893.084576388</Value>
+              <Value>672.912496</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>940.114260155</Value>
+              <Value>628.219638</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>964.584230555</Value>
+              <Value>718.228912</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>973.144111902</Value>
+              <Value>834.054507</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>864.066629175</Value>
+              <Value>950.509307</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>999.329356692</Value>
+              <Value>1033.967742</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1068.44989935</Value>
+              <Value>1056.874405</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1045.55509931</Value>
+              <Value>1010.47973</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>917.44821369</Value>
+              <Value>908.182026</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>919.479368877</Value>
+              <Value>778.199335</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>879.064177717</Value>
+              <Value>651.126301</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>920.929556264</Value>
+              <Value>601.094981</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>977.920228505</Value>
+              <Value>675.920402</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>885.104396558</Value>
+              <Value>768.209412</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>786.942494229</Value>
+              <Value>857.893099</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>929.132852676</Value>
+              <Value>919.365488</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1017.87418932</Value>
+              <Value>932.590656</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>969.46174924</Value>
+              <Value>892.517038</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>905.027183698</Value>
+              <Value>811.006955</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>948.51649669</Value>
+              <Value>710.544341</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>889.213620546</Value>
+              <Value>614.320149</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>883.690928176</Value>
+              <Value>572.646737</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>892.015986734</Value>
+              <Value>631.679234</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>903.538818383</Value>
+              <Value>697.319173</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>788.518391779</Value>
+              <Value>755.292672</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>846.559328315</Value>
+              <Value>789.608184</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1008.69122434</Value>
+              <Value>789.608184</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1051.8721964</Value>
+              <Value>755.292672</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>971.421774991</Value>
+              <Value>697.319173</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>847.553486014</Value>
+              <Value>631.679234</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>846.839269912</Value>
+              <Value>572.646737</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>952.299887069</Value>
+              <Value>548.393417</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>982.868328591</Value>
+              <Value>594.045508</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>938.687221223</Value>
+              <Value>635.718921</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>809.504858437</Value>
+              <Value>664.351469</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>862.129979799</Value>
+              <Value>672.912496</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>1012.53205302</Value>
+              <Value>659.687328</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>983.271436926</Value>
+              <Value>629.72753</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>922.411424513</Value>
+              <Value>592.921378</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>728.483036399</Value>
+              <Value>559.421568</Value>
             </DataItem>
             <DataItem xsi:type="UpcdDataItem">
-              <Value>399.560156287</Value>
+              <Value>535.168248</Value>
             </DataItem>
           </Data>
-          <ChuckTemperature>24.2453077212</ChuckTemperature>
-          <MeasurementVelocity>126.499119418</MeasurementVelocity>
-          <TauSteadyStateFactor>1.01164151614</TauSteadyStateFactor>
-          <QDCValue>0.890894074921</QDCValue>
+          <ChuckTemperature>23.943985307621674</ChuckTemperature>
+          <MeasurementVelocity>125</MeasurementVelocity>
+          <TauSteadyStateFactor>1</TauSteadyStateFactor>
+          <QDCValue>0.88067266325459226</QDCValue>
         </Iteration>
       </IterationData>
     </MeasurementData>
     <Pattern xsi:type="SquareRegionPattern">
-      <Name>QSS-µPCD built-in demo</Name>
+      <Name>Square [0,0,10,10] [11,11]</Name>
       <DisplayName>Square Region</DisplayName>
       <Region>
         <Location>
@@ -421,32 +421,7 @@
     <SaveTransient>false</SaveTransient>
     <OpticalFactor>1</OpticalFactor>
     <UseBackSideLamp>false</UseBackSideLamp>
-    <HeaderInfo>
-      <PairOfStringString>
-        <First>Wafer Thickness</First>
-        <Second>400</Second>
-      </PairOfStringString>
-      <PairOfStringString>
-        <First>uPCD Avg Mode</First>
-        <Second>4</Second>
-      </PairOfStringString>
-      <PairOfStringString>
-        <First>Laser Power</First>
-        <Second>150 E11</Second>
-      </PairOfStringString>
-      <PairOfStringString>
-        <First>Do AutoSetting</First>
-        <Second>True</Second>
-      </PairOfStringString>
-      <PairOfStringString>
-        <First>Transient</First>
-        <Second>Normal Transient</Second>
-      </PairOfStringString>
-      <PairOfStringString>
-        <First>QSS Intensity</First>
-        <Second>1000</Second>
-      </PairOfStringString>
-    </HeaderInfo>
+    <HeaderInfo />
     <ProbeSelection>Front</ProbeSelection>
     <QssBiasSelection>Front</QssBiasSelection>
     <QSSRange>
@@ -454,8 +429,8 @@
       <Max>10</Max>
     </QSSRange>
   </Measurement>
-  <Name>QSS-µPCD built-in demo</Name>
-  <ResultName>QSS-µPCD sanitized example</ResultName>
+  <Name>QSS-µPCD built-in physical demo</Name>
+  <ResultName>QSS-µPCD sanitized physical example</ResultName>
   <Status>Completed</Status>
   <ExecutionInfo>
     <StartTime>2026-01-01T12:00:00Z</StartTime>
