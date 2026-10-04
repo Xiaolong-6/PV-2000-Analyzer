@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Measurement xsi:type="JZeroMeasurement">
+    <MeasurementData>
+      <IterationData>
+        <Iteration xsi:type="UpcdIterationData">
+          <Data>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>52.5160203339</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>40.7362306551</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>38.9240367646</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>46.6089203481</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>48.0281985907</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>39.7953428524</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>44.4881540355</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>36.8254262489</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>34.5525829657</Value>
+            </DataItem>
+          </Data>
+          <ChuckTemperature>23.6006683758</ChuckTemperature>
+          <MeasurementVelocity>123.321327096</MeasurementVelocity>
+          <TauSteadyStateFactor>0.987011264421</TauSteadyStateFactor>
+          <QDCValue>0.974828626201</QDCValue>
+        </Iteration>
+        <Iteration xsi:type="UpcdIterationData">
+          <Data>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>53.8515935497</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>46.8398421913</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>49.3836803586</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>52.9537539037</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>51.6152256778</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>46.5764914899</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>50.789925144</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>47.8862431046</Value>
+            </DataItem>
+            <DataItem xsi:type="UpcdDataItem">
+              <Value>47.4002974623</Value>
+            </DataItem>
+          </Data>
+          <ChuckTemperature>23.6012743873</ChuckTemperature>
+          <MeasurementVelocity>123.309710793</MeasurementVelocity>
+          <TauSteadyStateFactor>0.986820227806</TauSteadyStateFactor>
+          <QDCValue>0.986197952778</QDCValue>
+        </Iteration>
+      </IterationData>
+    </MeasurementData>
+    <Pattern xsi:type="NinePointPattern">
+      <Name>Emitter J0 built-in demo</Name>
+      <DisplayName>9Pts</DisplayName>
+      <Coefficients>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-0.63245553203367588</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>-0.63245553203367588</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0.63245553203367588</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>0.63245553203367588</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-0.63245553203367588</X>
+          <Y>0.63245553203367588</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0.63245553203367588</X>
+          <Y>0.63245553203367588</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0.63245553203367588</X>
+          <Y>-0.63245553203367588</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-0.63245553203367588</X>
+          <Y>-0.63245553203367588</Y>
+        </SDI.Math.Point>
+      </Coefficients>
+    </Pattern>
+    <Target xsi:type="SquareCell">
+      <DisplayName />
+      <Exclusions />
+      <EdgeExclusion>7</EdgeExclusion>
+      <Size>
+        <Width>156</Width>
+        <Height>156</Height>
+      </Size>
+    </Target>
+    <EdgeExclusion>7</EdgeExclusion>
+    <DynamicParameters />
+    <DoRastering>true</DoRastering>
+    <UseInitialPt>false</UseInitialPt>
+    <InitialPoint>
+      <X>0</X>
+      <Y>0</Y>
+    </InitialPoint>
+    <AutosetCoordinates>
+      <X>0</X>
+      <Y>0</Y>
+    </AutosetCoordinates>
+    <WaferThickness>150</WaferThickness>
+    <DefaultAmplitude>1</DefaultAmplitude>
+    <PreProcessings>
+      <ArrayOfPreProcessSettings>
+        <PreProcessSettings xsi:type="QssSettings">
+          <Coordinates>
+            <X>0</X>
+            <Y>0</Y>
+          </Coordinates>
+          <QssLampIntensity>1000</QssLampIntensity>
+          <QSSLampDelay>100</QSSLampDelay>
+          <MeasureTransient>true</MeasureTransient>
+        </PreProcessSettings>
+      </ArrayOfPreProcessSettings>
+      <ArrayOfPreProcessSettings>
+        <PreProcessSettings xsi:type="QssSettings">
+          <Coordinates>
+            <X>0</X>
+            <Y>0</Y>
+          </Coordinates>
+          <QssLampIntensity>3000</QssLampIntensity>
+          <QSSLampDelay>100</QSSLampDelay>
+          <MeasureTransient>true</MeasureTransient>
+        </PreProcessSettings>
+      </ArrayOfPreProcessSettings>
+    </PreProcessings>
+    <FeConstant>34000000000000</FeConstant>
+    <LIDConstant>34000000000000</LIDConstant>
+    <DoPointAveraging>false</DoPointAveraging>
+    <PointAverageCount>3</PointAverageCount>
+    <DoAutoSetting>true</DoAutoSetting>
+    <LaserPowerRange>1</LaserPowerRange>
+    <LaserPowerType>
+      <string>Low</string>
+      <string>High</string>
+    </LaserPowerType>
+    <Averaging>4</Averaging>
+    <AveragingValues>
+      <int>1</int>
+      <int>2</int>
+      <int>4</int>
+      <int>8</int>
+      <int>16</int>
+      <int>32</int>
+      <int>64</int>
+      <int>128</int>
+      <int>256</int>
+      <int>512</int>
+      <int>1028</int>
+      <int>2048</int>
+      <int>4096</int>
+    </AveragingValues>
+    <EvalutationMode>4</EvalutationMode>
+    <EvaluationModes>
+      <string>SL/64</string>
+      <string>SL/128</string>
+      <string>SL/256</string>
+      <string>SL/512</string>
+      <string>SL/1024</string>
+      <string>1/e</string>
+      <string>1/e2</string>
+    </EvaluationModes>
+    <LaserPower>150</LaserPower>
+    <AutosetLaserPower>150</AutosetLaserPower>
+    <UseFastTransient>0</UseFastTransient>
+    <FastTransientType>
+      <string>Normal Transient</string>
+      <string>Fast Transient (1024 pts)</string>
+    </FastTransientType>
+    <SettingDelay>300</SettingDelay>
+    <Doping>5E+15</Doping>
+    <DopingType>PType</DopingType>
+    <SaveTransient>false</SaveTransient>
+    <OpticalFactor>0.7</OpticalFactor>
+    <UseBackSideLamp>false</UseBackSideLamp>
+    <HeaderInfo>
+      <PairOfStringString>
+        <First>QSS Intensity (1st,2nd)</First>
+        <Second>1000.000,3000.000</Second>
+      </PairOfStringString>
+    </HeaderInfo>
+    <ProbeSelection>Back</ProbeSelection>
+    <QssBiasSelection>Back</QssBiasSelection>
+    <QSSRange>
+      <Min>0.5</Min>
+      <Max>10</Max>
+    </QSSRange>
+    <InjectionConstant>1</InjectionConstant>
+    <SecondAveraging>5</SecondAveraging>
+  </Measurement>
+  <Name>Emitter J0 built-in demo</Name>
+  <ResultName>Emitter J0 sanitized example</ResultName>
+  <Status>Completed</Status>
+  <ExecutionInfo>
+    <StartTime>2026-01-01T12:00:00Z</StartTime>
+    <EndTime>2026-01-01T12:01:00Z</EndTime>
+    <ExecutionTime />
+    <ElapsedTime>00:01:58.3593750</ElapsedTime>
+  </ExecutionInfo>
+  <Substrate>
+    <ScribeId />
+    <SubstrateId>demo-jzero-substrate</SubstrateId>
+    <CassetteId />
+    <LotId />
+    <Description />
+    <SubstrateShape xsi:type="Quadrilateral">
+      <Vertices>
+        <SDI.Math.Point>
+          <X>78</X>
+          <Y>78</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-78</X>
+          <Y>78</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-78</X>
+          <Y>-78</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>78</X>
+          <Y>-78</Y>
+        </SDI.Math.Point>
+      </Vertices>
+    </SubstrateShape>
+  </Substrate>
+  <ExecutionActivityType>SDI.ExecutionControl.UpcdDummyExecutionBase, SDI.ExecutionControl</ExecutionActivityType>
+  <StaticParameters />
+</Job>
