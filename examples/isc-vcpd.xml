@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<!-- Built-in synthetic physical VCPD demo. Four Kelvin-probe readings near 0.42 V with a 20 mV instrument offset produce a representative 0.40 V-class contact-potential result. Demonstration only; not validation evidence. -->
 <Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Measurement xsi:type="VcpdMeasurement">
     <MeasurementData>
@@ -7,17 +7,12 @@
         <Iteration xsi:type="VcpdIterationData">
           <Data>
             <DataItem xsi:type="VcpdDataItem">
-              <Readings>
-                <double>60.5390980717</double>
-                <double>60.5712834749</double>
-                <double>60.5875763729</double>
-                <double>60.5844434319</double>
-              </Readings>
+              <Readings><double>0.418</double><double>0.421</double><double>0.419</double><double>0.422</double></Readings>
             </DataItem>
           </Data>
           <ChuckTemperature>0</ChuckTemperature>
           <MeasurementVelocity>0</MeasurementVelocity>
-          <VcpdOffset>0</VcpdOffset>
+          <VcpdOffset>0.020</VcpdOffset>
         </Iteration>
       </IterationData>
     </MeasurementData>
