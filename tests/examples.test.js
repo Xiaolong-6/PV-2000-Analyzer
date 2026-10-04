@@ -89,6 +89,13 @@ test('all landing examples pass the real dedicated parser and analyzer',()=>{
       assert.ok(analysis.metrics.eot.values.some(value=>Number.isFinite(value)&&value>0),'CET example must expose finite positive EOT');
       assert.ok(analysis.metrics.r2.values.some(value=>Number.isFinite(value)&&value>.95),'CET example must expose a meaningful fit');
     }
+    if(parsed.type==='LBICMeasurement'){
+      const beams=Object.values(analysis.iterations[0]?.beams||{});
+      const dl=beams.flatMap(beam=>Object.values(beam.metrics||{})).find(metric=>metric.concept==='dl');
+      const iqe=beams.flatMap(beam=>Object.values(beam.metrics||{})).find(metric=>metric.concept==='iqe');
+      assert.ok(dl&&dl.values.length>=5&&dl.values.every(value=>Number.isFinite(value)&&value>0),'LBIC example must expose finite positive diffusion length at every site');
+      assert.ok(iqe&&iqe.values.some(value=>Number.isFinite(value)&&value>0&&value<=100),'LBIC example must expose physically bounded IQE');
+    }
     if(parsed.type==='SPVMeasurement'){
       assert.ok(Number.isFinite(analysis.metrics.dl.values[0])&&analysis.metrics.dl.values[0]>0,'SPV example must expose finite positive DL');
       assert.ok(Number.isFinite(analysis.metrics.tau.values[0])&&analysis.metrics.tau.values[0]>0,'SPV example must expose finite positive lifetime');
