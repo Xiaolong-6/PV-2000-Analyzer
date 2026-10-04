@@ -1,6 +1,6 @@
 # Changelog
 
-## v20260929.1.2 — 2026-10-04
+## v20261004.1 — 2026-10-04
 
 - Made all nine supported-analyzer tags on the landing page clickable, with one built-in example per analyzer family.
 - Added sanitized demonstration XML shaped from representative private reference cases; identifying metadata and original acquisition timestamps are removed, measurement values are transformed or synthesized, and the files are explicitly excluded from validation evidence.
