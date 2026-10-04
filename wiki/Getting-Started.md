@@ -8,7 +8,9 @@ https://xiaolong-6.github.io/PV-2000-Analyzer/
 
 The application runs in the browser. Imported XML files are processed locally and are not uploaded by the analyzer.
 
-For offline use, choose **Download Offline HTML** on the landing page and open that self-contained file locally.
+For offline use, choose **Download Offline HTML** on the landing page and open that self-contained file locally. The built-in examples are embedded in the same file and remain available offline.
+
+You can also click any supported-analyzer tag on the landing page to open its sanitized built-in example. These examples demonstrate the analyzer UI and data flow; they are not public reference cases and do not establish validation.
 
 ## 2. Open an XML result
 
