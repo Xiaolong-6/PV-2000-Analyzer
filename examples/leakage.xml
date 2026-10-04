@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<!-- Built-in synthetic physical Leakage demo. Positive and negative surface-potential relaxation traces are smooth first-order relaxations with both polarities enabled, yielding finite VSASS+, VSASS- and LI. Demonstration only; not validation evidence. -->
 <Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Measurement xsi:type="LeakageMeasurement">
     <MeasurementData xsi:type="LeakageDataContainer">
@@ -7,85 +7,17 @@
         <Iteration>
           <Data>
             <DataItem xsi:type="LeakageDataItem">
-              <NegativeData />
+              <NegativeData><double>-1.85</double><double>-1.821142539</double><double>-1.795487974</double><double>-1.772680816</double><double>-1.752405029</double><double>-1.734379657</double><double>-1.718354925</double><double>-1.704108782</double><double>-1.691443821</double><double>-1.680184548</double><double>-1.670174944</double><double>-1.661276308</double><double>-1.653365334</double><double>-1.6463324</double><double>-1.640080054</double><double>-1.634521657</double><double>-1.629580188</double><double>-1.625187174</double><double>-1.621281741</double><double>-1.617809773</double><double>-1.61472316</double><double>-1.611979131</double><double>-1.609539662</double><double>-1.60737095</double><double>-1.605442944</double><double>-1.603728928</double><double>-1.602205151</double><double>-1.600850499</double><double>-1.599646199</double><double>-1.598575565</double><double>-1.597623761</double><double>-1.596777598</double><double>-1.596025351</double><double>-1.595356596</double><double>-1.594762066</double><double>-1.594233523</double><double>-1.593763644</double><double>-1.593345916</double><double>-1.592974552</double><double>-1.592644406</double><double>-1.592350902</double><double>-1.592089975</double><double>-1.591858008</double><double>-1.591651788</double><double>-1.591468455</double><double>-1.591305471</double><double>-1.591160577</double><double>-1.591031764</double><double>-1.590917248</double><double>-1.590815443</double><double>-1.590724936</double></NegativeData>
               <NegativeDelaySeconds>0</NegativeDelaySeconds>
-              <PositiveData>
-                <double>7.16821723384</double>
-                <double>7.16229768707</double>
-                <double>7.15834765155</double>
-                <double>7.1489568269</double>
-                <double>7.13886031349</double>
-                <double>7.12770547758</double>
-                <double>7.11586112996</double>
-                <double>7.10454054783</double>
-                <double>7.09441930819</double>
-                <double>7.08785985125</double>
-                <double>7.08176714174</double>
-                <double>7.08127755078</double>
-                <double>7.07777847141</double>
-                <double>7.07779568955</double>
-                <double>7.07667452921</double>
-                <double>7.07339009026</double>
-                <double>7.06832265688</double>
-                <double>7.06015489872</double>
-                <double>7.0526531995</double>
-                <double>7.04187845651</double>
-                <double>7.03223477856</double>
-                <double>7.02377747621</double>
-                <double>7.01643895736</double>
-                <double>7.0127676382</double>
-                <double>7.01015399606</double>
-                <double>7.00984105167</double>
-                <double>7.00876059505</double>
-                <double>7.00810206801</double>
-                <double>7.00767855147</double>
-                <double>7.00499863592</double>
-                <double>7.00088216296</double>
-                <double>6.99215642326</double>
-                <double>6.98286667814</double>
-                <double>6.97441940923</double>
-                <double>6.96659817842</double>
-                <double>6.95900872686</double>
-                <double>6.95428808465</double>
-                <double>6.9522992713</double>
-                <double>6.95204005679</double>
-                <double>6.95275071472</double>
-                <double>6.95267368398</double>
-                <double>6.95335494667</double>
-                <double>6.94962553226</double>
-                <double>6.94649911026</double>
-                <double>6.94166346079</double>
-                <double>6.93377274298</double>
-                <double>6.92530982642</double>
-                <double>6.91624972313</double>
-                <double>6.90948343907</double>
-                <double>6.90453349736</double>
-              </PositiveData>
-              <PositiveDelaySeconds>0.499486314784</PositiveDelaySeconds>
+              <PositiveData><double>1.65</double><double>1.615048529</double><double>1.584459935</double><double>1.557689613</double><double>1.534260941</double><double>1.513756793</double><double>1.49581211</double><double>1.480107402</double><double>1.46636306</double><double>1.454334379</double><double>1.443807199</double><double>1.434594091</double><double>1.426531025</double><double>1.419474445</double><double>1.413298714</double><double>1.407893879</double><double>1.403163712</double><double>1.399023996</double><double>1.395401027</double><double>1.392230301</double><double>1.389455366</double><double>1.387026818</double><double>1.384901416</double><double>1.383041322</double><double>1.381413417</double><double>1.379988718</double><double>1.37874186</double><double>1.377650642</double><double>1.376695638</double><double>1.375859844</double><double>1.375128379</double><double>1.37448822</double><double>1.373927971</double><double>1.373437655</double><double>1.373008544</double><double>1.372632998</double><double>1.372304329</double><double>1.372016687</double><double>1.371764951</double><double>1.371544638</double><double>1.371351826</double><double>1.371183082</double><double>1.371035402</double><double>1.370906156</double><double>1.370793044</double><double>1.370694051</double><double>1.370607415</double><double>1.370531593</double><double>1.370465236</double><double>1.370407162</double><double>1.370356337</double></PositiveData>
+              <PositiveDelaySeconds>0</PositiveDelaySeconds>
             </DataItem>
           </Data>
           <ChuckTemperature>0</ChuckTemperature>
           <MeasurementVelocity>0</MeasurementVelocity>
         </Iteration>
       </IterationData>
-      <VcpdOffset>
-        <double>-0.00495566869588</double>
-        <double>-0.00497611942307</double>
-        <double>-0.00519016897775</double>
-        <double>-0.00402525317489</double>
-        <double>-0.00457933172245</double>
-        <double>-0.00479988060231</double>
-        <double>-0.00490767870483</double>
-        <double>-0.00448624045293</double>
-        <double>-0.00499336071426</double>
-        <double>-0.00504424504423</double>
-        <double>-0.00534753765123</double>
-        <double>-0.00352113392698</double>
-        <double>-0.00522689064931</double>
-        <double>-0.00396817368822</double>
-        <double>-0.00480266071923</double>
-        <double>-0.00435601933334</double>
-      </VcpdOffset>
+      <VcpdOffset><double>0</double></VcpdOffset>
     </MeasurementData>
     <Pattern xsi:type="FixedPointsPattern">
       <Name />
@@ -121,12 +53,8 @@
       <MeasuringTimeSeconds>5</MeasuringTimeSeconds>
       <MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds>
     </PositiveSettings>
-    <MeasureNegative>false</MeasureNegative>
-    <NegativeSettings>
-      <Charge>-45000000000000</Charge>
-      <MeasuringTimeSeconds>30</MeasuringTimeSeconds>
-      <MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds>
-    </NegativeSettings>
+    <MeasureNegative>true</MeasureNegative>
+    <NegativeSettings><Charge>-4500000000000</Charge><MeasuringTimeSeconds>5</MeasuringTimeSeconds><MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds></NegativeSettings>
     <PhysicalThickness>200</PhysicalThickness>
     <Material>SiO2</Material>
     <StationTarget>Measurement</StationTarget>
