@@ -40,6 +40,8 @@ The project-level vendor-version validation boundary is currently anchored to pa
 
 Open the [live analyzer](https://xiaolong-6.github.io/PV-2000-Analyzer/), then drop or select a PV-2000 XML file. Processing stays in the browser.
 
+To explore the UI without a file, click any analyzer tag on the landing page. Each supported analyzer has one built-in sanitized demonstration dataset. These examples are for interface/scientific-workflow exploration only and are **not validation evidence**.
+
 For repeated files from one directory, authorize the folder once with **Folder**. The `←` / `→` buttons then load adjacent XML files directly; the arrows do not open a picker.
 
 For offline use, choose **Download Offline HTML** on the landing page and open the downloaded self-contained HTML locally.
