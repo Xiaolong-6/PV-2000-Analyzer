@@ -55,7 +55,7 @@ function parsedExample(fileName){
 test('all landing examples are explicitly sanitized and use the intended measurement type',()=>{
   for(const [fileName,type] of cases){
     const {xml,parsed}=parsedExample(fileName);
-    assert.match(xml,/Built-in sanitized demo/);
+    assert.match(xml,/Built-in (?:sanitized|synthetic).*demo/i);
     assert.match(xml,/sanitized example/);
     assert.equal(parsed.type,type,fileName);
     assert.doesNotMatch(xml,/(Yameng|MarkoY|markoy|Alex_AlN|Hannu|Toni|Paivikki|Guillaume|PB10B|NC6B|QM129|SC_meas|STech|ES552|CSUN)/i,fileName);
@@ -72,6 +72,12 @@ test('all landing examples pass the real dedicated parser and analyzer',()=>{
     const analysis=mod.analyze(data);
     assert.ok(data,fileName);
     assert.ok(analysis,fileName);
+    if(parsed.type==='DITMeasurement')assert.equal(analysis.sites[0]?.valid,true,'DIT example must be algorithm-valid');
+    if(parsed.type==='DualQssMeasurement')assert.equal(analysis.vendorResult?.available,true,'Dual QSS example must expose a finite vendor-compatible result table');
+    if(parsed.type==='SPVMeasurement'){
+      assert.ok(Number.isFinite(analysis.sites[0]?.dl),'SPV example must expose finite DL');
+      assert.ok(Number.isFinite(analysis.sites[0]?.tau),'SPV example must expose finite lifetime');
+    }
   }
 });
 
