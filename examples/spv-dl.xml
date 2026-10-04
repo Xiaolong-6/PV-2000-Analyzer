@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<!-- Built-in sanitized physical demo. Signal and correction values are synthetic/public-regression values chosen to produce a finite, physically meaningful SPV diffusion length and lifetime. Demonstration only; not validation evidence. -->
 <Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Measurement xsi:type="SPVMeasurement">
     <MeasurementData xsi:type="SPVDataContainer">
@@ -11,12 +11,8 @@
                 <double>6175.54838374</double>
               </Phase>
               <Signal>
-                <SDI.Math.Vector>
-                  <double>0.000869562318744</double>
-                </SDI.Math.Vector>
-                <SDI.Math.Vector>
-                  <double>0.000858380021443</double>
-                </SDI.Math.Vector>
+                <SDI.Math.Vector><double>0.0034875</double></SDI.Math.Vector>
+                <SDI.Math.Vector><double>0.003174</double></SDI.Math.Vector>
               </Signal>
               <Temperature>
                 <double>24.3525863476</double>
@@ -28,23 +24,23 @@
               </Params>
             </DataItem>
           </Data>
-          <ChuckTemperature>23.2098779226</ChuckTemperature>
+          <ChuckTemperature>24.017447199265384</ChuckTemperature>
           <MeasurementVelocity>0</MeasurementVelocity>
-          <LEDTemperature>24.288387556</LEDTemperature>
-          <SPV8Global>0.884888200015</SPV8Global>
-          <SPV8ReducedGlobal>0.490468085535</SPV8ReducedGlobal>
+          <LEDTemperature>24.745944291398835</LEDTemperature>
+          <SPV8Global>5.329166666666667</SPV8Global>
+          <SPV8ReducedGlobal>6.9295</SPV8ReducedGlobal>
           <SPV2Global>0.865114312319</SPV2Global>
-          <LinearityRatio>1.76991812623</LinearityRatio>
-          <LineartiyRatioOK>1.96372024833</LineartiyRatioOK>
+          <LinearityRatio>0.769</LinearityRatio>
+          <LineartiyRatioOK>2.00009</LineartiyRatioOK>
           <Sensitivity>0.000982445990413</Sensitivity>
           <IntensityN8>9062.50269887</IntensityN8>
           <IntensityN6>14218.728804</IntensityN6>
           <IntensityN8Reduced>4556.34874179</IntensityN8Reduced>
         </Iteration>
       </IterationData>
-      <OxideThickness>295.248130594</OxideThickness>
-      <Wavelength8>765.48318964</Wavelength8>
-      <Wavelenght6>917.512136908</Wavelenght6>
+      <OxideThickness>4</OxideThickness>
+      <Wavelength8>778</Wavelength8>
+      <Wavelenght6>933</Wavelenght6>
       <TemperatureCorrectionCoefficientLED8>0</TemperatureCorrectionCoefficientLED8>
       <TemperatureCorrectionCoefficientLED6>0</TemperatureCorrectionCoefficientLED6>
       <SPV8Freq>4992.3015227</SPV8Freq>
@@ -81,7 +77,7 @@
       <ArrayOfPreProcessSettings />
     </PreProcessings>
     <NumberOfLRRepeats>3</NumberOfLRRepeats>
-    <OxideThickness>300</OxideThickness>
+    <OxideThickness>4</OxideThickness>
     <UseLowIntensityCard>false</UseLowIntensityCard>
     <ExcitationLevel>3</ExcitationLevel>
     <StorageInterval>50</StorageInterval>
