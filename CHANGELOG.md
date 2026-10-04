@@ -1,5 +1,12 @@
 # Changelog
 
+## v20260929.1.1 — 2026-10-04
+
+- Made all nine supported-analyzer tags on the landing page clickable, with one built-in example per analyzer family.
+- Added sanitized demonstration XML shaped from representative private reference cases; identifying metadata and original acquisition timestamps are removed, measurement values are transformed or synthesized, and the files are explicitly excluded from validation evidence.
+- Embedded the examples into the generated single-file analyzer so the same examples work on GitHub Pages and in the downloaded offline HTML.
+- Added regression coverage for example sanitization, measurement-type routing, dedicated parser/analyzer execution and landing/build wiring.
+
 ## v20260929.1 — 2026-09-29
 
 - Reset the public repository to a clean baseline while preserving the current analyzer implementation, tests, scientific documentation, validation profiles, licensing and contribution workflow.
