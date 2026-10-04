@@ -35,9 +35,30 @@ const files=[
   'src/app.js'
 ];
 
+const examples=[
+  ['dit','Dit / COCOS','dit-cocos.xml'],
+  ['qss','QSS-µPCD','qss-upcd.xml'],
+  ['dual-qss','QSS Injection','qss-injection.xml'],
+  ['jzero','Emitter J0','emitter-j0.xml'],
+  ['isc','ISC / VCPD','isc-vcpd.xml'],
+  ['cet','CET / EOT','cet-eot.xml'],
+  ['lbic','LBIC','lbic.xml'],
+  ['spv','SPV / DL','spv-dl.xml'],
+  ['leakage','Leakage','leakage.xml']
+];
+
 const template=fs.readFileSync(path.join(root,'src/index.template.html'),'utf8');
 const css=fs.readFileSync(path.join(root,'src/styles.css'),'utf8');
-const js=files.map(file=>`// ${file}\n${fs.readFileSync(path.join(root,file),'utf8')}`).join('\n');
+const embeddedExamples=Object.fromEntries(examples.map(([key,label,fileName])=>[
+  key,
+  {
+    label,
+    fileName:`example-${fileName}`,
+    xml:fs.readFileSync(path.join(root,'examples',fileName),'utf8')
+  }
+]));
+const examplesBootstrap=`globalThis.PV2000_EXAMPLES=${JSON.stringify(embeddedExamples).replaceAll('<','\\u003c')};`;
+const js=[examplesBootstrap,...files.map(file=>`// ${file}\n${fs.readFileSync(path.join(root,file),'utf8')}`)].join('\n');
 
 const rawSha=String(process.env.PV2000_BUILD_SHA||process.env.GITHUB_SHA||'local').trim();
 const fullSha=/^[0-9a-f]{7,40}$/i.test(rawSha)?rawSha:'local';
