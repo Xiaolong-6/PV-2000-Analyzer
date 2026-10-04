@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and measurement values were synthesized because the selected private recipe contained no completed DataItem payload. Demonstration only; not validation evidence. -->
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Measurement xsi:type="DualQssMeasurement">
+    <MeasurementData>
+      <IterationData>
+        <Iteration>
+          <Data><DataItem><Values><ArrayOfDouble><double>223.535899614</double><double>223.015265656</double><double>222.001843162</double><double>220.129556209</double><double>217.335484574</double><double>213.750345538</double><double>209.815482871</double><double>206.037884142</double><double>202.875247575</double><double>200.615499919</double><double>199.282655735</double><double>198.628411195</double><double>198.216208888</double><double>197.540039701</double><double>196.168458173</double><double>193.94448168</double><double>190.985362257</double></ArrayOfDouble></Values><Intensity><ArrayOfDouble><double>46.05671265</double><double>68.0484332977</double><double>100.003716314</double><double>146.905039848</double><double>214.744354906</double><double>315.534138367</double><double>463.33196322</double><double>680.255668727</double><double>999.490770684</double><double>1468.27153896</double><double>2155.80733467</double><double>3166.14597031</double><double>4648.95819127</double><double>6822.27706879</double><double>10009.290824</double><double>14504.2776331</double><double>20491.7376649</double></ArrayOfDouble></Intensity><Power><ArrayOfDouble><double>7.2652278682e+11</double><double>1.0719083535e+12</double><double>1.5692550818e+12</double><double>2.2921354467e+12</double><double>3.3280734483e+12</double><double>4.8568733466e+12</double><double>7.0902716425e+12</double><double>1.03686635e+13</double><double>1.5212812155e+13</double><double>2.2378298499e+13</double><double>3.2987378461e+13</double><double>4.8736245692e+13</double><double>7.2066242826e+13</double><double>1.0650489604e+14</double><double>1.5720077249e+14</double><double>2.2872302551e+14</double><double>3.2361550857e+14</double></ArrayOfDouble></Power></DataItem></Data>
+          <ChuckTemperature>0</ChuckTemperature>
+          <MeasurementVelocity>0</MeasurementVelocity>
+        </Iteration>
+      </IterationData>
+    </MeasurementData>
+    <Pattern xsi:type="OnePointPattern">
+      <Name>QSS Injection built-in demo</Name>
+      <DisplayName>1Pt</DisplayName>
+      <Coefficients>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+      </Coefficients>
+    </Pattern>
+    <Target xsi:type="RoundWafer">
+      <DisplayName />
+      <Exclusions />
+      <EdgeExclusion>7</EdgeExclusion>
+      <Diameter>100</Diameter>
+    </Target>
+    <EdgeExclusion>7</EdgeExclusion>
+    <DynamicParameters />
+    <DoRastering>false</DoRastering>
+    <UseInitialPt>true</UseInitialPt>
+    <InitialPoint>
+      <X>0</X>
+      <Y>0</Y>
+    </InitialPoint>
+    <AutosetCoordinates>
+      <X>0</X>
+      <Y>0</Y>
+    </AutosetCoordinates>
+    <WaferThickness>675</WaferThickness>
+    <DefaultAmplitude>0.7</DefaultAmplitude>
+    <PreProcessings />
+    <FeConstant>34000000000000</FeConstant>
+    <LIDConstant>34000000000000</LIDConstant>
+    <DoPointAveraging>false</DoPointAveraging>
+    <PointAverageCount>3</PointAverageCount>
+    <DoAutoSetting>true</DoAutoSetting>
+    <LaserPowerRange>1</LaserPowerRange>
+    <LaserPowerType>
+      <string>Low</string>
+      <string>High</string>
+    </LaserPowerType>
+    <Averaging>2</Averaging>
+    <AveragingValues>
+      <int>1</int>
+      <int>2</int>
+      <int>4</int>
+      <int>8</int>
+      <int>16</int>
+      <int>32</int>
+      <int>64</int>
+      <int>128</int>
+      <int>256</int>
+      <int>512</int>
+      <int>1028</int>
+      <int>2048</int>
+      <int>4096</int>
+    </AveragingValues>
+    <EvalutationMode>4</EvalutationMode>
+    <EvaluationModes>
+      <string>SL/64</string>
+      <string>SL/128</string>
+      <string>SL/256</string>
+      <string>SL/512</string>
+      <string>SL/1024</string>
+      <string>1/e</string>
+      <string>1/e2</string>
+    </EvaluationModes>
+    <LaserPower>150</LaserPower>
+    <AutosetLaserPower>150</AutosetLaserPower>
+    <UseFastTransient>0</UseFastTransient>
+    <FastTransientType>
+      <string>Normal Transient</string>
+      <string>Fast Transient (1024 pts)</string>
+    </FastTransientType>
+    <SettingDelay>300</SettingDelay>
+    <Doping>5E+15</Doping>
+    <DopingType>PType</DopingType>
+    <SaveTransient>true</SaveTransient>
+    <OpticalFactor>1</OpticalFactor>
+    <UseBackSideLamp>false</UseBackSideLamp>
+    <HeaderInfo>
+      <PairOfStringString>
+        <First>QSS Intensity</First>
+        <Second>46, 68, 100, 147, 215, 316, 464, 681, 1000, 1468, 2154, 3162, 4642, 6813, 10000, 14500, 20500</Second>
+      </PairOfStringString>
+    </HeaderInfo>
+    <Autoset>true</Autoset>
+    <StartIntensity>1</StartIntensity>
+    <StopIntensity>150</StopIntensity>
+    <StepRate>1</StepRate>
+    <IntensityScan>0</IntensityScan>
+    <ScanTypes>
+      <string>QSS Intensity J0</string>
+      <string>Laser Power</string>
+    </ScanTypes>
+    <LaserPowerScans>
+      <double>1</double>
+      <double>2.5</double>
+      <double>5</double>
+      <double>7.5</double>
+      <double>10</double>
+      <double>25</double>
+      <double>50</double>
+      <double>75</double>
+      <double>100</double>
+      <double>120</double>
+      <double>150</double>
+    </LaserPowerScans>
+    <QssIntensityScans>
+      <int>46</int>
+      <int>68</int>
+      <int>100</int>
+      <int>147</int>
+      <int>215</int>
+      <int>316</int>
+      <int>464</int>
+      <int>681</int>
+      <int>1000</int>
+      <int>1468</int>
+      <int>2154</int>
+      <int>3162</int>
+      <int>4642</int>
+      <int>6813</int>
+      <int>10000</int>
+      <int>14500</int>
+      <int>20500</int>
+    </QssIntensityScans>
+    <DoAutoRange>true</DoAutoRange>
+    <QssLampIntensity>1000</QssLampIntensity>
+    <DeltaTauLimitForJ0Calc>15</DeltaTauLimitForJ0Calc>
+    <InitialDelayTime>2000</InitialDelayTime>
+    <DoAutoTimeBase>true</DoAutoTimeBase>
+    <DefaultDeltaN>5E+15</DefaultDeltaN>
+    <DefaultDeltaNRangeInPercentage>30</DefaultDeltaNRangeInPercentage>
+    <ProbeSelection>Back</ProbeSelection>
+    <QssBiasSelection>Back</QssBiasSelection>
+    <ValidQdcRange>
+      <Min>0.9</Min>
+      <Max>1.1</Max>
+    </ValidQdcRange>
+    <JZeroIntensity>
+      <Min>1</Min>
+      <Max>5</Max>
+    </JZeroIntensity>
+    <UseAugerCorrection>false</UseAugerCorrection>
+    <IncludeKSJ0>false</IncludeKSJ0>
+    <CalculateJZeroParams>false</CalculateJZeroParams>
+  </Measurement>
+  <Name>QSS Injection built-in demo</Name>
+  <ResultName>QSS Injection sanitized example</ResultName>
+  <Status>Completed</Status>
+  <ExecutionInfo>
+    <StartTime>2026-01-01T12:00:00Z</StartTime>
+    <EndTime>2026-01-01T12:01:00Z</EndTime>
+    <ExecutionTime />
+    <ElapsedTime>00:00:48.7031250</ElapsedTime>
+  </ExecutionInfo>
+  <Substrate>
+    <ScribeId />
+    <SubstrateId>demo-dual-qss-substrate</SubstrateId>
+    <CassetteId />
+    <LotId />
+    <Description />
+    <SubstrateShape xsi:type="Circle">
+      <Center>
+        <X>0</X>
+        <Y>0</Y>
+      </Center>
+      <Radius>50</Radius>
+    </SubstrateShape>
+  </Substrate>
+  <ExecutionActivityType>SDI.ExecutionControl.QssupcdExecutionBase, SDI.ExecutionControl</ExecutionActivityType>
+  <StaticParameters />
+</Job>
