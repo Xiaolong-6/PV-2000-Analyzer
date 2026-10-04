@@ -844,3 +844,20 @@ test('DIT detail polish keeps diagnostics out of the chart header and pairs Vsb-
   assert.match(ui,/selection-state-line selection-state-line-stacked/);
   assert.doesNotMatch(ui,/selection-state-separator/);
 });
+
+
+test('landing analyzer chips map one-to-one to the nine embedded examples',()=>{
+  const html=fs.readFileSync(require.resolve('../src/index.template.html'),'utf8'),
+    app=fs.readFileSync(require.resolve('../src/app.js'),'utf8'),
+    build=fs.readFileSync(require.resolve('../scripts/build.js'),'utf8'),
+    keys=['dit','qss','dual-qss','jzero','isc','cet','lbic','spv','leakage'];
+  assert.equal((html.match(/data-example="/g)||[]).length,9);
+  for(const key of keys){
+    assert.match(html,new RegExp('data-example="'+key+'"'));
+    assert.match(build,new RegExp("\\['"+key+"'"));
+  }
+  assert.match(app,/function openExample\(key\)/);
+  assert.match(app,/querySelectorAll\('\[data-example\]'\)/);
+  assert.match(build,/globalThis\.PV2000_EXAMPLES=/);
+  assert.match(build,/examplesBootstrap/);
+});

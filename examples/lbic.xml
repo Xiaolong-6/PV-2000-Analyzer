@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in synthetic physical LBIC demo. Five sites use the validated current + scattered-reflectance profile. Prescribed diffusion lengths set wavelength-dependent IQE through the silicon penetration-depth relation; Current is back-calculated from EQE and photon flux, so Current/Reflectivity/IQE/DL remain internally consistent. Demonstration only; not validation evidence. -->
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Measurement xsi:type="LBICMeasurement">
+    <MeasurementData>
+      <IterationData>
+        <Iteration>
+          <Data><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="263.299266" DirectReflection="0" ScatteredReflection="7" /><Item Key="1" Current="263.203972" DirectReflection="0" ScatteredReflection="10" /><Item Key="2" Current="261.626071" DirectReflection="0" ScatteredReflection="18" /><Item Key="3" Current="301.03182" DirectReflection="0" ScatteredReflection="5" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="272.259848" DirectReflection="0" ScatteredReflection="8.5" /><Item Key="1" Current="265.284401" DirectReflection="0" ScatteredReflection="11.5" /><Item Key="2" Current="254.849432" DirectReflection="0" ScatteredReflection="19.5" /><Item Key="3" Current="289.837845" DirectReflection="0" ScatteredReflection="6.5" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="278.432327" DirectReflection="0" ScatteredReflection="9.5" /><Item Key="1" Current="265.737808" DirectReflection="0" ScatteredReflection="12.5" /><Item Key="2" Current="248.69035" DirectReflection="0" ScatteredReflection="20.5" /><Item Key="3" Current="280.36602" DirectReflection="0" ScatteredReflection="7.5" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="288.608358" DirectReflection="0" ScatteredReflection="8" /><Item Key="1" Current="271.247448" DirectReflection="0" ScatteredReflection="11" /><Item Key="2" Current="249.530098" DirectReflection="0" ScatteredReflection="19" /><Item Key="3" Current="278.437212" DirectReflection="0" ScatteredReflection="6" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="179.649579" DirectReflection="0" ScatteredReflection="19" /><Item Key="1" Current="184.95151" DirectReflection="0" ScatteredReflection="22" /><Item Key="2" Current="189.950714" DirectReflection="0" ScatteredReflection="30" /><Item Key="3" Current="228.70152" DirectReflection="0" ScatteredReflection="17" /></BeamData></DataItem></Data>
+          <ChuckTemperature>0</ChuckTemperature>
+          <MeasurementVelocity>0</MeasurementVelocity>
+        </Iteration>
+      </IterationData>
+    </MeasurementData>
+    <Pattern xsi:type="FivePointPattern">
+      <Name>5Pts</Name>
+      <DisplayName>5Pts</DisplayName>
+      <Coefficients>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-0.63245553203367588</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>-0.63245553203367588</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0.63245553203367588</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>0.63245553203367588</Y>
+        </SDI.Math.Point>
+      </Coefficients>
+    </Pattern>
+    <Target xsi:type="SquareCell">
+      <DisplayName />
+      <Exclusions />
+      <EdgeExclusion>3</EdgeExclusion>
+      <Size>
+        <Width>156</Width>
+        <Height>156</Height>
+      </Size>
+    </Target>
+    <EdgeExclusion>3</EdgeExclusion>
+    <DynamicParameters />
+    <DoRastering>true</DoRastering>
+    <UseInitialPt>false</UseInitialPt>
+    <InitialPoint>
+      <X>0</X>
+      <Y>0</Y>
+    </InitialPoint>
+    <MicroAmps>μA</MicroAmps>
+    <MicroMeter>μm</MicroMeter>
+    <NanoMeter>nm</NanoMeter>
+    <MicroSecond>μs</MicroSecond>
+    <LaserSettings>
+      <LBICLaserSetting>
+        <Index>0</Index>
+        <Power>1</Power>
+        <Wavelength>984</Wavelength>
+      </LBICLaserSetting>
+      <LBICLaserSetting>
+        <Index>1</Index>
+        <Power>1</Power>
+        <Wavelength>952</Wavelength>
+      </LBICLaserSetting>
+      <LBICLaserSetting>
+        <Index>2</Index>
+        <Power>1</Power>
+        <Wavelength>855</Wavelength>
+      </LBICLaserSetting>
+      <LBICLaserSetting>
+        <Index>3</Index>
+        <Power>1</Power>
+        <Wavelength>656</Wavelength>
+      </LBICLaserSetting>
+    </LaserSettings>
+    <MeasureCurrent>true</MeasureCurrent>
+    <MeasureDirectReflectance>false</MeasureDirectReflectance>
+    <MeasureScatteredReflectance>true</MeasureScatteredReflectance>
+    <Averaging>1</Averaging>
+    <DLWavelenghtRange>
+      <Min>700</Min>
+      <Max>1000</Max>
+    </DLWavelenghtRange>
+    <MaxDLValue>2000</MaxDLValue>
+    <FluxCache>
+      <Item>
+        <Key Type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <int>0</int>
+        </Key>
+        <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <double>2700000000000000</double>
+        </Value>
+      </Item>
+      <Item>
+        <Key Type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <int>1</int>
+        </Key>
+        <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <double>2450000000000000</double>
+        </Value>
+      </Item>
+      <Item>
+        <Key Type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <int>2</int>
+        </Key>
+        <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <double>2300000000000000</double>
+        </Value>
+      </Item>
+      <Item>
+        <Key Type="System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <int>3</int>
+        </Key>
+        <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+          <double>2150000000000000</double>
+        </Value>
+      </Item>
+    </FluxCache>
+  </Measurement>
+  <Name>LBIC built-in physical demo</Name>
+  <ResultName>LBIC sanitized physical example</ResultName>
+  <Status>Completed</Status>
+  <ExecutionInfo>
+    <StartTime>2026-01-01T12:00:00Z</StartTime>
+    <EndTime>2026-01-01T12:01:00Z</EndTime>
+    <ExecutionTime />
+    <ElapsedTime>00:00:13.7656250</ElapsedTime>
+  </ExecutionInfo>
+  <Substrate>
+    <ScribeId />
+    <SubstrateId>demo-lbic-substrate</SubstrateId>
+    <CassetteId />
+    <LotId>demo-lot</LotId>
+    <Description>Sanitized physically coherent built-in demonstration dataset</Description>
+    <SubstrateShape xsi:type="Quadrilateral">
+      <Vertices>
+        <SDI.Math.Point>
+          <X>78</X>
+          <Y>78</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-78</X>
+          <Y>78</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-78</X>
+          <Y>-78</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>78</X>
+          <Y>-78</Y>
+        </SDI.Math.Point>
+      </Vertices>
+    </SubstrateShape>
+  </Substrate>
+  <ExecutionActivityType>SDI.ExecutionControl.LBICExecutionBase, SDI.ExecutionControl</ExecutionActivityType>
+  <StaticParameters />
+</Job>

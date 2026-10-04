@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in synthetic physical Leakage demo. Positive and negative surface-potential relaxation traces are smooth first-order relaxations with both polarities enabled, yielding finite VSASS+, VSASS- and LI. Demonstration only; not validation evidence. -->
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Measurement xsi:type="LeakageMeasurement">
+    <MeasurementData xsi:type="LeakageDataContainer">
+      <IterationData>
+        <Iteration>
+          <Data>
+            <DataItem xsi:type="LeakageDataItem">
+              <NegativeData><double>-1.85</double><double>-1.821142539</double><double>-1.795487974</double><double>-1.772680816</double><double>-1.752405029</double><double>-1.734379657</double><double>-1.718354925</double><double>-1.704108782</double><double>-1.691443821</double><double>-1.680184548</double><double>-1.670174944</double><double>-1.661276308</double><double>-1.653365334</double><double>-1.6463324</double><double>-1.640080054</double><double>-1.634521657</double><double>-1.629580188</double><double>-1.625187174</double><double>-1.621281741</double><double>-1.617809773</double><double>-1.61472316</double><double>-1.611979131</double><double>-1.609539662</double><double>-1.60737095</double><double>-1.605442944</double><double>-1.603728928</double><double>-1.602205151</double><double>-1.600850499</double><double>-1.599646199</double><double>-1.598575565</double><double>-1.597623761</double><double>-1.596777598</double><double>-1.596025351</double><double>-1.595356596</double><double>-1.594762066</double><double>-1.594233523</double><double>-1.593763644</double><double>-1.593345916</double><double>-1.592974552</double><double>-1.592644406</double><double>-1.592350902</double><double>-1.592089975</double><double>-1.591858008</double><double>-1.591651788</double><double>-1.591468455</double><double>-1.591305471</double><double>-1.591160577</double><double>-1.591031764</double><double>-1.590917248</double><double>-1.590815443</double><double>-1.590724936</double></NegativeData>
+              <NegativeDelaySeconds>0</NegativeDelaySeconds>
+              <PositiveData><double>1.65</double><double>1.615048529</double><double>1.584459935</double><double>1.557689613</double><double>1.534260941</double><double>1.513756793</double><double>1.49581211</double><double>1.480107402</double><double>1.46636306</double><double>1.454334379</double><double>1.443807199</double><double>1.434594091</double><double>1.426531025</double><double>1.419474445</double><double>1.413298714</double><double>1.407893879</double><double>1.403163712</double><double>1.399023996</double><double>1.395401027</double><double>1.392230301</double><double>1.389455366</double><double>1.387026818</double><double>1.384901416</double><double>1.383041322</double><double>1.381413417</double><double>1.379988718</double><double>1.37874186</double><double>1.377650642</double><double>1.376695638</double><double>1.375859844</double><double>1.375128379</double><double>1.37448822</double><double>1.373927971</double><double>1.373437655</double><double>1.373008544</double><double>1.372632998</double><double>1.372304329</double><double>1.372016687</double><double>1.371764951</double><double>1.371544638</double><double>1.371351826</double><double>1.371183082</double><double>1.371035402</double><double>1.370906156</double><double>1.370793044</double><double>1.370694051</double><double>1.370607415</double><double>1.370531593</double><double>1.370465236</double><double>1.370407162</double><double>1.370356337</double></PositiveData>
+              <PositiveDelaySeconds>0</PositiveDelaySeconds>
+            </DataItem>
+          </Data>
+          <ChuckTemperature>0</ChuckTemperature>
+          <MeasurementVelocity>0</MeasurementVelocity>
+        </Iteration>
+      </IterationData>
+      <VcpdOffset><double>0</double></VcpdOffset>
+    </MeasurementData>
+    <Pattern xsi:type="FixedPointsPattern">
+      <Name />
+      <DisplayName>Fixed 1Pt</DisplayName>
+      <PointValues>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>30</Y>
+        </SDI.Math.Point>
+      </PointValues>
+    </Pattern>
+    <Target xsi:type="PseudoSquareCell">
+      <DisplayName />
+      <Exclusions />
+      <EdgeExclusion>4</EdgeExclusion>
+      <Size>
+        <Width>125</Width>
+        <Height>125</Height>
+      </Size>
+      <Diameter>150</Diameter>
+    </Target>
+    <EdgeExclusion>4</EdgeExclusion>
+    <DynamicParameters />
+    <DoRastering>false</DoRastering>
+    <UseInitialPt>false</UseInitialPt>
+    <InitialPoint>
+      <X>0</X>
+      <Y>0</Y>
+    </InitialPoint>
+    <MeasurePositive>true</MeasurePositive>
+    <PositiveSettings>
+      <Charge>4500000000000</Charge>
+      <MeasuringTimeSeconds>5</MeasuringTimeSeconds>
+      <MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds>
+    </PositiveSettings>
+    <MeasureNegative>true</MeasureNegative>
+    <NegativeSettings><Charge>-4500000000000</Charge><MeasuringTimeSeconds>5</MeasuringTimeSeconds><MeasuringIntervalSeconds>0.1</MeasuringIntervalSeconds></NegativeSettings>
+    <PhysicalThickness>200</PhysicalThickness>
+    <Material>SiO2</Material>
+    <StationTarget>Measurement</StationTarget>
+  </Measurement>
+  <Name>Leakage built-in demo</Name>
+  <ResultName>Leakage sanitized example</ResultName>
+  <Status>Completed</Status>
+  <ExecutionInfo>
+    <StartTime>2026-01-01T12:00:00Z</StartTime>
+    <EndTime>2026-01-01T12:01:00Z</EndTime>
+    <ExecutionTime />
+    <ElapsedTime>00:00:38.7187500</ElapsedTime>
+  </ExecutionInfo>
+  <Substrate>
+    <ScribeId />
+    <SubstrateId>demo-leakage-substrate</SubstrateId>
+    <CassetteId />
+    <LotId />
+    <Description />
+    <SubstrateShape xsi:type="Quadrilateral">
+      <Vertices>
+        <SDI.Math.Point>
+          <X>62.5</X>
+          <Y>62.5</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-62.5</X>
+          <Y>62.5</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>-62.5</X>
+          <Y>-62.5</Y>
+        </SDI.Math.Point>
+        <SDI.Math.Point>
+          <X>62.5</X>
+          <Y>-62.5</Y>
+        </SDI.Math.Point>
+      </Vertices>
+    </SubstrateShape>
+  </Substrate>
+  <ExecutionActivityType>SDI.ExecutionControl.LeakageExecutionBase, SDI.ExecutionControl</ExecutionActivityType>
+  <StaticParameters />
+</Job>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Built-in sanitized physical demo. Signal and correction values are synthetic/public-regression values chosen to produce a finite, physically meaningful SPV diffusion length and lifetime. Demonstration only; not validation evidence. -->
+<Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Measurement xsi:type="SPVMeasurement">
+    <MeasurementData xsi:type="SPVDataContainer">
+      <IterationData>
+        <Iteration xsi:type="SPVIterationData">
+          <Data>
+            <DataItem xsi:type="SPVDataItem">
+              <Phase>
+                <double>6175.54838374</double>
+              </Phase>
+              <Signal>
+                <SDI.Math.Vector><double>0.0034875</double></SDI.Math.Vector>
+                <SDI.Math.Vector><double>0.003174</double></SDI.Math.Vector>
+              </Signal>
+              <Temperature>
+                <double>24.3525863476</double>
+              </Temperature>
+              <Params>
+                <SDI.Math.Vector>
+                  <double>2331.04130442</double>
+                </SDI.Math.Vector>
+              </Params>
+            </DataItem>
+          </Data>
+          <ChuckTemperature>24.017447199265384</ChuckTemperature>
+          <MeasurementVelocity>0</MeasurementVelocity>
+          <LEDTemperature>24.745944291398835</LEDTemperature>
+          <SPV8Global>5.329166666666667</SPV8Global>
+          <SPV8ReducedGlobal>6.9295</SPV8ReducedGlobal>
+          <SPV2Global>0.865114312319</SPV2Global>
+          <LinearityRatio>0.769</LinearityRatio>
+          <LineartiyRatioOK>2.00009</LineartiyRatioOK>
+          <Sensitivity>0.000982445990413</Sensitivity>
+          <IntensityN8>9062.50269887</IntensityN8>
+          <IntensityN6>14218.728804</IntensityN6>
+          <IntensityN8Reduced>4556.34874179</IntensityN8Reduced>
+        </Iteration>
+      </IterationData>
+      <OxideThickness>4</OxideThickness>
+      <Wavelength8>778</Wavelength8>
+      <Wavelenght6>933</Wavelenght6>
+      <TemperatureCorrectionCoefficientLED8>0</TemperatureCorrectionCoefficientLED8>
+      <TemperatureCorrectionCoefficientLED6>0</TemperatureCorrectionCoefficientLED6>
+      <SPV8Freq>4992.3015227</SPV8Freq>
+      <SPV2Freq>5042.90474118</SPV2Freq>
+    </MeasurementData>
+    <Pattern xsi:type="OnePointPattern">
+      <Name>SPV / DL built-in demo</Name>
+      <DisplayName>1Pt</DisplayName>
+      <Coefficients>
+        <SDI.Math.Point>
+          <X>0</X>
+          <Y>0</Y>
+        </SDI.Math.Point>
+      </Coefficients>
+    </Pattern>
+    <Target xsi:type="RoundWafer">
+      <DisplayName />
+      <Exclusions />
+      <EdgeExclusion>8</EdgeExclusion>
+      <Diameter>100</Diameter>
+    </Target>
+    <EdgeExclusion>8</EdgeExclusion>
+    <DynamicParameters />
+    <DoRastering>false</DoRastering>
+    <UseInitialPt>false</UseInitialPt>
+    <InitialPoint>
+      <X>0</X>
+      <Y>0</Y>
+    </InitialPoint>
+    <MicroMeter>μm</MicroMeter>
+    <MicroSecond>μs</MicroSecond>
+    <Multiplier>1000</Multiplier>
+    <PreProcessings>
+      <ArrayOfPreProcessSettings />
+    </PreProcessings>
+    <NumberOfLRRepeats>3</NumberOfLRRepeats>
+    <OxideThickness>4</OxideThickness>
+    <UseLowIntensityCard>false</UseLowIntensityCard>
+    <ExcitationLevel>3</ExcitationLevel>
+    <StorageInterval>50</StorageInterval>
+    <NumberOfReadings>16</NumberOfReadings>
+    <TimeConstant1>10</TimeConstant1>
+    <UseCurveBuffer>false</UseCurveBuffer>
+    <MeasureLinearity>true</MeasureLinearity>
+    <SPV_LED_Stabilization_Delay>6000</SPV_LED_Stabilization_Delay>
+    <AdjustBothSignals>false</AdjustBothSignals>
+    <MaxMagnitude>90</MaxMagnitude>
+    <MinMagnitude>60</MinMagnitude>
+    <DelayAfterMove>1</DelayAfterMove>
+    <SPV8Frequency>5080</SPV8Frequency>
+    <SPV6Frequency>5135</SPV6Frequency>
+    <MeasureLEDBoxTempInEachPoint>true</MeasureLEDBoxTempInEachPoint>
+    <LinearityRatioOffsetCoordinates>
+      <X>0</X>
+      <Y>0</Y>
+    </LinearityRatioOffsetCoordinates>
+    <TextureCorrection>0.74</TextureCorrection>
+    <ReflectivityCorrection8>0</ReflectivityCorrection8>
+    <ReflectivityCorrection6>0</ReflectivityCorrection6>
+    <UseTextureCorrection>false</UseTextureCorrection>
+    <AdjustSensinEachPoint>false</AdjustSensinEachPoint>
+    <UseEnhancedMode>false</UseEnhancedMode>
+    <WaferThickness>200</WaferThickness>
+    <BSRVelocity>10</BSRVelocity>
+    <DopingType>PType</DopingType>
+    <UseDetrapper>false</UseDetrapper>
+    <DetrapperLevel>10000</DetrapperLevel>
+    <MeasureLROnFirstPoint>false</MeasureLROnFirstPoint>
+    <ParseInterval>1</ParseInterval>
+    <ParseSignals>false</ParseSignals>
+    <LinearityRatioAlarmLevel>1.2</LinearityRatioAlarmLevel>
+    <LinearityRatioWarningLevel>1.4</LinearityRatioWarningLevel>
+    <ManualLinearityRatioValue>2</ManualLinearityRatioValue>
+    <LinearityRatioMethod>UseMeasuredLR</LinearityRatioMethod>
+    <HeaderInfo>
+      <PairOfStringString>
+        <First>LR</First>
+        <Second>1.804</Second>
+      </PairOfStringString>
+      <PairOfStringString>
+        <First>Chuck Temp</First>
+        <Second>23.61</Second>
+      </PairOfStringString>
+    </HeaderInfo>
+  </Measurement>
+  <Name>SPV / DL built-in demo</Name>
+  <ResultName>SPV / DL sanitized example</ResultName>
+  <Status>Completed</Status>
+  <ExecutionInfo>
+    <StartTime>2026-01-01T12:00:00Z</StartTime>
+    <EndTime>2026-01-01T12:01:00Z</EndTime>
+    <ExecutionTime />
+    <ElapsedTime>00:00:49.2656250</ElapsedTime>
+  </ExecutionInfo>
+  <Substrate>
+    <ScribeId />
+    <SubstrateId>demo-spv-substrate</SubstrateId>
+    <CassetteId />
+    <LotId />
+    <Description />
+    <SubstrateShape xsi:type="Circle">
+      <Center>
+        <X>0</X>
+        <Y>0</Y>
+      </Center>
+      <Radius>50</Radius>
+    </SubstrateShape>
+  </Substrate>
+  <ExecutionActivityType>SDI.ExecutionControl.ExecutionBaseActivity, SDI.ExecutionControl</ExecutionActivityType>
+  <StaticParameters />
+</Job>
