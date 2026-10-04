@@ -76,6 +76,14 @@
     }
   }
   function bindInput(id){$(id).addEventListener('change',e=>openFile(e.target.files?.[0]))}
+  function openExample(key){
+    const example=root.PV2000_EXAMPLES?.[key];
+    if(!example)return false;
+    return openFile({
+      name:example.fileName||`example-${key}.xml`,
+      text:async()=>example.xml
+    });
+  }
   function fileEntry(file){return{name:file.name,getFile:async()=>file}}
   function sortEntries(entries){return entries.sort((a,b)=>collator.compare(a.name,b.name))}
   function fallbackFolderEntries(fileList){
@@ -143,6 +151,9 @@
   }
 
   bindInput('#openLanding');bindInput('#openTop');
+  document.querySelectorAll('[data-example]').forEach(button=>{
+    button.addEventListener('click',()=>openExample(button.dataset.example));
+  });
   $('#prevXml').onclick=()=>navigateFolder(-1);
   $('#nextXml').onclick=()=>navigateFolder(1);
   $('#folderXmlAccess').onclick=()=>authorizeFolder();
