@@ -1,59 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Built-in sanitized demo derived from a private PV-2000 schema example. Identifying metadata was removed and numeric measurement values were transformed. Demonstration only; not validation evidence. -->
+<!-- Built-in synthetic physical LBIC demo. Five sites are generated from prescribed diffusion lengths, wavelength-dependent silicon penetration depth, total reflectivity and IQE; Current is back-calculated from EQE and photon flux, so Current/Reflectivity/IQE/DL remain internally consistent. Demonstration only; not validation evidence. -->
 <Job xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Measurement xsi:type="LBICMeasurement">
     <MeasurementData>
       <IterationData>
         <Iteration>
-          <Data>
-            <DataItem xsi:type="LBICDataItem">
-              <BeamData>
-                <Item Key="0" Current="399.132314577" DirectReflection="-0.510126654406" ScatteredReflection="4.8074141706" />
-                <Item Key="1" Current="370.997455048" DirectReflection="0.213465955527" ScatteredReflection="14.6268536909" />
-                <Item Key="2" Current="365.452110755" DirectReflection="0.0163156233648" ScatteredReflection="25.7857619366" />
-                <Item Key="3" Current="359.032083473" DirectReflection="-0.0958635689461" ScatteredReflection="0.68234777859" />
-              </BeamData>
-            </DataItem>
-            <DataItem xsi:type="LBICDataItem">
-              <BeamData>
-                <Item Key="0" Current="388.173343343" DirectReflection="-0.538218074498" ScatteredReflection="5.35555841499" />
-                <Item Key="1" Current="365.921399684" DirectReflection="0.213555288679" ScatteredReflection="16.1861618704" />
-                <Item Key="2" Current="362.481291949" DirectReflection="0.00163304307662" ScatteredReflection="30.2053471711" />
-                <Item Key="3" Current="357.849352758" DirectReflection="-0.0970345746813" ScatteredReflection="1.01751252108" />
-              </BeamData>
-            </DataItem>
-            <DataItem xsi:type="LBICDataItem">
-              <BeamData>
-                <Item Key="0" Current="397.399661607" DirectReflection="-0.51374339194" ScatteredReflection="5.45518112192" />
-                <Item Key="1" Current="368.503988922" DirectReflection="0.227544709233" ScatteredReflection="16.3733720304" />
-                <Item Key="2" Current="362.946137656" DirectReflection="0.0163449956507" ScatteredReflection="29.227405218" />
-                <Item Key="3" Current="356.028234301" DirectReflection="-0.0947115423303" ScatteredReflection="1.43493423961" />
-              </BeamData>
-            </DataItem>
-            <DataItem xsi:type="LBICDataItem">
-              <BeamData>
-                <Item Key="0" Current="401.34275777" DirectReflection="-0.52982420797" ScatteredReflection="5.21612339344" />
-                <Item Key="1" Current="370.41067294" DirectReflection="0.213368940339" ScatteredReflection="16.0814672716" />
-                <Item Key="2" Current="365.789841326" DirectReflection="0.0049060492748" ScatteredReflection="28.6505139811" />
-                <Item Key="3" Current="358.949069446" DirectReflection="-0.0971634528935" ScatteredReflection="0.996319117237" />
-              </BeamData>
-            </DataItem>
-            <DataItem xsi:type="LBICDataItem">
-              <BeamData>
-                <Item Key="0" Current="55.1200257115" DirectReflection="-0.538672942904" ScatteredReflection="54.0207479696" />
-                <Item Key="1" Current="174.499015087" DirectReflection="0.206943852321" ScatteredReflection="94.0671331469" />
-                <Item Key="2" Current="123.14542317" DirectReflection="0" ScatteredReflection="283.696243402" />
-                <Item Key="3" Current="61.0149033523" DirectReflection="-0.110354268921" ScatteredReflection="103.207396489" />
-              </BeamData>
-            </DataItem>
-          </Data>
+          <Data><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="263.299266" DirectReflection="1.54" ScatteredReflection="5.46" /><Item Key="1" Current="263.203972" DirectReflection="2.2" ScatteredReflection="7.8" /><Item Key="2" Current="261.626071" DirectReflection="3.96" ScatteredReflection="14.04" /><Item Key="3" Current="301.03182" DirectReflection="1.1" ScatteredReflection="3.9" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="272.259848" DirectReflection="1.87" ScatteredReflection="6.63" /><Item Key="1" Current="265.284401" DirectReflection="2.53" ScatteredReflection="8.97" /><Item Key="2" Current="254.849432" DirectReflection="4.29" ScatteredReflection="15.21" /><Item Key="3" Current="289.837845" DirectReflection="1.43" ScatteredReflection="5.07" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="278.432327" DirectReflection="2.09" ScatteredReflection="7.41" /><Item Key="1" Current="265.737808" DirectReflection="2.75" ScatteredReflection="9.75" /><Item Key="2" Current="248.69035" DirectReflection="4.51" ScatteredReflection="15.99" /><Item Key="3" Current="280.36602" DirectReflection="1.65" ScatteredReflection="5.85" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="288.608358" DirectReflection="1.76" ScatteredReflection="6.24" /><Item Key="1" Current="271.247448" DirectReflection="2.42" ScatteredReflection="8.58" /><Item Key="2" Current="249.530098" DirectReflection="4.18" ScatteredReflection="14.82" /><Item Key="3" Current="278.437212" DirectReflection="1.32" ScatteredReflection="4.68" /></BeamData></DataItem><DataItem xsi:type="LBICDataItem"><BeamData><Item Key="0" Current="179.649579" DirectReflection="4.18" ScatteredReflection="14.82" /><Item Key="1" Current="184.95151" DirectReflection="4.84" ScatteredReflection="17.16" /><Item Key="2" Current="189.950714" DirectReflection="6.6" ScatteredReflection="23.4" /><Item Key="3" Current="228.70152" DirectReflection="3.74" ScatteredReflection="13.26" /></BeamData></DataItem></Data>
           <ChuckTemperature>0</ChuckTemperature>
           <MeasurementVelocity>0</MeasurementVelocity>
         </Iteration>
       </IterationData>
     </MeasurementData>
     <Pattern xsi:type="FivePointPattern">
-      <Name>LBIC built-in demo</Name>
+      <Name>5Pts</Name>
       <DisplayName>5Pts</DisplayName>
       <Coefficients>
         <SDI.Math.Point>
@@ -136,7 +95,7 @@
           <int>0</int>
         </Key>
         <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <double>2.8214271272e+15</double>
+          <double>2700000000000000</double>
         </Value>
       </Item>
       <Item>
@@ -144,7 +103,7 @@
           <int>1</int>
         </Key>
         <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <double>2.4413354214e+15</double>
+          <double>2450000000000000</double>
         </Value>
       </Item>
       <Item>
@@ -152,7 +111,7 @@
           <int>2</int>
         </Key>
         <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <double>2.3827412628e+15</double>
+          <double>2300000000000000</double>
         </Value>
       </Item>
       <Item>
@@ -160,13 +119,13 @@
           <int>3</int>
         </Key>
         <Value Type="System.Double, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <double>2.2365473866e+15</double>
+          <double>2150000000000000</double>
         </Value>
       </Item>
     </FluxCache>
   </Measurement>
-  <Name>LBIC built-in demo</Name>
-  <ResultName>LBIC sanitized example</ResultName>
+  <Name>LBIC built-in physical demo</Name>
+  <ResultName>LBIC sanitized physical example</ResultName>
   <Status>Completed</Status>
   <ExecutionInfo>
     <StartTime>2026-01-01T12:00:00Z</StartTime>
@@ -179,7 +138,7 @@
     <SubstrateId>demo-lbic-substrate</SubstrateId>
     <CassetteId />
     <LotId>demo-lot</LotId>
-    <Description>Sanitized built-in demonstration dataset</Description>
+    <Description>Sanitized physically coherent built-in demonstration dataset</Description>
     <SubstrateShape xsi:type="Quadrilateral">
       <Vertices>
         <SDI.Math.Point>
