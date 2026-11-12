@@ -15,6 +15,7 @@ const files=[
   'src/core/theme.js',
   'src/core/ui.js',
   'src/core/plot.js',
+  'src/core/roi.js',
   'src/core/registry.js',
   'src/profiles/geometry.js',
   'src/profiles/isc.js',
