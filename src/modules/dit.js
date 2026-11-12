@@ -817,6 +817,7 @@
       return filterController;
     };
     rebuildFilter();
+    const roi=PV.roi.create({coords:analysis.sites.map(s=>s.coord||null),onChange:()=>renderShell()});
     const controlNum=(id,fallback)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return NaN;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const controlOptionalNum=(id,fallback=Infinity)=>{const el=host.querySelector(id);if(!el)return fallback;const raw=el.value.trim();if(raw==='')return Infinity;const v=Number(raw);return Number.isFinite(v)?v:NaN};
     const rebuild=()=>{analysisOpen=true;
@@ -844,7 +845,7 @@
       const metricKey=key==='eot'?'EOT':key,
         m=metrics?.[metricKey];
       if(!m)return'—';
-      const mask=filterController.metricMask(m),
+      const mask=roi.mask(filterController.metricMask(m)),
         st=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
       return Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)}`:'—'
     };
@@ -983,7 +984,7 @@
           state:filterState,
           helpText:'Choose a calculated DIT/COCOS site quantity and numeric range. Algorithm-invalid sites remain intrinsically excluded; the user range only narrows the active site population used by Results summary, wafer-map display and map export. Current-site Vcpd/Vsb/Dit curves are never recalculated or truncated by this filter.'
         })}
-        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary ${help('Each row shows valid-site mean ± sample standard deviation after intrinsic validity, the active Valid-data filter and quantity availability are applied. Point-specific values remain in the right-hand Selected site / Measurement point panel.')}</summary><dl class="meta compact-summary">${summaryRows}</dl></details>
+        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span> ${help('Each row shows valid-site mean ± sample standard deviation after intrinsic validity, the active Valid-data filter and quantity availability are applied. Point-specific values remain in the right-hand Selected site / Measurement point panel.')}</summary><dl class="meta compact-summary">${summaryRows}</dl></details>
 
         <details class="panel">\
 <summary>Acquisition metadata ${help('Lower-priority timing, instrument, calibration and COCOS recipe settings parsed directly from the imported XML.')}</summary>\
@@ -1018,6 +1019,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
             <option value="InitialQc">Initial Qc</option>
             <option value="MaxVsb">Max |Vsb|</option>
           </select>
+          ${d.patternType==='OnePointPattern'?'':roi.toolbar('ditRoi')}
           ${PV.plot.axisControls('ditMapAxes')}
           <button id="e4" title="Export every site with algorithm-validity, metric-availability and active filter provenance.">Export</button>
         </header><div class="chart-stage map-stage"><svg id="d4" viewBox="0 0 640 ${d.patternType==='OnePointPattern'?300:500}"></svg></div></div>
@@ -1047,6 +1049,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         <div class="panel chart"><header><b>Vsb–Qc</b>${help('Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits. Surface barrier versus corona charge. Standard COCOS displays doping-aware signed Vsb. PV-2000 current-DLL mode displays signed Vsb reconstructed from the EOT-defined synthetic light line. Standard measured signed Vsb is dashed for comparison in COCOS-II modes.')}<span class="chart-meta" id="ditVsbMeta"></span><span class="grow"></span>${PV.plot.axisControls('ditVsbAxes')}<button id="e3" title="Export current-site raw and analysis Vsb versus Qc.">Export</button></header><div class="chart-stage"><div class="chart-legend" id="ditVsbLegend"></div><svg id="d3" viewBox="0 0 640 360"></svg></div></div>
         <details class="panel dit-flatband-panel" open><summary>Flatband extraction</summary><dl class="meta"><dt>q initial ${help('Natural initial dark Vcpd projected onto the Process dark V–Q curve.')}</dt><dd>${sci(s.qinit,4)}</dd><dt>q flatband ${help('Flatband charge obtained from the dark differential-capacitance crossing using the theoretical semiconductor flatband capacitance.')}</dt><dd>${sci(s.qfb,4)}</dd><dt>EOT</dt><dd>${fmt(s.eot,3)} nm</dd><dt>Cox</dt><dd>${sci(s.Cox,4)} F/cm²</dd>${analysis.options.effectiveCocosMode==='pv2000-re'?`<dt>COCOS-II source ${help('PV-2000 current-DLL mode reconstructs the internal light branch after Vfb/Qcfb, uses EOT in Å, and applies Min/Max Vsb to Dit segment validity. Back Surface Shift remains outside the validated envelope.')}</dt><dd>${esc(s.c2?.source||'unavailable')} · EOT ${fmt(s.c2?.eotA,3)} Å · window [${fmt(s.c2?.minVsb,3)}, ${fmt(s.c2?.maxVsb,3)}] V</dd>`:''}</dl></details>
       </section>${d.patternType==='OnePointPattern'?'</div>':''}</div>`;
+      if(d.patternType!=='OnePointPattern')roi.bind(host,'ditRoi');
       host.querySelector('#ditMapMetric').value=mapKey;
         host.querySelector('#ditPchipScale').value=analysis.options.pchipScale;
         host.querySelector('#ditPchipMethod').value=analysis.options.pchipMethod;
@@ -1339,6 +1342,7 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
       svg.innerHTML=out;
       svg.querySelectorAll('[data-site]').forEach(g=>g.onclick=()=>{site=+g.dataset.site;renderShell()});
       PV.plot.bind(svg,{W,H,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b},ranges:{x:xr,y:yr},onChange:n=>{zoom.map=n;drawMap()},onReset:()=>{zoom.map={x:null,y:null};drawMap()}});
+      if(d.patternType!=='OnePointPattern')roi.attach({surface:svg,W,H,X,Y,plotRect:{x0:m.l,x1:W-m.r,y0:m.t,y1:H-m.b}});
       PV.plot.bindAxisControls(host,'ditMapAxes',zoom.map,n=>{zoom.map=n;drawMap()})}
     function drawAll(){drawVcpd();drawVsb();drawDit();drawMap()}
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)drawAll()});renderShell();
