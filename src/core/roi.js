@@ -44,7 +44,7 @@
     const active=()=>rois.find(r=>r.id===activeId)||null;
     const chosen=()=>scope==='roi'?active():null;
     const label=()=>scope==='roi'&&active()?'ROI: '+active().name:'Whole sample';
-    const mask=base=>combineMasks(base,points,chosen());
+    const mask=base=>combineMasks(base,Array.from({length:base.length},(_,i)=>points[i]||null),chosen());
     const html=key=>prefix+key;
     const number=v=>String(rounded(v));
     function changed(){refresh();notify();}
@@ -115,7 +115,25 @@
       host=element;prefix=id;panel=host.querySelector('#'+html('Panel'));
       const toggle=host.querySelector('#'+html('Toggle'));
       if(!toggle||!panel)return;
-      toggle.onclick=()=>{panel.hidden=!panel.hidden;refresh();};
+      toggle.onclick=()=>{
+        const opening=panel.hidden;
+        const header=toggle.closest('header');
+        if(opening)header?.querySelectorAll('.axis-popover-card:not([hidden])').forEach(box=>{
+          box.hidden=true;
+          box.__pvToggle?.setAttribute('aria-expanded','false');
+        });
+        panel.hidden=!opening;
+        if(!opening){mode='inspect';drawing=null;renderOverlay();}
+        refresh();
+      };
+      host.onkeydown=e=>{
+        const editable=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+        if(e.key==='Escape'&&mode!=='inspect'){
+          mode='inspect';drawing=null;preview=null;drag=null;refresh();renderOverlay();e.preventDefault();
+        }else if((e.key==='Delete'||e.key==='Backspace')&&!editable&&mode==='edit'&&active()){
+          remove();renderOverlay();e.preventDefault();
+        }
+      };
       refresh();
     }
     function svgPoint(e){
@@ -158,7 +176,10 @@
       return '<polygon points="'+pts.map(pt=>X(pt.x)+','+Y(pt.y)).join(' ')+'"/>';
     }
     function handlePoint(type,g,key){
-      if(key==='radius')return{x:g.cx+g.radius*Math.cos(rad(g.startDeg||0)),y:g.cy+g.radius*Math.sin(rad(g.startDeg||0))};
+      if(key==='radius'){
+        const angle=type==='sector'?g.startDeg+g.sweepDeg/2:0;
+        return{x:g.cx+g.radius*Math.cos(rad(angle)),y:g.cy+g.radius*Math.sin(rad(angle))};
+      }
       if(key==='start'||key==='end'){
         const a=rad(g.startDeg+(key==='end'?g.sweepDeg:0));
         return{x:g.cx+g.radius*Math.cos(a),y:g.cy+g.radius*Math.sin(a)};
@@ -174,6 +195,7 @@
       overlay.style.cursor=drawing?'crosshair':'default';
       const area=transform.plotRect;
       let out='<defs><clipPath id="'+esc(prefix)+'RoiClip"><rect x="'+area.x0+'" y="'+area.y0+'" width="'+(area.x1-area.x0)+'" height="'+(area.y1-area.y0)+'"/></clipPath></defs>';
+      out+='<rect class="roi-hit-plane" x="'+area.x0+'" y="'+area.y0+'" width="'+(area.x1-area.x0)+'" height="'+(area.y1-area.y0)+'" fill="transparent" pointer-events="all"/>';
       out+='<g clip-path="url(#'+esc(prefix)+'RoiClip)">';
       rois.filter(r=>r.visible).concat(preview?[preview]:[]).forEach(r=>{
         const current=r.id===activeId,ghost=r===preview;
@@ -187,7 +209,7 @@
           out+='<circle class="roi-handle" data-roi-handle="'+key+'" cx="'+transform.X(pt.x)+'" cy="'+transform.Y(pt.y)+'" r="5"/>';
         });
       }
-      out+='</g><rect class="roi-hit-plane" x="'+area.x0+'" y="'+area.y0+'" width="'+(area.x1-area.x0)+'" height="'+(area.y1-area.y0)+'" fill="transparent" pointer-events="none"/>';
+      out+='</g>';
       overlay.innerHTML=out;
     }
     function pointerDown(e){
@@ -200,7 +222,7 @@
         const id=targetRoi.dataset.roiId;
         if(rois.some(r=>r.id===id)){activeId=id;scope='roi';drag={kind:'move',from:p,original:{...active().geometry}};refresh();}
       }else{drag=null;}
-      if(drag){e.preventDefault();overlay.setPointerCapture?.(e.pointerId);}
+      if(drag){e.preventDefault();overlay.focus?.();overlay.setPointerCapture?.(e.pointerId);}
     }
     function pointerMove(e){
       if(!drag)return;
@@ -245,6 +267,7 @@
         overlay=root.document.createElementNS('http://www.w3.org/2000/svg','svg');
         overlay.classList.add('roi-overlay');
         overlay.setAttribute('aria-label','Spatial ROI editor');
+        overlay.setAttribute('tabindex','0');
         parent.appendChild(overlay);
         overlay.addEventListener('pointerdown',pointerDown);
         overlay.addEventListener('pointermove',pointerMove);
