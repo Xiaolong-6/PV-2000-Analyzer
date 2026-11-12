@@ -115,7 +115,7 @@
       host=element;prefix=id;panel=host.querySelector('#'+html('Panel'));
       const toggle=host.querySelector('#'+html('Toggle'));
       if(!toggle||!panel)return;
-      toggle.onclick=()=>{panel.hidden=!panel.hidden;refresh();panel.hidden=toggle.getAttribute('aria-expanded')==='true';toggle.setAttribute('aria-expanded',String(!panel.hidden));};
+      toggle.onclick=()=>{panel.hidden=!panel.hidden;refresh();};
       refresh();
     }
     function svgPoint(e){
