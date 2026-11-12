@@ -9,6 +9,7 @@ ROI is an **Analyzer-only spatial selection** for multi-site maps. It does not m
 3. Use **Edit** to drag the shape or its handles, or enter precise dimensions and center coordinates in millimetres and select **Apply**.
 4. Use the **Statistics** selector to switch between **Whole sample** and the selected ROI. The ROI menu can retain multiple named regions.
 5. Use **Inspect** (or close the ROI panel) for normal Map site-click inspection. **Esc** exits ROI editing; **Delete** removes the selected ROI when an editable field is not focused.
+6. Choose **Export ROIs** to download named region definitions (physical coordinates, millimetres and angles) as JSON. The export documents selection geometry; importing ROI definitions is not yet supported.
 
 The circle uses a center and radius; the rectangle uses center, width, height and counterclockwise rotation; the sector uses center, radius, start angle and sweep angle. Sector angles are measured counterclockwise from +X in the physical X/Y plane; a sweep of 360 degrees is a full disk. No screen-pixel coordinates are stored.
 
