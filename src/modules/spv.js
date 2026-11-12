@@ -281,9 +281,9 @@
       redraw();
     }
     function exportMetric(state,mask){
-      const m=analysis.metrics[metricKey];
-      PV.exporter.csv(`${safe(data.resultName)}_${metricKey}.csv`,['Index','X [mm]','Y [mm]',`${m.label} [${m.unit}]`,'Available','Pass filter'],
-        m.values.map((v,i)=>[i+1,data.coords[i]?.x??'',data.coords[i]?.y??'',v,!!mask[i],!!state.selection.activeMask[i]]));
+      const m=analysis.metrics[metricKey],scopedMask=roi.mask(mask),selectedRoi=roi.selected();
+      PV.exporter.csv(`${safe(data.resultName)}_${metricKey}.csv`,['Index','X [mm]','Y [mm]',`${m.label} [${m.unit}]`,'Available','Pass filter','In ROI','Included in ROI statistics','Statistics scope'],
+        m.values.map((v,i)=>[i+1,data.coords[i]?.x??'',data.coords[i]?.y??'',v,!!mask[i],!!state.selection.activeMask[i],selectedRoi?PV.roi.contains(selectedRoi,data.coords[i]):'',!!scopedMask[i],roi.label()]));
     }
     function redraw(){
       const state=filterController.snapshot(),metric=analysis.metrics[metricKey],mask=filterController.metricMask(metric),
@@ -297,7 +297,7 @@
       }
       host.querySelector('#spvExportMap').onclick=()=>exportMetric(state,mask);
       const histExport=host.querySelector('#spvExportHist');
-      if(histExport)histExport.onclick=()=>PV.exporter.csv(`${safe(data.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count'],rows.map(r=>[r.lo,r.hi,r.count]));
+      if(histExport)histExport.onclick=()=>PV.exporter.csv(`${safe(data.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count','Statistics scope'],rows.map(r=>[r.lo,r.hi,r.count,roi.label()]));
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});
     shell();
