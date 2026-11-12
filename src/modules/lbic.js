@@ -847,7 +847,8 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
       if(!metric)return;
       const controller=ensureFilter(it,metrics),
         filterState=controller.snapshot(),
-        displayMask=controller.metricMask(metric);
+        displayMask=controller.metricMask(metric),
+        scopedMask=roi.mask(displayMask),selectedRoi=roi.selected();
       selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));
       drawMap(host.querySelector('#lMap'),d,metric,displayMask,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()},roi);
       const bins=drawHist(host.querySelector('#lHist'),metric,roi.mask(displayMask),histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
@@ -876,7 +877,7 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
       
       host.querySelector('#lExportMap').onclick=()=>PV.exporter.csv(
         `${safe(d.resultName)}_${beamKey}_${safe(metric.short)}.csv`,
-        ['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`,'Source','Metric available','Pass valid-data filter','Displayed','Filter metric','Filter lower','Filter upper'],
+        ['Index','Row','Column','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`,'Source','Metric available','Pass valid-data filter','Displayed','In ROI','Included in ROI statistics','Statistics scope','Filter metric','Filter lower','Filter upper'],
         metric.values.map((v,i)=>[
           i+1,
           d.coords[i]?.row!=null?d.coords[i].row+1:'',
@@ -888,6 +889,7 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
           Number.isFinite(v),
           !!filterState.selection.activeMask[i],
           !!displayMask[i],
+          selectedRoi?PV.roi.contains(selectedRoi,d.coords[i]):'',!!scopedMask[i],roi.label(),
           metrics[filterState.metricKey]?.short||filterState.metricKey,
           filterState.lower,
           filterState.upper
@@ -909,14 +911,14 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
         
       host.querySelector('#lExportAll').onclick=()=>{
         const beamEntries=Object.entries(it.beams),
-        headers=['Index','Row','Column','X [mm]','Y [mm]','Pass active filter','Filter beam','Filter metric','Filter lower','Filter upper'],
+        headers=['Index','Row','Column','X [mm]','Y [mm]','Pass active filter','In ROI','Statistics scope','Filter beam','Filter metric','Filter lower','Filter upper'],
         series=[];
         for(const [bk,b] of beamEntries)for(const m of Object.values(b.metrics)){
           if(m.concept==='dl'&&series.includes(m.values))continue;
           const wl=Number.isFinite(b.laser?.wavelengthNm)?`${b.laser.wavelengthNm}nm`:`beam${bk}`;
           headers.push(`${m.concept==='dl'?'':`${wl} `}${m.label}${m.unit?` [${m.unit}]`:''} (${m.status})`);
           series.push(m.values)}const n=it.pointCount,
-        rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',!!filterState.selection.activeMask[i],beamKey,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper,...series.map(v=>v[i])]);
+        rows=Array.from({length:n},(_,i)=>[i+1,d.coords[i]?.row!=null?d.coords[i].row+1:'',d.coords[i]?.col!=null?d.coords[i].col+1:'',d.coords[i]?.x??'',d.coords[i]?.y??'',!!filterState.selection.activeMask[i],selectedRoi?PV.roi.contains(selectedRoi,d.coords[i]):'',roi.label(),beamKey,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper,...series.map(v=>v[i])]);
         PV.exporter.csv(`${safe(d.resultName)}_LBIC_all.csv`,headers,rows)};
         
     }
