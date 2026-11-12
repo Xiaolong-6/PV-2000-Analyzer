@@ -716,7 +716,7 @@
       return Object.values(visibleMetrics()).map(m=>{
         const st=statsFor(m.key),
           primary=Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)} ${m.unit}`:'—',
-          secondary=Number.isFinite(st.median)?`median ${fmt(st.median)} · range ${fmt(st.min)}–${fmt(st.max)} ${m.unit}`:'unavailable';
+          secondary=Number.isFinite(st.median)?`median ${fmt(st.median)} · range ${fmt(st.min)}–${fmt(st.max)} ${m.unit} · N ${st.count}`:'unavailable · N 0';
         return`<dt>${esc(m.short)} ${help(m.help)}</dt><dd><strong>${esc(primary)}</strong><small>${esc(secondary)}</small></dd>`;
       }).join('');
     }
