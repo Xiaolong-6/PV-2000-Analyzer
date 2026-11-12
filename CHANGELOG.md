@@ -1,5 +1,12 @@
 # Changelog
 
+## v20261004.1.13 — 2026-11-12 (branch)
+
+- Added shared physical-coordinate rectangle, circle and sector ROI editing for multi-site Canvas/SVG wafer maps, including dragging, resize handles, precise-mm fields, multiple named regions, and Whole sample/ROI scope switching.
+- Applied spatial selection in ISC/VCPD, QSS, JZero, LBIC, SPV, CET and multi-point DIT population summaries. Distribution uses the ROI intersection where the family has a histogram.
+- Kept the existing Valid-data filter, whole-sample map normalization, selected-site inspection and calculated physics independent of the ROI statistical scope.
+- Added ROI containment/mask unit tests and a scientific/user-facing ROI contract in `docs/ROI.md`.
+
 ## v20261004.1 — 2026-10-04
 
 - Made all nine supported-analyzer tags on the landing page clickable, with one built-in example per analyzer family.
