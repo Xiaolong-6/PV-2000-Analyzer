@@ -237,7 +237,7 @@ test('QSS source uses shared filter controller/UI while keeping intrinsic suppor
   assert.match(src,/drawHist\([^;]*supportMask/);
   assert.match(src,/drawMap\([^;]*supportMask/);
   assert.match(src,/drawProfile\([^;]*supportMask/);
-  assert.match(src,/downloadMetric\(d,a,metricKey,mask,supportMask\)/);
+  assert.match(src,/downloadMetric\(d,a,metricKey,mask,supportMask,roi\)/);
   assert.doesNotMatch(src,/function validMask|function metricRange|function supportedValues|function quantile/);
 });
 
