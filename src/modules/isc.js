@@ -734,7 +734,8 @@
   function downloadMap(d,a,key,filterState,displayMask,roi){
     const m=a.metrics[key],
       selection=filterState.selection,
-      filterMetric=a.metrics[filterState.metricKey];
+      filterMetric=a.metrics[filterState.metricKey],
+      scopedMask=roi.mask(displayMask),selectedRoi=roi.selected();
     PV.exporter.csv(
       `${safe(d.resultName)}_${key}.csv`,
       [
@@ -751,8 +752,8 @@
         m.availability?.[i]?.available??Number.isFinite(m.values[i]),
         !!selection.activeMask[i],
         !!displayMask[i],
-        roi.selected()?PV.roi.contains(roi.selected(),site.coord):'',
-        !!roi.mask(displayMask)[i],
+        selectedRoi?PV.roi.contains(selectedRoi,site.coord):'',
+        !!scopedMask[i],
         roi.label(),
         roi.selected()?JSON.stringify(roi.selected().geometry):'',
         filterMetric?.short||filterState.metricKey,
