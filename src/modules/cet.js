@@ -593,13 +593,15 @@
 
     function bindExports(){
       host.querySelector('#cetExportMap').onclick=()=>{
-        const state=filterController.snapshot(),metric=analysis.metrics[metricKey];
+        const state=filterController.snapshot(),metric=analysis.metrics[metricKey],
+          scopedMask=roi.mask(filterController.metricMask(metric)),selectedRoi=roi.selected();
         PV.exporter.csv(
           `${safe(data.resultName)}_${metricKey}.csv`,
-          ['Site','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`,'Available','Pass valid-data filter'],
+          ['Site','X [mm]','Y [mm]',`${metric.label} [${metric.unit}]`,'Available','Pass valid-data filter','In ROI','Included in ROI statistics','Statistics scope'],
           metric.values.map((value,index)=>[
             index+1,data.coords[index]?.x??'',data.coords[index]?.y??'',value,
-            Number.isFinite(value)?'YES':'NO',state.selection.activeMask[index]?'YES':'NO'
+            Number.isFinite(value)?'YES':'NO',state.selection.activeMask[index]?'YES':'NO',
+            selectedRoi?PV.roi.contains(selectedRoi,data.coords[index]):'',scopedMask[index]?'YES':'NO',roi.label()
           ])
         );
       };
