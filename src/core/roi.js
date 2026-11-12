@@ -2,7 +2,6 @@
   'use strict';
   const PV=root.PV2000=root.PV2000||{};
   const finite=Number.isFinite;
-  const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
   const norm=a=>((a%360)+360)%360;
   const rad=a=>a*Math.PI/180;
   const deg=a=>a*180/Math.PI;
