@@ -847,7 +847,7 @@
       if(!m)return'—';
       const mask=roi.mask(filterController.metricMask(m)),
         st=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
-      return Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)}`:'—'
+      return Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)} (N=${st.count})`:'—'
     };
     const resultHelp={
       Qtot:'Total dielectric/interface charge obtained from the horizontal charge separation between the natural initial condition and the flatband point on the dark V–Q characteristic.',
