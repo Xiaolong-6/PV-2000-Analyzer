@@ -242,7 +242,7 @@
     const roi=PV.roi.create({coords:Array.from({length:data.sites.length},(_,i)=>data.coords[i]||null),onChange:()=>shell()});
     const options=()=>Object.values(analysis.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
     const summaryRows=()=>Object.values(analysis.metrics).map(m=>{const st=S.summary(m.values.filter((v,i)=>roi.mask(filterController.metricMask(m))[i]&&Number.isFinite(v)));
-      return `<tr><td>${esc(m.short)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
+      return `<tr><td>${esc(m.short)}</td><td>${st.count}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
     function shell(){
       const state=filterController.snapshot(),current=data.sites[site],
         calc=data.calculationProfile?`${data.calculationProfile.status} · ${data.calculationProfile.id}`:'inferred',
@@ -255,7 +255,7 @@
         <section class="panel"><h3>Measurement ${PV.ui.help('Core SPV XML identity and sample context. Signal-channel settings and validation profiles are separated below.')}</h3><dl class="meta"><dt>Result</dt><dd>${esc(data.resultName)}</dd><dt>Recipe</dt><dd>${esc(data.name)}</dd><dt>Substrate</dt><dd>${esc(data.substrateId)}</dd><dt>Status</dt><dd>${esc(data.status)}</dd><dt>Pattern</dt><dd>${esc(data.patternName||data.patternType)}</dd><dt>Target</dt><dd>${esc(targetText)}</dd></dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${data.sites.length}</b><span>XML sites</span></div><div><b>${finiteDl}</b><span>finite DL/Tau</span></div><div><b>${data.coords.length} / ${data.sites.length}</b><span>coordinates</span></div><div><b>${state.validCount} / ${state.siteCount}</b><span>pass filter</span></div></div></section>
         ${PV.ui.validDataFilterMarkup({prefix:'spvFilter',metrics:analysis.metrics,state,helpText:'One site-level mask is shared by summaries, map, Distribution and export. DL/Tau availability remains quantity-specific, so raw SPV8/SPV6 sites are not discarded merely because DL is undefined.'})}
-        <section class="panel"><h3>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span></h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
+        <section class="panel"><h3>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span></h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>N</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
         <details class="panel"><summary>Acquisition / validation</summary>
           <dl class="meta meta-detail">
             <dt>Calculation profile</dt><dd>${esc(calc)}</dd>
