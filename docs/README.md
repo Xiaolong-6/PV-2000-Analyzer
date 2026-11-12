@@ -10,6 +10,7 @@ This directory contains the engineering and validation documentation for PV-2000
 | What XML measurement types have dedicated analyzers? | `docs/MEASUREMENT_TYPES.md` |
 | What does each measurement mean scientifically? | `wiki/` family pages and `wiki/Scientific-Foundations.md` |
 | How is the runtime/UI structured? | `docs/ARCHITECTURE.md` |
+| How are spatial ROI selections defined and used? | `docs/ROI.md` |
 | What input→output profiles are validated? | `docs/REFERENCE_PROFILES.md` |
 | What numerical evidence supports those profiles? | `docs/VALIDATION.md` |
 | How is the GitHub Wiki published? | `docs/WIKI_HANDOFF.md` |
