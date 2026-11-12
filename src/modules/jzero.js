@@ -513,14 +513,15 @@
       PV.ui.bindValidDataFilter(host,{prefix:'jFilter',controller:filterController,linkedSelect:'#jMetric',onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});redraw();
     }
     function exportMetric(filterState,displayMask){
-      const m=a.metrics[metricKey],filterMetric=a.metrics[filterState.metricKey];
+      const m=a.metrics[metricKey],filterMetric=a.metrics[filterState.metricKey],
+        scopedMask=roi.mask(displayMask),selectedRoi=roi.selected();
       PV.exporter.csv(
         `${safe(d.resultName)}_${metricKey}.csv`,
         ['Index','X [mm]','Y [mm]',`${m.label} [${m.unit}]`,'Metric available','Pass valid-data filter','Displayed','In ROI','Included in ROI statistics','Statistics scope','Filter metric','Filter lower','Filter upper'],
         m.values.map((v,i)=>[
           i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',v,Number.isFinite(v),
           !!filterState.selection.activeMask[i],!!displayMask[i],
-          roi.selected()?PV.roi.contains(roi.selected(),d.coords[i]):'',!!roi.mask(displayMask)[i],roi.label(),
+          selectedRoi?PV.roi.contains(selectedRoi,d.coords[i]):'',!!scopedMask[i],roi.label(),
           filterMetric?.short||filterState.metricKey,filterState.lower,filterState.upper
         ])
       );
