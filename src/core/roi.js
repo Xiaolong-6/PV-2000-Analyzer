@@ -69,7 +69,7 @@
       if(a.type==='rectangle')out+=field('width','Width [mm]',g.width)+field('height','Height [mm]',g.height)+field('rotation','Rotation [°]',g.rotation);
       else out+=field('radius','Radius [mm]',g.radius);
       if(a.type==='sector')out+=field('startDeg','Start [°]',g.startDeg)+field('sweepDeg','Sweep [°]',g.sweepDeg);
-      return out+'</div><div class="roi-field-actions"><button data-roi-apply type="button">Apply</button><button data-roi-delete type="button">Delete ROI</button></div>';
+      return out+'</div><div class="roi-field-actions"><button data-roi-apply type="button">Apply</button><button data-roi-delete type="button">Delete ROI</button><button data-roi-export type="button">Export ROIs</button></div>';
     }
     function refresh(){
       if(!panel)return;
@@ -107,6 +107,10 @@
       };
       const del=panel.querySelector('[data-roi-delete]');
       if(del)del.onclick=remove;
+      const exportBtn=panel.querySelector('[data-roi-export]');
+      if(exportBtn)exportBtn.onclick=()=>PV.exporter.json('PV2000_roi.json',{
+        schema:'PV2000-ROI-1',units:'mm',angleUnit:'degrees',rois:exportRows()
+      });
       const toggle=host?.querySelector('#'+html('Toggle'));
       if(toggle){toggle.setAttribute('aria-expanded',String(!panel.hidden));toggle.textContent=scope==='roi'?'ROI •':'ROI';}
     }
