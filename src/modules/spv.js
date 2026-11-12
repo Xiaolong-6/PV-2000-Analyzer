@@ -173,7 +173,7 @@
     const v=values.filter(Number.isFinite);if(!v.length)return[0,1];
     let lo=Math.min(...v),hi=Math.max(...v);if(lo===hi){lo-=.5;hi+=.5}return[lo,hi];
   }
-  function drawMap(canvas,data,metric,mask,selected,zoom,onZoom,onSelect){
+  function drawMap(canvas,data,metric,mask,selected,zoom,onZoom,onSelect,roi=null){
     const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:data.sites.length===1?'compact':'standard'}),p={l:56,r:78,t:24,b:46},plotW=W-p.l-p.r,plotH=H-p.t-p.b,
       radius=Math.max(data.diameter/2||0,data.geometryModel.nominal?.radius||0,1)*1.06,
       auto=PV.plot.equalAspectRanges([-radius,radius],[-radius,radius],plotW,plotH),
@@ -208,6 +208,7 @@
     ctx.fillStyle=css('--muted');ctx.textAlign='left';ctx.fillText(fmt(hi,3),bx+bw+4,by+8);ctx.fillText(fmt(lo,3),bx+bw+4,by+bh);
     canvas.onclick=e=>{const r=canvas.getBoundingClientRect(),mx=(e.clientX-r.left)*W/r.width,my=(e.clientY-r.top)*H/r.height;let bi=-1,bd=Infinity;data.coords.forEach((pt,i)=>{if(!pt)return;const dd=(xp(pt.x)-mx)**2+(yp(pt.y)-my)**2;if(dd<bd){bd=dd;bi=i}});if(bi>=0&&bd<500)onSelect?.(bi)};
     PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:onZoom,onReset:()=>onZoom({x:null,y:null})});
+    roi?.attach({surface:canvas,W,H,X:xp,Y:yp,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b}});
   }
   function histogram(values,mask,bins){
     const valid=values.filter((v,i)=>mask[i]&&Number.isFinite(v));if(!valid.length)return[];
@@ -238,8 +239,9 @@
     if(!data.sites.length){host.innerHTML='<section class="panel"><h3>SPVMeasurement</h3><p class="note">No SPV site data found.</p></section>';return}
     let metricKey='dl',site=0,histBins=30,histSwapped=true,zoom={map:{x:null,y:null},hist:{x:null,y:null}},
       filterController=Sel.createFilter({metrics:analysis.metrics,siteCount:data.sites.length,metricKey:'dl'});
+    const roi=PV.roi.create({coords:Array.from({length:data.sites.length},(_,i)=>data.coords[i]||null),onChange:()=>shell()});
     const options=()=>Object.values(analysis.metrics).map(m=>`<option value="${m.key}">${esc(m.short)}</option>`).join('');
-    const summaryRows=()=>Object.values(analysis.metrics).map(m=>{const st=S.summary(m.values.filter((v,i)=>filterController.metricMask(m)[i]&&Number.isFinite(v)));
+    const summaryRows=()=>Object.values(analysis.metrics).map(m=>{const st=S.summary(m.values.filter((v,i)=>roi.mask(filterController.metricMask(m))[i]&&Number.isFinite(v)));
       return `<tr><td>${esc(m.short)}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('');
     function shell(){
       const state=filterController.snapshot(),current=data.sites[site],
@@ -253,7 +255,7 @@
         <section class="panel"><h3>Measurement ${PV.ui.help('Core SPV XML identity and sample context. Signal-channel settings and validation profiles are separated below.')}</h3><dl class="meta"><dt>Result</dt><dd>${esc(data.resultName)}</dd><dt>Recipe</dt><dd>${esc(data.name)}</dd><dt>Substrate</dt><dd>${esc(data.substrateId)}</dd><dt>Status</dt><dd>${esc(data.status)}</dd><dt>Pattern</dt><dd>${esc(data.patternName||data.patternType)}</dd><dt>Target</dt><dd>${esc(targetText)}</dd></dl></section>
         <section class="panel current-dataset-panel"><h3>Current dataset</h3><div class="validation"><div><b>${data.sites.length}</b><span>XML sites</span></div><div><b>${finiteDl}</b><span>finite DL/Tau</span></div><div><b>${data.coords.length} / ${data.sites.length}</b><span>coordinates</span></div><div><b>${state.validCount} / ${state.siteCount}</b><span>pass filter</span></div></div></section>
         ${PV.ui.validDataFilterMarkup({prefix:'spvFilter',metrics:analysis.metrics,state,helpText:'One site-level mask is shared by summaries, map, Distribution and export. DL/Tau availability remains quantity-specific, so raw SPV8/SPV6 sites are not discarded merely because DL is undefined.'})}
-        <section class="panel"><h3>Results summary</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
+        <section class="panel"><h3>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span></h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${summaryRows()}</tbody></table></div></section>
         <details class="panel"><summary>Acquisition / validation</summary>
           <dl class="meta meta-detail">
             <dt>Calculation profile</dt><dd>${esc(calc)}</dd>
@@ -268,13 +270,14 @@
           </dl>
           <p class="note meta-detail">LED temperature participates in the wavelength-channel temperature correction. Wafer thickness, back-surface velocity and doping type enter the Enhanced finite-wafer diffusion-length path when Enhanced mode is enabled; doping type also selects the lifetime conversion. Paired PV-2000 output validates the standard two-wavelength profiles and the finite-wafer/back-surface Enhanced N-type profile. Parsed-signal, texture-corrected, manual-linearity and Enhanced P-type branches remain outside the validated envelope.</p>
         </details>
-      </aside>${data.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview"><div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="spvMetric">${options()}</select>${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div>${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div>`}</section>
+      </aside>${data.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview"><div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer map'}</b><span class="grow"></span><select id="spvMetric">${options()}</select>${data.sites.length>1?roi.toolbar('spvRoi'):''}${PV.plot.axisControls('spvMapAxes')}<button id="spvExportMap">Export</button></header><div class="canvas-wrap"><canvas id="spvMap"></canvas></div></div>${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span></b><span class="grow"></span>${PV.plot.axisControls('spvHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('spvHistBins',histBins)}<button id="spvExportHist">Export</button></header><div class="canvas-wrap"><canvas id="spvHist"></canvas></div></div>`}</section>
       <section class="plots detail"><section class="panel"><h3>${data.sites.length===1?'Measurement point':'Selected site'}</h3><div class="site-controls"><button id="spvPrev">←</button><select id="spvSite">${data.sites.map((_,i)=>`<option value="${i}">Site ${i+1}</option>`).join('')}</select><button id="spvNext">→</button></div><dl class="meta"><dt>Position</dt><dd>${current.coord?`${fmt(current.coord.x,2)}, ${fmt(current.coord.y,2)} mm`:'—'}</dd>${PV.ui.selectionStateRow(PV.ui.selectionStateFor(state,site),{metric:analysis.metrics[state.metricKey]?.short||state.metricKey})}<dt>DL</dt><dd>${fmt(current.dl)} µm</dd><dt>Tau</dt><dd>${fmt(current.tau)} µs</dd><dt>SPV8</dt><dd>${fmt(current.spv8)} mV</dd><dt>SPV6</dt><dd>${fmt(current.spv6)} mV</dd></dl></section></section>${data.sites.length===1?'</div>':''}</div>`;
       host.querySelector('#spvMetric').value=metricKey;host.querySelector('#spvSite').value=String(site);
       host.querySelector('#spvSite').onchange=e=>{site=Number(e.target.value);shell()};
       host.querySelector('#spvPrev').onclick=()=>{if(site>0){site--;shell()}};
       host.querySelector('#spvNext').onclick=()=>{if(site<data.sites.length-1){site++;shell()}};
-      PV.ui.bindValidDataFilter(host,{prefix:'spvFilter',controller:filterController,linkedSelect:'#spvMetric',onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});
+      if(data.sites.length>1)roi.bind(host,'spvRoi');
+       PV.ui.bindValidDataFilter(host,{prefix:'spvFilter',controller:filterController,linkedSelect:'#spvMetric',onChange:state=>{metricKey=state.metricKey;zoom={map:{x:null,y:null},hist:{x:null,y:null}};shell()}});
       redraw();
     }
     function exportMetric(state,mask){
@@ -285,8 +288,8 @@
     function redraw(){
       const state=filterController.snapshot(),metric=analysis.metrics[metricKey],mask=filterController.metricMask(metric),
         histCanvas=host.querySelector('#spvHist'),
-        rows=histCanvas?drawHist(histCanvas,metric,mask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}):[];
-      drawMap(host.querySelector('#spvMap'),data,metric,mask,site,zoom.map,n=>{zoom.map=n;redraw()},i=>{site=i;shell()});
+        rows=histCanvas?drawHist(histCanvas,metric,roi.mask(mask),histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}):[];
+      drawMap(host.querySelector('#spvMap'),data,metric,mask,site,zoom.map,n=>{zoom.map=n;redraw()},i=>{site=i;shell()},data.sites.length>1?roi:null);
       PV.plot.bindAxisControls(host,'spvMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       if(histCanvas){
         PV.plot.bindAxisControls(host,'spvHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{swapped:histSwapped,onSwap:()=>{histSwapped=!histSwapped;zoom.hist={x:null,y:null};shell()}});
