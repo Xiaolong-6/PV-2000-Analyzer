@@ -346,7 +346,7 @@ test('LBIC renderer uses the shared Valid-data filter lifecycle across plots and
   assert.match(src,/controller\.metricMask\(metric\)/);
   assert.match(src,/summaryRows\(metrics,controller\)/);
   assert.match(src,/drawMap\(host\.querySelector\('#lMap'\),d,metric,displayMask/);
-  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,displayMask/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,roi\.mask\(displayMask\)/);
   assert.match(src,/drawProfile\(host\.querySelector\('#lXProfile'\),d,metric,displayMask/);
   assert.match(src,/Pass valid-data filter/);
   assert.match(src,/Pass active filter/);
