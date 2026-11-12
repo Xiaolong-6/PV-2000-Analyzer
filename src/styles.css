@@ -299,3 +299,6 @@
 .roi-overlay .roi-shape.roi-preview>*{stroke:var(--muted);fill-opacity:.06}
 .roi-overlay .roi-handle{fill:var(--chart-bg);stroke:var(--blue);stroke-width:2;cursor:ew-resize;vector-effect:non-scaling-stroke}
 @media(max-width:700px){.roi-main-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.roi-tools{grid-column:1/-1}.roi-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.roi-scope-label{font-size:10px;font-weight:650;color:var(--blue);white-space:nowrap}
+.roi-editor{order:20;background:color-mix(in srgb,var(--panel) 86%,var(--chart-bg));padding:8px;border:1px solid var(--border);border-radius:7px}
