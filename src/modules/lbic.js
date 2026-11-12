@@ -356,7 +356,7 @@
   const setupTooltip=canvas=>PV.ui.setupTooltip(canvas);
   const showTip=(tip,event,html)=>PV.ui.showTooltip(tip,event,html);
   const hideTip=tip=>PV.ui.hideTooltip(tip);
-  function drawMap(canvas,d,metric,mask,selected,scaleMode,onSelect,zoom,onZoom){
+  function drawMap(canvas,d,metric,mask,selected,scaleMode,onSelect,zoom,onZoom,roi=null){
     const {ctx,W,H}=PV.plot.canvasFrame(canvas),
       p={l:64,r:82,t:28,b:52},
       coords=d.coords,
@@ -549,6 +549,7 @@
       if(best>=0)onSelect?.(best);
     };
     PV.plot.bind(canvas,{W,H,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+    roi?.attach({surface:canvas,W,H,X,Y,plotRect:{x0,x1:x0+plotW,y0,y1:y0+plotH}});
     return rg;
   }
   function drawHist(canvas,metric,mask,binCount=30,swapped=true,zoom,onZoom){
@@ -699,6 +700,11 @@
       selected={index:Math.floor((d.coords.length||1)/2)},
       zoom={map:{x:null,y:null},hist:{x:null,y:null},xProfile:{x:null,y:null},yProfile:{x:null,y:null}};
       
+    const roi=PV.roi.create({coords:d.coords,onChange:()=>{
+      const {metrics}=current(),controller=ensureFilter(current().it,metrics),body=host.querySelector('#lSummaryBody');
+      if(body)body.innerHTML=summaryRows(metrics,controller);
+      redraw();
+    }});
     const visibleMetrics=metrics=>Object.values(metrics).filter(m=>showAdvanced||m.tier==='primary');
     const visibleMetricMap=metrics=>Object.fromEntries(visibleMetrics(metrics).map(metric=>[metric.key,metric]));
     function defaultMetricKey(metrics){
@@ -735,9 +741,9 @@
     function beamOptions(it){return Object.entries(it?.beams||{}).map(([k,b])=>{const wl=b.laser?.wavelengthNm;return`<option value="${esc(k)}">${Number.isFinite(wl)?`${fmt(wl,0)} nm`:`Beam ${esc(k)}`}</option>`}).join('')}
     function summaryRows(metrics,controller){
       return visibleMetrics(metrics).map(m=>{
-        const mask=controller.metricMask(m),
+        const mask=roi.mask(controller.metricMask(m)),
           st=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
-        return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
+        return`<tr title="${esc(m.source)}"><td>${esc(m.short)}${m.status==='inferred'?' *':''}</td><td>${st.count}</td><td>${fmt(st.mean)}</td><td>${fmt(st.median)}</td><td>${fmt(st.stdev)}</td><td>${fmt(st.min)}</td><td>${fmt(st.max)}</td></tr>`}).join('')}
     function metaRow(k,v,h=''){return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v||'—')}</dd>`}
     function renderShell(){const {it,beam,metrics}=current(),
       controller=ensureFilter(it,metrics),
@@ -772,7 +778,7 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
         state:filterState,
         helpText:'Choose an active LBIC quantity and numeric range. One site-level mask is applied to every visible quantity for the current iteration/beam, including summary statistics, raster map, distribution and X/Y line profiles. Raw values are preserved in exports.'
       })}
-      <section class="panel"><h3>Results summary ${help('Statistics use the active Valid-data filter plus each quantity\'s finite-value availability. The displayed quantity and Filter metric are synchronized by default.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="lSummaryBody">${summaryRows(metrics,controller)}</tbody></table></div></section>
+      <section class="panel"><h3>Results summary <span class="roi-scope-label" id="lSummaryScope"></span> ${help('Statistics use the active Valid-data filter plus each quantity\'s finite-value availability. The displayed quantity and Filter metric are synchronized by default.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>N</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="lSummaryBody">${summaryRows(metrics,controller)}</tbody></table></div></section>
       <details class="panel"><summary>Channel provenance</summary><div class="table-wrap"><table><thead><tr><th>Quantity</th><th>Source</th><th>Status</th></tr></thead><tbody>${Object.values(metrics).map(m=>`<tr><td>${esc(m.short)}</td><td>${esc(m.source)}</td><td>${esc(m.status)}</td></tr>`).join('')}</tbody></table></div></details>
       <details class="panel">
         <summary>Acquisition / validation ${help('Lower-priority channel, acquisition and validation provenance for the active LBIC context.')}</summary>
@@ -794,12 +800,13 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
         </dl>
       </details>
       </aside><section class="plots overview">
-        <div class="panel chart"><header><b>LBIC raster map</b>${help('Only sites passing the active Valid-data filter and displayed-quantity availability are filled. Raw values remain preserved. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both spatial axes; hold Ctrl/⌘ over the X or Y axis to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
-        <div class="panel chart"><header><b>Distribution</b>${help('Count includes only sites passing the active Valid-data filter and displayed-quantity availability. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Ctrl/⌘ + wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('lHistBins',histBins)}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
+        <div class="panel chart"><header><b>LBIC raster map</b>${help('Only sites passing the active Valid-data filter and displayed-quantity availability are filled. Raw values remain preserved. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the plot to zoom both spatial axes; hold Ctrl/⌘ over the X or Y axis to zoom only that direction; double-click restores auto scale. Axes opens manual numeric X/Y limits.') }<span class="grow"></span>${roi.toolbar('lRoi')}${PV.plot.axisControls('lMapAxes')}<button id="lExportMap">Export map</button><button id="lExportAll">Export all</button></header><div class="canvas-wrap"><canvas id="lMap"></canvas></div></div>
+        <div class="panel chart"><header><b>Distribution <span class="roi-scope-label" id="lHistScope"></span></b>${help('Count includes only sites passing the active Valid-data filter and displayed-quantity availability. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Ctrl/⌘ + wheel zoom and double-click Auto remain available.') }<span class="grow"></span>${PV.plot.axisControls('lHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('lHistBins',histBins)}<button id="lExportHist">Export</button></header><div class="canvas-wrap"><canvas id="lHist"></canvas></div></div>
       </section><section class="plots detail">
         <section class="panel"><h3>Selected pixel</h3><div id="lPixel"></div></section>
         <div class="panel chart lbic-profiles-panel"><header><b>X / Y line profiles</b>${help('Profiles include only sites passing the active Valid-data filter and displayed-quantity availability along the selected row/column. Each profile supports wheel zoom; double-click restores Auto. Axes opens a floating manual X/Y range editor.') }<span class="grow"></span>${PV.plot.axisControls('lXProfileAxes',{label:'X axes'})}${PV.plot.axisControls('lYProfileAxes',{label:'Y axes'})}<button id="lExportProfile">Export</button></header><div class="lbic-profile-columns"><div class="profile-pane"><div class="mini-title">X profile through selected row</div><div class="canvas-wrap compact"><canvas id="lXProfile"></canvas></div></div><div class="profile-pane"><div class="mini-title">Y profile through selected column</div><div class="canvas-wrap compact"><canvas id="lYProfile"></canvas></div></div></div></div>
       </section></div>`;
+      roi.bind(host,'lRoi');
       host.querySelector('#lIter').value=String(iterationIndex);host.querySelector('#lBeam').value=beamKey;host.querySelector('#lMetric').value=metricKey;host.querySelector('#lScale').value=scaleMode;
       PV.ui.bindValidDataFilter(host,{
         prefix:'lFilter',
@@ -842,10 +849,15 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
         filterState=controller.snapshot(),
         displayMask=controller.metricMask(metric);
       selected.index=Math.max(0,Math.min(selected.index,metric.values.length-1));
-      drawMap(host.querySelector('#lMap'),d,metric,displayMask,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()});
-      const bins=drawHist(host.querySelector('#lHist'),metric,displayMask,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
+      drawMap(host.querySelector('#lMap'),d,metric,displayMask,selected,scaleMode,i=>{selected.index=i;redraw()},zoom.map,n=>{zoom.map=n;redraw()},roi);
+      const bins=drawHist(host.querySelector('#lHist'),metric,roi.mask(displayMask),histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()}),
       xp=drawProfile(host.querySelector('#lXProfile'),d,metric,displayMask,selected,'x',zoom.xProfile,n=>{zoom.xProfile=n;redraw()}),
       yp=drawProfile(host.querySelector('#lYProfile'),d,metric,displayMask,selected,'y',zoom.yProfile,n=>{zoom.yProfile=n;redraw()});
+      const scopeLabel=roi.scope()==='roi'?roi.label():'';
+      const summaryScope=host.querySelector('#lSummaryScope');
+      if(summaryScope)summaryScope.textContent=scopeLabel;
+      const histScope=host.querySelector('#lHistScope');
+      if(histScope)histScope.textContent=scopeLabel;
       PV.plot.bindAxisControls(host,'lMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       PV.plot.bindAxisControls(host,'lHistAxes',zoom.hist,n=>{zoom.hist=n;redraw()},{
         swapped:histSwapped,
@@ -884,8 +896,8 @@ ${metaRow(pseudo?'Target':'Region',regionText)}</dl>\
         
       host.querySelector('#lExportHist').onclick=()=>PV.exporter.csv(
         `${safe(d.resultName)}_${beamKey}_${safe(metric.short)}_histogram.csv`,
-        [`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],
-        bins.map(b=>[b.lo,b.hi,b.count,metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
+        [`Bin low [${metric.unit}]`,`Bin high [${metric.unit}]`,'Count','Statistics scope','Filter metric','Filter lower','Filter upper'],
+        bins.map(b=>[b.lo,b.hi,b.count,roi.label(),metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
       );
         
       host.querySelector('#lExportProfile').onclick=()=>PV.exporter.csv(
