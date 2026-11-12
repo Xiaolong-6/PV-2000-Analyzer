@@ -1141,16 +1141,18 @@ ${md('Back Surface Shift',d.backSurfaceShift?'True':'False','PV2000 exposes this
         host.querySelector('#e4').onclick=()=>{
         const [label,unit]=mapSpec(mapKey),
           filterState=filterController.snapshot(),
-          displayMask=filterController.metricMask(metrics[mapKey]);
+          displayMask=filterController.metricMask(metrics[mapKey]),
+          scopedMask=roi.mask(displayMask),selectedRoi=roi.selected();
         PV.exporter.csv(
           `Dit_wafer_${mapKey}.csv`,
-          ['Site','x','y',label,unit,'Algorithm valid','Metric available','Pass valid-data filter','Displayed','Filter metric','Filter lower','Filter upper'],
+          ['Site','x','y',label,unit,'Algorithm valid','Metric available','Pass valid-data filter','Displayed','In ROI','Included in ROI statistics','Statistics scope','Filter metric','Filter lower','Filter upper'],
           analysis.sites.map((x,i)=>[
             i+1,x.coord?.x??'',x.coord?.y??'',metric(x,mapKey),unit,
             x.valid?'YES':'NO',
             Number.isFinite(metric(x,mapKey))?'YES':'NO',
             filterState.selection.activeMask[i]?'YES':'NO',
             displayMask[i]?'YES':'NO',
+            selectedRoi?PV.roi.contains(selectedRoi,x.coord):'',scopedMask[i]?'YES':'NO',roi.label(),
             metrics[filterState.metricKey]?.short||filterState.metricKey,
             filterState.lower,
             filterState.upper
