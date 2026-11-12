@@ -866,7 +866,7 @@ test('spatial ROI is explicitly scoped without changing whole-sample Map masks',
   for(const file of ['isc.js','qss-upcd.js','jzero.js','lbic.js','spv.js','cet.js','dit.js']){
     const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
     assert.match(src,/PV\.roi\.create/);
-    assert.match(src,/roi\.attach/);
+    assert.match(src,/roi\??\.attach/);
     assert.match(src,/roi\.mask/);
     assert.match(src,/roi-scope-label/);
   }
