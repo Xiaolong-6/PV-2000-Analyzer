@@ -326,7 +326,7 @@
     };
     const statsRows=()=>Object.values(analysis.metrics).map(metric=>{
       const st=summaryMasked(metric,roi.mask(filterController.metricMask(metric)));
-      return`<tr><td>${esc(metric.short)} ${help(metric.help)}</td><td>${fmt(st.mean,4)}</td><td>${fmt(st.median,4)}</td><td>${fmt(st.stdev,4)}</td><td>${fmt(st.min,4)}</td><td>${fmt(st.max,4)}</td></tr>`;
+      return`<tr><td>${esc(metric.short)} ${help(metric.help)}</td><td>${st.count}</td><td>${fmt(st.mean,4)}</td><td>${fmt(st.median,4)}</td><td>${fmt(st.stdev,4)}</td><td>${fmt(st.min,4)}</td><td>${fmt(st.max,4)}</td></tr>`;
     }).join('');
 
     function shell(){
@@ -357,7 +357,7 @@
           state,
           helpText:'Choose EOT, Cd or R² as the filter metric. One site-level active mask is shared by result summaries, map, distribution and exports; quantity-specific unavailable values remain excluded from that quantity.'
         })}
-        <section class="panel"><h3>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span> ${help('Average, median, sample standard deviation, minimum and maximum use the active valid-data population for each quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
+        <section class="panel"><h3>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span> ${help('Average, median, sample standard deviation, minimum and maximum use the active valid-data population for each quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>N</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
 
         <details class="panel"><summary>Acquisition / validation</summary><dl class="meta meta-detail">
           ${meta('Calculation profile',calculation,'EOT/Cd/R² validation is independent from spatial geometry.')}
