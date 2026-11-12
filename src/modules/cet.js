@@ -315,6 +315,7 @@
         metricKey:'eot'
       });
 
+    const roi=PV.roi.create({coords:Array.from({length:data.sites.length},(_,i)=>data.coords[i]||null),onChange:()=>shell()});
     const metricOptions=()=>Object.values(analysis.metrics)
       .map(metric=>`<option value="${metric.key}">${esc(metric.short)}</option>`).join('');
     const meta=(label,value,tip='')=>`<dt>${esc(label)}${tip?' '+help(tip):''}</dt><dd>${esc(value??'—')}</dd>`;
@@ -324,7 +325,7 @@
       return data.targetType||'—';
     };
     const statsRows=()=>Object.values(analysis.metrics).map(metric=>{
-      const st=summaryMasked(metric,filterController.metricMask(metric));
+      const st=summaryMasked(metric,roi.mask(filterController.metricMask(metric)));
       return`<tr><td>${esc(metric.short)} ${help(metric.help)}</td><td>${fmt(st.mean,4)}</td><td>${fmt(st.median,4)}</td><td>${fmt(st.stdev,4)}</td><td>${fmt(st.min,4)}</td><td>${fmt(st.max,4)}</td></tr>`;
     }).join('');
 
@@ -356,7 +357,7 @@
           state,
           helpText:'Choose EOT, Cd or R² as the filter metric. One site-level active mask is shared by result summaries, map, distribution and exports; quantity-specific unavailable values remain excluded from that quantity.'
         })}
-        <section class="panel"><h3>Results summary ${help('Average, median, sample standard deviation, minimum and maximum use the active valid-data population for each quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
+        <section class="panel"><h3>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span> ${help('Average, median, sample standard deviation, minimum and maximum use the active valid-data population for each quantity.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody>${statsRows()}</tbody></table></div></section>
 
         <details class="panel"><summary>Acquisition / validation</summary><dl class="meta meta-detail">
           ${meta('Calculation profile',calculation,'EOT/Cd/R² validation is independent from spatial geometry.')}
@@ -366,14 +367,15 @@
         </dl><p class="note meta-detail">For each site, Qc[i] = i × Process.CoronaCharge. The mean illuminated Vcpd vector is offset-corrected and fitted linearly versus Qc. The historical compatibility constants used here are q = 1.602×10⁻¹⁹ C and EOT[Å] = 34.5 / Cd_internal. Runtime remains XML-only; paired CSV is validation evidence only.</p></details>
       </aside>
       ${data.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview">
-        <div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer / cell map'}</b><span class="grow"></span><select id="cetMetric">${metricOptions()}</select>${PV.plot.axisControls('cetMapAxes')}<button id="cetExportMap">Export</button></header><div class="chart-stage map-stage"><svg id="cetMap" viewBox="0 0 640 360"></svg></div></div>
-        ${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b><span class="grow"></span>${PV.plot.axisControls('cetHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('cetHistBins',histBins)}<button id="cetExportHist">Export</button></header><div class="chart-stage"><svg id="cetHist" viewBox="0 0 640 360"></svg></div></div>`}
+        <div class="panel chart"><header><b>${data.sites.length===1?'Measurement position':'Wafer / cell map'}</b><span class="grow"></span><select id="cetMetric">${metricOptions()}</select>${data.sites.length>1?roi.toolbar('cetRoi'):''}${PV.plot.axisControls('cetMapAxes')}<button id="cetExportMap">Export</button></header><div class="chart-stage map-stage"><svg id="cetMap" viewBox="0 0 640 360"></svg></div></div>
+        ${data.sites.length===1?'':`<div class="panel chart"><header><b>Distribution <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span></b><span class="grow"></span>${PV.plot.axisControls('cetHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('cetHistBins',histBins)}<button id="cetExportHist">Export</button></header><div class="chart-stage"><svg id="cetHist" viewBox="0 0 640 360"></svg></div></div>`}
       </section>
       <section class="plots detail">
         <section class="panel"><h3>${data.sites.length===1?'Measurement point':'Selected site'}</h3><div class="site-controls"><button id="cetPrev" title="Previous site">←</button><select id="cetSite">${data.sites.map((_,index)=>`<option value="${index}">Site ${index+1}</option>`).join('')}</select><button id="cetNext" title="Next site">→</button><span class="coord">${esc(point)}</span></div><dl class="meta" style="margin-top:8px">${PV.ui.selectionStateRow(PV.ui.selectionStateFor(state,site),{metric:analysis.metrics[state.metricKey]?.short||state.metricKey})}${meta('EOT',Number.isFinite(current.eot)?fmt(current.eot,4)+' Å':'—')}${meta('Cd',Number.isFinite(current.cd)?fmt(current.cd,4)+' nF/cm²':'—')}${meta('R²',fmt(current.r2,6))}${meta('Fit points',String(current.fitCount))}${meta('Slope',Number.isFinite(current.slope)?current.slope.toExponential(6)+' V·cm²/q':'—')}</dl></section>
         <div class="panel chart"><header><b>Current-site Vcpd light–Qc fit</b><span class="chart-meta">R² ${fmt(current.r2,6)}</span><span class="grow"></span>${PV.plot.axisControls('cetFitAxes')}<button id="cetExportFit">Export</button></header><div class="chart-stage"><svg id="cetFit" viewBox="0 0 640 360"></svg></div></div>
       </section>${data.sites.length===1?'</div>':''}</div>`;
 
+      if(data.sites.length>1)roi.bind(host,'cetRoi');
       host.querySelector('#cetMetric').value=metricKey;
       host.querySelector('#cetSite').value=String(site);
       host.querySelector('#cetSite').onchange=event=>{
@@ -468,6 +470,7 @@
         onChange:next=>{zoom.map=next;drawMap();},
         onReset:()=>{zoom.map={x:null,y:null};drawMap();}
       });
+      if(data.sites.length>1)roi.attach({surface:svg,W:width,H:height,X:Xp,Y:Yp,plotRect:{x0:margin.l,x1:width-margin.r,y0:margin.t,y1:height-margin.b}});
       PV.plot.bindAxisControls(host,'cetMapAxes',zoom.map,next=>{zoom.map=next;drawMap();});
     }
 
@@ -490,7 +493,7 @@
       const svg=host.querySelector('#cetHist');
       if(!svg)return;
       const metric=analysis.metrics[metricKey],
-        mask=filterController.metricMask(metric),
+        mask=roi.mask(filterController.metricMask(metric)),
         activeValues=metric.values.filter((value,index)=>mask[index]&&Number.isFinite(value)),
         rows=histogramRows(metric,mask,histBins),
         width=640,height=360,margin={l:62,r:18,t:22,b:42};
@@ -615,10 +618,10 @@
       const histExport=host.querySelector('#cetExportHist');
       if(histExport)histExport.onclick=()=>{
         const metric=analysis.metrics[metricKey],
-          rows=histogramRows(metric,filterController.metricMask(metric),histBins);
+          rows=histogramRows(metric,roi.mask(filterController.metricMask(metric)),histBins);
         PV.exporter.csv(
           `${safe(data.resultName)}_${metricKey}_distribution.csv`,
-          ['Bin low','Bin high','Count'],rows.map(row=>[row.lo,row.hi,row.count])
+          ['Bin low','Bin high','Count','Statistics scope'],rows.map(row=>[row.lo,row.hi,row.count,roi.label()])
         );
       };
     }
@@ -628,7 +631,7 @@
       drawHistogram();
       drawFit();
       const metric=analysis.metrics[metricKey],
-        mask=filterController.metricMask(metric),
+        mask=roi.mask(filterController.metricMask(metric)),
         activeCount=metric.values.filter((value,index)=>mask[index]&&Number.isFinite(value)).length,
         fitCount=data.sites[site].qc.map((x,index)=>({x,y:data.sites[site].vcpdLight[index]})).filter(point=>Number.isFinite(point.x)&&Number.isFinite(point.y)).length,
         histAxes=host.querySelector('[data-axis-toggle="cetHistAxes"]'),
