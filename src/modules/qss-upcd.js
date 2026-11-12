@@ -671,11 +671,11 @@
       PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
   }
-  function downloadMetric(d,a,key,mask,supportMask){const m=a.metrics[key];
+  function downloadMetric(d,a,key,mask,supportMask,roi){const m=a.metrics[key],scopedMask=roi.mask(mask),selectedRoi=roi.selected();
     PV.exporter.csv(
       `${safe(d.resultName)}_${key}.csv`,
-      ['Index','X [mm]','Y [mm]','Raw lifetime [µs]',`${m.label} [${m.unit}]`,'Lifetime available','Active filter valid'],
-      m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',d.values[i],v,supportMask[i]?'YES':'NO',mask[i]?'YES':'NO'])
+      ['Index','X [mm]','Y [mm]','Raw lifetime [µs]',`${m.label} [${m.unit}]`,'Lifetime available','Active filter valid','In ROI','Included in ROI statistics','Statistics scope'],
+      m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',d.values[i],v,supportMask[i]?'YES':'NO',mask[i]?'YES':'NO',selectedRoi?PV.roi.contains(selectedRoi,d.coords[i]):'',!!scopedMask[i],roi.label()])
     )}
   function render(host,d,a){
     let analysisOptions={vocModel:'pv2000',srvEnabled:false,surfaceMode:'planar',bulkLifetimeUs:Infinity,planarSrv:5,minLifetimeUs:0},
@@ -924,9 +924,9 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         PV.plot.bindBinControls(host,'qHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
       }
       if(profileCanvas)PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
-      host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
+      host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask,roi);
       const profileExport=host.querySelector('#qExportProfile');
-      if(profileExport)profileExport.onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
+      if(profileExport)profileExport.onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask,roi);
       const histExport=host.querySelector('#qExportHist');
       if(histExport)histExport.onclick=()=>{
         const unit=a.metrics[metricKey].unit;
