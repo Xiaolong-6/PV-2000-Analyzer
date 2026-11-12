@@ -18,6 +18,8 @@ PV-2000 Analyzer is a local, browser-based viewer and analysis tool for Semilab 
 
 **Runtime is XML-only.** Matching PV-2000 CSV/XPS exports are regression evidence used during development; they are never required to analyze a user file.
 
+**Spatial ROI analysis:** Multi-site maps offer Rectangle, Circle and Sector selection with drag/resize and physical-mm parameter editing. Distribution and Results summary label ROI-scoped statistics; the raw XML and whole-sample map stay unchanged. See [ROI guide](docs/ROI.md).
+
 ## Supported analyzers
 
 | XML type | Analyzer | Main outputs | Current evidence boundary |
