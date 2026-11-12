@@ -10,5 +10,15 @@
     a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     a.remove()}
-  PV.exporter={csv};
+  function json(name,data){
+    const content=JSON.stringify(data,null,2);
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([content],{type:'application/json;charset=utf-8'}));
+    a.download=name;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    a.remove();
+  }
+  PV.exporter={csv,json};
 })(typeof window!=='undefined'?window:globalThis);
