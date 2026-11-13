@@ -1,6 +1,6 @@
 # Changelog
 
-## v20261004.1.45 — 2026-11-13 (branch)
+## v20261113.1 — 2026-11-13
 
 - Preserved literal ROI names containing HTML special characters in CET, DIT, JZero and SPV summary/distribution labels.
 - Fixed Inspect/closed ROI overlays intercepting map site clicks and plot gestures; hit testing now inherits the shared editor mode.
