@@ -1,7 +1,8 @@
 # Changelog
 
-## v20261004.1.44 — 2026-11-13 (branch)
+## v20261004.1.45 — 2026-11-13 (branch)
 
+- Preserved literal ROI names containing HTML special characters in CET, DIT, JZero and SPV summary/distribution labels.
 - Fixed Inspect/closed ROI overlays intercepting map site clicks and plot gestures; hit testing now inherits the shared editor mode.
 - Fixed sector vertex inclusion for all start angles and added Canvas/SVG overlay and sector-membership regressions.
 - Added shared physical-coordinate rectangle, circle and sector ROI editing for multi-site Canvas/SVG wafer maps, including dragging, resize handles, precise-mm fields, multiple named regions, and Whole sample/ROI scope switching.

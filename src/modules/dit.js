@@ -984,7 +984,7 @@
           state:filterState,
           helpText:'Choose a calculated DIT/COCOS site quantity and numeric range. Algorithm-invalid sites remain intrinsically excluded; the user range only narrows the active site population used by Results summary, wafer-map display and map export. Current-site Vcpd/Vsb/Dit curves are never recalculated or truncated by this filter.'
         })}
-        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?roi.label():''}</span> ${help('Each row shows valid-site mean ± sample standard deviation after intrinsic validity, the active Valid-data filter and quantity availability are applied. Point-specific values remain in the right-hand Selected site / Measurement point panel.')}</summary><dl class="meta compact-summary">${summaryRows}</dl></details>
+        <details id="ditResultsSummary" class="panel results-summary-panel" ${resultsOpen?'open':''}><summary>Results summary <span class="roi-scope-label">${roi.scope()==='roi'?esc(roi.label()):''}</span> ${help('Each row shows valid-site mean ± sample standard deviation after intrinsic validity, the active Valid-data filter and quantity availability are applied. Point-specific values remain in the right-hand Selected site / Measurement point panel.')}</summary><dl class="meta compact-summary">${summaryRows}</dl></details>
 
         <details class="panel">\
 <summary>Acquisition metadata ${help('Lower-priority timing, instrument, calibration and COCOS recipe settings parsed directly from the imported XML.')}</summary>\

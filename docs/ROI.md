@@ -7,7 +7,7 @@ ROI is an **Analyzer-only spatial selection** for multi-site maps. It does not m
 1. Open a supported multi-site XML result and choose **ROI** in the Map header.
 2. Select **Rectangle**, **Circle**, or **Sector**, then drag from a starting location on the map.
 3. Use **Edit** to drag the shape or its handles, or enter precise dimensions and center coordinates in millimetres and select **Apply**.
-4. Use the **Statistics** selector to switch between **Whole sample** and the selected ROI. The ROI menu can retain multiple named regions.
+4. Use the **Statistics** selector to switch between **Whole sample** and the selected ROI. The ROI menu can retain multiple named regions; names are displayed literally, including HTML special characters.
 5. Use **Inspect** (or close the ROI panel) for normal Map site-click inspection. **Esc** exits ROI editing; **Delete** removes the selected ROI when an editable field is not focused.
 6. Choose **Export ROIs** to download named region definitions (physical coordinates, millimetres and angles) as JSON. The export documents selection geometry; importing ROI definitions is not yet supported.
 
