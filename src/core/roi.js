@@ -23,7 +23,8 @@
       return Math.abs(x)<=g.width/2+eps&&Math.abs(y)<=g.height/2+eps;
     }
     if(dx*dx+dy*dy>(g.radius+eps)**2)return false;
-    if(roi.type==='circle'||g.sweepDeg>=360)return true;
+    // The sector vertex belongs to every angular span, independent of atan2(0,0).
+    if(roi.type==='circle'||g.sweepDeg>=360||(dx===0&&dy===0))return true;
     const angle=norm(deg(Math.atan2(dy,dx)));
     return norm(angle-norm(g.startDeg))<=g.sweepDeg+1e-8;
   }
@@ -198,7 +199,7 @@
       overlay.style.cursor=drawing?'crosshair':'default';
       const area=transform.plotRect;
       let out='<defs><clipPath id="'+esc(prefix)+'RoiClip"><rect x="'+area.x0+'" y="'+area.y0+'" width="'+(area.x1-area.x0)+'" height="'+(area.y1-area.y0)+'"/></clipPath></defs>';
-      out+='<rect class="roi-hit-plane" x="'+area.x0+'" y="'+area.y0+'" width="'+(area.x1-area.x0)+'" height="'+(area.y1-area.y0)+'" fill="transparent" pointer-events="all"/>';
+      out+='<rect class="roi-hit-plane" x="'+area.x0+'" y="'+area.y0+'" width="'+(area.x1-area.x0)+'" height="'+(area.y1-area.y0)+'" fill="transparent"/>';
       out+='<g clip-path="url(#'+esc(prefix)+'RoiClip)">';
       rois.filter(r=>r.visible).concat(preview?[preview]:[]).forEach(r=>{
         const current=r.id===activeId,ghost=r===preview;

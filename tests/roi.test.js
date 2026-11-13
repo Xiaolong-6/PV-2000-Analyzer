@@ -59,3 +59,43 @@ test('editing one ROI does not change other ROI memberships',()=>{
   session.remove();
   assert.deepEqual(session.mask([true,true,true]),[true,true,false]);
 });
+
+
+test('every sector includes its vertex without including off-angle nearby sites',()=>{
+  for(const startDeg of [0,45,90,180,270,350,-90,450]){
+    const sector={type:'sector',geometry:{cx:5,cy:-3,radius:10,startDeg,sweepDeg:30}};
+    assert.equal(ROI.contains(sector,pt(5,-3)),true);
+    const outside=(startDeg+180)*Math.PI/180;
+    assert.equal(ROI.contains(sector,pt(5+1e-6*Math.cos(outside),-3+1e-6*Math.sin(outside))),false);
+    assert.deepEqual(ROI.combineMasks([true,false],[pt(5,-3),pt(5,-3)],sector),[true,false]);
+  }
+});
+
+test('shared Canvas/SVG overlay inherits hit testing from inspect or edit mode',()=>{
+  const documentBefore=global.document;
+  const overlays=[];
+  global.document={createElementNS:()=>{
+    const el={style:{},attributes:{},classList:{add(){}},addEventListener(){},
+      setAttribute(key,value){this.attributes[key]=value;},remove(){}};
+    overlays.push(el);return el;
+  }};
+  try{
+    for(const tagName of ['CANVAS','svg']){
+      const parent={style:{},appendChild(el){el.parentElement=this;}};
+      const session=ROI.create({coords:[pt(0,0)]});
+      const projection={surface:{tagName,parentElement:parent},W:200,H:200,
+        X:x=>100+x,Y:y=>100-y,plotRect:{x0:0,x1:200,y0:0,y1:200}};
+      session.attach(projection);
+      const overlay=overlays.at(-1);
+      assert.equal(overlay.style.pointerEvents,'none');
+      // An explicit descendant override would intercept the underlying site map.
+      assert.doesNotMatch(overlay.innerHTML,/pointer-events=["'](?:all|auto)["']/);
+      session.add('circle',{cx:0,cy:0,radius:10});
+      session.attach(projection);
+      assert.equal(overlay.style.pointerEvents,'auto');
+      assert.match(overlay.innerHTML,/roi-hit-plane/);
+      assert.match(overlay.innerHTML,/roi-handle/);
+      assert.equal(overlays.at(-1),overlay);
+    }
+  }finally{global.document=documentBefore;}
+});

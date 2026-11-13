@@ -1,7 +1,9 @@
 # Changelog
 
-## v20261004.1.43 — 2026-11-12 (branch)
+## v20261004.1.44 — 2026-11-13 (branch)
 
+- Fixed Inspect/closed ROI overlays intercepting map site clicks and plot gestures; hit testing now inherits the shared editor mode.
+- Fixed sector vertex inclusion for all start angles and added Canvas/SVG overlay and sector-membership regressions.
 - Added shared physical-coordinate rectangle, circle and sector ROI editing for multi-site Canvas/SVG wafer maps, including dragging, resize handles, precise-mm fields, multiple named regions, and Whole sample/ROI scope switching.
 - Applied spatial selection in ISC/VCPD, QSS, JZero, LBIC, SPV, CET and multi-point DIT population summaries. Distribution uses the ROI intersection where the family has a histogram.
 - Kept the existing Valid-data filter, whole-sample map normalization, selected-site inspection and calculated physics independent of the ROI statistical scope.

@@ -13,11 +13,13 @@ ROI is an **Analyzer-only spatial selection** for multi-site maps. It does not m
 
 The circle uses a center and radius; the rectangle uses center, width, height and counterclockwise rotation; the sector uses center, radius, start angle and sweep angle. Sector angles are measured counterclockwise from +X in the physical X/Y plane; a sweep of 360 degrees is a full disk. No screen-pixel coordinates are stored.
 
+In Inspect mode and with the ROI panel closed, the entire overlay passes pointer events through to the underlying map for ordinary site selection and plot gestures. Edit mode enables shape and handle interaction.
+
 The chosen ROI is visibly outlined on the Map. **Distribution** and **Results summary** label the selected ROI when ROI statistics are active; switching to Whole sample preserves drawn shapes. Map color normalization and point selection remain based on the existing data and do not change solely because ROI statistics are active.
 
 ## Statistical contract
 
-A site is inside an ROI if its **physical measurement-site center** is inside the region. Boundaries are inclusive. The statistics do not measure geometric area overlap, reweight cells by overlap fraction, or sample interpolated Smooth Map pixels.
+A site is inside an ROI if its **physical measurement-site center** is inside the region. Boundaries are inclusive, including the center of every sector regardless of its start angle. The statistics do not measure geometric area overlap, reweight cells by overlap fraction, or sample interpolated Smooth Map pixels.
 
 For a metric q at site i, the included statistical population is:
 
