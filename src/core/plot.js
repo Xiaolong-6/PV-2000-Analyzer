@@ -55,6 +55,7 @@
     box.__pvSetOpen=open=>setOpen(box,open);
     toggle.onclick=()=>{
       const open=box.hidden;
+      if(open&&header.querySelector('.roi-editor:not([hidden])'))header.querySelector('.roi-toggle')?.click();
       header.querySelectorAll('.axis-popover-card:not([hidden])').forEach(peer=>{
         if(peer!==box)setOpen(peer,false);
       });

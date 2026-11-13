@@ -292,7 +292,7 @@
     }
     return nearestSiteValid&&nearestValidSq<=maxDist*maxDist&&den?num/den:NaN;
   }
-  function drawMap(canvas,d,a,key,mode,mask,selected,zoom,onZoom,onSelect,supportMask=null){
+  function drawMap(canvas,d,a,key,mode,mask,selected,zoom,onZoom,onSelect,supportMask=null,roi=null){
     const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:d.values.length===1?'compact':'standard'}),
       m=a.metrics[key],
       vals=m.values,
@@ -474,6 +474,7 @@
         if(best>=0&&bestD<500)onSelect?.(best);
       };
     PV.plot.bind(canvas,{W,H,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
+    roi?.attach({surface:canvas,W,H,X,Y,plotRect:{x0:cx-R,x1:cx+R,y0:cy-R,y1:cy+R}});
       
     return{lo,hi};
   }
@@ -670,11 +671,11 @@
       PV.plot.bind(canvas,{W,H,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b},ranges:{x:xr,y:yr},onChange:n=>onZoom?.(n),onReset:()=>onZoom?.({x:null,y:null})});
       
   }
-  function downloadMetric(d,a,key,mask,supportMask){const m=a.metrics[key];
+  function downloadMetric(d,a,key,mask,supportMask,roi){const m=a.metrics[key],scopedMask=roi.mask(mask),selectedRoi=roi.selected();
     PV.exporter.csv(
       `${safe(d.resultName)}_${key}.csv`,
-      ['Index','X [mm]','Y [mm]','Raw lifetime [µs]',`${m.label} [${m.unit}]`,'Lifetime available','Active filter valid'],
-      m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',d.values[i],v,supportMask[i]?'YES':'NO',mask[i]?'YES':'NO'])
+      ['Index','X [mm]','Y [mm]','Raw lifetime [µs]',`${m.label} [${m.unit}]`,'Lifetime available','Active filter valid','In ROI','Included in ROI statistics','Statistics scope'],
+      m.values.map((v,i)=>[i+1,d.coords[i]?.x??'',d.coords[i]?.y??'',d.values[i],v,supportMask[i]?'YES':'NO',mask[i]?'YES':'NO',selectedRoi?PV.roi.contains(selectedRoi,d.coords[i]):'',!!scopedMask[i],roi.label()])
     )}
   function render(host,d,a){
     let analysisOptions={vocModel:'pv2000',srvEnabled:false,surfaceMode:'planar',bulkLifetimeUs:Infinity,planarSrv:5,minLifetimeUs:0},
@@ -697,7 +698,12 @@
         metricKey:'lifetime'
       });
       
-    const activeMask=()=>filterController.snapshot().selection.activeMask,
+    const roi=PV.roi.create({coords:Array.from({length:d.values.length},(_,i)=>d.coords[i]||null),onChange:()=>{
+      const body=host.querySelector('#qRoiSummaryBody');
+      if(body)body.innerHTML=summaryCards();
+      redraw();
+    }});
+    const activeMask=()=>roi.mask(filterController.snapshot().selection.activeMask),
       statsFor=k=>summaryMasked(a.metrics[k].values,activeMask());
     const targetSummary=()=>{
       if(d.targetType==='SquareCell'&&Number.isFinite(d.targetWidth)&&Number.isFinite(d.targetHeight)){
@@ -710,7 +716,7 @@
       return Object.values(visibleMetrics()).map(m=>{
         const st=statsFor(m.key),
           primary=Number.isFinite(st.mean)?`${fmt(st.mean)} ± ${fmt(st.stdev)} ${m.unit}`:'—',
-          secondary=Number.isFinite(st.median)?`median ${fmt(st.median)} · range ${fmt(st.min)}–${fmt(st.max)} ${m.unit}`:'unavailable';
+          secondary=Number.isFinite(st.median)?`median ${fmt(st.median)} · range ${fmt(st.min)}–${fmt(st.max)} ${m.unit} · N ${st.count}`:'unavailable · N 0';
         return`<dt>${esc(m.short)} ${help(m.help)}</dt><dd><strong>${esc(primary)}</strong><small>${esc(secondary)}</small></dd>`;
       }).join('');
     }
@@ -783,7 +789,7 @@
           resetTitle:'Reset the range to include every point available under the current lifetime-validity mode.',
           applyTitle:'Recalculate the valid-point mask and all summary statistics using the entered lower/upper limits.'
         })}
-        <section class="panel qss-results-panel"><h3>Results summary ${help('Each row shows mean ± sample standard deviation for the active valid population; median and min–max range remain available on the compact second line. SRV appears only when Additional SRV analysis is explicitly enabled.')}</h3><dl class="meta compact-summary">${summaryCards()}</dl></section>
+        <section class="panel qss-results-panel"><h3>Results summary <span class="roi-scope-label" id="qRoiSummaryScope"></span> ${help('Each row shows mean ± sample standard deviation for the active valid population; median and min–max range remain available on the compact second line. SRV appears only when Additional SRV analysis is explicitly enabled.')}</h3><dl class="meta compact-summary" id="qRoiSummaryBody">${summaryCards()}</dl></section>
         <details class="panel">\
 <summary>Full metadata</summary>\
 <dl class="meta meta-detail">${metaRow('Lot ID',d.lotId||'—','Lot identifier stored with the result; it may be empty for manually measured samples.')}\
@@ -820,13 +826,15 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
             ${analysisOptions.srvEnabled?'<option value="srv">SRV</option>':''}
           </select>
           <select id="qMapMode"><option value="smooth">Smooth</option><option value="points">Points</option></select>
+          ${onePoint?'':roi.toolbar('qRoi')}
           ${PV.plot.axisControls('qMapAxes')}
           <button id="qExportMap" title="Export all sites for the selected metric, including X/Y coordinates and the current validity flag.">Export</button>
         </header><div class="canvas-wrap"><canvas id="qMap"></canvas></div></div>
-        ${onePoint?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
+        ${onePoint?'':`<div class="panel chart"><header><b>Distribution <span class="roi-scope-label" id="qHistScope"></span></b>${help('Count is the default X axis. Open Axes for manual X/Y limits, Swap axes, and Bins; fewer bins make wider bars and more bins make narrower bars. Bars count only points that pass the active Valid-data filter and use the wafer-map color scale. Excluded points are omitted from the plotted Count; yellow lines show the active validity limits.')}<span class="grow"></span>${PV.plot.axisControls('qHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('qHistBins',histBins)}<button id="qExportHist" title="Export histogram bins with valid and excluded counts.">Export</button></header><div class="canvas-wrap"><canvas id="qHist"></canvas></div></div>
         <div class="panel chart"><header><b>Acquisition profile</b>${help('This is a whole-dataset acquisition-order profile. Scroll normally moves this pane. Hold Ctrl/⌘ while scrolling inside the profile to zoom both axes; hold Ctrl/⌘ over one axis to zoom only that axis; double-click restores auto scale. Axes opens manual numeric X/Y limits.')}<span class="grow"></span>${PV.plot.axisControls('qProfileAxes')}<button id="qExportProfile" title="Export point-by-point values, coordinates and validity state.">Export</button></header><div class="canvas-wrap"><canvas id="qProfile"></canvas></div></div>`}
       </section><section class="plots detail"><section class="panel"><h3>${d.values.length===1?'Measurement point':'Selected site'}</h3><div id="qSelected">${selectedHtml()}</div></section></section>${onePoint?'</div>':''}</div>`;
       host.querySelector('#qMetric').value=metricKey;host.querySelector('#qMapMode').value=mapMode;
+      if(!onePoint)roi.bind(host,'qRoi');
         host.querySelector('#qMapMode').onchange=e=>{mapMode=e.target.value;
         redraw()};
         
@@ -894,13 +902,18 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         histCanvas=host.querySelector('#qHist'),
         profileCanvas=host.querySelector('#qProfile'),
         bins=histCanvas
-          ?drawHist(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},supportMask)
+          ?drawHist(histCanvas,a,metricKey,roi.mask(mask),filterKey,filterLo,filterHi,histBins,histSwapped,zoom.hist,n=>{zoom.hist=n;redraw()},roi.mask(supportMask))
           :[];
       drawMap(host.querySelector('#qMap'),d,a,metricKey,mapMode,mask,selected,zoom.map,n=>{zoom.map=n;redraw()},i=>{
         selected=i;
         host.querySelector('#qSelected').innerHTML=selectedHtml();
         redraw();
-      },supportMask);
+      },supportMask,d.values.length>1?roi:null);
+      const scopeLabel=roi.scope()==='roi'?roi.label():'';
+      const summaryScope=host.querySelector('#qRoiSummaryScope');
+      if(summaryScope)summaryScope.textContent=scopeLabel;
+      const histScope=host.querySelector('#qHistScope');
+      if(histScope)histScope.textContent=scopeLabel;
       if(profileCanvas)drawProfile(profileCanvas,d,a,metricKey,mask,zoom.profile,n=>{zoom.profile=n;redraw()},supportMask);
       PV.plot.bindAxisControls(host,'qMapAxes',zoom.map,n=>{zoom.map=n;redraw()});
       if(histCanvas){
@@ -911,13 +924,13 @@ ${metaRow('LID constant',fmt(d.lidConstant),'Calibration constant used only when
         PV.plot.bindBinControls(host,'qHistBins',histBins,n=>{histBins=n;zoom.hist={x:null,y:null};redraw()});
       }
       if(profileCanvas)PV.plot.bindAxisControls(host,'qProfileAxes',zoom.profile,n=>{zoom.profile=n;redraw()});
-      host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
+      host.querySelector('#qExportMap').onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask,roi);
       const profileExport=host.querySelector('#qExportProfile');
-      if(profileExport)profileExport.onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask);
+      if(profileExport)profileExport.onclick=()=>downloadMetric(d,a,metricKey,mask,supportMask,roi);
       const histExport=host.querySelector('#qExportHist');
       if(histExport)histExport.onclick=()=>{
         const unit=a.metrics[metricKey].unit;
-        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid]));
+        PV.exporter.csv(`${safe(d.resultName)}_${metricKey}_histogram.csv`,[`Bin low [${unit}]`,`Bin high [${unit}]`,'Valid count','Filter-excluded count','Statistics scope'],bins.map(b=>[b.lo,b.hi,b.valid,b.invalid,roi.label()]));
       };
     }
     document.addEventListener('pv-theme-change',()=>{if(host.isConnected)redraw()});renderShell();

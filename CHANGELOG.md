@@ -1,5 +1,16 @@
 # Changelog
 
+## v20261113.1 — 2026-11-13
+
+- Preserved literal ROI names containing HTML special characters in CET, DIT, JZero and SPV summary/distribution labels.
+- Fixed Inspect/closed ROI overlays intercepting map site clicks and plot gestures; hit testing now inherits the shared editor mode.
+- Fixed sector vertex inclusion for all start angles and added Canvas/SVG overlay and sector-membership regressions.
+- Added shared physical-coordinate rectangle, circle and sector ROI editing for multi-site Canvas/SVG wafer maps, including dragging, resize handles, precise-mm fields, multiple named regions, and Whole sample/ROI scope switching.
+- Applied spatial selection in ISC/VCPD, QSS, JZero, LBIC, SPV, CET and multi-point DIT population summaries. Distribution uses the ROI intersection where the family has a histogram.
+- Kept the existing Valid-data filter, whole-sample map normalization, selected-site inspection and calculated physics independent of the ROI statistical scope.
+- Added ROI containment/mask unit tests and a scientific/user-facing ROI contract in `docs/ROI.md`.
+- Added explicit per-quantity site counts, ROI membership and statistical scope to spatial CSV exports; named ROI geometries can be exported as JSON.
+
 ## v20261004.1 — 2026-10-04
 
 - Made all nine supported-analyzer tags on the landing page clickable, with one built-in example per analyzer family.

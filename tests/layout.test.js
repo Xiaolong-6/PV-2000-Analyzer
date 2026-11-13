@@ -157,7 +157,7 @@ test('dedicated analyzer sidebars follow the shared information hierarchy where 
   ordered(sources.isc,['<h3>Measurement ','<h3>Current dataset ','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition metadata</summary>']);
   ordered(sources.lbic,['<h3>Measurement ','<h3>Current dataset</h3>','<h3>View ','validDataFilterMarkup','<h3>Results summary ','<summary>Channel provenance</summary>','<summary>Acquisition / validation ']);
   ordered(sources.cet,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition / validation</summary>']);
-  ordered(sources.spv,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary</h3>','<summary>Acquisition / validation</summary>']);
+  ordered(sources.spv,['<h3>Measurement ','<h3>Current dataset</h3>','validDataFilterMarkup','<h3>Results summary ','<summary>Acquisition / validation</summary>']);
   ordered(sources.leakage,['<h3>Measurement</h3>','<h3>Current dataset</h3>','<h3>Results summary</h3>','<summary>Acquisition / validation</summary>']);
 });
 
@@ -257,7 +257,7 @@ test('LBIC Distribution defaults to Count on X and keeps Swap/Bins in header con
   assert.match(src,/binControls\('lHistBins',histBins\)/);
   assert.match(src,/onSwap:\(\)=>\{histSwapped=!histSwapped/);
   assert.match(src,/bindBinControls\(host,'lHistBins',histBins/);
-  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,displayMask,histBins,histSwapped/);
+  assert.match(src,/drawHist\(host\.querySelector\('#lHist'\),metric,roi\.mask\(displayMask\),histBins,histSwapped/);
   assert.doesNotMatch(src,/id="lSwapHistAxes"/);
 });
 
@@ -463,7 +463,7 @@ test('QSS Distribution defaults to Count on X and exposes Swap/Bins through shar
   assert.match(src,/axisControls\('qHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(src,/binControls\('qHistBins',histBins\)/);
   assert.match(src,/bindBinControls\(host,'qHistBins',histBins/);
-  assert.match(src,/histCanvas\s*\?drawHist\(histCanvas,a,metricKey,mask,filterKey,filterLo,filterHi,histBins,histSwapped/);
+  assert.match(src,/histCanvas\s*\?drawHist\(histCanvas,a,metricKey,roi\.mask\(mask\),filterKey,filterLo,filterHi,histBins,histSwapped/);
   assert.doesNotMatch(src,/id="qSwapHistAxes"/);
 });
 
@@ -480,7 +480,7 @@ test('ISC keeps validated quantities, geometry-aware map and standardized Distri
   assert.match(isc,/axisControls\('iHistAxes',\{distribution:true,swapped:histSwapped\}\)/);
   assert.match(isc,/binControls\('iHistBins',histBins\)/);
   assert.match(isc,/bindBinControls\(host,'iHistBins',histBins/);
-  assert.match(isc,/histCanvas\?drawHist\(histCanvas,a,metricKey,displayMask,histBins,histSwapped/);
+  assert.match(isc,/histCanvas\?drawHist\(histCanvas,a,metricKey,roi\.mask\(displayMask\),histBins,histSwapped/);
   assert.doesNotMatch(isc,/id="iSwapHistAxes"/);
   assert.match(isc,/axisControls\('iMapAxes'\)/);
   assert.match(isc,/axisControls\('iRawAxes'\)/);
@@ -677,7 +677,7 @@ test('DIT does not duplicate Follow XML mapping as a persistent status row',()=>
 
 test('QSS compact summary keeps all statistics without repeating five labels per metric',()=>{
   const src=fs.readFileSync(require.resolve('../src/modules/qss-upcd.js'),'utf8');
-  assert.match(src,/<dl class="meta compact-summary">\$\{summaryCards\(\)\}<\/dl>/);
+  assert.match(src,/<dl class="meta compact-summary" id="qRoiSummaryBody">\$\{summaryCards\(\)\}<\/dl>/);
   assert.match(src,/median \$\{fmt\(st\.median\)\} · range/);
   assert.doesNotMatch(src,/qss-result-values/);
 });
@@ -860,4 +860,14 @@ test('landing analyzer chips map one-to-one to the nine embedded examples',()=>{
   assert.match(app,/querySelectorAll\('\[data-example\]'\)/);
   assert.match(build,/globalThis\.PV2000_EXAMPLES=/);
   assert.match(build,/examplesBootstrap/);
+});
+
+test('spatial ROI is explicitly scoped without changing whole-sample Map masks',()=>{
+  for(const file of ['isc.js','qss-upcd.js','jzero.js','lbic.js','spv.js','cet.js','dit.js']){
+    const src=fs.readFileSync(require.resolve('../src/modules/'+file),'utf8');
+    assert.match(src,/PV\.roi\.create/);
+    assert.match(src,/roi\??\.attach/);
+    assert.match(src,/roi\.mask/);
+    assert.match(src,/roi-scope-label/);
+  }
 });

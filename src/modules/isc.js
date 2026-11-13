@@ -385,7 +385,7 @@
     return{X,Y};
   }
 
-  function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect){
+  function drawMap(canvas,d,a,key,mask,selected,zoom,onZoom,onSelect,roi=null){
     const {ctx,W,H}=PV.plot.canvasFrame(canvas,{surface:d.sites.length===1?'compact':'standard'}),
       metric=a.metrics[key],
       values=metric.values,
@@ -562,6 +562,7 @@
       onChange:n=>onZoom?.(n),
       onReset:()=>onZoom?.({x:null,y:null})
     });
+    roi?.attach({surface:canvas,W,H,X,Y,plotRect:{x0:p.l,x1:W-p.r,y0:p.t,y1:H-p.b}});
   }
 
   function drawHist(canvas,a,key,mask,binCount=30,swapped=true,zoom,onZoom){
@@ -730,15 +731,17 @@
     });
   }
 
-  function downloadMap(d,a,key,filterState,displayMask){
+  function downloadMap(d,a,key,filterState,displayMask,roi){
     const m=a.metrics[key],
       selection=filterState.selection,
-      filterMetric=a.metrics[filterState.metricKey];
+      filterMetric=a.metrics[filterState.metricKey],
+      scopedMask=roi.mask(displayMask),selectedRoi=roi.selected();
     PV.exporter.csv(
       `${safe(d.resultName)}_${key}.csv`,
       [
         'Point','X [mm]','Y [mm]',`${m.short} [${m.unit}]`,
         'Metric available','Pass valid-data filter','Displayed',
+        'In ROI','Included in ROI statistics','Statistics scope','ROI geometry',
         'Filter metric','Filter lower','Filter upper'
       ],
       d.sites.map((site,i)=>[
@@ -749,6 +752,10 @@
         m.availability?.[i]?.available??Number.isFinite(m.values[i]),
         !!selection.activeMask[i],
         !!displayMask[i],
+        selectedRoi?PV.roi.contains(selectedRoi,site.coord):'',
+        !!scopedMask[i],
+        roi.label(),
+        roi.selected()?JSON.stringify(roi.selected().geometry):'',
         filterMetric?.short||filterState.metricKey,
         filterState.lower,
         filterState.upper
@@ -812,15 +819,21 @@
         raw:{x:null,y:null}
       };
 
+    const roi=PV.roi.create({coords:d.coords,onChange:()=>{
+      const body=host.querySelector('#iSummaryBody');
+      if(body)body.innerHTML=statRows();
+      redraw();
+    }});
+
     function metaRow(k,v,h=''){
       return`<dt>${esc(k)}${h?` ${help(h)}`:''}</dt><dd>${esc(v??'—')}</dd>`;
     }
 
     function statRows(){
       return Object.values(a.metrics).map(m=>{
-        const mask=filterController.metricMask(m),
+        const mask=roi.mask(filterController.metricMask(m)),
           s=S.summary(m.values.filter((value,index)=>mask[index]&&Number.isFinite(value)));
-        return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${fmt(s.mean)}</td><td>${fmt(s.median)}</td><td>${fmt(s.stdev)}</td><td>${fmt(s.min)}</td><td>${fmt(s.max)}</td></tr>`;
+        return`<tr title="${esc(m.help)}"><td>${esc(m.short)} ${help(m.help)}</td><td>${s.count}</td><td>${fmt(s.mean)}</td><td>${fmt(s.median)}</td><td>${fmt(s.stdev)}</td><td>${fmt(s.min)}</td><td>${fmt(s.max)}</td></tr>`;
       }).join('');
     }
 
@@ -866,7 +879,7 @@
           ?'Filter Vcpd Dark by a numeric range. Raw XML readings are preserved; the same site mask is applied to summary statistics, map, distribution and exports.'
           :'Choose Vcpd Dark, Vcpd Light or VSB as the filter quantity. One shared site mask is then applied across all ISC result quantities, summaries, maps, distributions and exports.'
       })}
-      <section class="panel"><h3>Results summary ${help('Average, Median, Stdev, Min and Max use only sites passing the active Valid-data filter and availability mask. Stdev is the sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="iSummaryBody">${statRows()}</tbody></table></div></section>
+      <section class="panel"><h3>Results summary <span class="roi-scope-label" id="iSummaryScope"></span> ${help('ROI statistics use only sites inside the active ROI, after the Valid-data filter and per-quantity availability. Stdev is the sample standard deviation.')}</h3><div class="table-wrap"><table><thead><tr><th>Parameter</th><th>N</th><th>Average</th><th>Median</th><th>Stdev</th><th>Min</th><th>Max</th></tr></thead><tbody id="iSummaryBody">${statRows()}</tbody></table></div></section>
       <details class="panel"><summary>Acquisition metadata</summary><dl class="meta">
         ${metaRow('Edge exclusion',`${fmt(d.edgeExclusion,2)} mm`)}
         ${metaRow('Readings/site',fmt(d.readingsPerSite,0),isVcpd?'PV-2000 VcpdMeasurement NumberOfReadings.':'PV-2000 recipe setting for repeated VCPD readings averaged at each ISC site.')}
@@ -884,13 +897,14 @@
         ${metaRow('Elapsed',d.elapsed||'—')}
       </dl></details>
     </aside>${d.sites.length===1?'<div class="single-analysis-workspace">':''}<section class="plots overview">
-      <div class="panel chart"><header><b>${d.sites.length===1?'Measurement position':moduleLabel+' map'}</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
-      ${d.sites.length===1?'':`<div class="panel chart"><header><b>Distribution</b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>`}
+      <div class="panel chart"><header><b>${d.sites.length===1?'Measurement position':moduleLabel+' map'}</b>${help(`${mapHelp} Sites excluded by the Valid-data filter are omitted from the filled map while their raw values remain available in export and selected-site inspection.`)}<span class="grow"></span><select id="iMetric">${metricOptions}</select>${d.sites.length>1?roi.toolbar('iRoi'):''}${PV.plot.axisControls('iMapAxes')}<button id="iExportMap" title="Export every site with raw result value, availability and active filter state.">Export</button></header><div class="canvas-wrap"><canvas id="iMap"></canvas></div></div>
+      ${d.sites.length===1?'':`<div class="panel chart"><header><b>Distribution <span class="roi-scope-label" id="iHistScope"></span></b>${help('Count is the default X axis. Histogram bars include only sites passing the active Valid-data filter and availability mask. Open Axes for manual X/Y limits, Swap axes, and Bins.')}<span class="grow"></span>${PV.plot.axisControls('iHistAxes',{distribution:true,swapped:histSwapped})}${PV.plot.binControls('iHistBins',histBins)}<button id="iExportHist">Export</button></header><div class="canvas-wrap"><canvas id="iHist"></canvas></div></div>`}
     </section><section class="plots detail">
       <section class="panel"><h3>${d.sites.length===1?'Measurement point':'Selected site'} ${help(selectedHelp)}</h3><div id="iSelected">${selectedHtml()}</div></section>
       <div class="panel chart"><header><b>Raw readings</b>${help(rawHelp)}<span class="grow"></span>${PV.plot.axisControls('iRawAxes')}<button id="iExportRaw">Export</button></header><div class="canvas-wrap"><canvas id="iRaw"></canvas></div></div>
     </section>${d.sites.length===1?'</div>':''}</div>`;
 
+    if(d.sites.length>1)roi.bind(host,'iRoi');
     PV.ui.bindValidDataFilter(host,{
       prefix:'iFilter',
       controller:filterController,
@@ -910,7 +924,7 @@
       const filterState=filterController.snapshot(),
         displayMask=filterController.metricMask(a.metrics[metricKey]),
         histCanvas=host.querySelector('#iHist'),
-        bins=histCanvas?drawHist(histCanvas,a,metricKey,displayMask,histBins,histSwapped,zoom.hist,n=>{
+        bins=histCanvas?drawHist(histCanvas,a,metricKey,roi.mask(displayMask),histBins,histSwapped,zoom.hist,n=>{
           zoom.hist=n;
           redraw();
         }):[];
@@ -931,8 +945,14 @@
           zoom.raw={x:null,y:null};
           host.querySelector('#iSelected').innerHTML=selectedHtml();
           redraw();
-        }
+        },
+        d.sites.length>1?roi:null
       );
+      const scopeLabel=roi.scope()==='roi'?roi.label():'';
+      const summaryScope=host.querySelector('#iSummaryScope');
+      if(summaryScope)summaryScope.textContent=scopeLabel;
+      const histScope=host.querySelector('#iHistScope');
+      if(histScope)histScope.textContent=scopeLabel;
       drawRaw(host.querySelector('#iRaw'),d,selected,zoom.raw,n=>{
         zoom.raw=n;
         redraw();
@@ -961,14 +981,14 @@
         redraw();
       });
 
-      host.querySelector('#iExportMap').onclick=()=>downloadMap(d,a,metricKey,filterState,displayMask);
+      host.querySelector('#iExportMap').onclick=()=>downloadMap(d,a,metricKey,filterState,displayMask,roi);
       const histExport=host.querySelector('#iExportHist');
       if(histExport)histExport.onclick=()=>{
         const m=a.metrics[metricKey];
         PV.exporter.csv(
           `${safe(d.resultName)}_${metricKey}_histogram.csv`,
-          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count','Filter metric','Filter lower','Filter upper'],
-          bins.map(b=>[b.lo,b.hi,b.count,a.metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
+          [`Bin low [${m.unit}]`,`Bin high [${m.unit}]`,'Count','Scope','ROI geometry','Filter metric','Filter lower','Filter upper'],
+          bins.map(b=>[b.lo,b.hi,b.count,roi.label(),roi.selected()?JSON.stringify(roi.selected().geometry):'',a.metrics[filterState.metricKey]?.short||filterState.metricKey,filterState.lower,filterState.upper])
         );
       };
       host.querySelector('#iExportRaw').onclick=()=>downloadRaw(d,selected);

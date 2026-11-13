@@ -277,3 +277,28 @@
   .dit-module.dit-one-point .dit-point-meta-grid dd{min-width:0}.dit-module.dit-one-point .dit-selected-panel{overflow:visible}.dit-module.dit-one-point .dit-point-meta-grid{font-size:11px}
 }
 @media(min-width:1201px) and (max-width:1450px){.dit-module.dit-one-point .dit-point-meta-grid{grid-template-columns:minmax(0,1fr) auto}}
+
+/* Spatial ROI editor: shared by SVG and canvas wafer maps. */
+.roi-toggle[aria-expanded="true"],.roi-toggle:hover{border-color:var(--blue)}
+.roi-editor{flex:1 0 100%;width:100%;display:grid;gap:7px;border-top:1px solid var(--border);padding:9px 2px 4px;color:var(--text);font-weight:400}
+.roi-editor[hidden]{display:none!important}
+.roi-main-row{display:flex;align-items:end;flex-wrap:wrap;gap:9px}
+.roi-tools{display:flex;flex-wrap:wrap;gap:4px;align-self:end}
+.roi-editor label{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--muted)}
+.roi-editor input,.roi-editor select{min-width:0;font-size:11px}
+.roi-editor .roi-tools button{font-size:10px;padding:4px 7px}
+.roi-active-tool{outline:1.5px solid var(--blue);background:var(--panel2)}
+.roi-name-row{max-width:240px}
+.roi-field-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
+.roi-field-actions{display:flex;justify-content:flex-end;gap:6px}
+.roi-field-actions [data-roi-delete]{color:var(--bad)}
+.roi-hint{font-size:10px;color:var(--muted);line-height:1.4}
+.roi-overlay{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:3;overflow:visible;touch-action:none}
+.roi-overlay .roi-shape>*{fill:var(--blue);fill-opacity:.09;stroke:var(--blue);stroke-width:2;stroke-dasharray:5 3;vector-effect:non-scaling-stroke;cursor:move}
+.roi-overlay .roi-shape.roi-selected>*{stroke:var(--yellow);fill:var(--yellow);fill-opacity:.12;stroke-width:2.6}
+.roi-overlay .roi-shape.roi-preview>*{stroke:var(--muted);fill-opacity:.06}
+.roi-overlay .roi-handle{fill:var(--chart-bg);stroke:var(--blue);stroke-width:2;cursor:ew-resize;vector-effect:non-scaling-stroke}
+@media(max-width:700px){.roi-main-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.roi-tools{grid-column:1/-1}.roi-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.roi-scope-label{font-size:10px;font-weight:650;color:var(--blue);white-space:nowrap}
+.roi-editor{order:20;background:color-mix(in srgb,var(--panel) 86%,var(--chart-bg));padding:8px;border:1px solid var(--border);border-radius:7px}
